@@ -1,0 +1,9 @@
+# Nixpacks configuration for Coolify
+# Coolify auto-detects the framework and uses Nixpacks (not our Dockerfile).
+# This file tells Nixpacks to install sqlite3 CLI at runtime.
+
+[phases.start]
+nixPkgs = ["sqlite"]
+
+[start]
+cmd = "node server.js"

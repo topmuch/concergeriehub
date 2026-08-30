@@ -1,0 +1,17 @@
+{
+  "services": {
+    "app": {
+      "name": "QR Domotik",
+      "image": "node:20-alpine",
+      "buildCommand": "npx prisma generate && bun run build",
+      "startCommand": "npx prisma db push --accept-data-loss --skip-generate 2>/dev/null || true && node server.js",
+      "ports": ["3000"],
+      "volumes": [
+        {
+          "hostPath": "./data",
+          "containerPath": "/app/data"
+        }
+      ]
+    }
+  }
+}

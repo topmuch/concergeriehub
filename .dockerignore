@@ -1,0 +1,44 @@
+# Dependencies
+node_modules
+
+# Build output
+.next
+
+# Development
+.git
+.gitignore
+
+# Dev-only directories
+skills/
+tool-results/
+mini-services/
+examples/
+tests/
+agent-ctx/
+upload/
+download/
+.supabase/
+.zscripts/
+
+# Database (will be created at runtime)
+db/*.db
+db/*.db-journal
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Misc
+*.log
+dev.log
+README.md
+LICENSE
