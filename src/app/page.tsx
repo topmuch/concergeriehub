@@ -27,8 +27,6 @@ import { ClientDashboard } from '@/components/client/client-dashboard';
 import { HomesManager } from '@/components/client/homes-manager';
 import { RoomsManager } from '@/components/client/rooms-manager';
 import { ActivityLogViewer } from '@/components/client/activity-log-viewer';
-
-import { ChoresManager } from '@/components/client/chores-manager';
 import { NotificationCenter } from '@/components/client/notifications-center';
 import { ScanAnalytics } from '@/components/client/scan-analytics';
 import { AutomationsManager } from '@/components/client/automations-manager';
@@ -118,7 +116,7 @@ function PhoneFrame({ children, onBack, title }: { children: React.ReactNode; on
 }
 
 function ScanAnalyticsWrapper() {
-  const [homeId, setHomeId] = useState('');
+  const [propertyId, setHomeId] = useState('');
   useEffect(() => {
     async function fetchHomes() {
       try {
@@ -129,14 +127,14 @@ function ScanAnalyticsWrapper() {
     }
     fetchHomes();
   }, []);
-  if (!homeId) {
+  if (!propertyId) {
     return (
       <div className="flex items-center justify-center py-20">
         <div className="h-8 w-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
       </div>
     );
   }
-  return <ScanAnalytics homeId={homeId} />;
+  return <ScanAnalytics propertyId={propertyId} />;
 }
 
 type AppView = 'landing' | 'auth' | 'select' | 'superadmin' | 'client' | 'setup-demo' | 'hub-demo';
@@ -284,12 +282,10 @@ function AppContent() {
   const renderClientPage = () => {
     switch (clientPage) {
       case 'client-home': return <ClientDashboard />;
-      // @ts-expect-error 'client-hub' added to ClientPage type in a separate task
       case 'client-hub': return <HubManager />;
       case 'client-homes': return <HomesManager />;
       case 'client-rooms': return <RoomsManager />;
       case 'client-activity': return <ActivityLogViewer />;
-      case 'client-chores': return <ChoresManager />;
       case 'client-artisans': return <ArtisanManager />;
       case 'client-stock': return <StockManager />;
       case 'client-packs': return <PackManager />;

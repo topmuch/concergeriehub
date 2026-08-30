@@ -42,7 +42,7 @@ import {
 interface ProductInstance {
   id: string;
   productId: string;
-  homeId: string;
+  propertyId: string;
   purchaseDate: string | null;
   expiryDate: string | null;
   status: string;
@@ -51,7 +51,7 @@ interface ProductInstance {
 
 interface ProductData {
   id: string;
-  homeId: string;
+  propertyId: string;
   name: string;
   category: string | null;
   minStockThreshold: number;
@@ -102,7 +102,7 @@ type TabType = 'products' | 'dlc' | 'stock';
 // ── Component ──────────────────────────────────────────────────
 export function StockManager() {
   // Data state
-  const [homeId, setHomeId] = useState<string | null>(null);
+  const [propertyId, setHomeId] = useState<string | null>(null);
   const [products, setProducts] = useState<ProductData[]>([]);
   const [dlcProducts, setDlcProducts] = useState<ProductData[]>([]);
   const [stockProducts, setStockProducts] = useState<ProductData[]>([]);
@@ -135,7 +135,7 @@ export function StockManager() {
   // ── Fetch data ──────────────────────────────────────────────
   const fetchProducts = useCallback(async (home: string, filter: string = 'all') => {
     try {
-      const res = await fetch(`/api/client/products?homeId=${home}&filter=${filter}`);
+      const res = await fetch(`/api/client/products?propertyId=${home}&filter=${filter}`);
       const data = await res.json();
       return (data.products || []) as ProductData[];
     } catch {
@@ -174,7 +174,7 @@ export function StockManager() {
   }, [fetchAllData]);
 
   const fetchTabData = useCallback(async (tab: TabType) => {
-    if (!homeId) return;
+    if (!propertyId) return;
     setTabLoading(true);
     try {
       const filterMap: Record<TabType, string> = {
@@ -182,7 +182,7 @@ export function StockManager() {
         dlc: 'dlc',
         stock: 'stock',
       };
-      const data = await fetchProducts(homeId, filterMap[tab]);
+      const data = await fetchProducts(propertyId, filterMap[tab]);
       if (tab === 'products') setProducts(data);
       else if (tab === 'dlc') setDlcProducts(data);
       else if (tab === 'stock') setStockProducts(data);
@@ -191,11 +191,11 @@ export function StockManager() {
     } finally {
       setTabLoading(false);
     }
-  }, [homeId, fetchProducts]);
+  }, [propertyId, fetchProducts]);
 
   useEffect(() => {
-    if (homeId) fetchTabData(activeTab);
-  }, [activeTab, homeId, fetchTabData]);
+    if (propertyId) fetchTabData(activeTab);
+  }, [activeTab, propertyId, fetchTabData]);
 
   // ── Helpers ─────────────────────────────────────────────────
   const toggleExpand = (productId: string) => {
@@ -244,7 +244,7 @@ export function StockManager() {
   };
 
   const handleCreateProduct = async () => {
-    if (!formName.trim() || !homeId) return;
+    if (!formName.trim() || !propertyId) return;
 
     setSubmitting(true);
     try {
@@ -252,7 +252,7 @@ export function StockManager() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          homeId,
+          propertyId,
           name: formName.trim(),
           category: formCategory || undefined,
           minStockThreshold: parseInt(formMinStock) || 1,
@@ -300,7 +300,7 @@ export function StockManager() {
   };
 
   const handleAddInstance = async () => {
-    if (!instanceDialogProduct || !homeId) return;
+    if (!instanceDialogProduct || !propertyId) return;
 
     setInstanceSubmitting(true);
     try {
@@ -309,7 +309,7 @@ export function StockManager() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           productId: instanceDialogProduct.id,
-          homeId,
+          propertyId,
           purchaseDate: instPurchaseDate || undefined,
           expiryDate: instExpiryDate || undefined,
         }),
@@ -328,14 +328,14 @@ export function StockManager() {
   };
 
   const handleCheckAlerts = async () => {
-    if (!homeId) return;
+    if (!propertyId) return;
 
     setCheckingAlerts(true);
     try {
       const res = await fetch('/api/client/products/check-alerts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ homeId }),
+        body: JSON.stringify({ propertyId }),
       });
       if (!res.ok) throw new Error();
       const data = await res.json();
@@ -366,7 +366,7 @@ export function StockManager() {
     );
   }
 
-  if (!homeId) {
+  if (!propertyId) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
         <div className="rounded-2xl border-2 border-dashed border-muted-foreground/25 p-12 max-w-md">

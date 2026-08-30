@@ -190,7 +190,7 @@ const userId = 'dev-user-1';
 // ── Component ──────────────────────────────────────────────────
 export function MarketplaceManager() {
   // Data state
-  const [homeId, setHomeId] = useState<string | null>(null);
+  const [propertyId, setHomeId] = useState<string | null>(null);
   const [merchants, setMerchants] = useState<MerchantData[]>([]);
   const [promos, setPromos] = useState<PromoData[]>([]);
   const [flashSales, setFlashSales] = useState<FlashSaleData[]>([]);
@@ -287,7 +287,7 @@ export function MarketplaceManager() {
     try {
       let url = '/api/client/merchants?';
       const params: string[] = [];
-      if (home) params.push(`homeId=${home}`);
+      if (home) params.push(`propertyId=${home}`);
       if (category && category !== 'all') params.push(`category=${encodeURIComponent(category)}`);
       if (search) params.push(`search=${encodeURIComponent(search)}`);
       url += params.join('&');
@@ -393,7 +393,7 @@ export function MarketplaceManager() {
     setTabLoading(true);
     try {
       if (tab === 'merchants') {
-        const data = await fetchMerchants(homeId, categoryFilter, searchQuery);
+        const data = await fetchMerchants(propertyId, categoryFilter, searchQuery);
         setMerchants(data);
       } else if (tab === 'promos') {
         const data = await fetchPromos(promoMerchantFilter, promoCategoryFilter, promoStatusFilter);
@@ -414,7 +414,7 @@ export function MarketplaceManager() {
     } finally {
       setTabLoading(false);
     }
-  }, [homeId, categoryFilter, searchQuery, promoMerchantFilter, promoCategoryFilter, promoStatusFilter, couponStatusFilter, txnTypeFilter, txnStatusFilter, fetchMerchants, fetchPromos, fetchFlashSales, fetchCoupons, fetchTransactions]);
+  }, [propertyId, categoryFilter, searchQuery, promoMerchantFilter, promoCategoryFilter, promoStatusFilter, couponStatusFilter, txnTypeFilter, txnStatusFilter, fetchMerchants, fetchPromos, fetchFlashSales, fetchCoupons, fetchTransactions]);
 
   useEffect(() => {
     fetchTabData(activeTab);
@@ -498,7 +498,7 @@ export function MarketplaceManager() {
           phone: merchFormPhone || undefined,
           website: merchFormWebsite || undefined,
           openingHours: merchFormHours || '{}',
-          homeId: homeId || undefined,
+          propertyId: propertyId || undefined,
         }),
       });
       if (!res.ok) throw new Error();
@@ -706,7 +706,7 @@ export function MarketplaceManager() {
     );
   }
 
-  if (!homeId) {
+  if (!propertyId) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
         <div className="rounded-2xl border-2 border-dashed border-muted-foreground/25 p-12 max-w-md">

@@ -5,19 +5,19 @@ import { db } from '@/lib/db';
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const homeId = searchParams.get('homeId');
+    const propertyId = searchParams.get('propertyId');
     const limitParam = searchParams.get('limit');
     const limit = limitParam ? parseInt(limitParam, 10) : 50;
 
-    if (!homeId) {
+    if (!propertyId) {
       return NextResponse.json(
-        { error: 'Le paramètre homeId est requis' },
+        { error: 'Le paramètre propertyId est requis' },
         { status: 400 }
       );
     }
 
     const logs = await db.activityLog.findMany({
-      where: { homeId },
+      where: { propertyId },
       include: {
         user: {
           select: {

@@ -13,28 +13,28 @@ export async function GET(req: NextRequest) {
     const userId = (session.user as { id: string }).id;
     const { searchParams } = new URL(req.url);
     const qrCodeId = searchParams.get('qrCodeId');
-    const homeId = searchParams.get('homeId');
+    const propertyId = searchParams.get('propertyId');
 
-    if (!qrCodeId && !homeId) {
-      return NextResponse.json({ error: 'qrCodeId ou homeId requis' }, { status: 400 });
+    if (!qrCodeId && !propertyId) {
+      return NextResponse.json({ error: 'qrCodeId ou propertyId requis' }, { status: 400 });
     }
 
     // Verify user owns the home or the QR code belongs to their home
-    let effectiveHomeId = homeId;
-    if (qrCodeId && !homeId) {
+    let effectiveHomeId = propertyId;
+    if (qrCodeId && !propertyId) {
       const qr = await db.qrCode.findUnique({
         where: { id: qrCodeId },
-        select: { homeId: true },
+        select: { propertyId: true },
       });
       if (!qr) return NextResponse.json({ error: 'QR code introuvable' }, { status: 404 });
-      effectiveHomeId = qr.homeId;
+      effectiveHomeId = qr.propertyId;
     }
 
     if (effectiveHomeId) {
-      const membership = await db.homeMember.findFirst({
-        where: { homeId: effectiveHomeId, userId },
+      const membership = await db.propertyMember.findFirst({
+        where: { propertyId: effectiveHomeId, userId },
       });
-      const homeOwner = await db.home.findFirst({
+      const homeOwner = await db.property.findFirst({
         where: { id: effectiveHomeId, ownerId: userId },
       });
       if (!membership && !homeOwner) {
@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
 
     const whereClause: Record<string, unknown> = {};
     if (qrCodeId) whereClause.qrCodeId = qrCodeId;
-    if (effectiveHomeId) whereClause.homeId = effectiveHomeId;
+    if (effectiveHomeId) whereClause.propertyId = effectiveHomeId;
 
     const now = new Date();
     const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());

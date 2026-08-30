@@ -87,17 +87,17 @@ export async function sendPushToUser(
  * Send a push notification to all owners/members of a home.
  */
 export async function sendPushToHome(
-  homeId: string,
+  propertyId: string,
   payload: PushPayload
 ): Promise<{ sent: number; failed: number; cleaned: number }> {
-  const members = await db.homeMember.findMany({
-    where: { homeId },
+  const members = await db.propertyMember.findMany({
+    where: { propertyId },
     select: { userId: true },
   });
 
   // Also get the owner
-  const home = await db.home.findUnique({
-    where: { id: homeId },
+  const home = await db.property.findUnique({
+    where: { id: propertyId },
     select: { ownerId: true },
   });
 

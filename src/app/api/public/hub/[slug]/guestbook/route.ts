@@ -68,17 +68,17 @@ export async function POST(
       where: { hubSlug: slug },
     });
 
-    if (!plaque || !plaque.isClaimed || !plaque.homeId) {
+    if (!plaque || !plaque.isClaimed || !plaque.propertyId) {
       return NextResponse.json({ error: 'Hub non trouvé' }, { status: 404 });
     }
 
     // ── Verify the QR code exists and belongs to this home ──
     const qrCode = await db.qrCode.findUnique({
       where: { id: qrCodeId },
-      select: { id: true, homeId: true },
+      select: { id: true, propertyId: true },
     });
 
-    if (!qrCode || qrCode.homeId !== plaque.homeId) {
+    if (!qrCode || qrCode.propertyId !== plaque.propertyId) {
       return NextResponse.json(
         { error: 'Code QR non trouvé pour ce logement' },
         { status: 404 }

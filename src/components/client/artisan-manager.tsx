@@ -78,7 +78,7 @@ interface ProfessionalData {
 
 interface ServiceData {
   id: string;
-  professionalId: string;
+  providerId: string;
   name: string;
   description: string | null;
   basePrice: number;
@@ -90,8 +90,8 @@ interface ServiceData {
 
 interface ServiceRequestData {
   id: string;
-  homeId: string;
-  professionalId: string;
+  propertyId: string;
+  providerId: string;
   serviceId: string | null;
   status: ServiceRequestStatus;
   description: string | null;
@@ -100,7 +100,7 @@ interface ServiceRequestData {
   address: string | null;
   finalPrice: number | null;
   createdAt: string;
-  professional: { id: string; businessName: string };
+  provider: { id: string; businessName: string };
   service: { id: string; name: string } | null;
   review?: ReviewData;
   chatMessages?: ChatMessageData[];
@@ -109,13 +109,13 @@ interface ServiceRequestData {
 interface ReviewData {
   id: string;
   serviceRequestId: string;
-  professionalId: string;
+  providerId: string;
   userId: string;
   rating: number;
   comment: string | null;
   createdAt: string;
   serviceRequest?: { id: string; status: string };
-  professional?: { id: string; businessName: string };
+  provider?: { id: string; businessName: string };
 }
 
 interface ChatMessageData {
@@ -154,7 +154,7 @@ const userId = 'dev-user-1';
 // ── Component ──────────────────────────────────────────────────
 export function ArtisanManager() {
   // Data state
-  const [homeId, setHomeId] = useState<string | null>(null);
+  const [propertyId, setHomeId] = useState<string | null>(null);
   const [professionals, setProfessionals] = useState<ProfessionalData[]>([]);
   const [serviceRequests, setServiceRequests] = useState<ServiceRequestData[]>([]);
   const [reviewsWritten, setReviewsWritten] = useState<ReviewData[]>([]);
@@ -218,7 +218,7 @@ export function ArtisanManager() {
 
   const fetchProfessionals = useCallback(async (home: string, category?: string) => {
     try {
-      let url = `/api/client/professionals?homeId=${home}`;
+      let url = `/api/client/professionals?propertyId=${home}`;
       if (category && category !== 'all') url += `&category=${encodeURIComponent(category)}`;
       const res = await fetch(url);
       const data = await res.json();
@@ -230,7 +230,7 @@ export function ArtisanManager() {
 
   const fetchServiceRequests = useCallback(async (home: string) => {
     try {
-      const res = await fetch(`/api/client/service-requests?homeId=${home}`);
+      const res = await fetch(`/api/client/service-requests?propertyId=${home}`);
       const data = await res.json();
       return (data.serviceRequests || []) as ServiceRequestData[];
     } catch {
@@ -290,21 +290,21 @@ export function ArtisanManager() {
   }, [fetchAllData]);
 
   const fetchTabData = useCallback(async (tab: TabType) => {
-    if (!homeId) return;
+    if (!propertyId) return;
     setTabLoading(true);
     try {
       if (tab === 'annuaire') {
-        const data = await fetchProfessionals(homeId, categoryFilter);
+        const data = await fetchProfessionals(propertyId, categoryFilter);
         setProfessionals(data);
       } else if (tab === 'demandes') {
-        const data = await fetchServiceRequests(homeId);
+        const data = await fetchServiceRequests(propertyId);
         setServiceRequests(data);
       } else if (tab === 'avis') {
         const data = await fetchReviews();
         setReviewsWritten(data.written);
         setReviewsReceived(data.received);
       } else if (tab === 'chat') {
-        const data = await fetchServiceRequests(homeId);
+        const data = await fetchServiceRequests(propertyId);
         setChatConversations(data.filter((r) => (r.chatMessages?.length ?? 0) > 0));
       }
     } catch {
@@ -312,11 +312,11 @@ export function ArtisanManager() {
     } finally {
       setTabLoading(false);
     }
-  }, [homeId, categoryFilter, fetchProfessionals, fetchServiceRequests, fetchReviews]);
+  }, [propertyId, categoryFilter, fetchProfessionals, fetchServiceRequests, fetchReviews]);
 
   useEffect(() => {
-    if (homeId) fetchTabData(activeTab);
-  }, [activeTab, homeId, fetchTabData]);
+    if (propertyId) fetchTabData(activeTab);
+  }, [activeTab, propertyId, fetchTabData]);
 
   // ── Chat polling ────────────────────────────────────────────
   useEffect(() => {
@@ -372,15 +372,15 @@ export function ArtisanManager() {
 
   // ── Demandes handlers ───────────────────────────────────────
   const handleCreateRequest = async () => {
-    if (!homeId || !reqFormProId || !reqFormServiceId) return;
+    if (!propertyId || !reqFormProId || !reqFormServiceId) return;
     setReqSubmitting(true);
     try {
       const res = await fetch('/api/client/service-requests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          homeId,
-          professionalId: reqFormProId,
+          propertyId,
+          providerId: reqFormProId,
           serviceId: reqFormServiceId,
           description: reqFormDesc || undefined,
           preferredDate: reqFormDate || undefined,
@@ -427,7 +427,7 @@ export function ArtisanManager() {
   };
 
   const handleSubmitReview = async () => {
-    if (!reviewFormRating || !homeId) return;
+    if (!reviewFormRating || !propertyId) return;
     setReviewSubmitting(true);
     try {
       const res = await fetch('/api/client/reviews', {
@@ -436,7 +436,7 @@ export function ArtisanManager() {
         body: JSON.stringify({
           userId,
           serviceRequestId: reviewFormRequestId,
-          professionalId: reviewFormProId,
+          providerId: reviewFormProId,
           rating: reviewFormRating,
           comment: reviewFormComment || undefined,
         }),
@@ -500,7 +500,7 @@ export function ArtisanManager() {
     );
   }
 
-  if (!homeId) {
+  if (!propertyId) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
         <div className="rounded-2xl border-2 border-dashed border-muted-foreground/25 p-12 max-w-md">
@@ -724,7 +724,7 @@ export function ArtisanManager() {
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
                 </div>
-                <Select value={categoryFilter} onValueChange={(v) => { setCategoryFilter(v); if (homeId) fetchProfessionals(homeId, v).then(setProfessionals); }}>
+                <Select value={categoryFilter} onValueChange={(v) => { setCategoryFilter(v); if (propertyId) fetchProfessionals(propertyId, v).then(setProfessionals); }}>
                   <SelectTrigger className="w-full sm:w-48">
                     <SelectValue placeholder="Toutes catégories" />
                   </SelectTrigger>
@@ -737,7 +737,7 @@ export function ArtisanManager() {
                 </Select>
               </div>
 
-              {/* Professional grid */}
+              {/* Provider grid */}
               {filteredProfessionals.length === 0 ? (
                 <div className="text-center py-12">
                   <Briefcase className="h-12 w-12 mx-auto mb-3 text-muted-foreground/50" />
@@ -800,7 +800,7 @@ export function ArtisanManager() {
                 </div>
               )}
 
-              {/* Professional detail dialog */}
+              {/* Provider detail dialog */}
               <Dialog open={proDetailOpen} onOpenChange={setProDetailOpen}>
                 <DialogContent className="sm:max-w-[560px] max-h-[80vh] overflow-y-auto">
                   {selectedPro && (
@@ -919,7 +919,7 @@ export function ArtisanManager() {
                               </Badge>
                             </div>
                             <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
-                              <span>{req.professional?.businessName}</span>
+                              <span>{req.provider?.businessName}</span>
                               {req.preferredDate && (
                                 <span className="flex items-center gap-1">
                                   <Clock className="h-3 w-3" />{formatDate(req.preferredDate)}
@@ -965,7 +965,7 @@ export function ArtisanManager() {
                         <div className="grid grid-cols-2 gap-3 text-sm">
                           <div>
                             <p className="text-xs text-muted-foreground">Professionnel</p>
-                            <p className="font-medium">{selectedRequest.professional?.businessName}</p>
+                            <p className="font-medium">{selectedRequest.provider?.businessName}</p>
                           </div>
                           <div>
                             <p className="text-xs text-muted-foreground">Service</p>
@@ -1038,7 +1038,7 @@ export function ArtisanManager() {
                           {selectedRequest.status === 'completed' && !selectedRequest.review && (
                             <Button
                               size="sm"
-                              onClick={(e) => { e.stopPropagation(); setRequestDetailOpen(false); handleOpenReview(selectedRequest.id, selectedRequest.professionalId); }}
+                              onClick={(e) => { e.stopPropagation(); setRequestDetailOpen(false); handleOpenReview(selectedRequest.id, selectedRequest.providerId); }}
                               className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white"
                             >
                               <Star className="h-3.5 w-3.5 mr-1.5" />Laisser un avis
@@ -1091,7 +1091,7 @@ export function ArtisanManager() {
                                 <p className="text-sm text-muted-foreground">{rev.comment}</p>
                               )}
                               <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
-                                <span>{rev.professional?.businessName || 'Professionnel'}</span>
+                                <span>{rev.provider?.businessName || 'Professionnel'}</span>
                                 <span>{formatDate(rev.createdAt)}</span>
                               </div>
                             </div>
@@ -1117,12 +1117,12 @@ export function ArtisanManager() {
                         <Card key={req.id}>
                           <CardContent className="p-4 flex items-center justify-between">
                             <div>
-                              <p className="text-sm font-medium">{req.professional?.businessName}</p>
+                              <p className="text-sm font-medium">{req.provider?.businessName}</p>
                               <p className="text-xs text-muted-foreground">{req.service?.name} — {formatDate(req.createdAt)}</p>
                             </div>
                             <Button
                               size="sm"
-                              onClick={() => handleOpenReview(req.id, req.professionalId)}
+                              onClick={() => handleOpenReview(req.id, req.providerId)}
                               className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white"
                             >
                               <Star className="h-3.5 w-3.5 mr-1.5" />Laisser un avis
@@ -1134,7 +1134,7 @@ export function ArtisanManager() {
                 </div>
               )}
 
-              {/* Reviews received (if user is a professional) */}
+              {/* Reviews received (if user is a provider) */}
               {reviewsReceived.length > 0 && (
                 <div>
                   <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
@@ -1226,7 +1226,7 @@ export function ArtisanManager() {
                   {chatConversations.map((conv) => {
                     const lastMsg = conv.chatMessages?.[conv.chatMessages.length - 1];
                     const unreadCount = conv.chatMessages?.filter(
-                      (m) => m.senderType === 'professional' && !m.isRead,
+                      (m) => m.senderType === 'provider' && !m.isRead,
                     ).length || 0;
 
                     return (
@@ -1238,13 +1238,13 @@ export function ArtisanManager() {
                         <CardContent className="p-4 flex items-center gap-3">
                           <Avatar className="h-10 w-10 shrink-0">
                             <AvatarFallback className="bg-emerald-100 text-emerald-700 text-sm font-semibold">
-                              {conv.professional?.businessName.charAt(0).toUpperCase() || '?'}
+                              {conv.provider?.businessName.charAt(0).toUpperCase() || '?'}
                             </AvatarFallback>
                           </Avatar>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between gap-2">
                               <h4 className="font-medium text-sm truncate">
-                                {conv.professional?.businessName}
+                                {conv.provider?.businessName}
                               </h4>
                               {lastMsg && (
                                 <span className="text-[10px] text-muted-foreground shrink-0">
@@ -1277,7 +1277,7 @@ export function ArtisanManager() {
                   <DialogHeader className="px-6 pt-6 pb-2">
                     <DialogTitle className="flex items-center gap-2">
                       <MessageCircle className="h-5 w-5 text-emerald-500" />
-                      {chatConversations.find((c) => c.id === chatRequestId)?.professional?.businessName || 'Conversation'}
+                      {chatConversations.find((c) => c.id === chatRequestId)?.provider?.businessName || 'Conversation'}
                     </DialogTitle>
                   </DialogHeader>
 

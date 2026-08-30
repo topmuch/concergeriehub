@@ -7,18 +7,18 @@ import crypto from 'crypto';
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const homeId = searchParams.get('homeId');
+    const propertyId = searchParams.get('propertyId');
 
-    if (!homeId) {
+    if (!propertyId) {
       return NextResponse.json(
-        { error: 'Le paramètre homeId est requis' },
+        { error: 'Le paramètre propertyId est requis' },
         { status: 400 }
       );
     }
 
     // Fetch all existing QR codes for this home (type + name only)
     const existingQrCodes = await db.qrCode.findMany({
-      where: { homeId, isActive: true },
+      where: { propertyId, isActive: true },
       select: { type: true, name: true },
     });
 
@@ -72,15 +72,15 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { homeId, packId, userId } = body as {
-      homeId: string;
+    const { propertyId, packId, userId } = body as {
+      propertyId: string;
       packId: string;
       userId?: string;
     };
 
-    if (!homeId || !packId) {
+    if (!propertyId || !packId) {
       return NextResponse.json(
-        { error: 'Champs requis: homeId, packId' },
+        { error: 'Champs requis: propertyId, packId' },
         { status: 400 }
       );
     }
@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify home exists
-    const home = await db.home.findUnique({ where: { id: homeId } });
+    const home = await db.property.findUnique({ where: { id: propertyId } });
     if (!home) {
       return NextResponse.json(
         { error: 'Maison introuvable' },
@@ -106,15 +106,15 @@ export async function POST(request: NextRequest) {
     // Resolve userId for activity logs
     let resolvedUserId = userId;
     if (!resolvedUserId) {
-      const member = await db.homeMember.findFirst({
-        where: { homeId },
+      const member = await db.propertyMember.findFirst({
+        where: { propertyId },
       });
       resolvedUserId = member?.userId;
     }
 
     // Fetch existing QR codes to skip already-installed ones
     const existingQrCodes = await db.qrCode.findMany({
-      where: { homeId, isActive: true },
+      where: { propertyId, isActive: true },
       select: { type: true, name: true },
     });
     const installedKeys = new Set(
@@ -132,14 +132,14 @@ export async function POST(request: NextRequest) {
 
       for (const roomName of roomNames) {
         const existingRoom = await tx.room.findFirst({
-          where: { homeId, name: roomName },
+          where: { propertyId, name: roomName },
         });
 
         if (existingRoom) {
           roomMap.set(roomName, existingRoom.id);
         } else {
           const newRoom = await tx.room.create({
-            data: { homeId, name: roomName },
+            data: { propertyId, name: roomName },
           });
           roomMap.set(roomName, newRoom.id);
         }
@@ -155,7 +155,7 @@ export async function POST(request: NextRequest) {
 
         const qrCode = await tx.qrCode.create({
           data: {
-            homeId,
+            propertyId,
             roomId: roomId || null,
             name: qrDef.name,
             type: qrDef.moduleType,
@@ -175,7 +175,7 @@ export async function POST(request: NextRequest) {
         if (resolvedUserId) {
           await tx.activityLog.create({
             data: {
-              homeId,
+              propertyId,
               qrCodeId: qrCode.id,
               userId: resolvedUserId,
               actionType: 'qr_activated',

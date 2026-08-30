@@ -9,7 +9,7 @@ export async function GET(
 
   const qrCode = await db.qrCode.findUnique({
     where: { publicSlug: slug, isActive: true },
-    include: { content: true, home: true },
+    include: { content: true, property: true },
   });
 
   if (!qrCode || !qrCode.isActive) {
@@ -28,9 +28,9 @@ export async function GET(
 
   // Find hub slug for this QR code's home
   let hubSlug: string | null = null;
-  if (qrCode.homeId) {
+  if (qrCode.propertyId) {
     const plaque = await db.physicalQrCode.findFirst({
-      where: { homeId: qrCode.homeId, isClaimed: true, hubSlug: { not: null } },
+      where: { propertyId: qrCode.propertyId, isClaimed: true, hubSlug: { not: null } },
       select: { hubSlug: true },
     });
     hubSlug = plaque?.hubSlug || null;
@@ -55,7 +55,7 @@ export async function GET(
   db.scanLog.create({
     data: {
       qrCodeId: qrCode.id,
-      homeId: qrCode.homeId,
+      propertyId: qrCode.propertyId,
       visitorIp,
       userAgent,
       locale,
@@ -72,8 +72,8 @@ export async function GET(
       type: qrCode.type,
       publicSlug: qrCode.publicSlug,
       isActive: qrCode.isActive,
-      homeName: qrCode.home?.name || null,
-      homeId: qrCode.homeId,
+      homeName: qrCode.property?.name || null,
+      propertyId: qrCode.propertyId,
     },
     hubSlug,
     content: parsedContent,

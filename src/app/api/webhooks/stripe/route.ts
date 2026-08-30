@@ -1,17 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
+import type Stripe from 'stripe';
 import { db } from '@/lib/db';
 
 // Lazy Stripe init to avoid build-time crash when STRIPE_SECRET_KEY is missing
 let _stripe: InstanceType<typeof import('stripe').default> | null = null;
 function getStripe() {
-  if (!_stripe) {
+  let stripe = _stripe;
+  if (!stripe) {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const Stripe = require('stripe');
-    _stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder', {
-      apiVersion: '2024-06-20',
-    });
+    stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder');
+    _stripe = stripe;
   }
-  return _stripe;
+  return stripe as NonNullable<typeof stripe>;
 }
 const isSimulation = !process.env.STRIPE_SECRET_KEY;
 
@@ -56,22 +57,22 @@ export async function POST(request: NextRequest) {
     }
 
     // Handle events
-    const S = await import('stripe');
+    
     switch (event.type) {
       case 'checkout.session.completed': {
-        await handleCheckoutCompleted(event.data.object as S.Checkout.Session);
+        await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session);
         break;
       }
       case 'customer.subscription.updated': {
-        await handleSubscriptionUpdated(event.data.object as S.Subscription);
+        await handleSubscriptionUpdated(event.data.object as Stripe.Subscription);
         break;
       }
       case 'customer.subscription.deleted': {
-        await handleSubscriptionDeleted(event.data.object as S.Subscription);
+        await handleSubscriptionDeleted(event.data.object as Stripe.Subscription);
         break;
       }
       case 'invoice.payment_failed': {
-        await handlePaymentFailed(event.data.object as S.Invoice);
+        await handlePaymentFailed(event.data.object as Stripe.Invoice);
         break;
       }
       default:

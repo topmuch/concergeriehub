@@ -5,17 +5,17 @@ import { db } from '@/lib/db';
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const homeId = searchParams.get('homeId');
+    const propertyId = searchParams.get('propertyId');
 
-    if (!homeId) {
+    if (!propertyId) {
       return NextResponse.json(
-        { error: 'Le paramètre homeId est requis' },
+        { error: 'Le paramètre propertyId est requis' },
         { status: 400 }
       );
     }
 
     const rooms = await db.room.findMany({
-      where: { homeId },
+      where: { propertyId },
       include: {
         _count: {
           select: { qrCodes: true },
@@ -38,22 +38,22 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { homeId, name, icon } = body as {
-      homeId: string;
+    const { propertyId, name, icon } = body as {
+      propertyId: string;
       name: string;
       icon?: string;
     };
 
-    if (!homeId || !name) {
+    if (!propertyId || !name) {
       return NextResponse.json(
-        { error: 'Les champs homeId et name sont requis' },
+        { error: 'Les champs propertyId et name sont requis' },
         { status: 400 }
       );
     }
 
     const room = await db.room.create({
       data: {
-        homeId,
+        propertyId,
         name,
         icon: icon ?? null,
       },

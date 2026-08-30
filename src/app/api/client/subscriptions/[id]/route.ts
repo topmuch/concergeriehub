@@ -25,7 +25,7 @@ export async function GET(
             user: { select: { id: true, email: true, fullName: true } },
           },
         },
-        professional: {
+        provider: {
           include: {
             user: { select: { id: true, email: true, fullName: true } },
           },
@@ -102,7 +102,7 @@ export async function PATCH(
     if (status === 'cancelled' && existing.stripeSubscriptionId && !isSimulation) {
       const Stripe = (await import('stripe')).default;
       const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-        apiVersion: '2024-06-20',
+        
       });
       await stripe.subscriptions.cancel(existing.stripeSubscriptionId);
     }
@@ -149,7 +149,7 @@ export async function DELETE(
     if (existing.stripeSubscriptionId && !isSimulation) {
       const Stripe = (await import('stripe')).default;
       const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-        apiVersion: '2024-06-20',
+        
       });
       await stripe.subscriptions.cancel(existing.stripeSubscriptionId);
     }

@@ -278,7 +278,7 @@ export function PhysicalQrCodes() {
     async function fetchRooms() {
       setLoadingRooms(true);
       try {
-        const res = await fetch(`/api/client/rooms?homeId=${selectedHomeId}`);
+        const res = await fetch(`/api/client/rooms?propertyId=${selectedHomeId}`);
         const data = await res.json();
         setRooms(data.rooms ?? []);
       } catch {
@@ -297,7 +297,7 @@ export function PhysicalQrCodes() {
       const res = await fetch('/api/client/rooms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ homeId: selectedHomeId, name: newRoomName.trim() }),
+        body: JSON.stringify({ propertyId: selectedHomeId, name: newRoomName.trim() }),
       });
       const data = await res.json();
       if (data.id) {
@@ -317,7 +317,7 @@ export function PhysicalQrCodes() {
     async function fetchQrCodes() {
       setLoadingCodes(true);
       try {
-        const res = await fetch(`/api/client/qr-codes?homeId=${selectedHomeId}`);
+        const res = await fetch(`/api/client/qr-codes?propertyId=${selectedHomeId}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const text = await res.text();
         const data = JSON.parse(text);
@@ -446,7 +446,7 @@ export function PhysicalQrCodes() {
           code: codeInput,
           moduleType: selectedModuleType,
           name: qrName,
-          homeId: selectedHomeId,
+          propertyId: selectedHomeId,
           content: hasContent ? moduleContent : undefined,
         }),
       });
@@ -457,7 +457,7 @@ export function PhysicalQrCodes() {
         toast.success('QR code activé avec succès !');
         resetWizard();
         // Refresh QR codes list and switch to "Mes QR codes activés" tab
-        const qrRes = await fetch(`/api/client/qr-codes?homeId=${selectedHomeId}`);
+        const qrRes = await fetch(`/api/client/qr-codes?propertyId=${selectedHomeId}`);
         const qrData = await qrRes.json();
         setQrCodes(qrData.qrCodes ?? []);
         // Switch to the activated QR codes tab so the user can see their QR
@@ -535,7 +535,7 @@ export function PhysicalQrCodes() {
           moduleType: batchModuleType,
           roomId: batchRoomId,
           name: batchNamePrefix,
-          homeId: selectedHomeId,
+          propertyId: selectedHomeId,
         }),
       });
 
@@ -554,7 +554,7 @@ export function PhysicalQrCodes() {
         setBatchResult({ activated: data.activated, failed: data.failed, errors: data.errors });
         toast.success(`${data.activated} QR code(s) activé(s) avec succès !`);
         // Refresh QR codes
-        const qrRes = await fetch(`/api/client/qr-codes?homeId=${selectedHomeId}`);
+        const qrRes = await fetch(`/api/client/qr-codes?propertyId=${selectedHomeId}`);
         const qrData = await qrRes.json();
         setQrCodes(qrData.qrCodes ?? []);
       }
@@ -612,7 +612,7 @@ export function PhysicalQrCodes() {
         toast.success('QR code modifié avec succès');
         setEditDialogOpen(false);
         // Refresh
-        const qrRes = await fetch(`/api/client/qr-codes?homeId=${selectedHomeId}`);
+        const qrRes = await fetch(`/api/client/qr-codes?propertyId=${selectedHomeId}`);
         const qrData = await qrRes.json();
         setQrCodes(qrData.qrCodes ?? []);
       }
@@ -650,7 +650,7 @@ export function PhysicalQrCodes() {
         toast.success('QR code désactivé');
         setDeactivateDialogOpen(false);
         // Refresh
-        const qrRes = await fetch(`/api/client/qr-codes?homeId=${selectedHomeId}`);
+        const qrRes = await fetch(`/api/client/qr-codes?propertyId=${selectedHomeId}`);
         const qrData = await qrRes.json();
         setQrCodes(qrData.qrCodes ?? []);
       }

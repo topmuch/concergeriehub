@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 
-const VALID_ROLES = ['owner', 'admin', 'member', 'child'];
+const VALID_ROLES = ['owner', 'cohost', 'staff', 'cleaner', 'member'];
 
 // PUT: Update member role or nickname
 export async function PUT(
@@ -31,7 +31,7 @@ export async function PUT(
     }
 
     // Find the member
-    const member = await db.homeMember.findUnique({ where: { id } });
+    const member = await db.propertyMember.findUnique({ where: { id } });
     if (!member) {
       return NextResponse.json(
         { error: 'Membre introuvable' },
@@ -47,7 +47,7 @@ export async function PUT(
       );
     }
 
-    const updated = await db.homeMember.update({
+    const updated = await db.propertyMember.update({
       where: { id },
       data: {
         ...(role ? { role } : {}),
@@ -79,7 +79,7 @@ export async function DELETE(
     const { id } = await params;
 
     // Find the member
-    const member = await db.homeMember.findUnique({ where: { id } });
+    const member = await db.propertyMember.findUnique({ where: { id } });
     if (!member) {
       return NextResponse.json(
         { error: 'Membre introuvable' },
@@ -95,7 +95,7 @@ export async function DELETE(
       );
     }
 
-    await db.homeMember.delete({ where: { id } });
+    await db.propertyMember.delete({ where: { id } });
 
     return NextResponse.json({ success: true });
   } catch (error) {

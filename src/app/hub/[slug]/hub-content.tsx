@@ -35,7 +35,7 @@ interface VoiceMsg {
 }
 
 interface HubData {
-  home: { id: string; name: string; address: string | null; hasPin: boolean };
+  property: { id: string; name: string; address: string | null; hasPin: boolean };
   ownerName: string | null;
   guestRooms: RoomInfo[];
   familyRooms: RoomInfo[];
@@ -1141,7 +1141,7 @@ export function HubPageContent({ params }: { params: Promise<{ slug: string }> }
                   </motion.button>
                 ) : (
                   <h1 className="text-2xl font-bold text-white">
-                    {data.home.name}
+                    {data.property.name}
                   </h1>
                 )}
 
@@ -1165,7 +1165,7 @@ export function HubPageContent({ params }: { params: Promise<{ slug: string }> }
                     </motion.span>
                   )}
 
-                  {view === 'mode-select' && data.home.hasPin && (
+                  {view === 'mode-select' && data.property.hasPin && (
                     <motion.button
                       whileTap={{ scale: 0.9 }}
                       onClick={() => setPinModalFor('settings')}
@@ -1240,7 +1240,7 @@ export function HubPageContent({ params }: { params: Promise<{ slug: string }> }
                     </motion.button>
 
                     {/* FAMILLE button */}
-                    {data.home.hasPin && (
+                    {data.property.hasPin && (
                       <motion.button
                         onClick={() => setPinModalFor('family')}
                         whileHover={{ scale: 1.01 }}
@@ -1311,9 +1311,9 @@ export function HubPageContent({ params }: { params: Promise<{ slug: string }> }
                 >
                   {/* 1. Home name + address subtitle */}
                   <div>
-                    <h2 className="text-xl font-bold text-white">{data.home.name}</h2>
-                    {data.home.address && (
-                      <p className="text-sm text-white/50 mt-1">{data.home.address}</p>
+                    <h2 className="text-xl font-bold text-white">{data.property.name}</h2>
+                    {data.property.address && (
+                      <p className="text-sm text-white/50 mt-1">{data.property.address}</p>
                     )}
                   </div>
 
@@ -1410,9 +1410,9 @@ export function HubPageContent({ params }: { params: Promise<{ slug: string }> }
                 >
                   {/* Title */}
                   <div>
-                    <h2 className="text-xl font-bold text-white">{data.home.name}</h2>
+                    <h2 className="text-xl font-bold text-white">{data.property.name}</h2>
                     <p className="text-sm text-white/50 mt-1">
-                      Mode Famille{data.home.address && ` · ${data.home.address}`}
+                      Mode Famille{data.property.address && ` · ${data.property.address}`}
                     </p>
                   </div>
 

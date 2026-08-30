@@ -15,7 +15,7 @@ async function ensureDemoUser() {
       },
     });
 
-    const home = await db.home.create({
+    const home = await db.property.create({
       data: {
         ownerId: user.id,
         name: 'Ma Maison',
@@ -24,38 +24,38 @@ async function ensureDemoUser() {
       },
     });
 
-    await db.homeMember.create({
+    await db.propertyMember.create({
       data: {
-        homeId: home.id,
+        propertyId: home.id,
         userId: user.id,
         role: 'owner',
       },
     });
   }
 
-  const member = await db.homeMember.findFirst({
+  const member = await db.propertyMember.findFirst({
     where: { userId: user.id },
-    include: { home: true },
+    include: { property: true },
   });
 
-  return { user, home: member?.home };
+  return { user, home: member?.property };
 }
 
 // GET: List QR codes for a home
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const homeId = searchParams.get('homeId');
+    const propertyId = searchParams.get('propertyId');
 
-    if (!homeId) {
+    if (!propertyId) {
       return NextResponse.json(
-        { error: 'Le paramètre homeId est requis' },
+        { error: 'Le paramètre propertyId est requis' },
         { status: 400 }
       );
     }
 
     const qrCodes = await db.qrCode.findMany({
-      where: { homeId },
+      where: { propertyId },
       include: {
         room: {
           select: { id: true, name: true, icon: true },
@@ -180,7 +180,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     await db.$transaction(async (tx) => {
-      // 1. Get QR code for homeId
+      // 1. Get QR code for propertyId
       const qrCode = await tx.qrCode.findUnique({ where: { id } });
       if (!qrCode) {
         throw new Error('QR code introuvable');
@@ -215,7 +215,7 @@ export async function DELETE(request: NextRequest) {
       // 5. Create ActivityLog
       await tx.activityLog.create({
         data: {
-          homeId: qrCode.homeId,
+          propertyId: qrCode.propertyId,
           qrCodeId: id,
           userId: user.id,
           actionType: 'qr_deactivated',

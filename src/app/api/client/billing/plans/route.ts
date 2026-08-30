@@ -11,12 +11,13 @@ const PLANS = [
     price: 0,
     currency: 'EUR',
     interval: 'month',
+    stripePriceId: null as string | null,
     features: [
       '5 QR codes actifs',
       'Annuaire artisans basique',
       'Support email',
     ],
-    subscriberTypes: ['merchant', 'professional'],
+    subscriberTypes: ['merchant', 'provider'],
   },
   {
     id: 'premium',
@@ -32,7 +33,7 @@ const PLANS = [
       'Statistiques avancées',
       'Support prioritaire',
     ],
-    subscriberTypes: ['merchant', 'professional'],
+    subscriberTypes: ['merchant', 'provider'],
   },
   {
     id: 'featured',
@@ -49,7 +50,7 @@ const PLANS = [
       'Gestionnaire de compte dédié',
       'API access',
     ],
-    subscriberTypes: ['merchant', 'professional'],
+    subscriberTypes: ['merchant', 'provider'],
   },
 ] as const;
 
@@ -85,7 +86,7 @@ export async function POST(request: NextRequest) {
 
     if (!SUBSCRIBER_TYPES.includes(subscriberType as SubscriberType)) {
       return NextResponse.json(
-        { error: 'Type de souscripteur invalide. Valeurs autorisées : merchant, professional' },
+        { error: 'Type de souscripteur invalide. Valeurs autorisées : merchant, provider' },
         { status: 400 }
       );
     }
@@ -115,8 +116,8 @@ export async function POST(request: NextRequest) {
         );
       }
     } else {
-      const professional = await db.professional.findUnique({ where: { id: subscriberId } });
-      if (!professional) {
+      const provider = await db.provider.findUnique({ where: { id: subscriberId } });
+      if (!provider) {
         return NextResponse.json(
           { error: 'Professionnel introuvable' },
           { status: 404 }
@@ -162,7 +163,7 @@ export async function POST(request: NextRequest) {
     // --- Stripe mode ---
     const Stripe = (await import('stripe')).default;
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-      apiVersion: '2024-06-20',
+      
     });
 
     let customerEmail: string | null = null;
@@ -173,11 +174,11 @@ export async function POST(request: NextRequest) {
       });
       customerEmail = merchant?.user?.email ?? null;
     } else {
-      const professional = await db.professional.findUnique({
+      const provider = await db.provider.findUnique({
         where: { id: subscriberId },
         include: { user: { select: { email: true } } },
       });
-      customerEmail = professional?.user?.email ?? null;
+      customerEmail = provider?.user?.email ?? null;
     }
 
     const origin = request.headers.get('origin') || 'http://localhost:3000';

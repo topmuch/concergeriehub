@@ -180,7 +180,7 @@ export function MonetizationManager() {
   const [plansLoading, setPlansLoading] = useState(true);
   const [choosePlanDialogOpen, setChoosePlanDialogOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<PlanData | null>(null);
-  const [subscriberType, setSubscriberType] = useState<'merchant' | 'professional'>('merchant');
+  const [subscriberType, setSubscriberType] = useState<'merchant' | 'provider'>('merchant');
   const [subscribing, setSubscribing] = useState(false);
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
 
@@ -885,13 +885,13 @@ export function MonetizationManager() {
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Type de souscripteur</label>
-                <Select value={subscriberType} onValueChange={(v) => setSubscriberType(v as 'merchant' | 'professional')}>
+                <Select value={subscriberType} onValueChange={(v) => setSubscriberType(v as 'merchant' | 'provider')}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="merchant">Marchand</SelectItem>
-                    <SelectItem value="professional">Professionnel</SelectItem>
+                    <SelectItem value="provider">Professionnel</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

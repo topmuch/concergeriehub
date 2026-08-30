@@ -72,10 +72,10 @@ export function HomesManager() {
 
   const [membersLoading, setMembersLoading] = useState(false);
 
-  const fetchMembers = async (homeId: string) => {
+  const fetchMembers = async (propertyId: string) => {
     setMembersLoading(true);
     try {
-      const res = await fetch(`/api/client/homes/${homeId}/members`);
+      const res = await fetch(`/api/client/homes/${propertyId}/members`);
       const data = await res.json();
       setMembers(data.members || []);
     } catch {

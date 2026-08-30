@@ -48,7 +48,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
 
 // ── Component ──────────────────────────────────────────────────
 export function PackManager() {
-  const [homeId, setHomeId] = useState<string | null>(null);
+  const [propertyId, setHomeId] = useState<string | null>(null);
   const [packs, setPacks] = useState<PackData[]>([]);
   const [loading, setLoading] = useState(true);
   const [installingPackId, setInstallingPackId] = useState<string | null>(null);
@@ -56,7 +56,7 @@ export function PackManager() {
   // ── Fetch homes & packs data ──────────────────────────────────
   const fetchPacks = useCallback(async (home: string) => {
     try {
-      const res = await fetch(`/api/client/packs?homeId=${home}`);
+      const res = await fetch(`/api/client/packs?propertyId=${home}`);
       const data = await res.json();
       return (data.packs || []) as PackData[];
     } catch {
@@ -92,14 +92,14 @@ export function PackManager() {
 
   // ── Install handler ──────────────────────────────────────────
   const handleInstall = async (packId: string) => {
-    if (!homeId) return;
+    if (!propertyId) return;
     setInstallingPackId(packId);
 
     try {
       const res = await fetch('/api/client/packs/install', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ homeId, packId }),
+        body: JSON.stringify({ propertyId, packId }),
       });
 
       const data = await res.json();
@@ -112,7 +112,7 @@ export function PackManager() {
       toast.success(`Pack installé ! ${data.installed} QR codes créés`);
 
       // Refetch packs data
-      const packsData = await fetchPacks(homeId);
+      const packsData = await fetchPacks(propertyId);
       setPacks(packsData);
     } catch {
       toast.error("Erreur lors de l'installation");
@@ -139,7 +139,7 @@ export function PackManager() {
   }
 
   // ── Empty state (no home) ─────────────────────────────────────
-  if (!homeId) {
+  if (!propertyId) {
     return (
       <div className="flex min-h-[400px] flex-col items-center justify-center gap-4 text-center">
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">

@@ -111,12 +111,12 @@ export function HubManager() {
       setHome(firstHome);
 
       if (firstHome) {
-        const homeId = firstHome.id;
+        const propertyId = firstHome.id;
 
         // 2. Fetch rooms and scan stats in parallel
         const [roomsRes, statsRes] = await Promise.all([
-          fetch(`/api/client/rooms?homeId=${homeId}`).then((r) => r.json()),
-          fetch(`/api/client/scan-stats?homeId=${homeId}`).then((r) => r.json()),
+          fetch(`/api/client/rooms?propertyId=${propertyId}`).then((r) => r.json()),
+          fetch(`/api/client/scan-stats?propertyId=${propertyId}`).then((r) => r.json()),
         ]);
 
         if (roomsRes.rooms) setRooms(roomsRes.rooms);

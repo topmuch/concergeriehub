@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
     const isVerifiedParam = request.nextUrl.searchParams.get('isVerified');
     const isActiveParam = request.nextUrl.searchParams.get('isActive');
     const search = request.nextUrl.searchParams.get('search');
-    const homeId = request.nextUrl.searchParams.get('homeId');
+    const propertyId = request.nextUrl.searchParams.get('propertyId');
 
     const where: Record<string, unknown> = {};
 
@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     if (isVerifiedParam === 'true') where.isVerified = true;
     if (isActiveParam === 'true') where.isActive = true;
     else if (isActiveParam === 'false') where.isActive = false;
-    if (homeId) where.homeId = homeId;
+    if (propertyId) where.propertyId = propertyId;
 
     if (search) {
       where.OR = [
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
       phone,
       website,
       openingHours,
-      homeId,
+      propertyId,
     } = body as {
       name: string;
       category?: string;
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
       phone?: string;
       website?: string;
       openingHours?: string;
-      homeId?: string;
+      propertyId?: string;
     };
 
     if (!name) {
@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
         phone: phone ?? null,
         website: website ?? null,
         openingHours: openingHours ?? '{}',
-        homeId: homeId ?? null,
+        propertyId: propertyId ?? null,
       },
       include: {
         merchantPhotos: {

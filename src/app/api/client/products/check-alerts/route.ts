@@ -6,18 +6,18 @@ import { sendPushToHome } from '@/lib/push-sender';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { homeId } = body as { homeId: string };
+    const { propertyId } = body as { propertyId: string };
 
-    if (!homeId) {
+    if (!propertyId) {
       return NextResponse.json(
-        { error: 'Le paramètre homeId est requis' },
+        { error: 'Le paramètre propertyId est requis' },
         { status: 400 }
       );
     }
 
     // Verify the home exists and get ownerId
-    const home = await db.home.findUnique({
-      where: { id: homeId },
+    const home = await db.property.findUnique({
+      where: { id: propertyId },
       select: { id: true, ownerId: true },
     });
     if (!home) {
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     // Query all fresh instances with expiryDate set, within the next 3 days
     const freshInstances = await db.productInstance.findMany({
       where: {
-        homeId,
+        propertyId,
         status: 'fresh',
         expiryDate: { not: null },
       },
@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
             title,
             body: notificationBody,
             dataJson: JSON.stringify({
-              homeId,
+              propertyId,
               productId: inst.product.id,
               instanceId: inst.id,
               type: 'dlc_alert',
@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
           },
         });
 
-        await sendPushToHome(homeId, {
+        await sendPushToHome(propertyId, {
           title,
           body: pushBody,
           tag: `dlc-${inst.product.id}`,
@@ -133,7 +133,7 @@ export async function POST(request: NextRequest) {
     // Query all Products where currentStock <= minStockThreshold
     // SQLite doesn't support field comparisons, so we filter in JS
     const allProducts = await db.product.findMany({
-      where: { homeId },
+      where: { propertyId },
     });
 
     const stockProducts = allProducts.filter(
@@ -170,7 +170,7 @@ export async function POST(request: NextRequest) {
             title,
             body: notificationBody,
             dataJson: JSON.stringify({
-              homeId,
+              propertyId,
               productId: product.id,
               type: 'stock_alert',
               currentStock: product.currentStock,
@@ -179,7 +179,7 @@ export async function POST(request: NextRequest) {
           },
         });
 
-        await sendPushToHome(homeId, {
+        await sendPushToHome(propertyId, {
           title,
           body: pushBody,
           tag: `stock-${product.id}`,

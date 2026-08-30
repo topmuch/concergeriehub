@@ -40,9 +40,9 @@ export async function POST(
       );
     }
 
-    const automation = await db.homeAutomation.findUnique({
+    const automation = await db.propertyAutomation.findUnique({
       where: { id },
-      include: { home: true },
+      include: { property: true },
     });
 
     if (!automation) {
@@ -50,9 +50,9 @@ export async function POST(
     }
 
     // Verify ownership
-    const home = await db.home.findFirst({
+    const home = await db.property.findFirst({
       where: {
-        id: automation.homeId,
+        id: automation.propertyId,
         OR: [
           { ownerId: userId },
           { members: { some: { userId } } },

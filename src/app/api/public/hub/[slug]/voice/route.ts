@@ -38,9 +38,9 @@ export async function POST(
     // Find the home via hubSlug
     const plaque = await db.physicalQrCode.findUnique({
       where: { hubSlug: slug },
-      select: { homeId: true, isClaimed: true },
+      select: { propertyId: true, isClaimed: true },
     });
-    if (!plaque || !plaque.isClaimed || !plaque.homeId) {
+    if (!plaque || !plaque.isClaimed || !plaque.propertyId) {
       return NextResponse.json({ error: 'Hub non trouvé' }, { status: 404 });
     }
 
@@ -49,7 +49,7 @@ export async function POST(
 
     // Generate unique filename
     const ext = audio.name?.split('.').pop() || 'webm';
-    const filename = `${plaque.homeId}-${crypto.randomBytes(8).toString('hex')}.${ext}`;
+    const filename = `${plaque.propertyId}-${crypto.randomBytes(8).toString('hex')}.${ext}`;
     const filePath = join(UPLOAD_DIR, filename);
 
     // Save file
@@ -59,7 +59,7 @@ export async function POST(
     // Create DB record
     const voiceMsg = await db.voiceMessage.create({
       data: {
-        homeId: plaque.homeId,
+        propertyId: plaque.propertyId,
         senderName: senderName.trim().slice(0, 50),
         senderType: 'guest',
         audioUrl: `/uploads/voice/${filename}`,
@@ -93,14 +93,14 @@ export async function GET(
 
     const plaque = await db.physicalQrCode.findUnique({
       where: { hubSlug: slug },
-      select: { homeId: true, isClaimed: true },
+      select: { propertyId: true, isClaimed: true },
     });
-    if (!plaque || !plaque.isClaimed || !plaque.homeId) {
+    if (!plaque || !plaque.isClaimed || !plaque.propertyId) {
       return NextResponse.json({ error: 'Hub non trouvé' }, { status: 404 });
     }
 
     const messages = await db.voiceMessage.findMany({
-      where: { homeId: plaque.homeId },
+      where: { propertyId: plaque.propertyId },
       orderBy: { createdAt: 'desc' },
       take: limit,
       select: {

@@ -16,7 +16,7 @@
 export type UserRole = 'user' | 'superadmin';
 
 /** Roles that a member can have inside a specific Home. */
-export type HomeMemberRole = 'owner' | 'admin' | 'member' | 'child';
+export type HomeMemberRole = 'owner' | 'cohost' | 'staff' | 'cleaner' | 'member';
 
 /** Lifecycle statuses for a physical (printed) QR code. */
 export type PhysicalQrStatus = 'inactive' | 'active' | 'lost' | 'cancelled';
@@ -32,14 +32,6 @@ export type ProductInstanceStatus =
   | 'expired'
   | 'consumed';
 
-/** How often a chore repeats. */
-export type ChoreFrequency = 'daily' | 'weekly' | 'once';
-
-/** Validation state of a chore completion. */
-export type ChoreCompletionStatus =
-  | 'pending_validation'
-  | 'validated'
-  | 'rejected';
 
 /** Where a promo / advertisement originates from. */
 export type PromoSource = 'local' | 'scraped';
@@ -83,7 +75,7 @@ export type TransactionStatus =
   | 'refunded';
 
 /** Kind of subscriber on the marketplace. */
-export type SubscriberType = 'merchant' | 'professional';
+export type SubscriberType = 'merchant' | 'provider';
 
 /** Flash sale lifecycle statuses. */
 export type FlashSaleStatus = 'scheduled' | 'active' | 'expired' | 'cancelled';
@@ -95,7 +87,7 @@ export type CouponDiscountType = 'percentage' | 'fixed' | 'bogof';
 export type CouponStatus = 'active' | 'used' | 'expired' | 'cancelled';
 
 /** Who sent a chat message. */
-export type ChatSenderType = 'homeowner' | 'professional';
+export type ChatSenderType = 'homeowner' | 'provider';
 
 /** Type of chat message content. */
 export type ChatMessageType = 'text' | 'image' | 'document' | 'system';
@@ -107,7 +99,6 @@ export type NotificationType =
   | 'service_request_update'
   | 'service_chat'
   | 'promo_match'
-  | 'chore_reminder'
   | 'stock_alert'
   | 'membership_invite'
   | 'system';
@@ -123,9 +114,10 @@ export const USER_ROLES: readonly UserRole[] = [
 
 export const HOME_MEMBER_ROLES: readonly HomeMemberRole[] = [
   'owner',
-  'admin',
+  'cohost',
+  'staff',
+  'cleaner',
   'member',
-  'child',
 ] as const;
 
 export const PHYSICAL_QR_STATUSES: readonly PhysicalQrStatus[] = [
@@ -149,17 +141,9 @@ export const PRODUCT_INSTANCE_STATUSES: readonly ProductInstanceStatus[] = [
   'consumed',
 ] as const;
 
-export const CHORE_FREQUENCIES: readonly ChoreFrequency[] = [
-  'daily',
-  'weekly',
-  'once',
-] as const;
 
-export const CHORE_COMPLETION_STATUSES: readonly ChoreCompletionStatus[] = [
-  'pending_validation',
-  'validated',
-  'rejected',
-] as const;
+
+
 
 export const PROMO_SOURCES: readonly PromoSource[] = [
   'local',
@@ -221,7 +205,7 @@ export const TRANSACTION_STATUSES: readonly TransactionStatus[] = [
 
 export const SUBSCRIBER_TYPES: readonly SubscriberType[] = [
   'merchant',
-  'professional',
+  'provider',
 ] as const;
 
 export const FLASH_SALE_STATUSES: readonly FlashSaleStatus[] = [
@@ -246,7 +230,7 @@ export const COUPON_STATUSES: readonly CouponStatus[] = [
 
 export const CHAT_SENDER_TYPES: readonly ChatSenderType[] = [
   'homeowner',
-  'professional',
+  'provider',
 ] as const;
 
 export const CHAT_MESSAGE_TYPES: readonly ChatMessageType[] = [
@@ -262,7 +246,6 @@ export const NOTIFICATION_TYPES: readonly NotificationType[] = [
   'service_request_update',
   'service_chat',
   'promo_match',
-  'chore_reminder',
   'stock_alert',
   'membership_invite',
   'system',
@@ -277,7 +260,7 @@ export const NOTIFICATION_TYPES: readonly NotificationType[] = [
  *
  * V1 — Foundational smart-home modules.
  * V2 — Extended daily-life & utility modules.
- * V3 — Marketplace & professional-service modules.
+ * V3 — Marketplace & provider-service modules.
  */
 export const QR_MODULE_TYPES = {
   V1: [
@@ -436,7 +419,7 @@ export const QR_MODULE_LABELS: Record<QrModuleType, string> = {
 };
 
 // ---------------------------------------------------------------------------
-//  Merchant / Professional Categories (French)
+//  Merchant / Provider Categories (French)
 // ---------------------------------------------------------------------------
 
 /**
@@ -569,5 +552,5 @@ export interface QrScanPayload {
   /** Version group (1, 2, or 3). */
   version: 1 | 2 | 3;
   /** Home id the QR code belongs to (may be null for V3). */
-  homeId: string | null;
+  propertyId: string | null;
 }

@@ -9,19 +9,19 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const {
       productId,
-      homeId,
+      propertyId,
       purchaseDate,
       expiryDate,
     } = body as {
       productId: string;
-      homeId: string;
+      propertyId: string;
       purchaseDate?: string;
       expiryDate?: string;
     };
 
-    if (!productId || !homeId) {
+    if (!productId || !propertyId) {
       return NextResponse.json(
-        { error: 'Les champs productId et homeId sont requis' },
+        { error: 'Les champs productId et propertyId sont requis' },
         { status: 400 }
       );
     }
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
     const instance = await db.productInstance.create({
       data: {
         productId,
-        homeId,
+        propertyId,
         purchaseDate: purchaseDate ? new Date(purchaseDate) : null,
         expiryDate: expiryDate ? new Date(expiryDate) : null,
       },

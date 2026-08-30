@@ -15,7 +15,7 @@ export async function GET() {
 
     const userId = (session.user as { id: string }).id;
 
-    const homes = await db.home.findMany({
+    const homes = await db.property.findMany({
       where: {
         OR: [
           { ownerId: userId },
@@ -25,16 +25,16 @@ export async function GET() {
       select: { id: true },
     });
 
-    const homeIds = homes.map((h) => h.id);
+    const propertyIds = homes.map((h) => h.id);
 
-    if (homeIds.length === 0) {
+    if (propertyIds.length === 0) {
       return NextResponse.json({ automations: [] });
     }
 
-    const automations = await db.homeAutomation.findMany({
-      where: { homeId: { in: homeIds } },
+    const automations = await db.propertyAutomation.findMany({
+      where: { propertyId: { in: propertyIds } },
       include: {
-        home: { select: { id: true, name: true } },
+        property: { select: { id: true, name: true } },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -56,17 +56,17 @@ export async function POST(request: NextRequest) {
 
     const userId = (session.user as { id: string }).id;
     const body = await request.json();
-    const { homeId, name, provider, baseUrl, apiToken } = body as {
-      homeId: string;
+    const { propertyId, name, provider, baseUrl, apiToken } = body as {
+      propertyId: string;
       name: string;
       provider: string;
       baseUrl: string;
       apiToken?: string;
     };
 
-    if (!homeId || !name || !provider || !baseUrl) {
+    if (!propertyId || !name || !provider || !baseUrl) {
       return NextResponse.json(
-        { error: 'Les champs homeId, name, provider et baseUrl sont requis' },
+        { error: 'Les champs propertyId, name, provider et baseUrl sont requis' },
         { status: 400 }
       );
     }
@@ -79,9 +79,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify user has access to this home
-    const home = await db.home.findFirst({
+    const home = await db.property.findFirst({
       where: {
-        id: homeId,
+        id: propertyId,
         OR: [
           { ownerId: userId },
           { members: { some: { userId } } },
@@ -96,16 +96,16 @@ export async function POST(request: NextRequest) {
     // Clean baseUrl
     const cleanUrl = baseUrl.replace(/\/+$/, '');
 
-    const automation = await db.homeAutomation.create({
+    const automation = await db.propertyAutomation.create({
       data: {
-        homeId,
+        propertyId,
         name,
         provider,
         baseUrl: cleanUrl,
         apiToken: apiToken || null,
       },
       include: {
-        home: { select: { id: true, name: true } },
+        property: { select: { id: true, name: true } },
       },
     });
 

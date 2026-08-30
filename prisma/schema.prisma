@@ -1,7 +1,14 @@
 // ==============================================================
-// QR DOMOTIK - PRISMA SCHEMA (SQLite - Dev Local)
-// Miroir du schéma Supabase PostgreSQL pour le développement local
-// Version: 1.0.0
+// CONCIERGERIE HUB - PRISMA SCHEMA (SQLite - Dev Local)
+// SaaS B2B pour hôtes Airbnb & gestionnaires de biens
+// Version: 2.0.0 (ex QR Domotik — refonte B2B)
+//
+// NOTES :
+// - SQLite ne supporte pas les enums Prisma natifs : les "enums"
+//   sont des champs String dont les valeurs autorisées sont
+//   documentées en commentaire (miroir PostgreSQL/Supabase à venir).
+// - Catalogue de modules QR B2B :
+//   'WIFI' | 'GUIDEBOOK' | 'UPSELLING' | 'CHECKOUT' | 'COMPLAINT' | 'PROVIDER_DIRECTORY'
 // ==============================================================
 
 generator client {
@@ -21,33 +28,30 @@ model User {
   email     String   @unique
   fullName     String?  @map("full_name")
   passwordHash String?  @map("password_hash")
-  role         String   @default("user")
-  selectedPlan      String?   @map("selected_plan")      // 'famille', 'airbnb_solo', 'airbnb_pro' — choisi avant paiement
+  role         String   @default("user")             // 'user' | 'superadmin'
+  selectedPlan      String?   @map("selected_plan")      // 'airbnb_solo' | 'airbnb_pro' | 'agency' | 'free' — choisi avant paiement
   onboardingCompleted Boolean @default(false) @map("onboarding_completed")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
   profile                       Profile?
-  ownedHomes                    Home[]
-  homeMemberships               HomeMember[]
+  ownedProperties               Property[]
+  propertyMemberships           PropertyMember[]
   createdBatches                QrBatch[]
   activatedPhysicalQrs          PhysicalQrCode[] @relation("UserActivatedQrs")
-  claimedPlaqueQrs            PhysicalQrCode[] @relation("PlaqueClaimedByUser")
+  claimedPlaqueQrs              PhysicalQrCode[] @relation("PlaqueClaimedByUser")
   activityLogEntries            ActivityLog[] @relation("ActivityLogUser")
-  assignedChores                Chore[] @relation("ChoreAssignedTo")
-  childChoreCompletions         ChoreCompletion[] @relation("ChoreCompletionChild")
-  validatedChoreCompletions     ChoreCompletion[] @relation("ChoreCompletionValidator")
   pushSubscriptions             PushSubscription[]
   merchantProfile               Merchant?
-  professionalProfile           Professional?
+  providerProfile               Provider?
   promoRedemptions              PromoRedemption[]
   reviews                       Review[]
   activationLogs                ActivationLog[] @relation("ActivationLogUser")
-  coupons                        Coupon[]             @relation("UserCoupons")
-  couponScans                    CouponScan[]          @relation("CouponScanUser")
-  chatMessages                   ChatMessage[]         @relation("ChatMessageSender")
-  notifications                  Notification[]        @relation("UserNotifications")
+  coupons                       Coupon[]             @relation("UserCoupons")
+  couponScans                   CouponScan[]          @relation("CouponScanUser")
+  chatMessages                  ChatMessage[]         @relation("ChatMessageSender")
+  notifications                 Notification[]        @relation("UserNotifications")
 
   @@map("users")
 }
@@ -70,59 +74,63 @@ model Profile {
 }
 
 // ==============================================================
-// TABLE 3: homes
+// TABLE 3: properties (ex "homes" — un bien géré par un hôte)
 // ==============================================================
-model Home {
+model Property {
   id        String   @id @default(cuid())
   ownerId   String   @map("owner_id")
-  name      String
-  address   String?
-  location  String?  // JSON string: {"lat": 48.8566, "lng": 2.3522} for SQLite (PostGIS GEOGRAPHY in Supabase)
+  name      String                                   // Nom de l'annonce (ex: "Loft Canal Saint-Martin")
+  propertyType String  @default("AIRBNB") @map("property_type") // 'AIRBNB' | 'BOOKING' | 'GITE' | 'CHAMBRE_HOTE'
+  address   String?                                  // Adresse précise → géolocalisation des prestataires
+  location  String?  // JSON string: {"lat": 48.8566, "lng": 2.3522} (SQLite; PostGIS GEOGRAPHY en Postgres)
+  latitude  Float?                                   // Dénormalisé pour requêtes géo rapides
+  longitude Float?
   isActive  Boolean  @default(true) @map("is_active")
-  pinHash   String?  @map("pin_hash")          // bcrypt hash du code PIN à 4 chiffres (mode Famille/Hôte)
+  pinHash   String?  @map("pin_hash")                 // bcrypt du PIN 4 chiffres — "Mode Hôte" (protège l'accès tablette/QR)
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  owner            User             @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  members          HomeMember[]
-  rooms            Room[]
-  qrCodes          QrCode[]
-  activityLogs     ActivityLog[]
-  products         Product[]
-  productInstances ProductInstance[]
-  chores           Chore[]
-  merchant         Merchant?        @relation("HomeMerchant")
-  serviceRequests  ServiceRequest[] @relation("HomeServiceRequests")
-  scanLogs        ScanLog[]
-  webhooks         Webhook[]
-  homeAutomations  HomeAutomation[]
-  voiceMessages    VoiceMessage[]
-  plaqueQrCodes    PhysicalQrCode[] @relation("PlaqueQrHome")
+  owner             User             @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  members           PropertyMember[]
+  rooms             Room[]
+  qrCodes           QrCode[]
+  activityLogs      ActivityLog[]
+  products          Product[]
+  productInstances  ProductInstance[]
+  merchant          Merchant?        @relation("PropertyMerchant")
+  serviceRequests   ServiceRequest[] @relation("PropertyServiceRequests")
+  scanLogs          ScanLog[]
+  webhooks          Webhook[]
+  propertyAutomations PropertyAutomation[]
+  voiceMessages     VoiceMessage[]
+  plaqueQrCodes     PhysicalQrCode[] @relation("PlaqueQrProperty")
 
-  @@map("homes")
+  @@index([ownerId])
+  @@index([propertyType])
+  @@map("properties")
 }
 
 // ==============================================================
-// TABLE 4: home_members
+// TABLE 4: property_members (équipe d'un bien)
+// Rôles B2B : 'owner' | 'cohost' | 'staff' | 'cleaner' | 'member'
 // ==============================================================
-model HomeMember {
+model PropertyMember {
   id       String   @id @default(cuid())
-  homeId   String   @map("home_id")
+  propertyId String @map("property_id")
   userId   String   @map("user_id")
-  role     String   @default("member")
+  role     String   @default("member")               // 'owner' | 'cohost' | 'staff' | 'cleaner' | 'member'
   nickname String?
-  points   Int      @default(0)
   joinedAt DateTime @default(now()) @map("joined_at")
 
-  home Home @relation(fields: [homeId], references: [id], onDelete: Cascade)
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([homeId, userId])
-  @@index([homeId])
+  @@unique([propertyId, userId])
+  @@index([propertyId])
   @@index([userId])
   @@index([role])
-  @@map("home_members")
+  @@map("property_members")
 }
 
 // ==============================================================
@@ -130,24 +138,27 @@ model HomeMember {
 // ==============================================================
 model Room {
   id        String   @id @default(cuid())
-  homeId    String   @map("home_id")
+  propertyId String  @map("property_id")
   name      String
   icon      String?
   createdAt DateTime @default(now()) @map("created_at")
 
-  home    Home     @relation(fields: [homeId], references: [id], onDelete: Cascade)
-  qrCodes QrCode[]
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  qrCodes  QrCode[]
 
-  @@index([homeId])
+  @@index([propertyId])
   @@map("rooms")
 }
 
 // ==============================================================
 // TABLE 6: qr_codes (Dynamiques - V1)
+// `type` : catalogue B2B :
+//   'WIFI' | 'GUIDEBOOK' | 'UPSELLING' | 'CHECKOUT' | 'COMPLAINT' | 'PROVIDER_DIRECTORY'
+//   (legacy V1/V2 conservé en base pour migration douce : 'wifi', 'note', 'doorbell', 'guestbook', …)
 // ==============================================================
 model QrCode {
   id         String   @id @default(cuid())
-  homeId     String   @map("home_id")
+  propertyId String   @map("property_id")
   roomId     String?  @map("room_id")
   name       String
   type       String
@@ -159,7 +170,7 @@ model QrCode {
   updatedAt  DateTime @updatedAt @map("updated_at")
 
   // Relations
-  home              Home              @relation(fields: [homeId], references: [id], onDelete: Cascade)
+  property          Property          @relation(fields: [propertyId], references: [id], onDelete: Cascade)
   room              Room?             @relation(fields: [roomId], references: [id], onDelete: SetNull)
   content           QrContent?
   physicalQrCodes   PhysicalQrCode[]
@@ -167,9 +178,9 @@ model QrCode {
   activityLogs      ActivityLog[]
   serviceRequests   ServiceRequest[]
   emergencyQrCode   EmergencyQrCode?
-  scanLogs         ScanLog[]
+  scanLogs          ScanLog[]
 
-  @@index([homeId])
+  @@index([propertyId])
   @@index([roomId])
   @@index([type])
   @@index([isActive])
@@ -200,8 +211,8 @@ model QrBatch {
   createdBy    String   @map("created_by")
   createdAt    DateTime @default(now()) @map("created_at")
 
-  user             User             @relation(fields: [createdBy], references: [id], onDelete: Cascade)
-  physicalQrCodes  PhysicalQrCode[]
+  user            User             @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  physicalQrCodes PhysicalQrCode[]
 
   @@index([createdBy])
   @@map("qr_batches")
@@ -214,26 +225,27 @@ model PhysicalQrCode {
   id                 String    @id @default(cuid())
   batchId            String    @map("batch_id")
   activationCode     String    @unique @map("activation_code")
-  status             String    @default("inactive")
+  status             String    @default("inactive") // 'inactive' | 'active' | 'lost' | 'cancelled'
+  createdAt          DateTime  @default(now()) @map("created_at")
   activatedByUserId  String?   @map("activated_by_user_id")
   activatedAt        DateTime? @map("activated_at")
   dynamicQrCodeId    String?   @map("dynamic_qr_code_id")
   designConfig       String    @default("{}") @map("design_config")
   // ── Scan-to-Onboard & QR Hub ──
-  setupToken         String?   @unique @map("setup_token")              // token unique pour /setup/[token] (ex: "SETUP-7K9M2X")
-  isClaimed          Boolean   @default(false) @map("is_claimed")       // true = plaque liée à un compte
-  hubSlug            String?   @unique @map("hub_slug")              // slug public pour /hub/[slug] (ex: "maison-dupont-7kx")
-  claimedByUserId    String?   @map("claimed_by_user_id")        // utilisateur qui a claimé
-  claimedAt          DateTime? @map("claimed_at")              // date du claim
-  homeId             String?   @map("home_id")                 // maison liée à cette plaque
+  setupToken         String?   @unique @map("setup_token")            // token unique pour /setup/[token] (ex: "SETUP-7K9M2X")
+  isClaimed          Boolean   @default(false) @map("is_claimed")     // true = plaque liée à un compte
+  hubSlug            String?   @unique @map("hub_slug")               // slug public pour /hub/[slug] (ex: "loft-saint-martin-7kx")
+  claimedByUserId    String?   @map("claimed_by_user_id")             // utilisateur qui a claimé
+  claimedAt          DateTime? @map("claimed_at")
+  propertyId         String?   @map("property_id")                    // bien lié à cette plaque
 
   // Relations
-  batch         QrBatch    @relation(fields: [batchId], references: [id], onDelete: Cascade)
-  activatedBy   User?      @relation("UserActivatedQrs", fields: [activatedByUserId], references: [id], onDelete: SetNull)
+  batch          QrBatch    @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  activatedBy    User?      @relation("UserActivatedQrs", fields: [activatedByUserId], references: [id], onDelete: SetNull)
   claimedBy      User?      @relation("PlaqueClaimedByUser", fields: [claimedByUserId], references: [id], onDelete: SetNull)
-  dynamicQrCode QrCode?    @relation(fields: [dynamicQrCodeId], references: [id], onDelete: SetNull)
+  dynamicQrCode  QrCode?    @relation(fields: [dynamicQrCodeId], references: [id], onDelete: SetNull)
   activationLogs ActivationLog[]
-  home          Home?      @relation("PlaqueQrHome", fields: [homeId], references: [id], onDelete: SetNull)
+  property       Property?  @relation("PlaqueQrProperty", fields: [propertyId], references: [id], onDelete: SetNull)
 
   @@index([batchId])
   @@index([status])
@@ -241,7 +253,7 @@ model PhysicalQrCode {
   @@index([dynamicQrCodeId])
   @@index([isClaimed])
   @@index([claimedByUserId])
-  @@index([homeId])
+  @@index([propertyId])
   @@index([setupToken])
   @@map("physical_qr_codes")
 }
@@ -253,7 +265,7 @@ model ActivationLog {
   id                String   @id @default(cuid())
   physicalQrCodeId  String   @map("physical_qr_code_id")
   userId            String?  @map("user_id")
-  action            String
+  action            String   // 'activated' | 'deactivated' | 'marked_lost'
   createdAt         DateTime @default(now()) @map("created_at")
 
   physicalQrCode PhysicalQrCode @relation(fields: [physicalQrCodeId], references: [id], onDelete: Cascade)
@@ -266,7 +278,7 @@ model ActivationLog {
 }
 
 // ==============================================================
-// TABLE 11: guestbook_entries (Module V1)
+// TABLE 11: guestbook_entries (Livre d'or — utile aux hôtes)
 // ==============================================================
 model GuestbookEntry {
   id        String   @id @default(cuid())
@@ -283,22 +295,22 @@ model GuestbookEntry {
 }
 
 // ==============================================================
-// TABLE 12: activity_logs (Module V2)
+// TABLE 12: activity_logs
 // ==============================================================
 model ActivityLog {
   id          String   @id @default(cuid())
-  homeId      String   @map("home_id")
+  propertyId  String   @map("property_id")
   qrCodeId    String?  @map("qr_code_id")
   userId      String?  @map("user_id")
   actionType  String   @map("action_type")
   detailsJson String   @default("{}") @map("details_json")
   createdAt   DateTime @default(now()) @map("created_at")
 
-  home   Home    @relation(fields: [homeId], references: [id], onDelete: Cascade)
-  qrCode QrCode? @relation(fields: [qrCodeId], references: [id], onDelete: SetNull)
-  user   User?   @relation("ActivityLogUser", fields: [userId], references: [id], onDelete: SetNull)
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  qrCode   QrCode?  @relation(fields: [qrCodeId], references: [id], onDelete: SetNull)
+  user     User?    @relation("ActivityLogUser", fields: [userId], references: [id], onDelete: SetNull)
 
-  @@index([homeId])
+  @@index([propertyId])
   @@index([qrCodeId])
   @@index([userId])
   @@index([actionType])
@@ -307,11 +319,12 @@ model ActivityLog {
 }
 
 // ==============================================================
-// TABLE 13: products (Module V2 - Stock)
+// TABLE 13: products (Stock — consommables & linge du bien)
+// isOnShoppingList = liste de réapprovisionnement (ménage/consommables)
 // ==============================================================
 model Product {
   id                String   @id @default(cuid())
-  homeId            String   @map("home_id")
+  propertyId        String   @map("property_id")
   name              String
   category          String?
   minStockThreshold Int      @default(1) @map("min_stock_threshold")
@@ -320,10 +333,10 @@ model Product {
   createdAt         DateTime @default(now()) @map("created_at")
   updatedAt         DateTime @updatedAt @map("updated_at")
 
-  home             Home              @relation(fields: [homeId], references: [id], onDelete: Cascade)
-  productInstances  ProductInstance[]
+  property         Property          @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  productInstances ProductInstance[]
 
-  @@index([homeId])
+  @@index([propertyId])
   @@index([category])
   @@index([isOnShoppingList])
   @@map("products")
@@ -335,74 +348,24 @@ model Product {
 model ProductInstance {
   id           String    @id @default(cuid())
   productId    String    @map("product_id")
-  homeId       String    @map("home_id")
+  propertyId   String    @map("property_id")
   purchaseDate DateTime? @map("purchase_date")
   expiryDate   DateTime? @map("expiry_date")
   status       String    @default("fresh")
   createdAt    DateTime  @default(now()) @map("created_at")
 
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  home    Home    @relation(fields: [homeId], references: [id], onDelete: Cascade)
+  product  Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
 
   @@index([productId])
-  @@index([homeId])
+  @@index([propertyId])
   @@index([status])
   @@index([expiryDate])
   @@map("product_instances")
 }
 
 // ==============================================================
-// TABLE 15: chores (Module V2)
-// ==============================================================
-model Chore {
-  id               String   @id @default(cuid())
-  homeId           String   @map("home_id")
-  title            String
-  description      String?
-  pointsValue      Int      @default(10) @map("points_value")
-  frequency        String   @default("once")
-  assignedToUserId String?  @map("assigned_to_user_id")
-  isActive         Boolean  @default(true) @map("is_active")
-  createdAt        DateTime @default(now()) @map("created_at")
-
-  home        Home               @relation(fields: [homeId], references: [id], onDelete: Cascade)
-  assignedTo  User?              @relation("ChoreAssignedTo", fields: [assignedToUserId], references: [id], onDelete: SetNull)
-  completions ChoreCompletion[]
-
-  @@index([homeId])
-  @@index([assignedToUserId])
-  @@index([frequency])
-  @@index([isActive])
-  @@map("chores")
-}
-
-// ==============================================================
-// TABLE 16: chore_completions
-// ==============================================================
-model ChoreCompletion {
-  id                String    @id @default(cuid())
-  choreId           String    @map("chore_id")
-  childUserId       String    @map("child_user_id")
-  validatedByUserId String?   @map("validated_by_user_id")
-  pointsEarned      Int       @default(0) @map("points_earned")
-  completedAt       DateTime  @default(now()) @map("completed_at")
-  validatedAt       DateTime? @map("validated_at")
-  status            String    @default("pending_validation")
-
-  chore    Chore  @relation(fields: [choreId], references: [id], onDelete: Cascade)
-  child    User   @relation("ChoreCompletionChild", fields: [childUserId], references: [id], onDelete: Cascade)
-  validator User?  @relation("ChoreCompletionValidator", fields: [validatedByUserId], references: [id], onDelete: SetNull)
-
-  @@index([choreId])
-  @@index([childUserId])
-  @@index([validatedByUserId])
-  @@index([status])
-  @@index([completedAt])
-  @@map("chore_completions")
-}
-
-// ==============================================================
-// TABLE 17: push_subscriptions
+// TABLE 15: push_subscriptions
 // ==============================================================
 model PushSubscription {
   id        String   @id @default(cuid())
@@ -419,12 +382,12 @@ model PushSubscription {
 }
 
 // ==============================================================
-// TABLE 18: merchants (Module V3 - Marketplace)
+// TABLE 16: merchants (Marketplace)
 // ==============================================================
 model Merchant {
   id                       String    @id @default(cuid())
   userId                   String?   @unique @map("user_id")
-  homeId                   String?   @unique @map("home_id")
+  propertyId               String?   @unique @map("property_id")
   name                     String
   category                 String?
   description              String?
@@ -444,14 +407,14 @@ model Merchant {
   createdAt                DateTime  @default(now()) @map("created_at")
   updatedAt                DateTime  @updatedAt @map("updated_at")
 
-  user          User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
-  home          Home?          @relation("HomeMerchant", fields: [homeId], references: [id], onDelete: SetNull)
-  promos        Promo[]
-  subscriptions Subscription[] @relation("MerchantSubscriptions")
-  flashSales                     FlashSale[]
-  coupons                        Coupon[]
-  couponScans                    CouponScan[]
-  merchantPhotos                 MerchantPhoto[]
+  user           User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
+  property       Property?        @relation("PropertyMerchant", fields: [propertyId], references: [id], onDelete: SetNull)
+  promos         Promo[]
+  subscriptions  Subscription[]   @relation("MerchantSubscriptions")
+  flashSales     FlashSale[]
+  coupons        Coupon[]
+  couponScans    CouponScan[]
+  merchantPhotos MerchantPhoto[]
 
   @@index([category])
   @@index([subscriptionTier])
@@ -461,7 +424,7 @@ model Merchant {
 }
 
 // ==============================================================
-// TABLE 19: promos
+// TABLE 17: promos (Marketplace)
 // ==============================================================
 model Promo {
   id                      String    @id @default(cuid())
@@ -485,8 +448,8 @@ model Promo {
 
   merchant    Merchant?          @relation(fields: [merchantId], references: [id], onDelete: SetNull)
   redemptions PromoRedemption[]
-  flashSales                     FlashSale[]
-  couponList                     Coupon[]              @relation("CouponPromo")
+  flashSales  FlashSale[]
+  couponList  Coupon[]           @relation("CouponPromo")
 
   @@index([merchantId])
   @@index([category])
@@ -498,7 +461,7 @@ model Promo {
 }
 
 // ==============================================================
-// TABLE 20: promo_redemptions
+// TABLE 18: promo_redemptions (Marketplace)
 // ==============================================================
 model PromoRedemption {
   id               String   @id @default(cuid())
@@ -517,7 +480,7 @@ model PromoRedemption {
 }
 
 // ==============================================================
-// TABLE 21: scraping_jobs
+// TABLE 19: scraping_jobs (Marketplace)
 // ==============================================================
 model ScrapingJob {
   id              String    @id @default(cuid())
@@ -535,17 +498,23 @@ model ScrapingJob {
 }
 
 // ==============================================================
-// TABLE 22: professionals (Module V3)
+// TABLE 20: providers (Prestataires de la conciergerie)
+// audience : 'OWNER_SERVICE' (ménage, plomberie → services à l'hôte)
+//            'GUEST_EXPERIENCE' (petit-déj, sommelier → expérience invité)
+// Géolocalisation : latitude/longitude + serviceRadiusKm (rayon d'intervention)
 // ==============================================================
-model Professional {
+model Provider {
   id                       String    @id @default(cuid())
   userId                   String    @unique @map("user_id")
   businessName             String    @map("business_name")
   category                 String
   subcategory              String?   @map("subcategory")
   description              String?
-  location                 String?
+  location                 String?                                  // Adresse/ville affichée
+  latitude                 Float?                                   // Géoloc précise (matching avec les biens)
+  longitude                Float?
   serviceRadiusKm          Int       @default(10) @map("service_radius_km")
+  audience                 String    @default("OWNER_SERVICE")      // 'OWNER_SERVICE' | 'GUEST_EXPERIENCE'
   hourlyRate               Float?    @map("hourly_rate")
   isUrgentAvailable        Boolean   @default(false) @map("is_urgent_available")
   isVerified               Boolean   @default(false) @map("is_verified")
@@ -562,51 +531,55 @@ model Professional {
   createdAt                DateTime  @default(now()) @map("created_at")
   updatedAt                DateTime  @updatedAt @map("updated_at")
 
-  user              User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  services          Service[]
-  serviceRequests   ServiceRequest[] @relation("ProfessionalServiceRequests")
-  reviews           Review[]
-  subscriptions     Subscription[] @relation("ProfessionalSubscriptions")
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  services        Service[]
+  serviceRequests ServiceRequest[] @relation("ProviderServiceRequests")
+  reviews         Review[]
+  subscriptions   Subscription[]   @relation("ProviderSubscriptions")
 
   @@index([category])
+  @@index([audience])
+  @@index([latitude])
+  @@index([longitude])
   @@index([subcategory])
   @@index([subscriptionStatus])
   @@index([isVerified])
   @@index([isActive])
   @@index([isUrgentAvailable])
-  @@map("professionals")
+  @@map("providers")
 }
 
 // ==============================================================
-// TABLE 23: services
+// TABLE 21: services (offres d'un prestataire)
 // ==============================================================
 model Service {
   id              String  @id @default(cuid())
-  professionalId  String  @map("professional_id")
+  providerId      String  @map("provider_id")
   name            String
   description     String?
   basePrice       Float   @default(0) @map("base_price")
-  priceUnit       String  @default("flat_rate") @map("price_unit")
+  priceUnit       String  @default("flat_rate") @map("price_unit") // 'hour' | 'flat_rate' | 'estimate'
   durationMinutes Int?    @map("duration_minutes")
   isUrgent        Boolean @default(false) @map("is_urgent")
   isActive        Boolean @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
 
-  professional    Professional      @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  provider        Provider         @relation(fields: [providerId], references: [id], onDelete: Cascade)
   serviceRequests ServiceRequest[]
 
-  @@index([professionalId])
+  @@index([providerId])
   @@index([isActive])
   @@index([isUrgent])
   @@map("services")
 }
 
 // ==============================================================
-// TABLE 24: service_requests
+// TABLE 22: service_requests (demandes de service)
 // ==============================================================
 model ServiceRequest {
   id               String    @id @default(cuid())
-  homeId           String    @map("home_id")
-  professionalId   String    @map("professional_id")
+  propertyId       String    @map("property_id")
+  providerId       String    @map("provider_id")
   serviceId        String?   @map("service_id")
   qrCodeId         String?   @map("qr_code_id")
   status           String    @default("pending")
@@ -620,15 +593,15 @@ model ServiceRequest {
   paidAt           DateTime? @map("paid_at")
   createdAt        DateTime  @default(now()) @map("created_at")
 
-  home         Home          @relation("HomeServiceRequests", fields: [homeId], references: [id], onDelete: Cascade)
-  professional Professional   @relation("ProfessionalServiceRequests", fields: [professionalId], references: [id], onDelete: Cascade)
-  service      Service?      @relation(fields: [serviceId], references: [id], onDelete: SetNull)
-  qrCode       QrCode?       @relation(fields: [qrCodeId], references: [id], onDelete: SetNull)
-  reviews      Review[]
-  chatMessages                   ChatMessage[]
+  property  Property       @relation("PropertyServiceRequests", fields: [propertyId], references: [id], onDelete: Cascade)
+  provider  Provider       @relation("ProviderServiceRequests", fields: [providerId], references: [id], onDelete: Cascade)
+  service   Service?       @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  qrCode    QrCode?        @relation(fields: [qrCodeId], references: [id], onDelete: SetNull)
+  reviews   Review[]
+  chatMessages ChatMessage[]
 
-  @@index([homeId])
-  @@index([professionalId])
+  @@index([propertyId])
+  @@index([providerId])
   @@index([serviceId])
   @@index([qrCodeId])
   @@index([status])
@@ -638,30 +611,30 @@ model ServiceRequest {
 }
 
 // ==============================================================
-// TABLE 25: reviews
+// TABLE 23: reviews
 // ==============================================================
 model Review {
   id                String   @id @default(cuid())
   serviceRequestId  String   @map("service_request_id")
-  professionalId    String   @map("professional_id")
+  providerId        String   @map("provider_id")
   userId            String   @map("user_id")
   rating            Int
   comment           String?
   createdAt         DateTime @default(now()) @map("created_at")
 
   serviceRequest ServiceRequest @relation(fields: [serviceRequestId], references: [id], onDelete: Cascade)
-  professional   Professional   @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  provider       Provider       @relation(fields: [providerId], references: [id], onDelete: Cascade)
   user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([serviceRequestId])
-  @@index([professionalId])
+  @@index([providerId])
   @@index([userId])
   @@index([rating])
   @@map("reviews")
 }
 
 // ==============================================================
-// TABLE 26: emergency_qr_codes
+// TABLE 24: emergency_qr_codes
 // ==============================================================
 model EmergencyQrCode {
   id                String  @id @default(cuid())
@@ -678,25 +651,26 @@ model EmergencyQrCode {
 }
 
 // ==============================================================
-// TABLE 27: subscriptions (Monétisation)
+// TABLE 25: subscriptions (Monétisation)
+// plan : 'airbnb_solo' | 'airbnb_pro' | 'agency' | 'free' | 'pro_merchant' | 'business_merchant'
 // ==============================================================
 model Subscription {
   id                    String    @id @default(cuid())
   subscriberId          String    @map("subscriber_id")
-  subscriberType        String    @map("subscriber_type") // 'user', 'merchant', 'professional'
-  plan                  String                                  // 'famille', 'airbnb_solo', 'airbnb_pro', 'free', 'pro_merchant', 'business_merchant'
+  subscriberType        String    @map("subscriber_type") // 'user' | 'merchant' | 'provider'
+  plan                  String
   amount                Float
   currency              String    @default("EUR")
-  billingCycle          String    @default("annual") @map("billing_cycle") // 'monthly', 'annual'
-  maxHomes              Int       @default(1) @map("max_homes")        // nombre de logements inclus (airbnb_pro = 3)
+  billingCycle          String    @default("annual") @map("billing_cycle") // 'monthly' | 'annual'
+  maxProperties         Int       @default(1) @map("max_properties")      // nombre de biens inclus (airbnb_pro = 3)
   stripeSubscriptionId  String?   @map("stripe_subscription_id")
-  status                String    @default("active")                  // 'active', 'past_due', 'cancelled', 'trialing'
+  status                String    @default("active")                      // 'active' | 'past_due' | 'cancelled' | 'trialing'
   currentPeriodStart    DateTime? @map("current_period_start")
   currentPeriodEnd      DateTime? @map("current_period_end")
   createdAt             DateTime  @default(now()) @map("created_at")
 
-  merchant     Merchant?     @relation("MerchantSubscriptions", fields: [subscriberId], references: [id], onDelete: Cascade)
-  professional Professional? @relation("ProfessionalSubscriptions", fields: [subscriberId], references: [id], onDelete: Cascade)
+  merchant Merchant? @relation("MerchantSubscriptions", fields: [subscriberId], references: [id], onDelete: Cascade)
+  provider Provider? @relation("ProviderSubscriptions", fields: [subscriberId], references: [id], onDelete: Cascade)
 
   @@index([subscriberId])
   @@index([subscriberType])
@@ -706,7 +680,7 @@ model Subscription {
 }
 
 // ==============================================================
-// TABLE 28: transactions (Monétisation)
+// TABLE 26: transactions (Monétisation)
 // ==============================================================
 model Transaction {
   id              String   @id @default(cuid())
@@ -720,8 +694,8 @@ model Transaction {
   referenceId     String?  @map("reference_id")
   createdAt       DateTime @default(now()) @map("created_at")
 
-  flashSales                     FlashSale[]           @relation("FlashSaleTransaction")
-  couponScans                    CouponScan[]          @relation("CouponScanTransaction")
+  flashSales  FlashSale[]  @relation("FlashSaleTransaction")
+  couponScans CouponScan[] @relation("CouponScanTransaction")
 
   @@index([type])
   @@index([payerId])
@@ -733,7 +707,7 @@ model Transaction {
 }
 
 // ==============================================================
-// TABLE 29: flash_sales (V3 - Ventes Flash)
+// TABLE 27: flash_sales (Marketplace)
 // ==============================================================
 model FlashSale {
   id                    String    @id @default(cuid())
@@ -749,17 +723,17 @@ model FlashSale {
   endsAt                DateTime  @map("ends_at")
   maxRedemptions        Int?      @map("max_redemptions")
   currentRedemptions    Int       @default(0) @map("current_redemptions")
-  status                String    @default("scheduled") // scheduled, active, expired, cancelled
+  status                String    @default("scheduled") // 'scheduled' | 'active' | 'expired' | 'cancelled'
   costEuros             Float     @default(0.5) @map("cost_euros")
   transactionId         String?   @map("transaction_id")
   pushSent              Boolean   @default(false) @map("push_sent")
   createdAt             DateTime  @default(now()) @map("created_at")
   updatedAt             DateTime  @updatedAt @map("updated_at")
 
-  promo      Promo        @relation(fields: [promoId], references: [id], onDelete: Cascade)
-  merchant   Merchant     @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  promo       Promo        @relation(fields: [promoId], references: [id], onDelete: Cascade)
+  merchant    Merchant     @relation(fields: [merchantId], references: [id], onDelete: Cascade)
   transaction Transaction? @relation("FlashSaleTransaction", fields: [transactionId], references: [id], onDelete: SetNull)
-  coupons    Coupon[]
+  coupons     Coupon[]
 
   @@index([promoId])
   @@index([merchantId])
@@ -770,7 +744,7 @@ model FlashSale {
 }
 
 // ==============================================================
-// TABLE 30: coupons (V3 - Coupons numériques)
+// TABLE 28: coupons (Marketplace)
 // ==============================================================
 model Coupon {
   id              String    @id @default(cuid())
@@ -780,21 +754,21 @@ model Coupon {
   userId          String    @map("user_id")
   code            String    @unique
   qrCodeData      String    @map("qr_code_data")
-  discountType    String    @default("percentage") @map("discount_type") // percentage, fixed, bogof
+  discountType    String    @default("percentage") @map("discount_type") // 'percentage' | 'fixed' | 'bogof'
   discountValue   Float     @map("discount_value")
   maxUses         Int       @default(1) @map("max_uses")
   currentUses     Int       @default(0) @map("current_uses")
   validFrom       DateTime? @map("valid_from")
   validUntil      DateTime? @map("valid_until")
-  status          String    @default("active") // active, used, expired, cancelled
+  status          String    @default("active") // 'active' | 'used' | 'expired' | 'cancelled'
   commissionRate  Float     @default(5.0) @map("commission_rate")
   createdAt       DateTime  @default(now()) @map("created_at")
 
-  merchant    Merchant?    @relation(fields: [merchantId], references: [id], onDelete: Cascade)
-  promo       Promo?       @relation("CouponPromo", fields: [promoId], references: [id], onDelete: SetNull)
-  flashSale   FlashSale?   @relation(fields: [flashSaleId], references: [id], onDelete: SetNull)
-  user        User         @relation("UserCoupons", fields: [userId], references: [id], onDelete: Cascade)
-  scans       CouponScan[]
+  merchant  Merchant?    @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  promo     Promo?       @relation("CouponPromo", fields: [promoId], references: [id], onDelete: SetNull)
+  flashSale FlashSale?   @relation(fields: [flashSaleId], references: [id], onDelete: SetNull)
+  user      User         @relation("UserCoupons", fields: [userId], references: [id], onDelete: Cascade)
+  scans     CouponScan[]
 
   @@index([merchantId])
   @@index([userId])
@@ -806,7 +780,7 @@ model Coupon {
 }
 
 // ==============================================================
-// TABLE 31: coupon_scans (V3 - Validation coupons)
+// TABLE 29: coupon_scans (Marketplace)
 // ==============================================================
 model CouponScan {
   id                String   @id @default(cuid())
@@ -818,9 +792,9 @@ model CouponScan {
   notes             String?
   createdAt         DateTime @default(now()) @map("created_at")
 
-  coupon     Coupon      @relation(fields: [couponId], references: [id], onDelete: Cascade)
-  merchant  Merchant    @relation(fields: [merchantId], references: [id], onDelete: Cascade)
-  scannedBy  User?       @relation("CouponScanUser", fields: [scannedByUserId], references: [id], onDelete: SetNull)
+  coupon      Coupon       @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  merchant    Merchant     @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  scannedBy   User?        @relation("CouponScanUser", fields: [scannedByUserId], references: [id], onDelete: SetNull)
   transaction Transaction? @relation("CouponScanTransaction", fields: [transactionId], references: [id], onDelete: SetNull)
 
   @@index([couponId])
@@ -831,21 +805,22 @@ model CouponScan {
 }
 
 // ==============================================================
-// TABLE 32: chat_messages (V3 - Chat demandes de service)
+// TABLE 30: chat_messages (chat des demandes de service)
+// senderType : 'host' | 'provider'
 // ==============================================================
 model ChatMessage {
   id                String   @id @default(cuid())
   serviceRequestId  String   @map("service_request_id")
   senderId          String   @map("sender_id")
-  senderType        String   @map("sender_type") // homeowner, professional
+  senderType        String   @map("sender_type") // 'host' | 'provider'
   content           String
-  messageType       String   @default("text") @map("message_type") // text, image, document, system
+  messageType       String   @default("text") @map("message_type") // 'text' | 'image' | 'document' | 'system'
   attachmentUrl     String?  @map("attachment_url")
   isRead            Boolean  @default(false) @map("is_read")
   createdAt         DateTime @default(now()) @map("created_at")
 
   serviceRequest ServiceRequest @relation(fields: [serviceRequestId], references: [id], onDelete: Cascade)
-  sender         User          @relation("ChatMessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  sender         User           @relation("ChatMessageSender", fields: [senderId], references: [id], onDelete: Cascade)
 
   @@index([serviceRequestId])
   @@index([senderId])
@@ -855,7 +830,7 @@ model ChatMessage {
 }
 
 // ==============================================================
-// TABLE 33: notifications (V3 - Notifications)
+// TABLE 31: notifications
 // ==============================================================
 model Notification {
   id           String   @id @default(cuid())
@@ -878,7 +853,7 @@ model Notification {
 }
 
 // ==============================================================
-// TABLE 34: merchant_photos (V3 - Photos commerçant)
+// TABLE 32: merchant_photos (Marketplace)
 // ==============================================================
 model MerchantPhoto {
   id         String   @id @default(cuid())
@@ -896,90 +871,91 @@ model MerchantPhoto {
 }
 
 // ==============================================================
-// TABLE 35: scan_logs (V3 - Scan Analytics)
+// TABLE 33: scan_logs (Scan Analytics)
 // ==============================================================
 model ScanLog {
   id         String   @id @default(cuid())
   qrCodeId   String   @map("qr_code_id")
-  homeId     String   @map("home_id")
+  propertyId String   @map("property_id")
   visitorIp  String?  @map("visitor_ip")
   userAgent  String?  @map("user_agent")
   locale     String?  @default("fr")
   referrer   String?
   createdAt  DateTime @default(now()) @map("created_at")
 
-  qrCode QrCode @relation(fields: [qrCodeId], references: [id], onDelete: Cascade)
-  home   Home   @relation(fields: [homeId], references: [id], onDelete: Cascade)
+  qrCode   QrCode   @relation(fields: [qrCodeId], references: [id], onDelete: Cascade)
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
 
   @@index([qrCodeId])
-  @@index([homeId])
+  @@index([propertyId])
   @@index([createdAt])
   @@map("scan_logs")
 }
 
 // ==============================================================
-// TABLE 36: webhooks (V3 - Webhook Integration)
+// TABLE 34: webhooks (Intégrations)
 // ==============================================================
 model Webhook {
-  id          String   @id @default(cuid())
-  homeId      String   @map("home_id")
-  name        String
-  url         String
-  events      String   @default("[\"scan\",\"doorbell\",\"guestbook\"]")
-  secret      String?
-  isActive    Boolean  @default(true) @map("is_active")
+  id            String   @id @default(cuid())
+  propertyId    String   @map("property_id")
+  name          String
+  url           String
+  events        String   @default("[\"scan\",\"doorbell\",\"guestbook\"]")
+  secret        String?
+  isActive      Boolean  @default(true) @map("is_active")
   lastTriggerAt DateTime? @map("last_trigger_at")
-  successCount Int     @default(0) @map("success_count")
-  failCount   Int     @default(0) @map("fail_count")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  successCount  Int      @default(0) @map("success_count")
+  failCount     Int      @default(0) @map("fail_count")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
 
-  home Home @relation(fields: [homeId], references: [id], onDelete: Cascade)
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
 
-  @@index([homeId])
+  @@index([propertyId])
   @@index([isActive])
   @@map("webhooks")
 }
 
 // ==============================================================
-// TABLE 37: home_automations (V3 - Home Assistant / Jeedom)
+// TABLE 35: property_automations (Home Assistant / Jeedom)
 // ==============================================================
-model HomeAutomation {
+model PropertyAutomation {
   id            String   @id @default(cuid())
-  homeId        String   @map("home_id")
+  propertyId    String   @map("property_id")
   name          String
-  provider      String   @default("home_assistant") // home_assistant, jeedom
+  provider      String   @default("home_assistant") // home_assistant | jeedom
   baseUrl       String   @map("base_url")
   apiToken      String?  @map("api_token")
   isActive      Boolean  @default(true) @map("is_active")
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
-  home Home @relation(fields: [homeId], references: [id], onDelete: Cascade)
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
 
-  @@index([homeId])
+  @@index([propertyId])
   @@index([provider])
   @@index([isActive])
-  @@map("home_automations")
+  @@map("property_automations")
 }
 
 // ==============================================================
-// TABLE 38: voice_messages (Hub - Répondeur vocal)
+// TABLE 36: voice_messages (Hub — répondeur vocal)
+// senderType : 'guest' | 'host' | 'system'
 // ==============================================================
 model VoiceMessage {
   id          String   @id @default(cuid())
-  homeId      String   @map("home_id")
-  senderName  String   @map("sender_name")      // nom affiché (invité ou membre)
-  senderType  String   @default("guest") @map("sender_type") // 'guest', 'family', 'system'
-  audioUrl    String   @map("audio_url")       // URL Supabase Storage (ou local en dev)
-  durationSec Int      @default(0) @map("duration_sec")   // durée en secondes (max 30)
-  fileSizeKb Int      @default(0) @map("file_size_kb")   // taille du fichier audio
+  propertyId  String   @map("property_id")
+  senderName  String   @map("sender_name")       // nom affiché (invité ou membre de l'équipe)
+  senderType  String   @default("guest") @map("sender_type") // 'guest' | 'host' | 'system'
+  audioUrl    String   @map("audio_url")         // URL Supabase Storage (ou local en dev)
+  durationSec Int      @default(0) @map("duration_sec")  // durée en secondes (max 30)
+  fileSizeKb  Int      @default(0) @map("file_size_kb")  // taille du fichier audio
   isRead      Boolean  @default(false) @map("is_read")
   createdAt   DateTime @default(now()) @map("created_at")
 
-  home        Home     @relation(fields: [homeId], references: [id], onDelete: Cascade)
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
 
-  @@index([homeId])
+  @@index([propertyId])
   @@index([senderType])
   @@index([isRead])
   @@index([createdAt])

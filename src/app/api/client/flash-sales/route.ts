@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
       data: {
         promoId,
         merchantId,
-        title: title ?? null,
+        title: title || 'Vente flash',
         description: description ?? null,
         imageUrl: imageUrl ?? null,
         originalPrice: originalPrice ?? null,

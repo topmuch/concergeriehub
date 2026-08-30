@@ -32,16 +32,16 @@ export async function PUT(
     // Verify ownership
     const webhook = await db.webhook.findUnique({
       where: { id },
-      include: { home: true },
+      include: { property: true },
     });
 
     if (!webhook) {
       return NextResponse.json({ error: 'Webhook introuvable' }, { status: 404 });
     }
 
-    const home = await db.home.findFirst({
+    const home = await db.property.findFirst({
       where: {
-        id: webhook.homeId,
+        id: webhook.propertyId,
         OR: [
           { ownerId: userId },
           { members: { some: { userId } } },
@@ -69,7 +69,7 @@ export async function PUT(
         ...(newSecret !== undefined && { secret: newSecret }),
         ...(isActive !== undefined && { isActive }),
       },
-      include: { home: { select: { id: true, name: true } } },
+      include: { property: { select: { id: true, name: true } } },
     });
 
     return NextResponse.json(updated);
@@ -96,16 +96,16 @@ export async function DELETE(
     // Verify ownership
     const webhook = await db.webhook.findUnique({
       where: { id },
-      include: { home: true },
+      include: { property: true },
     });
 
     if (!webhook) {
       return NextResponse.json({ error: 'Webhook introuvable' }, { status: 404 });
     }
 
-    const home = await db.home.findFirst({
+    const home = await db.property.findFirst({
       where: {
-        id: webhook.homeId,
+        id: webhook.propertyId,
         OR: [
           { ownerId: userId },
           { members: { some: { userId } } },

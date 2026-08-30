@@ -4,7 +4,7 @@ import { createHmac } from 'crypto';
 interface WebhookPayload {
   event: string;
   timestamp: string;
-  homeId: string;
+  propertyId: string;
   data: Record<string, unknown>;
 }
 
@@ -17,13 +17,13 @@ interface WebhookPayload {
  * This is a fire-and-forget utility — errors are logged but not thrown.
  */
 export async function dispatchWebhooks(
-  homeId: string,
+  propertyId: string,
   event: string,
   data: Record<string, unknown>
 ): Promise<void> {
   try {
     const webhooks = await db.webhook.findMany({
-      where: { homeId, isActive: true },
+      where: { propertyId, isActive: true },
     });
 
     if (webhooks.length === 0) return;
@@ -31,7 +31,7 @@ export async function dispatchWebhooks(
     const payload: WebhookPayload = {
       event,
       timestamp: new Date().toISOString(),
-      homeId,
+      propertyId,
       data,
     };
 

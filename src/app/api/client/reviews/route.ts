@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 
-// Helper: recalculate professional rating
-async function recalcProfessionalRating(professionalId: string) {
-  const reviews = await db.review.findMany({ where: { professionalId } });
+// Helper: recalculate provider rating
+async function recalcProfessionalRating(providerId: string) {
+  const reviews = await db.review.findMany({ where: { providerId } });
   const totalReviews = reviews.length;
   const ratingAvg = totalReviews > 0 ? reviews.reduce((sum, r) => sum + r.rating, 0) / totalReviews : 0;
-  await db.professional.update({
-    where: { id: professionalId },
+  await db.provider.update({
+    where: { id: providerId },
     data: {
       ratingAvg: Math.round(ratingAvg * 10) / 10,
       totalReviews,
@@ -19,12 +19,12 @@ async function recalcProfessionalRating(professionalId: string) {
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const professionalId = searchParams.get('professionalId');
+    const providerId = searchParams.get('providerId');
     const serviceRequestId = searchParams.get('serviceRequestId');
     const userId = searchParams.get('userId');
 
     const where: Record<string, unknown> = {};
-    if (professionalId) where.professionalId = professionalId;
+    if (providerId) where.providerId = providerId;
     if (serviceRequestId) where.serviceRequestId = serviceRequestId;
     if (userId) where.userId = userId;
 
@@ -54,21 +54,21 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const {
       serviceRequestId,
-      professionalId,
+      providerId,
       userId,
       rating,
       comment,
     } = body as {
       serviceRequestId: string;
-      professionalId: string;
+      providerId: string;
       userId: string;
       rating: number;
       comment?: string;
     };
 
-    if (!serviceRequestId || !professionalId || !userId || rating === undefined) {
+    if (!serviceRequestId || !providerId || !userId || rating === undefined) {
       return NextResponse.json(
-        { error: 'Les champs serviceRequestId, professionalId, userId et rating sont requis' },
+        { error: 'Les champs serviceRequestId, providerId, userId et rating sont requis' },
         { status: 400 }
       );
     }
@@ -91,11 +91,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify professional exists
-    const professional = await db.professional.findUnique({
-      where: { id: professionalId },
+    // Verify provider exists
+    const provider = await db.provider.findUnique({
+      where: { id: providerId },
     });
-    if (!professional) {
+    if (!provider) {
       return NextResponse.json(
         { error: 'Professionnel introuvable' },
         { status: 404 }
@@ -105,7 +105,7 @@ export async function POST(request: NextRequest) {
     const review = await db.review.create({
       data: {
         serviceRequestId,
-        professionalId,
+        providerId,
         userId,
         rating,
         comment: comment ?? null,
@@ -117,8 +117,8 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Recalculate professional rating
-    await recalcProfessionalRating(professionalId);
+    // Recalculate provider rating
+    await recalcProfessionalRating(providerId);
 
     return NextResponse.json(review, { status: 201 });
   } catch (error) {

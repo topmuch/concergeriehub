@@ -149,7 +149,7 @@ function RulesView({ content }: { content: Record<string, unknown> }) {
 
   return (
     <motion.div variants={itemVariants} initial="hidden" animate="visible" className="space-y-3">
-      {content.title && (
+      {!!content.title && (
         <QRTCard>
           <p className="text-base font-bold text-black">{content.title as string}</p>
         </QRTCard>
@@ -315,13 +315,13 @@ function RecipeView({ content }: { content: Record<string, unknown> }) {
   return (
     <motion.div variants={itemVariants} initial="hidden" animate="visible" className="space-y-4">
       <QRTCard header={{ emoji: '\uD83C\uDF73', title }}>
-        {content.description && (
+        {!!content.description && (
           <p className="text-sm text-black/60 mb-3">{content.description as string}</p>
         )}
-        {content.prep_time && (
+        {!!content.prep_time && (
           <p className="text-xs text-black/40">\u23F1\uFE0F Pr\u00e9paration : {content.prep_time as string}</p>
         )}
-        {content.cook_time && (
+        {!!content.cook_time && (
           <p className="text-xs text-black/40">\uD83D\uDD25 Cuisson : {content.cook_time as string}</p>
         )}
       </QRTCard>
@@ -535,7 +535,7 @@ function VoicePlayer({ msg }: { msg: VoiceMsg }) {
 // ══════════════════════════════════════════════════════════════
 // Voice Recorder
 // ══════════════════════════════════════════════════════════════
-function VoiceRecorder({ homeId, onSent }: { homeId: string; onSent: () => void }) {
+function VoiceRecorder({ propertyId, onSent }: { propertyId: string; onSent: () => void }) {
   const [recording, setRecording] = useState(false);
   const [duration, setDuration] = useState(0);
   const [senderName, setSenderName] = useState('');
@@ -599,7 +599,7 @@ function VoiceRecorder({ homeId, onSent }: { homeId: string; onSent: () => void 
       formData.append('audio', blob, 'voice.webm');
       formData.append('senderName', senderName.trim() || 'Invit\u00e9');
       formData.append('durationSec', String(duration));
-      const res = await fetch(`/api/public/qr-voice/${encodeURIComponent(homeId)}`, { method: 'POST', body: formData });
+      const res = await fetch(`/api/public/qr-voice/${encodeURIComponent(propertyId)}`, { method: 'POST', body: formData });
       if (!res.ok) {
         const json = await res.json().catch(() => ({}));
         throw new Error((json as { error?: string }).error || 'Erreur');
@@ -817,7 +817,7 @@ export function ViewPageContent({ params }: { params: Promise<{ slug: string }> 
               <div className="flex items-center gap-2 text-sm font-semibold text-white/70">
                 <span>\uD83D\uDCAC</span> Messages vocaux
               </div>
-              <VoiceRecorder homeId={qrData.id} onSent={refreshVoice} />
+              <VoiceRecorder propertyId={qrData.id} onSent={refreshVoice} />
               {voiceMsgs.length > 0 && (
                 <div className="space-y-2 max-h-48 overflow-y-auto scrollbar-thin">
                   {voiceMsgs.map((vm) => <VoicePlayer key={vm.id} msg={vm} />)}

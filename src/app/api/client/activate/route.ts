@@ -7,11 +7,11 @@ import crypto from 'crypto';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { code, moduleType, name, homeId, roomId, content } = body as {
+    const { code, moduleType, name, propertyId, roomId, content } = body as {
       code: string;
       moduleType: string;
       name?: string;
-      homeId?: string;
+      propertyId?: string;
       roomId?: string;
       content?: Record<string, unknown>;
     };
@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
     // Resolve authenticated user
     const session = await getServerSession(authOptions);
     let userId: string | undefined;
-    let resolvedHomeId: string | undefined = homeId;
+    let resolvedHomeId: string | undefined = propertyId;
     let resolvedRoomId: string | undefined = roomId;
 
     if (session?.user?.id) {
@@ -34,15 +34,15 @@ export async function POST(request: NextRequest) {
 
       // Auto-resolve home if not provided
       if (!resolvedHomeId) {
-        const membership = await db.homeMember.findFirst({
+        const membership = await db.propertyMember.findFirst({
           where: { userId },
-          include: { home: true },
+          include: { property: true },
         });
-        if (membership?.home) {
-          resolvedHomeId = membership.home.id;
+        if (membership?.property) {
+          resolvedHomeId = membership.property.id;
         } else {
           // Create a default home if none exists
-          const home = await db.home.create({
+          const home = await db.property.create({
             data: {
               ownerId: userId,
               name: 'Ma Maison',
@@ -50,8 +50,8 @@ export async function POST(request: NextRequest) {
               isActive: true,
             },
           });
-          await db.homeMember.create({
-            data: { homeId: home.id, userId, role: 'owner' },
+          await db.propertyMember.create({
+            data: { propertyId: home.id, userId, role: 'owner' },
           });
           resolvedHomeId = home.id;
         }
@@ -60,12 +60,12 @@ export async function POST(request: NextRequest) {
       // Auto-resolve room if not provided
       if (!resolvedRoomId && resolvedHomeId) {
         let room = await db.room.findFirst({
-          where: { homeId: resolvedHomeId },
+          where: { propertyId: resolvedHomeId },
         });
         if (!room) {
           // Auto-create a default room
           room = await db.room.create({
-            data: { homeId: resolvedHomeId, name: 'Piece principale' },
+            data: { propertyId: resolvedHomeId, name: 'Piece principale' },
           });
         }
         resolvedRoomId = room.id;
@@ -105,7 +105,7 @@ export async function POST(request: NextRequest) {
       // 2. Create QrCode record
       const qrCode = await tx.qrCode.create({
         data: {
-          homeId: resolvedHomeId,
+          propertyId: resolvedHomeId,
           roomId: resolvedRoomId || null,
           name: name || `QR ${code}`,
           type: moduleType,
@@ -149,7 +149,7 @@ export async function POST(request: NextRequest) {
       // 6. Create ActivityLog for the home
       await tx.activityLog.create({
         data: {
-          homeId: resolvedHomeId,
+          propertyId: resolvedHomeId,
           qrCodeId: qrCode.id,
           userId,
           actionType: 'qr_activated',

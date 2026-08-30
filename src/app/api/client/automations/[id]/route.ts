@@ -28,18 +28,18 @@ export async function PUT(
     };
 
     // Verify ownership through home
-    const automation = await db.homeAutomation.findUnique({
+    const automation = await db.propertyAutomation.findUnique({
       where: { id },
-      include: { home: true },
+      include: { property: true },
     });
 
     if (!automation) {
       return NextResponse.json({ error: 'Automatisation introuvable' }, { status: 404 });
     }
 
-    const home = await db.home.findFirst({
+    const home = await db.property.findFirst({
       where: {
-        id: automation.homeId,
+        id: automation.propertyId,
         OR: [
           { ownerId: userId },
           { members: { some: { userId } } },
@@ -60,7 +60,7 @@ export async function PUT(
 
     const cleanUrl = baseUrl ? baseUrl.replace(/\/+$/, '') : undefined;
 
-    const updated = await db.homeAutomation.update({
+    const updated = await db.propertyAutomation.update({
       where: { id },
       data: {
         ...(name !== undefined && { name }),
@@ -69,7 +69,7 @@ export async function PUT(
         ...(apiToken !== undefined && { apiToken: apiToken || null }),
         ...(isActive !== undefined && { isActive }),
       },
-      include: { home: { select: { id: true, name: true } } },
+      include: { property: { select: { id: true, name: true } } },
     });
 
     return NextResponse.json(updated);
@@ -94,18 +94,18 @@ export async function DELETE(
     const { id } = await params;
 
     // Verify ownership
-    const automation = await db.homeAutomation.findUnique({
+    const automation = await db.propertyAutomation.findUnique({
       where: { id },
-      include: { home: true },
+      include: { property: true },
     });
 
     if (!automation) {
       return NextResponse.json({ error: 'Automatisation introuvable' }, { status: 404 });
     }
 
-    const home = await db.home.findFirst({
+    const home = await db.property.findFirst({
       where: {
-        id: automation.homeId,
+        id: automation.propertyId,
         OR: [
           { ownerId: userId },
           { members: { some: { userId } } },
@@ -117,7 +117,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
     }
 
-    await db.homeAutomation.delete({ where: { id } });
+    await db.propertyAutomation.delete({ where: { id } });
 
     return NextResponse.json({ success: true });
   } catch (error) {

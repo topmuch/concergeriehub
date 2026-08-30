@@ -43,7 +43,7 @@ export async function GET() {
       db.user.count(),
 
       // 8. Total homes
-      db.home.count(),
+      db.property.count(),
 
       // 9. Total dynamic QR codes
       db.qrCode.count(),

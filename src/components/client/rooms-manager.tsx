@@ -24,7 +24,7 @@ const ROOM_ICONS = ['🏠', '🍳', '🛋️', '🛏️', '🚿', '🏢', '📦'
 export function RoomsManager() {
   const [rooms, setRooms] = useState<RoomData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [homeId, setHomeId] = useState('');
+  const [propertyId, setHomeId] = useState('');
   const [createOpen, setCreateOpen] = useState(false);
   const [newName, setNewName] = useState('');
   const [newIcon, setNewIcon] = useState('🏠');
@@ -46,7 +46,7 @@ export function RoomsManager() {
 
   const fetchRooms = (hid: string) => {
     setLoading(true);
-    fetch(`/api/client/rooms?homeId=${hid}`)
+    fetch(`/api/client/rooms?propertyId=${hid}`)
       .then((r) => r.json())
       .then((d) => setRooms(d.rooms || []))
       .catch(console.error)
@@ -54,16 +54,16 @@ export function RoomsManager() {
   };
 
   const handleCreate = async () => {
-    if (!newName.trim() || !homeId) return;
+    if (!newName.trim() || !propertyId) return;
     setCreating(true);
     try {
       await fetch('/api/client/rooms', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ homeId, name: newName, icon: newIcon }),
+        body: JSON.stringify({ propertyId, name: newName, icon: newIcon }),
       });
       toast.success(`Pièce « ${newName} » créée`);
       setNewName(''); setNewIcon('🏠'); setCreateOpen(false);
-      fetchRooms(homeId);
+      fetchRooms(propertyId);
     } catch { toast.error('Erreur lors de la création'); }
     finally { setCreating(false); }
   };
@@ -73,7 +73,7 @@ export function RoomsManager() {
     try {
       toast.success('Pièce mise à jour');
       setEditingRoom(null);
-      fetchRooms(homeId);
+      fetchRooms(propertyId);
     } catch { toast.error('Erreur lors de la mise à jour'); }
   };
 

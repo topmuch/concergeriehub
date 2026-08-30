@@ -8,7 +8,7 @@ async function seed() {
   let user = await db.user.findUnique({ where: { email: 'demo@qrdomotik.com' } });
   if (!user) {
     user = await db.user.create({
-      data: { email: 'demo@qrdomotik.com', fullName: 'Martin Dupont', passwordHash: await hash('demo1234', 12), role: 'user', selectedPlan: 'famille', onboardingCompleted: true },
+      data: { email: 'demo@qrdomotik.com', fullName: 'Martin Dupont', passwordHash: await hash('demo1234', 12), role: 'user', selectedPlan: 'airbnb_solo', onboardingCompleted: true },
     });
     console.log('✅ User created');
   } else {
@@ -34,10 +34,10 @@ async function seed() {
   }
 
   // 4. Home
-  let home = await db.home.findFirst({ where: { ownerId: user.id, name: 'Maison Martin' } });
+  let home = await db.property.findFirst({ where: { ownerId: user.id, name: 'Maison Martin' } });
   if (!home) {
     const pinHash = await hash('1234', 10);
-    home = await db.home.create({ data: { name: 'Maison Martin', ownerId: user.id, pinHash, address: '12 Rue de la Paix, Paris' } });
+    home = await db.property.create({ data: { name: 'Maison Martin', ownerId: user.id, pinHash, address: '12 Rue de la Paix, Paris' } });
     console.log('✅ Home created (PIN: 1234)');
   } else {
     console.log('ℹ️  Home exists, skipping');
@@ -48,9 +48,9 @@ async function seed() {
   const roomIcons = ['salon', 'chambre-principale', 'cuisine', 'sdb', 'jardin'];
   const rooms: { id: string }[] = [];
   for (let i = 0; i < roomDefs.length; i++) {
-    let room = await db.room.findFirst({ where: { homeId: home.id, name: roomDefs[i] } });
+    let room = await db.room.findFirst({ where: { propertyId: home.id, name: roomDefs[i] } });
     if (!room) {
-      room = await db.room.create({ data: { homeId: home.id, name: roomDefs[i], icon: roomIcons[i] } });
+      room = await db.room.create({ data: { propertyId: home.id, name: roomDefs[i], icon: roomIcons[i] } });
     }
     rooms.push(room);
   }
@@ -85,7 +85,7 @@ async function seed() {
     const existing = await db.qrCode.findUnique({ where: { publicSlug: qr.slug } });
     if (!existing) {
       const created = await db.qrCode.create({
-        data: { homeId: home.id, roomId: qr.roomId, name: qr.name, type: qr.type, isPrivate: qr.isPrivate, isActive: true, publicSlug: qr.slug },
+        data: { propertyId: home.id, roomId: qr.roomId, name: qr.name, type: qr.type, isPrivate: qr.isPrivate, isActive: true, publicSlug: qr.slug },
       });
       await db.qrContent.create({ data: { qrCodeId: created.id, contentJson: JSON.stringify(qr.content) } });
     }
@@ -97,7 +97,7 @@ async function seed() {
   if (!existingHub) {
     await db.physicalQrCode.create({
       data: { batchId: batch.id, activationCode: 'demo-hub-plaque', status: 'active', designConfig: '{}',
-        isClaimed: true, hubSlug: 'demo-hub', claimedByUserId: user.id, claimedAt: new Date(), homeId: home.id },
+        isClaimed: true, hubSlug: 'demo-hub', claimedByUserId: user.id, claimedAt: new Date(), propertyId: home.id },
     });
     console.log('✅ Hub plaque created (slug: demo-hub)');
   } else {
@@ -105,13 +105,13 @@ async function seed() {
   }
 
   // 8. Voice messages
-  const msgCount = await db.voiceMessage.count({ where: { homeId: home.id } });
+  const msgCount = await db.voiceMessage.count({ where: { propertyId: home.id } });
   if (msgCount === 0) {
     await db.voiceMessage.createMany({
       data: [
-        { homeId: home.id, senderName: 'Marie', senderType: 'family', audioUrl: '', durationSec: 8, fileSizeKb: 120, isRead: true, createdAt: new Date(Date.now() - 3600000) },
-        { homeId: home.id, senderName: 'Pierre (invité)', senderType: 'guest', audioUrl: '', durationSec: 12, fileSizeKb: 180, isRead: false, createdAt: new Date(Date.now() - 7200000) },
-        { homeId: home.id, senderName: 'Martin', senderType: 'family', audioUrl: '', durationSec: 5, fileSizeKb: 75, isRead: true, createdAt: new Date(Date.now() - 86400000) },
+        { propertyId: home.id, senderName: 'Marie', senderType: 'family', audioUrl: '', durationSec: 8, fileSizeKb: 120, isRead: true, createdAt: new Date(Date.now() - 3600000) },
+        { propertyId: home.id, senderName: 'Pierre (invité)', senderType: 'guest', audioUrl: '', durationSec: 12, fileSizeKb: 180, isRead: false, createdAt: new Date(Date.now() - 7200000) },
+        { propertyId: home.id, senderName: 'Martin', senderType: 'family', audioUrl: '', durationSec: 5, fileSizeKb: 75, isRead: true, createdAt: new Date(Date.now() - 86400000) },
       ],
     });
     console.log('✅ 3 voice messages');
@@ -120,9 +120,9 @@ async function seed() {
   }
 
   // 9. Home member
-  const memberExists = await db.homeMember.findFirst({ where: { homeId: home.id, userId: user.id } });
+  const memberExists = await db.propertyMember.findFirst({ where: { propertyId: home.id, userId: user.id } });
   if (!memberExists) {
-    await db.homeMember.create({ data: { homeId: home.id, userId: user.id, role: 'owner', nickname: 'Martin' } });
+    await db.propertyMember.create({ data: { propertyId: home.id, userId: user.id, role: 'owner', nickname: 'Martin' } });
     console.log('✅ Home member');
   }
 

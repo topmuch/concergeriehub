@@ -31,10 +31,10 @@ export function ActivityLogViewer() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [homeId, setHomeId] = useState('');
+  const [propertyId, setHomeId] = useState('');
 
   const fetchLogs = (hid: string) => {
-    fetch(`/api/client/activity?homeId=${hid}&limit=100`)
+    fetch(`/api/client/activity?propertyId=${hid}&limit=100`)
       .then((r) => r.json())
       .then((d) => { setLogs(d.logs || []); setLoading(false); })
       .catch(console.error);

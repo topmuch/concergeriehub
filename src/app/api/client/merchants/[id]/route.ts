@@ -65,7 +65,7 @@ export async function PATCH(
       );
     }
 
-    const { name, category, description, address, location, phone, website, openingHours, homeId, isVerified, logoUrl } = body as {
+    const { name, category, description, address, location, phone, website, openingHours, propertyId, isVerified, logoUrl } = body as {
       name?: string;
       category?: string;
       description?: string;
@@ -74,7 +74,7 @@ export async function PATCH(
       phone?: string;
       website?: string;
       openingHours?: string;
-      homeId?: string;
+      propertyId?: string;
       isVerified?: boolean;
       logoUrl?: string;
     };
@@ -90,7 +90,7 @@ export async function PATCH(
         ...(phone !== undefined && { phone }),
         ...(website !== undefined && { website }),
         ...(openingHours !== undefined && { openingHours }),
-        ...(homeId !== undefined && { homeId }),
+        ...(propertyId !== undefined && { propertyId }),
         ...(isVerified !== undefined && { isVerified }),
         ...(logoUrl !== undefined && { logoUrl }),
       },

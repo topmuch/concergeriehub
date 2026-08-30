@@ -49,7 +49,7 @@ interface User {
   role: string;
   createdAt: string;
   _count: {
-    homeMemberships: number;
+    propertyMemberships: number;
     ownedHomes: number;
     createdBatches: number;
   };
@@ -336,7 +336,7 @@ export function AdminUsers() {
                         <RoleBadge role={user.role} />
                       </TableCell>
                       <TableCell className="text-center">
-                        {user._count.homeMemberships}
+                        {user._count.propertyMemberships}
                       </TableCell>
                       <TableCell className="text-center">
                         {user._count.createdBatches}

@@ -30,7 +30,7 @@ export function ActivationPage() {
   const [physicalQrId, setPhysicalQrId] = useState('');
   const [moduleType, setModuleType] = useState('');
   const [qrName, setQrName] = useState('');
-  const [homeId, setHomeId] = useState('');
+  const [propertyId, setHomeId] = useState('');
   const [moduleContent, setModuleContent] = useState<Record<string, string>>({});
   const [contentErrors, setContentErrors] = useState<string[]>([]);
   const [activating, setActivating] = useState(false);
@@ -94,7 +94,7 @@ export function ActivationPage() {
           code,
           moduleType,
           name: qrName,
-          homeId: homeId || undefined,
+          propertyId: propertyId || undefined,
           content: hasContent ? moduleContent : undefined,
         }),
       });

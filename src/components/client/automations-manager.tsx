@@ -40,14 +40,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-interface Home {
+interface Property {
   id: string;
   name: string;
 }
 
 interface Automation {
   id: string;
-  homeId: string;
+  propertyId: string;
   name: string;
   provider: string;
   baseUrl: string;
@@ -55,7 +55,7 @@ interface Automation {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
-  home: Home;
+  property: Property;
 }
 
 interface HACEntity {
@@ -73,7 +73,7 @@ type ActionType = 'toggle' | 'turn_on' | 'turn_off' | 'get_state';
 
 export function AutomationsManager() {
   const [automations, setAutomations] = useState<Automation[]>([]);
-  const [homes, setHomes] = useState<Home[]>([]);
+  const [homes, setHomes] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -131,7 +131,7 @@ export function AutomationsManager() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          homeId: selectedHomeId,
+          propertyId: selectedHomeId,
           name: newName,
           provider: newProvider,
           baseUrl: newBaseUrl,
@@ -346,7 +346,7 @@ export function AutomationsManager() {
                     </div>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className="text-xs text-muted-foreground truncate">
-                        {automation.home.name}
+                        {automation.property.name}
                       </span>
                       <span className="text-xs text-muted-foreground">·</span>
                       <Badge variant="secondary" className="text-[10px] px-1.5 py-0">

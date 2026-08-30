@@ -19,7 +19,7 @@ import { Wifi, Link, BookOpen, StickyNote, User, Bell, UtensilsCrossed, Pill, Za
 export interface ModuleFieldDef {
   key: string;
   label: string;
-  type: 'text' | 'password' | 'textarea' | 'select' | 'url';
+  type: 'text' | 'password' | 'textarea' | 'select' | 'url' | 'email';
   placeholder?: string;
   required?: boolean;
   options?: string[];

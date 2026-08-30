@@ -7,7 +7,7 @@ const DEMO_SLUG = 'demo-hub';
 const isDemo = (slug: string) => slug === DEMO_SLUG;
 
 const DEMO_HUB_DATA = {
-  home: {
+  property: {
     id: 'demo-home-001',
     name: 'Le Petit Nid',
     address: '12 Rue de la Paix, 75002 Paris',
@@ -240,13 +240,13 @@ export async function GET(
       },
     });
 
-    if (!plaque || !plaque.isClaimed || !plaque.homeId) {
+    if (!plaque || !plaque.isClaimed || !plaque.propertyId) {
       return NextResponse.json({ error: 'Hub non trouvé' }, { status: 404 });
     }
 
     // Fetch the home
-    const home = await db.home.findUnique({
-      where: { id: plaque.homeId },
+    const home = await db.property.findUnique({
+      where: { id: plaque.propertyId },
       select: {
         id: true,
         name: true,
@@ -261,7 +261,7 @@ export async function GET(
 
     // Fetch rooms with their active non-private QR codes (guest mode)
     const guestRooms = await db.room.findMany({
-      where: { homeId: home.id },
+      where: { propertyId: home.id },
       orderBy: { createdAt: 'asc' },
       include: {
         qrCodes: {
@@ -276,7 +276,7 @@ export async function GET(
 
     // Fetch ALL active QR codes (including private) for family mode
     const familyRooms = await db.room.findMany({
-      where: { homeId: home.id },
+      where: { propertyId: home.id },
       orderBy: { createdAt: 'asc' },
       include: {
         qrCodes: {
@@ -291,7 +291,7 @@ export async function GET(
 
     // Fetch recent voice messages (last 10)
     const voiceMessages = await db.voiceMessage.findMany({
-      where: { homeId: home.id },
+      where: { propertyId: home.id },
       orderBy: { createdAt: 'desc' },
       take: 10,
       select: {
@@ -323,7 +323,7 @@ export async function GET(
       }));
 
     return NextResponse.json({
-      home: {
+      property: {
         id: home.id,
         name: home.name,
         address: home.address,
@@ -356,7 +356,7 @@ export async function POST(
 
     // ── DEMO MODE: any 4-digit PIN works ──
     if (isDemo(slug)) {
-      return NextResponse.json({ success: true, homeId: 'demo-home-001' });
+      return NextResponse.json({ success: true, propertyId: 'demo-home-001' });
     }
 
     // Find the plaque and home
@@ -364,12 +364,12 @@ export async function POST(
       where: { hubSlug: slug },
     });
 
-    if (!plaque || !plaque.isClaimed || !plaque.homeId) {
+    if (!plaque || !plaque.isClaimed || !plaque.propertyId) {
       return NextResponse.json({ error: 'Hub non trouvé' }, { status: 404 });
     }
 
-    const home = await db.home.findUnique({
-      where: { id: plaque.homeId },
+    const home = await db.property.findUnique({
+      where: { id: plaque.propertyId },
       select: { id: true, pinHash: true },
     });
 
@@ -382,7 +382,7 @@ export async function POST(
       return NextResponse.json({ error: 'PIN incorrect' }, { status: 401 });
     }
 
-    return NextResponse.json({ success: true, homeId: home.id });
+    return NextResponse.json({ success: true, propertyId: home.id });
   } catch (error) {
     console.error('Hub PIN verify error:', error);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });

@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const category = searchParams.get('category');
     const location = searchParams.get('location');
-    const homeId = searchParams.get('homeId');
+    const propertyId = searchParams.get('propertyId');
     const isVerifiedParam = searchParams.get('isVerified');
     const urgentParam = searchParams.get('urgent');
 
@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     if (isVerifiedParam === 'true') where.isVerified = true;
     if (urgentParam === 'true') where.isUrgentAvailable = true;
 
-    const professionals = await db.professional.findMany({
+    const professionals = await db.provider.findMany({
       where,
       include: {
         user: {
@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST: Create a professional profile
+// POST: Create a provider profile
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const professional = await db.professional.create({
+    const provider = await db.provider.create({
       data: {
         userId,
         businessName,
@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return NextResponse.json(professional, { status: 201 });
+    return NextResponse.json(provider, { status: 201 });
   } catch (error) {
     console.error('[professionals POST] Error:', error);
     return NextResponse.json(

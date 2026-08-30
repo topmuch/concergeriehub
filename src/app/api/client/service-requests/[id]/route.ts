@@ -3,7 +3,7 @@ import { db } from '@/lib/db';
 import { sendPushToHome } from '@/lib/push-sender';
 import { SERVICE_REQUEST_STATUSES, URGENCY_LEVELS } from '@/types/database';
 
-// GET: Get single service request with professional, service, reviews, and chat messages
+// GET: Get single service request with provider, service, reviews, and chat messages
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -14,7 +14,7 @@ export async function GET(
     const serviceRequest = await db.serviceRequest.findUnique({
       where: { id },
       include: {
-        professional: {
+        provider: {
           include: {
             user: {
               select: { id: true, email: true, fullName: true },
@@ -80,7 +80,7 @@ export async function PATCH(
     const existing = await db.serviceRequest.findUnique({
       where: { id },
       include: {
-        professional: {
+        provider: {
           select: { userId: true, businessName: true },
         },
       },
@@ -109,7 +109,7 @@ export async function PATCH(
         ...(preferredDate !== undefined ? { preferredDate: preferredDate ? new Date(preferredDate) : null } : {}),
       },
       include: {
-        professional: {
+        provider: {
           include: {
             user: {
               select: { id: true, email: true, fullName: true },
@@ -131,7 +131,7 @@ export async function PATCH(
           disputed: 'contestée',
         };
 
-        await sendPushToHome(existing.homeId, {
+        await sendPushToHome(existing.propertyId, {
           title: 'Mise à jour de votre demande',
           body: `Votre demande de service a été ${statusLabels[status] || status}.`,
           tag: `service-request-${id}`,

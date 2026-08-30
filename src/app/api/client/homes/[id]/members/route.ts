@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 
-const VALID_ROLES = ['owner', 'admin', 'member', 'child'];
+const VALID_ROLES = ['owner', 'cohost', 'staff', 'cleaner', 'member'];
 
 // GET: List all members of a home
 export async function GET(
@@ -11,7 +11,7 @@ export async function GET(
   try {
     const { id } = await params;
 
-    const home = await db.home.findUnique({ where: { id } });
+    const home = await db.property.findUnique({ where: { id } });
     if (!home) {
       return NextResponse.json(
         { error: 'Maison introuvable' },
@@ -19,8 +19,8 @@ export async function GET(
       );
     }
 
-    const members = await db.homeMember.findMany({
-      where: { homeId: id },
+    const members = await db.propertyMember.findMany({
+      where: { propertyId: id },
       include: {
         user: {
           select: { id: true, email: true, fullName: true },
@@ -76,7 +76,7 @@ export async function POST(
     }
 
     // Verify the home exists
-    const home = await db.home.findUnique({ where: { id } });
+    const home = await db.property.findUnique({ where: { id } });
     if (!home) {
       return NextResponse.json(
         { error: 'Maison introuvable' },
@@ -98,9 +98,9 @@ export async function POST(
     }
 
     // Check if already a member
-    const existingMember = await db.homeMember.findUnique({
+    const existingMember = await db.propertyMember.findUnique({
       where: {
-        homeId_userId: { homeId: id, userId: invitedUser.id },
+        propertyId_userId: { propertyId: id, userId: invitedUser.id },
       },
     });
 
@@ -111,10 +111,10 @@ export async function POST(
       );
     }
 
-    // Create the HomeMember record
-    const member = await db.homeMember.create({
+    // Create the PropertyMember record
+    const member = await db.propertyMember.create({
       data: {
-        homeId: id,
+        propertyId: id,
         userId: invitedUser.id,
         role: memberRole,
         nickname: nickname ?? null,

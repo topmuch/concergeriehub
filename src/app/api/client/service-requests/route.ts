@@ -7,12 +7,12 @@ import { SERVICE_REQUEST_STATUSES, URGENCY_LEVELS } from '@/types/database';
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const homeId = searchParams.get('homeId');
+    const propertyId = searchParams.get('propertyId');
     const status = searchParams.get('status');
 
-    if (!homeId) {
+    if (!propertyId) {
       return NextResponse.json(
-        { error: 'Le paramètre homeId est requis' },
+        { error: 'Le paramètre propertyId est requis' },
         { status: 400 }
       );
     }
@@ -24,13 +24,13 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const where: Record<string, unknown> = { homeId };
+    const where: Record<string, unknown> = { propertyId };
     if (status) where.status = status;
 
     const serviceRequests = await db.serviceRequest.findMany({
       where,
       include: {
-        professional: {
+        provider: {
           include: {
             user: {
               select: { id: true, email: true, fullName: true },
@@ -69,8 +69,8 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const {
-      homeId,
-      professionalId,
+      propertyId,
+      providerId,
       serviceId,
       description,
       preferredDate,
@@ -78,8 +78,8 @@ export async function POST(request: NextRequest) {
       address,
       photos,
     } = body as {
-      homeId: string;
-      professionalId: string;
+      propertyId: string;
+      providerId: string;
       serviceId?: string;
       description?: string;
       preferredDate?: string;
@@ -88,9 +88,9 @@ export async function POST(request: NextRequest) {
       photos?: string[];
     };
 
-    if (!homeId || !professionalId) {
+    if (!propertyId || !providerId) {
       return NextResponse.json(
-        { error: 'Les champs homeId et professionalId sont requis' },
+        { error: 'Les champs propertyId et providerId sont requis' },
         { status: 400 }
       );
     }
@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify home exists
-    const home = await db.home.findUnique({ where: { id: homeId } });
+    const home = await db.property.findUnique({ where: { id: propertyId } });
     if (!home) {
       return NextResponse.json(
         { error: 'Maison introuvable' },
@@ -111,9 +111,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify professional exists
-    const professional = await db.professional.findUnique({ where: { id: professionalId } });
-    if (!professional) {
+    // Verify provider exists
+    const provider = await db.provider.findUnique({ where: { id: providerId } });
+    if (!provider) {
       return NextResponse.json(
         { error: 'Professionnel introuvable' },
         { status: 404 }
@@ -133,8 +133,8 @@ export async function POST(request: NextRequest) {
 
     const serviceRequest = await db.serviceRequest.create({
       data: {
-        homeId,
-        professionalId,
+        propertyId,
+        providerId,
         serviceId: serviceId ?? null,
         status: 'pending',
         description: description ?? null,
@@ -144,7 +144,7 @@ export async function POST(request: NextRequest) {
         photos: photos ? JSON.stringify(photos) : '[]',
       },
       include: {
-        professional: {
+        provider: {
           include: {
             user: {
               select: { id: true, email: true, fullName: true },
@@ -155,11 +155,11 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Send push notification to the professional
+    // Send push notification to the provider
     try {
-      await sendPushToUser(professional.userId, {
+      await sendPushToUser(provider.userId, {
         title: 'Nouvelle demande de service',
-        body: `Vous avez reçu une nouvelle demande de service pour ${professional.businessName}.`,
+        body: `Vous avez reçu une nouvelle demande de service pour ${provider.businessName}.`,
         tag: `service-request-${serviceRequest.id}`,
         data: { serviceRequestId: serviceRequest.id },
       });

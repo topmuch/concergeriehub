@@ -34,7 +34,7 @@ export async function POST(req: Request) {
       },
     });
 
-    await db.home.create({
+    await db.property.create({
       data: {
         name: 'Ma Maison',
         ownerId: user.id,

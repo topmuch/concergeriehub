@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { CATEGORIES } from '@/types/database';
 
-// GET: Get single professional with services and reviews
+// GET: Get single provider with services and reviews
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -10,7 +10,7 @@ export async function GET(
   try {
     const { id } = await params;
 
-    const professional = await db.professional.findUnique({
+    const provider = await db.provider.findUnique({
       where: { id },
       include: {
         user: {
@@ -30,14 +30,14 @@ export async function GET(
       },
     });
 
-    if (!professional) {
+    if (!provider) {
       return NextResponse.json(
         { error: 'Professionnel introuvable' },
         { status: 404 }
       );
     }
 
-    return NextResponse.json(professional);
+    return NextResponse.json(provider);
   } catch (error) {
     console.error('[professionals GET by id] Error:', error);
     return NextResponse.json(
@@ -47,7 +47,7 @@ export async function GET(
   }
 }
 
-// PATCH: Update professional fields
+// PATCH: Update provider fields
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -81,7 +81,7 @@ export async function PATCH(
       portfolioImages?: string;
     };
 
-    const existing = await db.professional.findUnique({ where: { id } });
+    const existing = await db.provider.findUnique({ where: { id } });
     if (!existing) {
       return NextResponse.json(
         { error: 'Professionnel introuvable' },
@@ -96,7 +96,7 @@ export async function PATCH(
       );
     }
 
-    const updated = await db.professional.update({
+    const updated = await db.provider.update({
       where: { id },
       data: {
         ...(businessName !== undefined ? { businessName } : {}),
@@ -137,7 +137,7 @@ export async function DELETE(
   try {
     const { id } = await params;
 
-    const existing = await db.professional.findUnique({ where: { id } });
+    const existing = await db.provider.findUnique({ where: { id } });
     if (!existing) {
       return NextResponse.json(
         { error: 'Professionnel introuvable' },
@@ -145,7 +145,7 @@ export async function DELETE(
       );
     }
 
-    await db.professional.update({
+    await db.provider.update({
       where: { id },
       data: { isActive: false },
     });

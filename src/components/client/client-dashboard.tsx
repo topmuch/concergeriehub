@@ -48,11 +48,11 @@ export function ClientDashboard() {
       const homesList = homesData.homes || [];
       setHomes(homesList);
 
-      const homeId = homesList[0]?.id;
-      if (homeId) {
+      const propertyId = homesList[0]?.id;
+      if (propertyId) {
         const [qrRes, statsRes] = await Promise.all([
-          fetch(`/api/client/qr-codes?homeId=${homeId}`).then(r => r.json()),
-          fetch(`/api/client/scan-stats?homeId=${homeId}`).then(r => r.json()),
+          fetch(`/api/client/qr-codes?propertyId=${propertyId}`).then(r => r.json()),
+          fetch(`/api/client/scan-stats?propertyId=${propertyId}`).then(r => r.json()),
         ]);
         setQrCount((qrRes.qrCodes || []).length);
         if (statsRes.totalScans !== undefined) {

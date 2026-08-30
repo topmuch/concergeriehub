@@ -16,7 +16,7 @@ export async function GET() {
 
     const userId = (session.user as { id: string }).id;
 
-    const homes = await db.home.findMany({
+    const homes = await db.property.findMany({
       where: {
         OR: [
           { ownerId: userId },
@@ -26,16 +26,16 @@ export async function GET() {
       select: { id: true },
     });
 
-    const homeIds = homes.map((h) => h.id);
+    const propertyIds = homes.map((h) => h.id);
 
-    if (homeIds.length === 0) {
+    if (propertyIds.length === 0) {
       return NextResponse.json({ webhooks: [] });
     }
 
     const webhooks = await db.webhook.findMany({
-      where: { homeId: { in: homeIds } },
+      where: { propertyId: { in: propertyIds } },
       include: {
-        home: { select: { id: true, name: true } },
+        property: { select: { id: true, name: true } },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -57,17 +57,17 @@ export async function POST(request: NextRequest) {
 
     const userId = (session.user as { id: string }).id;
     const body = await request.json();
-    const { homeId, name, url, events, secret } = body as {
-      homeId: string;
+    const { propertyId, name, url, events, secret } = body as {
+      propertyId: string;
       name: string;
       url: string;
       events?: string[];
       secret?: string;
     };
 
-    if (!homeId || !name || !url) {
+    if (!propertyId || !name || !url) {
       return NextResponse.json(
-        { error: 'Les champs homeId, name et url sont requis' },
+        { error: 'Les champs propertyId, name et url sont requis' },
         { status: 400 }
       );
     }
@@ -76,9 +76,9 @@ export async function POST(request: NextRequest) {
     const validatedEvents = events?.filter((e) => VALID_EVENTS.includes(e)) || ['scan', 'doorbell', 'guestbook'];
 
     // Verify user has access to this home
-    const home = await db.home.findFirst({
+    const home = await db.property.findFirst({
       where: {
-        id: homeId,
+        id: propertyId,
         OR: [
           { ownerId: userId },
           { members: { some: { userId } } },
@@ -94,14 +94,14 @@ export async function POST(request: NextRequest) {
 
     const webhook = await db.webhook.create({
       data: {
-        homeId,
+        propertyId,
         name,
         url: url.replace(/\/+$/, ''),
         events: JSON.stringify(validatedEvents),
         secret: webhookSecret,
       },
       include: {
-        home: { select: { id: true, name: true } },
+        property: { select: { id: true, name: true } },
       },
     });
 

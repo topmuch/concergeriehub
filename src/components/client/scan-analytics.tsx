@@ -61,7 +61,7 @@ interface HomeOption {
 }
 
 interface ScanAnalyticsProps {
-  homeId: string;
+  propertyId: string;
   qrCodeId?: string;
 }
 
@@ -162,8 +162,8 @@ function KpiCard({
 //  Main Component
 // ---------------------------------------------------------------------------
 
-export function ScanAnalytics({ homeId: initialHomeId, qrCodeId }: ScanAnalyticsProps) {
-  const [homeId, setHomeId] = useState(initialHomeId);
+export function ScanAnalytics({ propertyId: initialHomeId, qrCodeId }: ScanAnalyticsProps) {
+  const [propertyId, setHomeId] = useState(initialHomeId);
   const [homes, setHomes] = useState<HomeOption[]>([]);
   const [stats, setStats] = useState<ScanStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -185,14 +185,14 @@ export function ScanAnalytics({ homeId: initialHomeId, qrCodeId }: ScanAnalytics
     fetchHomes();
   }, []);
 
-  // Fetch stats when homeId or qrCodeId changes
+  // Fetch stats when propertyId or qrCodeId changes
   useEffect(() => {
-    if (!homeId) return;
+    if (!propertyId) return;
     async function fetchStats() {
       setLoading(true);
       setError(null);
       try {
-        const params = new URLSearchParams({ homeId });
+        const params = new URLSearchParams({ propertyId });
         if (qrCodeId) params.set('qrCodeId', qrCodeId);
         const res = await fetch(`/api/client/scan-stats?${params.toString()}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -205,7 +205,7 @@ export function ScanAnalytics({ homeId: initialHomeId, qrCodeId }: ScanAnalytics
       }
     }
     fetchStats();
-  }, [homeId, qrCodeId]);
+  }, [propertyId, qrCodeId]);
 
   const chartData = stats?.dailyScans.map((d) => ({
     ...d,
@@ -232,7 +232,7 @@ export function ScanAnalytics({ homeId: initialHomeId, qrCodeId }: ScanAnalytics
           </div>
         </div>
         {homes.length > 1 && !qrCodeId && (
-          <Select value={homeId} onValueChange={setHomeId}>
+          <Select value={propertyId} onValueChange={setHomeId}>
             <SelectTrigger className="w-56">
               <SelectValue placeholder="Sélectionner une maison" />
             </SelectTrigger>
@@ -384,10 +384,10 @@ export function ScanAnalytics({ homeId: initialHomeId, qrCodeId }: ScanAnalytics
                       boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
                       fontSize: '13px',
                     }}
-                    formatter={(value: number, _name: string, props: { payload: { flag: string } }) => [
+                    formatter={((value: number) => [
                       `${value} scan(s)`,
-                      `${props.payload.flag} ${props.payload.name}`,
-                    ]}
+                      '',
+                    ]) as never}
                   />
                   <Bar
                     dataKey="count"

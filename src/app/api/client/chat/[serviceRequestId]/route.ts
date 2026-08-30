@@ -17,7 +17,7 @@ export async function GET(
     // Verify service request exists
     const serviceRequest = await db.serviceRequest.findUnique({
       where: { id: serviceRequestId },
-      select: { id: true, professionalId: true, homeId: true },
+      select: { id: true, providerId: true, propertyId: true },
     });
 
     if (!serviceRequest) {
@@ -99,7 +99,7 @@ export async function POST(
 
     if (!CHAT_SENDER_TYPES.includes(senderType as typeof CHAT_SENDER_TYPES[number])) {
       return NextResponse.json(
-        { error: "Type d'expéditeur invalide. Valeurs autorisées : homeowner, professional" },
+        { error: "Type d'expéditeur invalide. Valeurs autorisées : homeowner, provider" },
         { status: 400 }
       );
     }
@@ -115,10 +115,10 @@ export async function POST(
     const serviceRequest = await db.serviceRequest.findUnique({
       where: { id: serviceRequestId },
       include: {
-        professional: {
+        provider: {
           select: { userId: true, businessName: true },
         },
-        home: {
+        property: {
           select: { ownerId: true },
         },
       },
@@ -153,11 +153,11 @@ export async function POST(
       let recipientId: string | undefined;
 
       if (senderType === 'homeowner') {
-        // Notify the professional
-        recipientId = serviceRequest.professional.userId;
-      } else if (senderType === 'professional') {
+        // Notify the provider
+        recipientId = serviceRequest.provider.userId;
+      } else if (senderType === 'provider') {
         // Notify the homeowner
-        recipientId = serviceRequest.home.ownerId;
+        recipientId = serviceRequest.property.ownerId;
       }
 
       if (recipientId && recipientId !== senderId) {

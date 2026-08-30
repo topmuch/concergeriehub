@@ -16,7 +16,7 @@ async function ensureDemoUser() {
       },
     });
 
-    const home = await db.home.create({
+    const home = await db.property.create({
       data: {
         ownerId: user.id,
         name: 'Ma Maison',
@@ -25,38 +25,38 @@ async function ensureDemoUser() {
       },
     });
 
-    await db.homeMember.create({
+    await db.propertyMember.create({
       data: {
-        homeId: home.id,
+        propertyId: home.id,
         userId: user.id,
         role: 'owner',
       },
     });
   }
 
-  const member = await db.homeMember.findFirst({
+  const member = await db.propertyMember.findFirst({
     where: { userId: user.id },
-    include: { home: true },
+    include: { property: true },
   });
 
-  return { user, home: member?.home };
+  return { user, home: member?.property };
 }
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { codes, moduleType, roomId, name, homeId, userId } = body as {
+    const { codes, moduleType, roomId, name, propertyId, userId } = body as {
       codes: string[];
       moduleType: string;
       roomId: string;
       name: string;
-      homeId: string;
+      propertyId: string;
       userId?: string;
     };
 
-    if (!Array.isArray(codes) || codes.length === 0 || !moduleType || !roomId || !name || !homeId) {
+    if (!Array.isArray(codes) || codes.length === 0 || !moduleType || !roomId || !name || !propertyId) {
       return NextResponse.json(
-        { error: 'Champs requis: codes (array non vide), moduleType, roomId, name, homeId' },
+        { error: 'Champs requis: codes (array non vide), moduleType, roomId, name, propertyId' },
         { status: 400 }
       );
     }
@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
           // 2. Create QrCode
           const qrCode = await tx.qrCode.create({
             data: {
-              homeId,
+              propertyId,
               roomId,
               name: `${name} (${code.slice(-4)})`,
               type: moduleType,
@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
           // 6. ActivityLog
           await tx.activityLog.create({
             data: {
-              homeId,
+              propertyId,
               qrCodeId: qrCode.id,
               userId: user.id,
               actionType: 'qr_activated_batch',

@@ -32,9 +32,9 @@ export async function POST(
     // Find the QR code and its home
     const qrCode = await db.qrCode.findUnique({
       where: { id },
-      select: { homeId: true },
+      select: { propertyId: true },
     });
-    if (!qrCode?.homeId) {
+    if (!qrCode?.propertyId) {
       return NextResponse.json({ error: 'Module non li\u00e9 \u00e0 une maison' }, { status: 404 });
     }
 
@@ -43,7 +43,7 @@ export async function POST(
 
     // Generate unique filename
     const ext = audio.name?.split('.').pop() || 'webm';
-    const filename = `${qrCode.homeId}-${crypto.randomBytes(8).toString('hex')}.${ext}`;
+    const filename = `${qrCode.propertyId}-${crypto.randomBytes(8).toString('hex')}.${ext}`;
     const filePath = join(UPLOAD_DIR, filename);
 
     // Save file
@@ -55,7 +55,7 @@ export async function POST(
     // Create DB record
     const voiceMsg = await db.voiceMessage.create({
       data: {
-        homeId: qrCode.homeId,
+        propertyId: qrCode.propertyId,
         senderName: senderName.trim().slice(0, 50),
         senderType: 'guest',
         audioUrl: `/uploads/voice/${filename}`,
@@ -90,14 +90,14 @@ export async function GET(
     // Find the QR code and its home
     const qrCode = await db.qrCode.findUnique({
       where: { id },
-      select: { homeId: true },
+      select: { propertyId: true },
     });
-    if (!qrCode?.homeId) {
+    if (!qrCode?.propertyId) {
       return NextResponse.json({ error: 'Module non li\u00e9 \u00e0 une maison' }, { status: 404 });
     }
 
     const messages = await db.voiceMessage.findMany({
-      where: { homeId: qrCode.homeId },
+      where: { propertyId: qrCode.propertyId },
       orderBy: { createdAt: 'desc' },
       take: limit,
       select: {

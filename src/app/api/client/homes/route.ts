@@ -24,19 +24,19 @@ export async function GET() {
     }
 
     // Get all home IDs the user belongs to
-    const memberships = await db.homeMember.findMany({
+    const memberships = await db.propertyMember.findMany({
       where: { userId: effectiveUserId },
-      select: { homeId: true },
+      select: { propertyId: true },
     });
 
-    const homeIds = memberships.map((m) => m.homeId);
+    const propertyIds = memberships.map((m) => m.propertyId);
 
-    if (homeIds.length === 0) {
+    if (propertyIds.length === 0) {
       return NextResponse.json({ homes: [] });
     }
 
-    const homes = await db.home.findMany({
-      where: { id: { in: homeIds } },
+    const homes = await db.property.findMany({
+      where: { id: { in: propertyIds } },
       include: {
         _count: {
           select: {
@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Utilisateur non identifié' }, { status: 401 });
     }
 
-    const home = await db.home.create({
+    const home = await db.property.create({
       data: {
         ownerId: userId,
         name,
@@ -101,9 +101,9 @@ export async function POST(request: NextRequest) {
     });
 
     // Auto-add user as owner
-    await db.homeMember.create({
+    await db.propertyMember.create({
       data: {
-        homeId: home.id,
+        propertyId: home.id,
         userId,
         role: 'owner',
       },
@@ -123,16 +123,16 @@ export async function POST(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const homeId = searchParams.get('id');
+    const propertyId = searchParams.get('id');
 
-    if (!homeId) {
+    if (!propertyId) {
       return NextResponse.json(
         { error: "L'id de la maison est requis" },
         { status: 400 }
       );
     }
 
-    const home = await db.home.findUnique({ where: { id: homeId } });
+    const home = await db.property.findUnique({ where: { id: propertyId } });
     if (!home) {
       return NextResponse.json(
         { error: 'Maison introuvable' },
@@ -140,7 +140,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    await db.home.delete({ where: { id: homeId } });
+    await db.property.delete({ where: { id: propertyId } });
 
     return NextResponse.json({ success: true });
   } catch (error) {

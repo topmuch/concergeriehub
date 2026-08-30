@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { PRICE_UNITS } from '@/types/database';
 
-// GET: List services for a professional
+// GET: List services for a provider
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -10,11 +10,11 @@ export async function GET(
   try {
     const { id } = await params;
 
-    const professional = await db.professional.findUnique({
+    const provider = await db.provider.findUnique({
       where: { id },
     });
 
-    if (!professional) {
+    if (!provider) {
       return NextResponse.json(
         { error: 'Professionnel introuvable' },
         { status: 404 }
@@ -22,13 +22,13 @@ export async function GET(
     }
 
     const services = await db.service.findMany({
-      where: { professionalId: id },
+      where: { providerId: id },
       orderBy: { createdAt: 'desc' },
     });
 
     return NextResponse.json({ services });
   } catch (error) {
-    console.error('[professional-services GET] Error:', error);
+    console.error('[provider-services GET] Error:', error);
     return NextResponse.json(
       { error: 'Erreur interne du serveur' },
       { status: 500 }
@@ -36,7 +36,7 @@ export async function GET(
   }
 }
 
-// POST: Create a service for a professional
+// POST: Create a service for a provider
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -74,11 +74,11 @@ export async function POST(
       );
     }
 
-    const professional = await db.professional.findUnique({
+    const provider = await db.provider.findUnique({
       where: { id },
     });
 
-    if (!professional) {
+    if (!provider) {
       return NextResponse.json(
         { error: 'Professionnel introuvable' },
         { status: 404 }
@@ -87,7 +87,7 @@ export async function POST(
 
     const service = await db.service.create({
       data: {
-        professionalId: id,
+        providerId: id,
         name,
         description: description ?? null,
         basePrice,
@@ -99,7 +99,7 @@ export async function POST(
 
     return NextResponse.json(service, { status: 201 });
   } catch (error) {
-    console.error('[professional-services POST] Error:', error);
+    console.error('[provider-services POST] Error:', error);
     return NextResponse.json(
       { error: 'Erreur interne du serveur' },
       { status: 500 }

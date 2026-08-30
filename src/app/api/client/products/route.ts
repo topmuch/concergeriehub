@@ -5,12 +5,12 @@ import { db } from '@/lib/db';
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const homeId = searchParams.get('homeId');
+    const propertyId = searchParams.get('propertyId');
     const filter = searchParams.get('filter') || 'all';
 
-    if (!homeId) {
+    if (!propertyId) {
       return NextResponse.json(
-        { error: 'Le paramètre homeId est requis' },
+        { error: 'Le paramètre propertyId est requis' },
         { status: 400 }
       );
     }
@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     }
 
     const products = await db.product.findMany({
-      where: { homeId },
+      where: { propertyId },
       include: {
         productInstances: {
           orderBy: { expiryDate: 'asc' },
@@ -73,28 +73,28 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const {
-      homeId,
+      propertyId,
       name,
       category,
       minStockThreshold,
       currentStock,
     } = body as {
-      homeId: string;
+      propertyId: string;
       name: string;
       category?: string;
       minStockThreshold?: number;
       currentStock?: number;
     };
 
-    if (!homeId || !name) {
+    if (!propertyId || !name) {
       return NextResponse.json(
-        { error: 'Les champs homeId et name sont requis' },
+        { error: 'Les champs propertyId et name sont requis' },
         { status: 400 }
       );
     }
 
     // Verify the home exists
-    const home = await db.home.findUnique({ where: { id: homeId } });
+    const home = await db.property.findUnique({ where: { id: propertyId } });
     if (!home) {
       return NextResponse.json(
         { error: 'Maison introuvable' },
@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
 
     const product = await db.product.create({
       data: {
-        homeId,
+        propertyId,
         name,
         category: category ?? null,
         minStockThreshold: minStockThreshold ?? 1,

@@ -1,26 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 
-// POST: Invite a member (creates user if not exists, then HomeMember)
+// POST: Invite a member (creates user if not exists, then PropertyMember)
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { homeId, email, role, nickname } = body as {
-      homeId: string;
+    const { propertyId, email, role, nickname } = body as {
+      propertyId: string;
       email: string;
       role: string;
       nickname?: string;
     };
 
-    if (!homeId || !email || !role) {
+    if (!propertyId || !email || !role) {
       return NextResponse.json(
-        { error: 'Les champs homeId, email et role sont requis' },
+        { error: 'Les champs propertyId, email et role sont requis' },
         { status: 400 }
       );
     }
 
     // Verify the home exists
-    const home = await db.home.findUnique({ where: { id: homeId } });
+    const home = await db.property.findUnique({ where: { id: propertyId } });
     if (!home) {
       return NextResponse.json(
         { error: 'Maison introuvable' },
@@ -44,9 +44,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if already a member
-    const existingMember = await db.homeMember.findUnique({
+    const existingMember = await db.propertyMember.findUnique({
       where: {
-        homeId_userId: { homeId, userId: invitedUser.id },
+        propertyId_userId: { propertyId, userId: invitedUser.id },
       },
     });
 
@@ -57,10 +57,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create the HomeMember record
-    const member = await db.homeMember.create({
+    // Create the PropertyMember record
+    const member = await db.propertyMember.create({
       data: {
-        homeId,
+        propertyId,
         userId: invitedUser.id,
         role,
         nickname: nickname ?? null,
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
         user: {
           select: { id: true, email: true, fullName: true },
         },
-        home: {
+        property: {
           select: { id: true, name: true },
         },
       },

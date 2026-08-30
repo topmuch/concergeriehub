@@ -56,12 +56,12 @@ export async function PUT(
       where: { hubSlug: slug },
     });
 
-    if (!plaque || !plaque.isClaimed || !plaque.homeId) {
+    if (!plaque || !plaque.isClaimed || !plaque.propertyId) {
       return NextResponse.json({ error: 'Hub non trouvé' }, { status: 404 });
     }
 
-    const home = await db.home.findUnique({
-      where: { id: plaque.homeId },
+    const home = await db.property.findUnique({
+      where: { id: plaque.propertyId },
       select: { id: true, pinHash: true },
     });
 
@@ -86,7 +86,7 @@ export async function PUT(
     if (updates && Array.isArray(updates) && updates.length > 0) {
       // Fetch all QR codes belonging to this home for verification
       const homeQrCodes = await db.qrCode.findMany({
-        where: { homeId: home.id },
+        where: { propertyId: home.id },
         select: { id: true },
       });
       const homeQrCodeIds = new Set(homeQrCodes.map((qr) => qr.id));
@@ -131,7 +131,7 @@ export async function PUT(
       }
 
       if (Object.keys(updateData).length > 0) {
-        await db.home.update({
+        await db.property.update({
           where: { id: home.id },
           data: updateData,
         });
@@ -147,7 +147,7 @@ export async function PUT(
         );
       }
       const hashedPin = await hash(String(newPin), 10);
-      await db.home.update({
+      await db.property.update({
         where: { id: home.id },
         data: { pinHash: hashedPin },
       });

@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 
-// Helper: recalculate professional rating
-async function recalcProfessionalRating(professionalId: string) {
-  const reviews = await db.review.findMany({ where: { professionalId } });
+// Helper: recalculate provider rating
+async function recalcProfessionalRating(providerId: string) {
+  const reviews = await db.review.findMany({ where: { providerId } });
   const totalReviews = reviews.length;
   const ratingAvg = totalReviews > 0 ? reviews.reduce((sum, r) => sum + r.rating, 0) / totalReviews : 0;
-  await db.professional.update({
-    where: { id: professionalId },
+  await db.provider.update({
+    where: { id: providerId },
     data: {
       ratingAvg: Math.round(ratingAvg * 10) / 10,
       totalReviews,
@@ -29,7 +29,7 @@ export async function GET(
         user: {
           select: { id: true, email: true, fullName: true },
         },
-        professional: {
+        provider: {
           select: { id: true, businessName: true },
         },
         serviceRequest: {
@@ -96,8 +96,8 @@ export async function PATCH(
       },
     });
 
-    // Recalculate professional rating
-    await recalcProfessionalRating(existing.professionalId);
+    // Recalculate provider rating
+    await recalcProfessionalRating(existing.providerId);
 
     return NextResponse.json(updated);
   } catch (error) {
@@ -109,7 +109,7 @@ export async function PATCH(
   }
 }
 
-// DELETE: Delete review and recalculate professional rating
+// DELETE: Delete review and recalculate provider rating
 export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -125,12 +125,12 @@ export async function DELETE(
       );
     }
 
-    const professionalId = existing.professionalId;
+    const providerId = existing.providerId;
 
     await db.review.delete({ where: { id } });
 
-    // Recalculate professional rating
-    await recalcProfessionalRating(professionalId);
+    // Recalculate provider rating
+    await recalcProfessionalRating(providerId);
 
     return NextResponse.json({ success: true });
   } catch (error) {

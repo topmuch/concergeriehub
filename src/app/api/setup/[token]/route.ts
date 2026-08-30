@@ -195,7 +195,7 @@ export async function GET(
       include: {
         batch: true,
         claimedBy: { select: { id: true, fullName: true, email: true } },
-        home: { select: { id: true, name: true, address: true } },
+        property: { select: { id: true, name: true, address: true } },
       },
     });
 
@@ -205,7 +205,7 @@ export async function GET(
         include: {
           batch: true,
           claimedBy: { select: { id: true, fullName: true, email: true } },
-          home: { select: { id: true, name: true, address: true } },
+          property: { select: { id: true, name: true, address: true } },
         },
       });
     }
@@ -214,7 +214,7 @@ export async function GET(
       return NextResponse.json({ error: 'Plaque non trouvée' }, { status: 404 });
     }
 
-    if (plaque.isClaimed && plaque.homeId) {
+    if (plaque.isClaimed && plaque.propertyId) {
       return NextResponse.json({
         status: 'claimed',
         message: 'Cette plaque est déjà configurée',
@@ -222,7 +222,7 @@ export async function GET(
         claimedBy: plaque.claimedBy
           ? { fullName: plaque.claimedBy.fullName, email: plaque.claimedBy.email }
           : undefined,
-        homeName: plaque.home?.name || undefined,
+        homeName: plaque.property?.name || undefined,
       });
     }
 
@@ -269,10 +269,10 @@ export async function POST(
         success: true,
         isNewUser: true,
         userId: 'demo-user-001',
-        homeId: 'demo-home-001',
+        propertyId: 'demo-home-001',
         homeName: homeName || 'Mon Appartement Demo',
         hubSlug: 'demo-hub',
-        plan: plan || 'famille',
+        plan: plan || 'airbnb_solo',
         modulesCreated: 11,
         roomsCreated: 5,
       });
@@ -288,7 +288,7 @@ export async function POST(
       return NextResponse.json({ error: 'Code PIN à 4 chiffres requis' }, { status: 400 });
     }
     if (!homeName?.trim()) return NextResponse.json({ error: 'Nom du logement requis' }, { status: 400 });
-    if (!plan || !['famille', 'airbnb_solo', 'airbnb_pro', 'free'].includes(plan)) {
+    if (!plan || !['airbnb_solo', 'airbnb_pro', 'free'].includes(plan)) {
       return NextResponse.json({ error: 'Plan invalide' }, { status: 400 });
     }
 
@@ -351,7 +351,7 @@ export async function POST(
     if (slugExists) hubSlug = `home-${plaque.id.slice(0, 8)}`;
 
     // ── Create home ──
-    const home = await db.home.create({
+    const home = await db.property.create({
       data: { name: homeName.trim(), ownerId: userId!, pinHash, address: '' },
     });
 
@@ -377,7 +377,7 @@ export async function POST(
     for (const roomConfig of defaultRooms) {
       // Create room
       const room = await db.room.create({
-        data: { homeId: home.id, name: roomConfig.name, icon: roomConfig.icon },
+        data: { propertyId: home.id, name: roomConfig.name, icon: roomConfig.icon },
       });
 
       for (const mod of roomConfig.modules) {
@@ -386,7 +386,7 @@ export async function POST(
         // Create QR code
         const qr = await db.qrCode.create({
           data: {
-            homeId: home.id,
+            propertyId: home.id,
             roomId: room.id,
             name: mod.name,
             type: mod.type,
@@ -411,7 +411,7 @@ export async function POST(
               isClaimed: true,
               claimedByUserId: userId!,
               claimedAt: new Date(),
-              homeId: home.id,
+              propertyId: home.id,
               dynamicQrCodeId: qr.id,
               status: 'active',
             },
@@ -423,13 +423,13 @@ export async function POST(
 
     // ── Activate remaining physical QR codes as generic "Note" modules in Salon ──
     if (moduleIndex < batchQrcodes.length) {
-      const salonRoom = await db.room.findFirst({ where: { homeId: home.id, name: 'Salon' } });
+      const salonRoom = await db.room.findFirst({ where: { propertyId: home.id, name: 'Salon' } });
       for (let i = moduleIndex; i < batchQrcodes.length; i++) {
         const publicSlug = crypto.randomBytes(5).toString('hex');
         const num = i - moduleIndex + 1;
         const qr = await db.qrCode.create({
           data: {
-            homeId: home.id,
+            propertyId: home.id,
             roomId: salonRoom?.id || null,
             name: `Note #${num}`,
             type: 'note',
@@ -453,7 +453,7 @@ export async function POST(
             isClaimed: true,
             claimedByUserId: userId!,
             claimedAt: new Date(),
-            homeId: home.id,
+            propertyId: home.id,
             dynamicQrCodeId: qr.id,
             status: 'active',
           },
@@ -469,7 +469,7 @@ export async function POST(
         isClaimed: true,
         claimedByUserId: userId!,
         claimedAt: new Date(),
-        homeId: home.id,
+        propertyId: home.id,
         hubSlug,
         status: 'active',
         setupToken,
@@ -478,11 +478,10 @@ export async function POST(
 
     // ── Subscription (non-blocking) ──
     try {
-      const planConfig: Record<string, { amount: number; cycle: string; maxHomes: number }> = {
-        famille: { amount: 49, cycle: 'annual', maxHomes: 1 },
-        airbnb_solo: { amount: 9.9, cycle: 'monthly', maxHomes: 1 },
-        airbnb_pro: { amount: 199, cycle: 'annual', maxHomes: 3 },
-        free: { amount: 0, cycle: 'annual', maxHomes: 1 },
+      const planConfig: Record<string, { amount: number; cycle: string; maxProperties: number }> = {
+        airbnb_solo: { amount: 9.9, cycle: 'monthly', maxProperties: 1 },
+        airbnb_pro: { amount: 199, cycle: 'annual', maxProperties: 3 },
+        free: { amount: 0, cycle: 'annual', maxProperties: 1 },
       };
       const pc = planConfig[plan] || planConfig.free;
       await db.subscription.create({
@@ -492,7 +491,7 @@ export async function POST(
           plan,
           amount: pc.amount,
           billingCycle: pc.cycle,
-          maxHomes: pc.maxHomes,
+          maxProperties: pc.maxProperties,
           status: 'trialing',
           currentPeriodStart: new Date(),
           currentPeriodEnd: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
@@ -503,15 +502,15 @@ export async function POST(
     }
 
     // ── Owner as home member ──
-    await db.homeMember.create({
-      data: { homeId: home.id, userId: userId!, role: 'owner', nickname: fullName.trim() },
+    await db.propertyMember.create({
+      data: { propertyId: home.id, userId: userId!, role: 'owner', nickname: fullName.trim() },
     });
 
     return NextResponse.json({
       success: true,
       isNewUser,
       userId,
-      homeId: home.id,
+      propertyId: home.id,
       homeName: home.name,
       hubSlug,
       plan,

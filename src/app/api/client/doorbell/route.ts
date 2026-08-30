@@ -16,7 +16,7 @@ async function ensureDemoUser() {
       },
     });
 
-    const home = await db.home.create({
+    const home = await db.property.create({
       data: {
         ownerId: user.id,
         name: 'Ma Maison',
@@ -25,8 +25,8 @@ async function ensureDemoUser() {
       },
     });
 
-    await db.homeMember.create({
-      data: { homeId: home.id, userId: user.id, role: 'owner' },
+    await db.propertyMember.create({
+      data: { propertyId: home.id, userId: user.id, role: 'owner' },
     });
   }
 
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
     // Verify QR code exists
     const qrCode = await db.qrCode.findUnique({
       where: { id: qrCodeId },
-      include: { home: true },
+      include: { property: true },
     });
 
     if (!qrCode) {
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
     }
 
     const demoUser = await ensureDemoUser();
-    const homeId = qrCode.homeId;
+    const propertyId = qrCode.propertyId;
 
     // Log the action
     const actionType = action === 'ring' ? 'doorbell_ring' : 'doorbell_message';
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
 
     await db.activityLog.create({
       data: {
-        homeId,
+        propertyId,
         qrCodeId: qrCode.id,
         userId: demoUser.id,
         actionType,
@@ -87,13 +87,13 @@ export async function POST(request: NextRequest) {
     });
 
     // Send push notification to home owners/members (fire-and-forget)
-    if (homeId) {
+    if (propertyId) {
       const pushPayload = action === 'ring'
         ? {
             title: '🔔 Quelqu\'un sonne !',
             body: `Un visiteur a sonné à "${qrCode.name || 'votre porte'}"`,
             tag: `doorbell-${qrCodeId}`,
-            data: { type: 'doorbell', qrCodeId, homeId },
+            data: { type: 'doorbell', qrCodeId, propertyId },
             actions: [
               { action: 'view', title: 'Voir' },
             ],
@@ -102,16 +102,16 @@ export async function POST(request: NextRequest) {
             title: '💬 Nouveau message',
             body: text ? `${text.slice(0, 80)}${text.length > 80 ? '...' : ''}` : 'Un visiteur vous a laissé un message',
             tag: `doorbell-msg-${qrCodeId}`,
-            data: { type: 'doorbell_message', qrCodeId, homeId },
+            data: { type: 'doorbell_message', qrCodeId, propertyId },
             actions: [
               { action: 'view', title: 'Voir' },
             ],
           };
 
       // Fire and forget — don't block the response
-      sendPushToHome(homeId, pushPayload).then((result) => {
+      sendPushToHome(propertyId, pushPayload).then((result) => {
         if (result.sent > 0) {
-          console.log(`[doorbell] Push sent: ${result.sent} to home ${homeId}`);
+          console.log(`[doorbell] Push sent: ${result.sent} to home ${propertyId}`);
         }
       }).catch((err) => {
         console.error('[doorbell] Push error:', err);

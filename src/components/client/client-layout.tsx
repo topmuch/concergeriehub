@@ -28,7 +28,16 @@ export type ClientPage =
   | 'client-homes'
   | 'client-rooms'
   | 'client-activity'
-  | 'client-settings';
+  | 'client-settings'
+  | 'client-artisans'
+  | 'client-stock'
+  | 'client-packs'
+  | 'client-marketplace'
+  | 'client-monetization'
+  | 'client-notifications'
+  | 'client-analytics'
+  | 'client-automations'
+  | 'client-webhooks';
 
 interface ClientLayoutProps {
   activePage: ClientPage;
@@ -272,6 +281,15 @@ function getBreadcrumb(page: ClientPage): string[] {
     'client-rooms': ['Gestion', 'Mes Pièces'],
     'client-activity': ['Gestion', "Journal d'activité"],
     'client-settings': ['Outils', 'Paramètres'],
+    'client-artisans': ['Outils', 'Prestataires'],
+    'client-stock': ['Outils', 'Stock'],
+    'client-packs': ['Outils', 'Packs'],
+    'client-marketplace': ['Business', 'Marketplace'],
+    'client-monetization': ['Business', 'Monétisation'],
+    'client-notifications': ['Outils', 'Notifications'],
+    'client-analytics': ['Outils', 'Analytics'],
+    'client-automations': ['Outils', 'Domotique'],
+    'client-webhooks': ['Outils', 'Webhooks'],
   };
   return map[page] ?? ['Dashboard'];
 }

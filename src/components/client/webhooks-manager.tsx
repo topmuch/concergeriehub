@@ -41,14 +41,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-interface Home {
+interface Property {
   id: string;
   name: string;
 }
 
 interface Webhook {
   id: string;
-  homeId: string;
+  propertyId: string;
   name: string;
   url: string;
   events: string;
@@ -59,14 +59,13 @@ interface Webhook {
   failCount: number;
   createdAt: string;
   updatedAt: string;
-  home: Home;
+  property: Property;
 }
 
 const ALL_EVENTS = [
   { value: 'scan', label: 'Scan QR', icon: '📱' },
   { value: 'doorbell', label: 'Sonnette', icon: '🔔' },
   { value: 'guestbook', label: 'Livre d\'or', icon: '📖' },
-  { value: 'chore_completed', label: 'Corvée terminée', icon: '✅' },
   { value: 'notification', label: 'Notification', icon: '📢' },
 ];
 
@@ -105,7 +104,7 @@ const WEBHOOK_TEMPLATES = [
 
 export function WebhooksManager() {
   const [webhooks, setWebhooks] = useState<Webhook[]>([]);
-  const [homes, setHomes] = useState<Home[]>([]);
+  const [homes, setHomes] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -170,7 +169,7 @@ export function WebhooksManager() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          homeId: selectedHomeId,
+          propertyId: selectedHomeId,
           name: newName,
           url: newUrl,
           events: newEvents,
