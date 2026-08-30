@@ -133,3 +133,21 @@ Stage Summary:
 - Boucle complète invité→hôte fonctionnelle : message vocal invité → réclamation non lue côté hôte ; édition Wi-Fi hôte → visible invité immédiatement.
 - Sécurité : données hôte derrière PIN (route /host dédiée), GET publique limitée aux données invité.
 - ÉTAPE 5 terminée — en attente du "NEXT" utilisateur (feuille de route restante :Stripe checkout, génération plaques PDF, ou autre priorité définie par l'utilisateur).
+
+---
+Task ID: 5-hub-recheck (addendum — re-vérification après perte de contexte)
+Agent: Z.ai Code (orchestrator)
+Task: Re-vérification complète de l'ÉTAPE 5 après coupure de contexte (le travail 5-hub était déjà livré sur disque ; le "NEXT" utilisateur arrive après la coupure).
+
+Work Log:
+- Constaté que TOUS les artefacts 5-hub sont présents et complets : hub-content.tsx (1288 l), page.tsx (Suspense), GET/POST /api/public/hub/[slug]/route.ts, POST /host/route.ts, voice/route.ts (123 l), update/route.ts (161 l), seed-b2b-demo.ts (600 l), wipe-demo-data.ts.
+- tsc --noEmit : 0 erreur dans src/ (seuls examples/skills/mini-services hors build, connu) ; eslint 0/0.
+- Dev server : HTTP 200 sur /. DB vérifiée : 2 plaques (loft-canal-hub active / loft-canal-hub-off cancelled), bien PIN bcrypt + géoloc, Wi-Fi Loft-Canal-Fiber/bienvenue2024/WPA2, 3 messages vocaux guest, 13 prestataires actifs.
+- 6 scénarios API au curl : GET hub actif (payload complet : property, wifi, guidebookSlug, 5 services guest), GET cancelled → 410 message propre, GET slug inconnu → 404 propre, POST PIN 1234 → success, POST PIN 9999 → 401 "PIN incorrect", POST /host → wifi + 2 messages non lus + 1 demande pending + prestataires triés distance (720 m → …).
+- agent-browser re-vérif E2E : mobile 390px accueil (nom bien + badge "Hub officiel" + 2 cartes modes + footer collé) → invité (Wi-Fi expand + copie toast "Mot de passe Wi-Fi copié ! bienvenue2024", 5 services "Commander" = mailto pré-rempli no-op headless normal, dialog problème tel +33 6 12 34 56 78 / email / vocal 30 s) → hôte (9999 → "PIN incorrect" rouge + dots reset ; 1234 → 3 tuiles : Wi-Fi édité → toast + refresh live + persisté DB puis restauré et re-persisté, réclamations 2 audios fallback "indisponible en démo", prestataires 6 OWNER + 5 GUEST triés) ; plaque-off → 🔌 "Hub indisponible" + Réessayer ; slug inconnu → erreur propre ; /hub/demo-hub → "Le Petit Nid" 2 modes ; desktop 1280 centré, footer collé.
+- Console navigateur 0 erreur ; dev.log : uniquement codes attendus (401 PIN test, 410 plaque-off test, 404 slug test ; icon-512.png 404 cosmétique préexistant hors périmètre).
+- Aucune modification de code nécessaire — ÉTAPE 5 confirmée intacte et fonctionnelle.
+
+Stage Summary:
+- ÉTAPE 5 re-validée de bout en bout après la coupure de contexte : code complet, APIs sûres (données hôte derrière PIN), UX 2 modes conforme au spec, données démo cohérentes (Wi-Fi restauré en DB).
+- En attente du "NEXT" utilisateur pour l'étape suivante (feuille de route restante : Stripe checkout, génération plaques PDF, ou priorité définie par l'utilisateur).
