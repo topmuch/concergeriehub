@@ -27,6 +27,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { BrandLogo } from '@/components/ui/brand-logo';
 
 export type SuperAdminPage =
   | 'overview'
@@ -73,17 +74,16 @@ export function SuperAdminLayout({ activePage, onPageChange, onSwitchToClient, o
         <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
-      {/* Sidebar — Clean slate-950 with violet accent */}
+      {/* Sidebar — Clean slate-950 with emerald accent */}
       <aside className={cn(
         'fixed inset-y-0 left-0 z-50 flex w-64 flex-col bg-slate-950 border-r border-slate-800/80 transition-transform duration-300 lg:static lg:translate-x-0',
         sidebarOpen ? 'translate-x-0' : '-translate-x-full',
       )}>
         {/* Brand */}
         <div className="flex h-16 items-center gap-3 px-5">
-          <img src="/logo-ordomotik.png" alt="ORDOMOTIK" className="h-9 w-auto object-contain rounded-lg" />
           <div className="flex flex-col">
-            <span className="text-sm font-semibold text-white tracking-tight">ORDOMOTIK</span>
-            <span className="text-[10px] text-slate-500 font-medium">Super Admin</span>
+            <BrandLogo variant="light" size="md" />
+            <span className="mt-1 text-[10px] text-slate-500 font-medium">Super Admin</span>
           </div>
           <Button variant="ghost" size="icon" className="ml-auto lg:hidden h-8 w-8 text-slate-400 hover:text-white hover:bg-slate-800" onClick={() => setSidebarOpen(false)}>
             <X className="h-4 w-4" />
@@ -105,14 +105,14 @@ export function SuperAdminLayout({ activePage, onPageChange, onSwitchToClient, o
                 className={cn(
                   'flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-150',
                   activePage === item.key
-                    ? 'bg-violet-500/15 text-violet-400'
+                    ? 'bg-emerald-500/15 text-emerald-400'
                     : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200',
                 )}
               >
                 {item.icon}
                 <span className="flex-1 text-left">{item.label}</span>
                 {activePage === item.key && (
-                  <div className="h-1.5 w-1.5 rounded-full bg-violet-500" />
+                  <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                 )}
               </button>
             ))}
@@ -129,7 +129,7 @@ export function SuperAdminLayout({ activePage, onPageChange, onSwitchToClient, o
                 className={cn(
                   'flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-150',
                   activePage === item.key
-                    ? 'bg-violet-500/15 text-violet-400'
+                    ? 'bg-emerald-500/15 text-emerald-400'
                     : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200',
                 )}
               >
@@ -138,13 +138,13 @@ export function SuperAdminLayout({ activePage, onPageChange, onSwitchToClient, o
                 {item.badge && (
                   <span className={cn(
                     'rounded-md px-1.5 py-0.5 text-[10px] font-semibold',
-                    activePage === item.key ? 'bg-violet-500/20 text-violet-300' : 'bg-slate-800 text-slate-500',
+                    activePage === item.key ? 'bg-emerald-500/20 text-emerald-300' : 'bg-slate-800 text-slate-500',
                   )}>
                     {item.badge}
                   </span>
                 )}
                 {activePage === item.key && (
-                  <div className="h-1.5 w-1.5 rounded-full bg-violet-500" />
+                  <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                 )}
               </button>
             ))}
@@ -206,12 +206,12 @@ export function SuperAdminLayout({ activePage, onPageChange, onSwitchToClient, o
             </Button>
 
             <div className="flex items-center gap-2 rounded-full border border-border px-2 py-1 hover:bg-muted/50 transition-colors cursor-pointer">
-              <div className="hidden sm:flex items-center gap-1.5 rounded-full bg-violet-100 dark:bg-violet-500/15 px-2 py-0.5">
-                <Shield className="h-3 w-3 text-violet-600 dark:text-violet-400" />
-                <span className="text-[11px] font-semibold text-violet-700 dark:text-violet-400">Superadmin</span>
+              <div className="hidden sm:flex items-center gap-1.5 rounded-full bg-emerald-100 dark:bg-emerald-500/15 px-2 py-0.5">
+                <Shield className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">Superadmin</span>
               </div>
               <Avatar className="h-7 w-7">
-                <AvatarFallback className="bg-violet-500 text-white text-[10px] font-bold">SA</AvatarFallback>
+                <AvatarFallback className="bg-emerald-500 text-white text-[10px] font-bold">SA</AvatarFallback>
               </Avatar>
               <ChevronDown className="h-3 w-3 text-muted-foreground hidden sm:block" />
             </div>
@@ -229,8 +229,7 @@ export function SuperAdminLayout({ activePage, onPageChange, onSwitchToClient, o
         <footer className="border-t px-6 py-3 lg:px-8">
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <div className="flex items-center gap-2">
-              <img src="/logo-ordomotik.png" alt="ORDOMOTIK" className="h-5 w-auto object-contain rounded opacity-40" />
-              <span>ORDOMOTIK</span>
+              <BrandLogo variant="light" size="sm" />
             </div>
             <span>Super Administration</span>
           </div>

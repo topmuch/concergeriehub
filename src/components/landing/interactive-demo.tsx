@@ -21,14 +21,14 @@ interface DemoSlide {
 const DEMOS: DemoSlide[] = [
   {
     id: 'family',
-    title: 'Mode Famille',
-    subtitle: 'Tout le quotidien de la maison en un scan',
+    title: 'Mode Invité',
+    subtitle: 'Tout le séjour de vos invités en un scan',
     price: '49\u20ac / an',
-    badge: 'Famille',
+    badge: 'Invité',
     badgeColor: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
     qrValue: 'https://qrdomotik.roomscan.pro/demo/family-hub',
     phoneGradient: 'from-emerald-600 via-teal-600 to-cyan-700',
-    phoneTitle: 'Maison Martin',
+    phoneTitle: 'Villa Martin',
     phoneModules: [
       { icon: <Wifi className="w-4 h-4" />, label: 'Wi-Fi', value: 'Martin_Fibre_5G' },
       { icon: <ShoppingBag className="w-4 h-4" />, label: 'Courses', value: '3 articles' },
@@ -79,12 +79,12 @@ export function InteractiveDemo() {
   return (
     <div className="relative flex flex-col lg:flex-row items-center gap-8 lg:gap-12 p-6 md:p-8 bg-white/[0.03] backdrop-blur-2xl rounded-3xl border border-white/[0.08] shadow-2xl">
       {/* Background glow effects */}
-      <div className="absolute -top-20 -left-20 w-60 h-60 bg-violet-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -top-20 -left-20 w-60 h-60 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute -bottom-20 -right-20 w-60 h-60 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
 
       {/* QR Code Zone */}
       <div className="flex flex-col items-center relative z-10">
-        <div className="relative bg-white p-5 rounded-2xl shadow-[0_0_60px_rgba(139,92,246,0.15)] group">
+        <div className="relative bg-white p-5 rounded-2xl shadow-[0_0_60px_rgba(16,185,129,0.15)] group">
           <AnimatePresence mode="wait">
             <motion.div
               key={current.id}
@@ -109,24 +109,24 @@ export function InteractiveDemo() {
             className="absolute left-5 right-5 h-[2px] pointer-events-none"
             style={{
               top: `${20 + (scanProgress / 100) * 140}px`,
-              background: 'linear-gradient(90deg, transparent, #8b5cf6, transparent)',
+              background: 'linear-gradient(90deg, transparent, #10b981, transparent)',
             }}
             animate={{ opacity: [0.2, 0.8, 0.2] }}
             transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
           />
 
           {/* Corner markers */}
-          <div className="absolute top-2 left-2 w-5 h-5 border-t-2 border-l-2 border-violet-500 rounded-tl-lg" />
-          <div className="absolute top-2 right-2 w-5 h-5 border-t-2 border-r-2 border-violet-500 rounded-tr-lg" />
-          <div className="absolute bottom-2 left-2 w-5 h-5 border-b-2 border-l-2 border-violet-500 rounded-bl-lg" />
-          <div className="absolute bottom-2 right-2 w-5 h-5 border-b-2 border-r-2 border-violet-500 rounded-br-lg" />
+          <div className="absolute top-2 left-2 w-5 h-5 border-t-2 border-l-2 border-emerald-500 rounded-tl-lg" />
+          <div className="absolute top-2 right-2 w-5 h-5 border-t-2 border-r-2 border-emerald-500 rounded-tr-lg" />
+          <div className="absolute bottom-2 left-2 w-5 h-5 border-b-2 border-l-2 border-emerald-500 rounded-bl-lg" />
+          <div className="absolute bottom-2 right-2 w-5 h-5 border-b-2 border-r-2 border-emerald-500 rounded-br-lg" />
 
           {/* Badge */}
           <motion.div
             initial={{ scale: 0, y: 10 }}
             animate={{ scale: 1, y: 0 }}
             transition={{ delay: 0.3, type: 'spring', stiffness: 200 }}
-            className="absolute -top-3 -right-3 bg-violet-600 text-white text-[11px] font-bold px-3 py-1 rounded-full shadow-lg shadow-violet-500/30 whitespace-nowrap"
+            className="absolute -top-3 -right-3 bg-emerald-600 text-white text-[11px] font-bold px-3 py-1 rounded-full shadow-lg shadow-emerald-500/30 whitespace-nowrap"
           >
             Scannez-moi !
           </motion.div>
@@ -156,10 +156,10 @@ export function InteractiveDemo() {
         {/* Cycle button */}
         <button
           onClick={nextDemo}
-          className="mt-4 flex items-center gap-2 text-sm font-medium text-violet-300 hover:text-white transition-all bg-violet-500/10 hover:bg-violet-500/20 px-5 py-2.5 rounded-full border border-violet-500/20 hover:border-violet-500/40 cursor-pointer"
+          className="mt-4 flex items-center gap-2 text-sm font-medium text-emerald-300 hover:text-white transition-all bg-emerald-500/10 hover:bg-emerald-500/20 px-5 py-2.5 rounded-full border border-emerald-500/20 hover:border-emerald-500/40 cursor-pointer"
         >
           <RefreshCw className="w-3.5 h-3.5" />
-          <span>{currentIndex === 0 ? 'Voir Airbnb' : 'Voir Famille'}</span>
+          <span>{currentIndex === 0 ? 'Voir Airbnb' : 'Voir Invité'}</span>
         </button>
       </div>
 

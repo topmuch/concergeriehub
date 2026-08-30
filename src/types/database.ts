@@ -1,5 +1,5 @@
 /**
- * QR Domotik — Business-logic types & constants
+ * Conciergerie Hub — Business-logic types & constants
  *
  * This file defines enums, type aliases and utility types that Prisma
  * cannot express natively (SQLite stores everything as strings / ints /

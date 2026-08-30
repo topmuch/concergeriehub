@@ -159,7 +159,7 @@ function RulesView({ content }: { content: Record<string, unknown> }) {
           <motion.div key={i} variants={itemVariants} initial="hidden" animate="visible" transition={{ delay: i * 0.05 }}>
             <QRTCard>
               <div className="flex items-start gap-3">
-                <span className="h-6 min-w-6 rounded-full bg-[#6D28D9] text-white text-xs font-bold flex items-center justify-center mt-0.5">
+                <span className="h-6 min-w-6 rounded-full bg-[#059669] text-white text-xs font-bold flex items-center justify-center mt-0.5">
                   {i + 1}
                 </span>
                 <p className="text-sm text-black leading-relaxed flex-1">{rule}</p>
@@ -333,7 +333,7 @@ function RecipeView({ content }: { content: Record<string, unknown> }) {
             <ul className="space-y-1.5">
               {ingredients.map((ing, i) => (
                 <li key={i} className="flex items-start gap-2 text-sm text-black">
-                  <span className="text-[#6D28D9] mt-0.5">\u2022</span>
+                  <span className="text-[#059669] mt-0.5">\u2022</span>
                   {ing}
                 </li>
               ))}
@@ -348,7 +348,7 @@ function RecipeView({ content }: { content: Record<string, unknown> }) {
           {steps.map((step, i) => (
             <QRTCard key={i}>
               <div className="flex items-start gap-3">
-                <span className="h-6 min-w-6 rounded-full bg-[#6D28D9] text-white text-xs font-bold flex items-center justify-center mt-0.5">{i + 1}</span>
+                <span className="h-6 min-w-6 rounded-full bg-[#059669] text-white text-xs font-bold flex items-center justify-center mt-0.5">{i + 1}</span>
                 <p className="text-sm text-black leading-relaxed flex-1">{step}</p>
               </div>
             </QRTCard>
@@ -436,7 +436,7 @@ function ExternalLinkView({ content }: { content: Record<string, unknown> }) {
             href={url}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 h-12 bg-[#6D28D9] text-white font-bold text-sm rounded-[8px] border-2 border-black shadow-[3px_3px_0_rgba(0,0,0,0.15)] active:translate-y-[1px] active:shadow-none transition-all hover:bg-[#5B21B6]"
+            className="flex items-center justify-center gap-2 h-12 bg-[#059669] text-white font-bold text-sm rounded-[8px] border-2 border-black shadow-[3px_3px_0_rgba(0,0,0,0.15)] active:translate-y-[1px] active:shadow-none transition-all hover:bg-[#047857]"
           >
             <ExternalLink className="h-4 w-4" />
             Ouvrir le lien
@@ -525,7 +525,7 @@ function VoicePlayer({ msg }: { msg: VoiceMsg }) {
           <span className="text-[10px] text-black/40 shrink-0 ml-2">{msg.durationSec}s</span>
         </div>
         <div className="h-1.5 rounded-full bg-black/10 overflow-hidden">
-          <motion.div className="h-full rounded-full bg-[#6D28D9]" animate={{ width: `${progress}%` }} transition={{ duration: 0.2 }} />
+          <motion.div className="h-full rounded-full bg-[#059669]" animate={{ width: `${progress}%` }} transition={{ duration: 0.2 }} />
         </div>
       </div>
     </div>
@@ -654,7 +654,7 @@ function VoiceRecorder({ propertyId, onSent }: { propertyId: string; onSent: () 
             <input
               type="text" placeholder="Votre nom (optionnel)" maxLength={50}
               value={senderName} onChange={(e) => setSenderName(e.target.value)}
-              className="w-full h-11 bg-gray-50 border-2 border-black rounded-[8px] p-3.5 text-sm text-black focus:border-[#6D28D9] focus:bg-white outline-none transition-all"
+              className="w-full h-11 bg-gray-50 border-2 border-black rounded-[8px] p-3.5 text-sm text-black focus:border-[#059669] focus:bg-white outline-none transition-all"
               autoFocus
             />
             <div className="flex gap-2">
@@ -724,7 +724,7 @@ export function ViewPageContent({ params }: { params: Promise<{ slug: string }> 
   // ── Loading ──
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#8B5CF6] flex items-center justify-center">
+      <div className="min-h-screen bg-[#10B981] flex items-center justify-center">
         <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center gap-4">
           <QRTCard className="!p-6">
             <span className="text-4xl animate-pulse">{getModuleEmoji(qrData?.type || '')}</span>
@@ -738,7 +738,7 @@ export function ViewPageContent({ params }: { params: Promise<{ slug: string }> 
   // ── Error ──
   if (error || !qrData) {
     return (
-      <div className="min-h-screen bg-[#8B5CF6] flex items-center justify-center p-4">
+      <div className="min-h-screen bg-[#10B981] flex items-center justify-center p-4">
         <QRTCard className="w-full max-w-sm">
           <div className="text-center">
             <span className="text-5xl">\u274C</span>
@@ -772,7 +772,7 @@ export function ViewPageContent({ params }: { params: Promise<{ slug: string }> 
 
   return (
     <>
-      <div className="min-h-screen bg-[#8B5CF6]">
+      <div className="min-h-screen bg-[#10B981]">
         <div className="min-h-screen flex flex-col relative z-10">
           {/* Header */}
           <header className="w-full px-5 sm:px-6 pt-[max(1.5rem,env(safe-area-inset-top))] pb-2">
@@ -829,7 +829,7 @@ export function ViewPageContent({ params }: { params: Promise<{ slug: string }> 
           {/* Footer */}
           <div className="mt-auto px-6 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] text-center">
             <p className="text-xs text-white/30">
-              Propuls\u00e9 par QR Domotik \uD83C\uDFE0
+              Propulsé par Conciergerie Hub 🗝️
             </p>
           </div>
         </div>

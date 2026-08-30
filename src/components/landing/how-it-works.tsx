@@ -25,9 +25,9 @@ const STEPS = [
     icon: <Package className="w-6 h-6" />,
     title: 'Recevez votre plaque',
     description:
-      'Une plaque QR élégante en aluminium gravé est livrée chez vous. Fixez-la à l\'entrée de votre maison, de chaque pièce, ou de votre location Airbnb.',
-    color: 'from-violet-500 to-purple-600',
-    glowColor: 'violet',
+      'Une plaque QR élégante en aluminium gravé est livrée chez vous. Fixez-la à l\'entrée de votre logement, de chaque pièce, ou de votre location Airbnb.',
+    color: 'from-emerald-500 to-emerald-600',
+    glowColor: 'emerald',
   },
   {
     number: '02',
@@ -57,7 +57,7 @@ export function HowItWorks() {
       style={{ background: 'linear-gradient(180deg, #020617 0%, #0f172a 50%, #020617 100%)' }}
     >
       {/* Ambient glow */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-violet-500/[0.03] rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-emerald-500/[0.03] rounded-full blur-[120px] pointer-events-none" />
 
       <div className="max-w-6xl mx-auto relative z-10">
         {/* Section header */}
@@ -69,7 +69,7 @@ export function HowItWorks() {
           </FadeIn>
           <FadeIn delay={0.1}>
             <p className="text-white/50 text-lg md:text-xl max-w-2xl mx-auto">
-              3 étapes simples pour une maison intelligente et connectée
+              3 étapes simples pour une location intelligente et connectée
             </p>
           </FadeIn>
         </div>

@@ -69,7 +69,7 @@ function DemoNavBar({ currentView, onNavigate }: { currentView: string; onNaviga
               onClick={() => onNavigate(tab.id)}
               className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-sm font-medium transition-all cursor-pointer ${
                 currentView === tab.id
-                  ? 'bg-violet-600 text-white shadow-lg shadow-violet-600/30'
+                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30'
                   : 'text-white/50 hover:text-white/80 hover:bg-white/5'
               }`}
             >
@@ -99,9 +99,9 @@ function PhoneFrame({ children, onBack, title }: { children: React.ReactNode; on
           <p className="text-sm font-semibold text-white/90">{title}</p>
           <p className="text-[10px] text-white/40">Aperçu démo</p>
         </div>
-        <div className="flex items-center gap-1.5 bg-violet-500/15 border border-violet-500/30 px-2.5 py-1 rounded-full">
-          <div className="h-1.5 w-1.5 rounded-full bg-violet-400 animate-pulse" />
-          <span className="text-[10px] font-bold text-violet-300">DÉMO</span>
+        <div className="flex items-center gap-1.5 bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-1 rounded-full">
+          <div className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="text-[10px] font-bold text-emerald-300">DÉMO</span>
         </div>
       </div>
 
@@ -218,7 +218,7 @@ function AppContent() {
     if (view === 'hub-demo') {
       return (
         <>
-          <PhoneFrame onBack={() => setView('landing')} title="Hub QR (Invité / Famille)">
+          <PhoneFrame onBack={() => setView('landing')} title="Hub QR (Invité / Hôte)">
             <HubDemoView />
           </PhoneFrame>
           <DemoNavBar currentView="hub-demo" onNavigate={handleDemoNavigate} />

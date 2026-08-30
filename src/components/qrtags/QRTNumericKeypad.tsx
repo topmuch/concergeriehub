@@ -3,8 +3,8 @@
 import { useState, useCallback } from 'react';
 
 /**
- * Clavier numerique style iOS/QRTags pour le PIN a 4 chiffres.
- * S'inspire du design QRTags (touches blanches, bordures noires).
+ * Clavier numerique style iOS pour le PIN a 4 chiffres.
+ * Style B2B : touches blanches, bordures slate, accents emerald.
  */
 interface QRTNumericKeypadProps {
   /** Appele quand les 4 chiffres sont saisis */
@@ -61,10 +61,10 @@ export function QRTNumericKeypad({ onComplete, longueur = 4 }: QRTNumericKeypadP
         {Array.from({ length: len }, (_, i) => (
           <div
             key={i}
-            className={`w-4 h-4 rounded-full border-2 border-black transition-all duration-150 ${
+            className={`w-4 h-4 rounded-full border-2 transition-all duration-150 ${
               i < pin.length
-                ? 'bg-[#6D28D9] border-[#6D28D9] scale-110'
-                : 'bg-white'
+                ? 'bg-emerald-600 border-emerald-600 scale-110'
+                : 'bg-white border-slate-300'
             }`}
           />
         ))}
@@ -82,21 +82,21 @@ export function QRTNumericKeypad({ onComplete, longueur = 4 }: QRTNumericKeypadP
               key={key}
               type="button"
               onClick={() => (isDelete ? handleDelete() : handleKey(key))}
-              className="bg-white border-2 border-black rounded-[10px] h-16 flex flex-col items-center justify-center cursor-pointer
-                active:translate-y-[2px] active:shadow-none transition-all shadow-[2px_2px_0_rgba(0,0,0,0.08)]
-                hover:bg-gray-50 select-none"
+              className="bg-white border border-slate-200 rounded-xl h-16 flex flex-col items-center justify-center cursor-pointer
+                shadow-sm active:translate-y-[2px] active:shadow-none transition-all
+                hover:bg-slate-50 hover:border-slate-300 select-none"
             >
               {isDelete ? (
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-500">
                   <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z" />
                   <line x1="18" y1="9" x2="12" y2="15" />
                   <line x1="12" y1="9" x2="18" y2="15" />
                 </svg>
               ) : (
                 <>
-                  <span className="text-2xl font-bold text-black leading-none">{key}</span>
+                  <span className="text-2xl font-semibold text-slate-900 leading-none">{key}</span>
                   {SUB_LABELS[key] && (
-                    <span className="text-[9px] font-semibold text-gray-400 tracking-[0.15em] leading-none mt-0.5">
+                    <span className="text-[9px] font-medium text-slate-400 tracking-[0.15em] leading-none mt-0.5">
                       {SUB_LABELS[key]}
                     </span>
                   )}

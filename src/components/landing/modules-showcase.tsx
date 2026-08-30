@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import {
   Wifi, BookOpen, MessageSquare, ShoppingBag, ShieldCheck,
-  ClipboardList, Timer, UtensilsCrossed, Pill, StickyNote,
+  ClipboardList, Sparkles, DoorOpen, Briefcase, StickyNote,
   ExternalLink, Home, Mic, Tag, Megaphone, Ticket, Bell,
 } from 'lucide-react';
 
@@ -46,7 +46,7 @@ const MODULES: ModuleItem[] = [
   },
   {
     icon: <Home className="w-5 h-5" />,
-    name: 'Règles de la maison',
+    name: 'Règles du logement',
     description: 'Règles claires, zéro conflit.',
     gradient: 'from-amber-500 to-orange-600',
     category: 'essential',
@@ -61,15 +61,15 @@ const MODULES: ModuleItem[] = [
   {
     icon: <Mic className="w-5 h-5" />,
     name: 'Messages vocaux',
-    description: 'Laissez des notes vocales à la famille.',
-    gradient: 'from-violet-500 to-purple-600',
+    description: 'Vos invités vous laissent des messages vocaux.',
+    gradient: 'from-emerald-500 to-emerald-600',
     category: 'communication',
   },
   {
     icon: <MessageSquare className="w-5 h-5" />,
     name: 'Livre d\'or',
     description: 'Collectez les avis de vos invités.',
-    gradient: 'from-pink-500 to-fuchsia-600',
+    gradient: 'from-pink-500 to-emerald-600',
     category: 'communication',
   },
   {
@@ -89,28 +89,28 @@ const MODULES: ModuleItem[] = [
   {
     icon: <ClipboardList className="w-5 h-5" />,
     name: 'Tâches ménagères',
-    description: 'Attribuez et suivez les tâches du foyer.',
+    description: 'Attribuez et suivez les tâches de votre équipe.',
     gradient: 'from-sky-500 to-blue-600',
     category: 'organisation',
   },
   {
-    icon: <Timer className="w-5 h-5" />,
-    name: 'Minuteur',
-    description: 'Four, machine, cuisson : ne perdez rien.',
+    icon: <Sparkles className="w-5 h-5" />,
+    name: 'Upselling',
+    description: 'Proposez des extras et services en un scan.',
     gradient: 'from-orange-500 to-red-500',
     category: 'organisation',
   },
   {
-    icon: <UtensilsCrossed className="w-5 h-5" />,
-    name: 'Recettes',
-    description: 'Partagez vos recettes préférées.',
+    icon: <DoorOpen className="w-5 h-5" />,
+    name: 'Check-out',
+    description: 'Checklist de départ pour vos invités.',
     gradient: 'from-red-500 to-rose-600',
     category: 'organisation',
   },
   {
-    icon: <Pill className="w-5 h-5" />,
-    name: 'Médicaments',
-    description: 'Rappels et posologie accessibles.',
+    icon: <Briefcase className="w-5 h-5" />,
+    name: 'Prestataires',
+    description: 'Vos pros du logement à portée de scan.',
     gradient: 'from-teal-500 to-emerald-600',
     category: 'organisation',
   },
@@ -118,14 +118,14 @@ const MODULES: ModuleItem[] = [
     icon: <ExternalLink className="w-5 h-5" />,
     name: 'Lien externe',
     description: 'Redirigez vers n\'importe quel site.',
-    gradient: 'from-indigo-500 to-violet-600',
+    gradient: 'from-indigo-500 to-emerald-600',
     category: 'business',
   },
   {
     icon: <Tag className="w-5 h-5" />,
     name: 'Flash Sale',
     description: 'Promotions éphémères en un scan.',
-    gradient: 'from-fuchsia-500 to-pink-600',
+    gradient: 'from-emerald-500 to-pink-600',
     category: 'business',
   },
   {
@@ -160,7 +160,7 @@ export function ModulesShowcase() {
       style={{ background: 'linear-gradient(180deg, #020617 0%, #0f172a 50%, #020617 100%)' }}
     >
       {/* Ambient glow */}
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-violet-500/[0.03] rounded-full blur-[150px] pointer-events-none" />
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-emerald-500/[0.03] rounded-full blur-[150px] pointer-events-none" />
 
       <div className="max-w-6xl mx-auto relative z-10">
         {/* Section header */}
@@ -185,7 +185,7 @@ export function ModulesShowcase() {
                 key={cat.id}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-all cursor-default ${
                   cat.id === 'all'
-                    ? 'bg-violet-500/20 text-violet-300 border border-violet-500/30'
+                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
                     : 'bg-white/[0.04] text-white/40 border border-white/[0.06] hover:bg-white/[0.07] hover:text-white/60'
                 }`}
               >

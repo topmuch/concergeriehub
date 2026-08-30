@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, Lock, User, ArrowRight, Eye, EyeOff, Shield, Users, Copy, Check, QrCode, Smartphone, Home, Zap } from 'lucide-react';
+import { BrandLogo } from '@/components/ui/brand-logo';
 
 interface AuthFormProps {
   onSuccess: (role: string) => void;
@@ -119,7 +120,7 @@ export function AuthForm({ onSuccess, initialRegister }: AuthFormProps) {
             backgroundSize: '40px 40px',
           }} />
           {/* Gradient accent */}
-          <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-violet-500/10 rounded-full blur-[120px]" />
+          <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-emerald-500/10 rounded-full blur-[120px]" />
           <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-emerald-500/8 rounded-full blur-[100px]" />
 
           <div className="relative z-10 flex flex-col justify-center px-12 xl:px-20">
@@ -128,15 +129,15 @@ export function AuthForm({ onSuccess, initialRegister }: AuthFormProps) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
             >
-              <img src="/logo-ordomotik.png" alt="ORDOMOTIK" className="h-16 w-auto object-contain rounded-lg mb-8" />
+              <BrandLogo variant="light" size="lg" className="mb-8" />
               <h1 className="text-4xl xl:text-5xl font-bold text-white tracking-tight leading-tight">
-                La maison connectée{' '}
-                <span className="bg-gradient-to-r from-violet-400 to-emerald-400 bg-clip-text text-transparent">
+                La conciergerie digitale{' '}
+                <span className="bg-gradient-to-r from-emerald-400 to-emerald-400 bg-clip-text text-transparent">
                   commence par un QR
                 </span>
               </h1>
               <p className="mt-6 text-lg text-slate-400 max-w-lg leading-relaxed">
-                Scannez, configurez, controlez. ORDOMOTIK transforme chaque pièce en un point de commande intelligent pour votre habitat.
+                La conciergerie digitale de vos locations. Wi-Fi, guidebook, check-out et prestataires : une seule plaque QR pour vos invités, un tableau de bord pour vous.
               </p>
             </motion.div>
 
@@ -150,14 +151,14 @@ export function AuthForm({ onSuccess, initialRegister }: AuthFormProps) {
               {[
                 { icon: QrCode, label: 'QR Codes intelligents' },
                 { icon: Smartphone, label: 'Scan instantané' },
-                { icon: Home, label: 'Gestion multi-pièces' },
-                { icon: Zap, label: 'Domotique intégrée' },
+                { icon: Home, label: 'Gestion multi-logements' },
+                { icon: Zap, label: 'Prestataires intégrés' },
               ].map((f) => (
                 <div
                   key={f.label}
                   className="flex items-center gap-2 rounded-full border border-slate-700/50 bg-slate-800/40 px-4 py-2 text-sm text-slate-300"
                 >
-                  <f.icon className="h-4 w-4 text-violet-400" />
+                  <f.icon className="h-4 w-4 text-emerald-400" />
                   {f.label}
                 </div>
               ))}
@@ -171,7 +172,7 @@ export function AuthForm({ onSuccess, initialRegister }: AuthFormProps) {
               className="mt-12 flex gap-8"
             >
               {[
-                { value: '2 500+', label: 'Foyers connectés' },
+                { value: '2 500+', label: 'Hôtes connectés' },
                 { value: '15k+', label: 'QR Codes scannés/mois' },
                 { value: '99.9%', label: 'Disponibilité' },
               ].map((s) => (
@@ -188,7 +189,7 @@ export function AuthForm({ onSuccess, initialRegister }: AuthFormProps) {
         <div className="flex-1 flex flex-col">
           {/* Mobile header with logo */}
           <div className="lg:hidden flex items-center justify-center px-6 pt-6">
-            <img src="/logo-ordomotik.png" alt="ORDOMOTIK" className="h-10 w-auto object-contain rounded-lg" />
+            <BrandLogo variant="light" size="lg" />
           </div>
 
           <div className="flex-1 flex items-center justify-center px-6 py-8 lg:px-12">
@@ -204,7 +205,7 @@ export function AuthForm({ onSuccess, initialRegister }: AuthFormProps) {
                   {isLogin ? 'Connexion' : 'Créer un compte'}
                 </h2>
                 <p className="mt-2 text-sm text-slate-400">
-                  {isLogin ? 'Accédez à votre espace QR Domotik' : 'Rejoignez les 2 500+ foyers connectés'}
+                  {isLogin ? 'Accédez à votre espace Conciergerie Hub' : 'Rejoignez les 2 500+ hôtes qui automatisent leurs locations'}
                 </p>
               </div>
 
@@ -213,13 +214,16 @@ export function AuthForm({ onSuccess, initialRegister }: AuthFormProps) {
                 {DEPLOY_CREDENTIALS.map((cred) => {
                   const Icon = cred.icon;
                   return (
-                    <motion.button
+                    <motion.div
                       key={cred.email}
-                      type="button"
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`Remplir les identifiants ${cred.label}`}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => fillCredentials(cred)}
-                      className="relative overflow-hidden rounded-xl border border-slate-700/50 bg-slate-800/30 p-3 text-left transition-all hover:bg-slate-800/60 hover:border-slate-600/50"
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') fillCredentials(cred); }}
+                      className="relative overflow-hidden rounded-xl border border-slate-700/50 bg-slate-800/30 p-3 text-left transition-all hover:bg-slate-800/60 hover:border-slate-600/50 cursor-pointer"
                     >
                       <div className="flex items-center gap-2 mb-2">
                         <Icon className="h-4 w-4 text-slate-300" />
@@ -242,7 +246,7 @@ export function AuthForm({ onSuccess, initialRegister }: AuthFormProps) {
                           <Copy className="h-3 w-3 text-slate-500" />
                         )}
                       </button>
-                    </motion.button>
+                    </motion.div>
                   );
                 })}
               </div>
@@ -265,7 +269,7 @@ export function AuthForm({ onSuccess, initialRegister }: AuthFormProps) {
                             type="text"
                             value={fullName}
                             onChange={(e) => setFullName(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2.5 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/20 transition-all"
+                            className="w-full pl-10 pr-4 py-2.5 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 transition-all"
                             placeholder="Jean Dupont"
                             required={!isLogin}
                           />
@@ -282,7 +286,7 @@ export function AuthForm({ onSuccess, initialRegister }: AuthFormProps) {
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="w-full pl-10 pr-10 py-2.5 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/20 transition-all"
+                        className="w-full pl-10 pr-10 py-2.5 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 transition-all"
                         placeholder="vous@exemple.com"
                         required
                       />
@@ -309,7 +313,7 @@ export function AuthForm({ onSuccess, initialRegister }: AuthFormProps) {
                         type={showPassword ? 'text' : 'password'}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="w-full pl-10 pr-10 py-2.5 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/20 transition-all"
+                        className="w-full pl-10 pr-10 py-2.5 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 transition-all"
                         placeholder={isLogin ? 'Mot de passe' : '6 caractères minimum'}
                         required
                         minLength={6}
@@ -337,7 +341,7 @@ export function AuthForm({ onSuccess, initialRegister }: AuthFormProps) {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full py-3 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {loading ? (
                       <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -354,7 +358,7 @@ export function AuthForm({ onSuccess, initialRegister }: AuthFormProps) {
                   {isLogin ? 'Pas encore de compte ?' : 'Déjà un compte ?'}{' '}
                   <button
                     onClick={() => { setIsLogin(!isLogin); setError(''); }}
-                    className="text-violet-400 hover:text-violet-300 hover:underline font-medium transition-colors"
+                    className="text-emerald-400 hover:text-emerald-300 hover:underline font-medium transition-colors"
                   >
                     {isLogin ? "S'inscrire" : 'Se connecter'}
                   </button>
@@ -373,7 +377,7 @@ export function AuthForm({ onSuccess, initialRegister }: AuthFormProps) {
                     disabled={loading}
                     className="flex items-center justify-center gap-2 py-3 rounded-xl bg-slate-800/30 border border-slate-700/40 text-slate-300 hover:bg-slate-800/60 hover:text-white transition-all text-sm font-medium disabled:opacity-50"
                   >
-                    <Shield className="h-4 w-4 text-violet-400" />
+                    <Shield className="h-4 w-4 text-emerald-400" />
                     Super Admin
                   </button>
                   <button
@@ -393,10 +397,9 @@ export function AuthForm({ onSuccess, initialRegister }: AuthFormProps) {
           <div className="px-6 py-4 border-t border-slate-800/40">
             <div className="flex items-center justify-between text-xs text-slate-500">
               <div className="flex items-center gap-2">
-                <img src="/logo-ordomotik.png" alt="ORDOMOTIK" className="h-5 w-auto object-contain rounded opacity-40" />
-                <span>ORDOMOTIK</span>
+                <BrandLogo variant="light" size="sm" />
               </div>
-              <span>Smart Home Solutions</span>
+              <span>Conciergerie digitale pour hôtes</span>
             </div>
           </div>
         </div>

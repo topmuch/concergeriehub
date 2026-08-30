@@ -13,10 +13,13 @@ import {
   QRTProgressBar,
   QRTNumericKeypad,
 } from '@/components/qrtags';
+import { BrandLogo } from '@/components/ui/brand-logo';
+import { EmojiIcon } from '@/components/ui/emoji-icon';
+import { ProgressBar } from '@/components/ui/progress-bar';
 
 // ── Types ──
 type TokenStatus = 'loading' | 'available' | 'claimed' | 'not_found' | 'error';
-type SetupStep = 'welcome' | 'account' | 'pin' | 'config' | 'success';
+type SetupStep = 'welcome' | 'type' | 'info' | 'pin' | 'config' | 'success';
 
 interface PlaqueInfo {
   id: string;
@@ -25,30 +28,40 @@ interface PlaqueInfo {
   quantity: number;
 }
 
-// ── Plans (QRTags: emojis instead of Lucide) ──
-const PLANS = [
+// ── Types de logement (B2B) ──
+interface PropertyTypeOption {
+  propertyType: 'AIRBNB' | 'GITE' | 'AGENCY_VIEW';
+  plan: 'airbnb_solo' | 'agency';
+  emoji: string;
+  name: string;
+  description: string;
+  planLabel: string;
+}
+
+const PROPERTY_TYPES: PropertyTypeOption[] = [
   {
-    id: 'famille' as const,
-    name: 'Famille',
-    price: '49\u20ac',
-    period: '/an',
-    emoji: '\uD83C\uDFE0',
+    propertyType: 'AIRBNB',
+    plan: 'airbnb_solo',
+    emoji: '🏠',
+    name: 'Airbnb',
+    description: 'Location courte durée, appartement ou maison entière',
+    planLabel: 'Airbnb Solo — 9,90€/mois',
   },
   {
-    id: 'airbnb_solo' as const,
-    name: 'Airbnb Solo',
-    price: '9,90\u20ac',
-    period: '/mois',
-    emoji: '\uD83C\uDFE8',
-    popular: true,
+    propertyType: 'GITE',
+    plan: 'airbnb_solo',
+    emoji: '🏨',
+    name: 'Gîte & Chambre d\u2019hôtes',
+    description: 'Tourisme indépendant, maisons d\u2019hôtes et hébergements ruraux',
+    planLabel: 'Airbnb Solo — 9,90€/mois',
   },
   {
-    id: 'airbnb_pro' as const,
-    name: 'Airbnb Pro',
-    price: '199\u20ac',
-    period: '/an',
-    badge: '\u00C9conomisez 19\u20ac',
-    emoji: '\uD83C\uDFE8',
+    propertyType: 'AGENCY_VIEW',
+    plan: 'agency',
+    emoji: '🏢',
+    name: 'Gestion multi-biens',
+    description: 'Agence immobilière, co-hôtellerie, gestionnaire de plusieurs logements',
+    planLabel: 'Agence — 49€/mois · jusqu\u2019à 10 biens',
   },
 ];
 
@@ -74,18 +87,20 @@ const fadeUp = {
   exit: { opacity: 0, y: -10 },
 };
 
-// ── QRTags input class ──
-const qrtInput =
-  'w-full bg-gray-50 border-2 border-black rounded-[8px] p-3.5 text-sm text-black placeholder:text-black/30 focus:outline-none focus:border-[#6D28D9] focus:bg-white transition-all';
+// ── B2B input / label classes ──
+const b2bInput =
+  'w-full bg-white border border-slate-300 rounded-xl p-3.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/10 transition-all';
+const b2bLabel =
+  'text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5 block';
 
 // ── Step metadata for progress bar ──
-const STEP_TITLES: Record<SetupStep, { title: string; label: string }> = {
-  welcome: { title: 'BIENVENUE', label: '' },
-  account: { title: 'VOS INFORMATIONS', label: '' },
-  pin: { title: 'CODE SECRET', label: '' },
-  config: { title: 'CONFIGURATION', label: '' },
-  success: { title: '', label: '' },
+const STEP_TITLES: Record<Exclude<SetupStep, 'welcome' | 'success'>, string> = {
+  type: 'TYPE DE LOGEMENT',
+  info: 'VOTRE LOGEMENT',
+  pin: 'CODE HÔTE',
+  config: 'CONFIGURATION',
 };
+const WIZARD_STEPS: Exclude<SetupStep, 'welcome' | 'success'>[] = ['type', 'info', 'pin', 'config'];
 
 // ── Component ──
 export function SetupPageContent({ params }: { params: Promise<{ token: string }> }) {
@@ -108,13 +123,20 @@ export function SetupPageContent({ params }: { params: Promise<{ token: string }
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
+  // Property type
+  const [selectedType, setSelectedType] = useState<PropertyTypeOption | null>(null);
+
+  // Property info
+  const [homeName, setHomeName] = useState('');
+  const [address, setAddress] = useState('');
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [locating, setLocating] = useState(false);
+
   // PIN
   const [pinKey, setPinKey] = useState(0);
   const [pinValue, setPinValue] = useState('');
 
   // Config
-  const [selectedPlan, setSelectedPlan] = useState<string>('famille');
-  const [homeName, setHomeName] = useState('');
   const [wifiSsid, setWifiSsid] = useState('');
   const [wifiPassword, setWifiPassword] = useState('');
   const [emergencyPhone, setEmergencyPhone] = useState('');
@@ -158,7 +180,7 @@ export function SetupPageContent({ params }: { params: Promise<{ token: string }
   }, [session]);
 
   // ── Step navigation ──
-  const stepOrder: SetupStep[] = ['welcome', 'account', 'pin', 'config', 'success'];
+  const stepOrder: SetupStep[] = ['welcome', 'type', 'info', 'pin', 'config', 'success'];
 
   const goNext = () => {
     setDirection(1);
@@ -173,14 +195,57 @@ export function SetupPageContent({ params }: { params: Promise<{ token: string }
   };
 
   // ── Validate & navigate ──
-  const handleWelcomeNext = () => goNext();
+  const handleWelcomeNext = () => {
+    if (!selectedType) {
+      // Pass direct à l'étape type
+      setDirection(1);
+      setStep('type');
+      return;
+    }
+    goNext();
+  };
 
-  const handleAccountNext = () => {
+  const handleTypeSelect = (option: PropertyTypeOption) => {
+    setSelectedType(option);
+  };
+
+  const handleTypeNext = () => {
+    if (!selectedType) {
+      toast.error('Choisissez un type de logement');
+      return;
+    }
+    goNext();
+  };
+
+  // ── Geolocation ──
+  const handleLocate = () => {
+    if (!navigator.geolocation) {
+      toast.error('Géolocalisation non disponible sur cet appareil');
+      return;
+    }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setCoords({ lat: Number(pos.coords.latitude.toFixed(5)), lng: Number(pos.coords.longitude.toFixed(5)) });
+        setLocating(false);
+        toast.success('Position enregistrée — vos prestataires locaux seront priorisés');
+      },
+      () => {
+        setLocating(false);
+        toast.error('Impossible d\u2019obtenir la position. Renseignez l\u2019adresse manuellement.');
+      },
+      { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 },
+    );
+  };
+
+  const handleInfoNext = () => {
     if (!fullName.trim()) { toast.error('Entrez votre nom'); return; }
     if (!email.trim() || !email.includes('@')) { toast.error('Email invalide'); return; }
     if (!session?.user && (!password || password.length < 6)) {
-      toast.error('Mot de passe requis (6+ caract\u00E8res)'); return;
+      toast.error('Mot de passe requis (6+ caractères)');
+      return;
     }
+    if (!homeName.trim()) { toast.error('Nommez votre logement'); return; }
     goNext();
   };
 
@@ -190,19 +255,25 @@ export function SetupPageContent({ params }: { params: Promise<{ token: string }
   };
 
   const handleConfigSubmit = async () => {
-    if (!homeName.trim()) { toast.error('Nommez votre logement'); return; }
-    if (!PLANS.find((p) => p.id === selectedPlan)) { toast.error('Choisissez un plan'); return; }
+    if (!selectedType) { toast.error('Type de logement manquant'); return; }
+    if (!pinValue) { toast.error('Définissez votre code hôte'); goBack(); return; }
 
     setSubmitting(true);
     try {
-      const body: Record<string, string> = {
+      const body: Record<string, string | number> = {
         email: email.trim(),
         fullName: fullName.trim(),
         pin: pinValue,
         homeName: homeName.trim(),
-        plan: selectedPlan,
+        plan: selectedType.plan,
+        propertyType: selectedType.propertyType === 'AGENCY_VIEW' ? 'AIRBNB' : selectedType.propertyType,
       };
 
+      if (address.trim()) body.address = address.trim();
+      if (coords) {
+        body.latitude = coords.lat;
+        body.longitude = coords.lng;
+      }
       if (wifiSsid.trim()) body.wifiSsid = wifiSsid.trim();
       if (wifiPassword.trim()) body.wifiPassword = wifiPassword.trim();
       if (emergencyPhone.trim()) body.emergencyPhone = emergencyPhone.trim();
@@ -242,11 +313,11 @@ export function SetupPageContent({ params }: { params: Promise<{ token: string }
             });
             if (loginRes.ok) window.location.href = '/';
           } catch { /* stay on success page */ }
-        }, 3000);
+        }, 4000);
       } else {
         setTimeout(() => {
-          window.location.href = data.hubSlug ? `/hub/${data.hubSlug}` : '/';
-        }, 3000);
+          window.location.href = '/';
+        }, 4000);
       }
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Erreur';
@@ -257,18 +328,18 @@ export function SetupPageContent({ params }: { params: Promise<{ token: string }
   };
 
   // ── Progress ──
-  const currentIdx = stepOrder.indexOf(step);
+  const wizardIdx = WIZARD_STEPS.indexOf(step as Exclude<SetupStep, 'welcome' | 'success'>);
 
   // ── Loading state ──
   if (tokenStatus === 'loading') {
     return (
-      <div className="min-h-screen bg-[#8B5CF6] flex items-center justify-center">
+      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-16 h-16 bg-white border-2 border-black rounded-[12px] shadow-[4px_4px_0_rgba(0,0,0,0.08)] flex items-center justify-center">
-            <span className="text-3xl">\uD83D\uDFE8</span>
+          <div className="w-16 h-16 bg-white border border-slate-200 rounded-2xl shadow-sm flex items-center justify-center">
+            <span className="text-3xl">🗝️</span>
           </div>
-          <p className="text-white/80 font-bold text-sm">V\u00E9rification de votre plaque...</p>
-          <p className="text-xs text-white/40 font-mono">{token}</p>
+          <p className="text-slate-600 font-semibold text-sm">Vérification de votre plaque...</p>
+          <p className="text-xs text-slate-400 font-mono">{token}</p>
         </div>
       </div>
     );
@@ -278,23 +349,23 @@ export function SetupPageContent({ params }: { params: Promise<{ token: string }
   if (tokenStatus === 'not_found' || tokenStatus === 'error') {
     const isError = tokenStatus === 'error';
     return (
-      <div className="min-h-screen bg-[#8B5CF6] flex items-center justify-center p-4">
+      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-4">
         <div className="w-full max-w-sm">
           <QRTCard className="text-center">
             <div className="mb-4">
-              <span className="text-5xl">{isError ? '\u26A0\uFE0F' : '\u274C'}</span>
+              <EmojiIcon emoji={isError ? '⚠️' : '❌'} size="xl" variant="plain" className="mx-auto" />
             </div>
-            <h1 className="text-lg font-extrabold text-black mb-1">
-              {isError ? 'Erreur' : 'Plaque non trouv\u00E9e'}
+            <h1 className="text-lg font-bold text-slate-900 mb-1">
+              {isError ? 'Erreur' : 'Plaque non trouvée'}
             </h1>
-            <p className="text-xs text-black/40 font-mono mb-1">{token}</p>
-            <p className="text-sm text-black/60 mb-6">
+            <p className="text-xs text-slate-400 font-mono mb-1">{token}</p>
+            <p className="text-sm text-slate-600 mb-6">
               {isError
-                ? 'Impossible de v\u00E9rifier la plaque. R\u00E9essayez.'
-                : "Ce code d'activation n'existe pas. V\u00E9rifiez votre plaque et r\u00E9essayez."}
+                ? 'Impossible de vérifier la plaque. Réessayez.'
+                : "Ce code d'activation n'existe pas. Vérifiez votre plaque et réessayez."}
             </p>
             <QRTButton onClick={() => { setTokenStatus('loading'); checkToken(); }}>
-              R\u00E9essayer \u2192
+              Réessayer →
             </QRTButton>
           </QRTCard>
         </div>
@@ -305,28 +376,28 @@ export function SetupPageContent({ params }: { params: Promise<{ token: string }
   // ── Already claimed ──
   if (tokenStatus === 'claimed') {
     return (
-      <div className="min-h-screen bg-[#8B5CF6] flex items-center justify-center p-4">
+      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-4">
         <div className="w-full max-w-sm">
           <QRTCard className="text-center">
             <div className="mb-4">
-              <span className="text-5xl">\u2705</span>
+              <EmojiIcon emoji="✅" size="xl" variant="plain" className="mx-auto" />
             </div>
-            <h1 className="text-lg font-extrabold text-black mb-2">Plaque d\u00E9j\u00E0 configur\u00E9e</h1>
+            <h1 className="text-lg font-bold text-slate-900 mb-2">Plaque déjà configurée</h1>
             {claimedInfo.homeName && (
-              <p className="text-sm text-black/60 mb-1">
-                Logement : <span className="font-bold">{claimedInfo.homeName}</span>
+              <p className="text-sm text-slate-600 mb-1">
+                Logement : <span className="font-semibold">{claimedInfo.homeName}</span>
               </p>
             )}
-            <p className="text-sm text-black/40 mb-6">Cette plaque est d\u00E9j\u00E0 li\u00E9e \u00E0 un compte.</p>
+            <p className="text-sm text-slate-500 mb-6">Cette plaque est déjà liée à un compte.</p>
             {claimedInfo.hubSlug && (
               <div className="mb-3">
                 <QRTButton onClick={() => router.push(`/hub/${claimedInfo.hubSlug}`)}>
-                  Acc\u00E9der au Hub \u2192
+                  Accéder au Hub →
                 </QRTButton>
               </div>
             )}
             <QRTButton variant="secondary" onClick={() => router.push('/')}>
-              Aller \u00E0 l'accueil
+              Aller à l'accueil
             </QRTButton>
           </QRTCard>
         </div>
@@ -336,26 +407,26 @@ export function SetupPageContent({ params }: { params: Promise<{ token: string }
 
   // ── Main multi-step wizard ──
   return (
-    <div className="min-h-screen bg-[#8B5CF6] flex flex-col">
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col">
       {/* Header */}
       <div className="w-full px-5 pt-[max(1.25rem,env(safe-area-inset-top))] pb-3">
         <div className="max-w-md mx-auto">
           {/* Logo + step indicator */}
-          <div className="flex items-center justify-between mb-3">
-            <img src="/logo-ordomotik.png" alt="ORDOMOTIK" className="h-9 w-auto object-contain rounded-lg" />
-            {step !== 'success' && (
-              <span className="text-[11px] font-bold text-white/60">
-                \u00C9tape {currentIdx + 1} / 4
+          <div className="flex items-center justify-between mb-4">
+            <BrandLogo size="sm" />
+            {wizardIdx >= 0 && (
+              <span className="text-xs font-semibold text-slate-500">
+                Étape {wizardIdx + 1} / 4
               </span>
             )}
           </div>
 
-          {/* Progress bar (only during steps, not welcome) */}
-          {step !== 'welcome' && step !== 'success' && (
+          {/* Progress bar (only during wizard steps) */}
+          {wizardIdx >= 0 && (
             <QRTProgressBar
-              currentStep={currentIdx}
+              currentStep={wizardIdx + 1}
               totalSteps={4}
-              stepTitle={STEP_TITLES[step].title}
+              stepTitle={STEP_TITLES[step as Exclude<SetupStep, 'welcome' | 'success'>]}
             />
           )}
         </div>
@@ -366,7 +437,7 @@ export function SetupPageContent({ params }: { params: Promise<{ token: string }
         <div className="w-full max-w-md relative overflow-hidden">
           <AnimatePresence mode="wait" custom={direction}>
 
-            {/* ===== STEP 1: WELCOME ===== */}
+            {/* ===== STEP 0: WELCOME ===== */}
             {step === 'welcome' && (
               <motion.div
                 key="welcome"
@@ -385,30 +456,28 @@ export function SetupPageContent({ params }: { params: Promise<{ token: string }
                   transition={{ type: 'spring', duration: 0.6 }}
                   className="mx-auto"
                 >
-                  <div className="w-20 h-20 bg-white border-2 border-black rounded-[16px] shadow-[4px_4px_0_rgba(0,0,0,0.08)] flex items-center justify-center">
-                    <span className="text-5xl">\uD83C\uDFE0</span>
-                  </div>
+                  <EmojiIcon emoji="🗝️" size="xl" variant="accent" className="mx-auto" />
                 </motion.div>
 
                 <motion.div initial={fadeUp.initial} animate={fadeUp.animate} transition={{ delay: 0.15 }}>
-                  <h1 className="text-2xl font-extrabold text-white mb-2">
-                    Bienvenue ! \uD83C\uDF89
+                  <h1 className="text-2xl font-bold text-slate-900 mb-2">
+                    Bienvenue ! 🎉
                   </h1>
-                  <p className="text-white/70 text-sm leading-relaxed">
-                    Votre QR Domotik Hub est pr\u00EAt \u00E0 \u00EAtre configur\u00E9.<br />
+                  <p className="text-slate-600 text-sm leading-relaxed">
+                    Votre plaque <span className="font-semibold text-slate-900">Conciergerie Hub</span> est prête à être configurée.<br />
                     Cela ne prend que 2 minutes.
                   </p>
                 </motion.div>
 
-                {/* Feature pills in QRTags cards */}
+                {/* Feature pills */}
                 <motion.div
                   initial={fadeUp.initial} animate={fadeUp.animate} transition={{ delay: 0.25 }}
                   className="grid grid-cols-3 gap-3"
                 >
                   {[
-                    { emoji: '\uD83D\uDCF1', label: 'Wi-Fi' },
-                    { emoji: '\uD83D\uDEE1\uFE0F', label: 'S\u00E9curit\u00E9' },
-                    { emoji: '\uD83D\uDC68\u200D\uD83D\uDC69\u200D\uD83D\uDC67\u200D\uD83D\uDC66', label: 'Famille' },
+                    { emoji: '📶', label: 'Wi-Fi invités' },
+                    { emoji: '📖', label: 'Guidebook' },
+                    { emoji: '🛎️', label: 'Prestataires' },
                   ].map((item, i) => (
                     <motion.div
                       key={item.label}
@@ -416,9 +485,9 @@ export function SetupPageContent({ params }: { params: Promise<{ token: string }
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.3 + i * 0.08 }}
                     >
-                      <div className="bg-white border-2 border-black rounded-[10px] py-3 px-2 text-center shadow-[3px_3px_0_rgba(0,0,0,0.08)]">
+                      <div className="bg-white border border-slate-200 rounded-xl py-3 px-2 text-center shadow-sm">
                         <span className="text-2xl block mb-1">{item.emoji}</span>
-                        <span className="text-[11px] font-bold text-black/70">{item.label}</span>
+                        <span className="text-[11px] font-semibold text-slate-600">{item.label}</span>
                       </div>
                     </motion.div>
                   ))}
@@ -429,26 +498,26 @@ export function SetupPageContent({ params }: { params: Promise<{ token: string }
                   <motion.div
                     initial={fadeUp.initial} animate={fadeUp.animate} transition={{ delay: 0.4 }}
                   >
-                    <div className="inline-flex items-center gap-2 bg-white/15 border border-white/25 rounded-[8px] px-4 py-2">
-                      <span className="text-sm">\uD83D\uDFE8</span>
-                      <span className="text-xs font-mono text-white/70">{plaqueInfo.activationCode}</span>
+                    <div className="inline-flex items-center gap-2 bg-white border border-slate-200 rounded-lg px-4 py-2 shadow-sm">
+                      <span className="text-sm">🏷️</span>
+                      <span className="text-xs font-mono text-slate-500">{plaqueInfo.activationCode}</span>
                     </div>
                   </motion.div>
                 )}
 
                 {/* CTA */}
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
-                  <QRTButton onClick={handleWelcomeNext}>
-                    Commencer la configuration \u2192
+                  <QRTButton variant="accent" onClick={handleWelcomeNext}>
+                    Commencer la configuration →
                   </QRTButton>
                 </motion.div>
               </motion.div>
             )}
 
-            {/* ===== STEP 2: ACCOUNT ===== */}
-            {step === 'account' && (
+            {/* ===== STEP 1: PROPERTY TYPE ===== */}
+            {step === 'type' && (
               <motion.div
-                key="account"
+                key="type"
                 custom={direction}
                 variants={slideVariants}
                 initial="enter"
@@ -462,102 +531,214 @@ export function SetupPageContent({ params }: { params: Promise<{ token: string }
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     transition={{ delay: 0.1, type: 'spring' }}
-                    className="mx-auto mb-3 w-14 h-14 bg-white border-2 border-black rounded-[12px] shadow-[3px_3px_0_rgba(0,0,0,0.08)] flex items-center justify-center"
+                    className="mx-auto mb-3"
                   >
-                    <span className="text-2xl">\uD83D\uDC64</span>
+                    <EmojiIcon emoji="🏘️" size="lg" />
                   </motion.div>
-                  <h2 className="text-xl font-extrabold text-white">Cr\u00E9ez votre compte</h2>
-                  <p className="text-white/60 text-sm mt-1">
-                    {session?.user ? 'Connect\u00E9 en tant que' : 'Informations de connexion'}
+                  <h2 className="text-xl font-bold text-slate-900">Votre logement</h2>
+                  <p className="text-slate-500 text-sm mt-1">
+                    Quel type de bien gérez-vous ?
                   </p>
                 </div>
 
-                {/* Google button */}
-                {!session?.user && (
-                  <motion.button
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.15 }}
-                    className="w-full py-3.5 px-5 rounded-[8px] text-sm font-bold flex items-center justify-center gap-3 border-2 border-black bg-white text-black hover:bg-gray-50 active:translate-y-[2px] active:shadow-[1px_1px_0_rgba(0,0,0,0.08)] shadow-[3px_3px_0_rgba(0,0,0,0.08)] transition-all cursor-pointer"
+                {/* Type cards */}
+                <div className="space-y-3">
+                  {PROPERTY_TYPES.map((option, i) => {
+                    const isSelected =
+                      selectedType?.propertyType === option.propertyType && selectedType?.plan === option.plan;
+                    return (
+                      <motion.button
+                        key={option.name}
+                        type="button"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.15 + i * 0.08 }}
+                        onClick={() => handleTypeSelect(option)}
+                        className={`w-full text-left bg-white border rounded-xl p-4 flex items-center gap-4 transition-all cursor-pointer ${
+                          isSelected
+                            ? 'border-emerald-600 ring-2 ring-emerald-600/15 shadow-md'
+                            : 'border-slate-200 shadow-sm hover:border-slate-300 hover:shadow'
+                        }`}
+                        aria-pressed={isSelected}
+                      >
+                        <EmojiIcon emoji={option.emoji} size="lg" variant={isSelected ? 'accent' : 'default'} />
+                        <span className="flex-1 min-w-0">
+                          <span className="block text-sm font-semibold text-slate-900">{option.name}</span>
+                          <span className="block text-xs text-slate-500 mt-0.5 leading-relaxed">{option.description}</span>
+                          <span className={`inline-block mt-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-full ${
+                            isSelected ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-50 text-slate-500 border border-slate-200'
+                          }`}>
+                            {option.planLabel}
+                          </span>
+                        </span>
+                        {/* Radio dot */}
+                        <span className={`h-5 w-5 rounded-full border-2 shrink-0 flex items-center justify-center transition-colors ${
+                          isSelected ? 'border-emerald-600' : 'border-slate-300'
+                        }`}>
+                          {isSelected && <span className="h-2.5 w-2.5 rounded-full bg-emerald-600" />}
+                        </span>
+                      </motion.button>
+                    );
+                  })}
+                </div>
+
+                {/* Note */}
+                <p className="text-center text-xs text-slate-400 leading-relaxed px-4">
+                  📍 Votre adresse servira à trouver les meilleurs prestataires autour du logement.
+                  Essai gratuit de 14 jours, sans engagement.
+                </p>
+
+                <QRTActions onPrevious={goBack} onNext={handleTypeNext} nextAccent nextLabel="Continuer →" />
+              </motion.div>
+            )}
+
+            {/* ===== STEP 2: PROPERTY INFO (+ host account) ===== */}
+            {step === 'info' && (
+              <motion.div
+                key="info"
+                custom={direction}
+                variants={slideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ duration: 0.3, ease: 'easeInOut' }}
+                className="space-y-5"
+              >
+                <div className="text-center">
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.1, type: 'spring' }}
+                    className="mx-auto mb-3"
                   >
-                    <svg className="w-5 h-5" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-                    <span>Continuer avec Google</span>
-                  </motion.button>
-                )}
+                    <EmojiIcon emoji="📝" size="lg" />
+                  </motion.div>
+                  <h2 className="text-xl font-bold text-slate-900">Informations du logement</h2>
+                  <p className="text-slate-500 text-sm mt-1">
+                    {session?.user ? 'Complétez les informations de votre bien' : 'Votre compte hôte et votre bien'}
+                  </p>
+                </div>
 
-                {/* Divider */}
-                {!session?.user && (
-                  <div className="flex items-center gap-3">
-                    <div className="flex-1 h-px bg-white/20" />
-                    <span className="text-xs font-bold text-white/40">ou</span>
-                    <div className="flex-1 h-px bg-white/20" />
-                  </div>
-                )}
-
-                {/* Form fields in QRTCard */}
-                <QRTCard>
+                {/* Host account (QRTCard) */}
+                <QRTCard header={{ emoji: '👤', title: session?.user ? 'Votre compte' : 'Créez votre compte hôte' }}>
                   <div className="space-y-4">
                     {/* Full name */}
-                    <motion.div initial={fadeUp.initial} animate={fadeUp.animate} transition={{ delay: 0.2 }}>
-                      <label className="text-[11px] font-bold text-black/50 uppercase tracking-wider mb-1.5 block">
-                        \uD83D\uDC64 Nom complet
-                      </label>
+                    <div>
+                      <label className={b2bLabel} htmlFor="setup-fullname">Nom complet</label>
                       <input
+                        id="setup-fullname"
                         type="text"
                         placeholder="Jean Dupont"
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
-                        className={qrtInput}
+                        className={b2bInput}
                       />
-                    </motion.div>
+                    </div>
 
                     {/* Email */}
-                    <motion.div initial={fadeUp.initial} animate={fadeUp.animate} transition={{ delay: 0.25 }}>
-                      <label className="text-[11px] font-bold text-black/50 uppercase tracking-wider mb-1.5 block">
-                        \u2709\uFE0F Email
-                      </label>
+                    <div>
+                      <label className={b2bLabel} htmlFor="setup-email">Email</label>
                       <input
+                        id="setup-email"
                         type="email"
                         placeholder="jean@exemple.com"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         disabled={!!session?.user}
-                        className={`${qrtInput} disabled:opacity-40 disabled:cursor-not-allowed`}
+                        className={`${b2bInput} disabled:opacity-40 disabled:cursor-not-allowed`}
                       />
-                    </motion.div>
+                    </div>
 
                     {/* Password */}
                     {!session?.user && (
-                      <motion.div initial={fadeUp.initial} animate={fadeUp.animate} transition={{ delay: 0.3 }}>
-                        <label className="text-[11px] font-bold text-black/50 uppercase tracking-wider mb-1.5 block">
-                          \uD83D\uDD12 Mot de passe
-                        </label>
+                      <div>
+                        <label className={b2bLabel} htmlFor="setup-password">Mot de passe</label>
                         <div className="relative">
                           <input
+                            id="setup-password"
                             type={showPassword ? 'text' : 'password'}
-                            placeholder="6 caract\u00E8res minimum"
+                            placeholder="6 caractères minimum"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className={qrtInput}
+                            className={`${b2bInput} pr-12`}
                           />
                           <button
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-black/30 hover:text-black/60 transition-colors"
+                            aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
                           >
-                            <span className="text-base">{showPassword ? '\uD83D\uDC41\u200D\u2B07\uFE0F' : '\uD83D\uDC41'}</span>
+                            <span className="text-base">{showPassword ? '🙈' : '👁️'}</span>
                           </button>
                         </div>
-                      </motion.div>
+                      </div>
                     )}
                   </div>
                 </QRTCard>
 
-                <QRTActions onPrevious={goBack} onNext={handleAccountNext} />
+                {/* Property info (QRTCard) */}
+                <QRTCard header={{ emoji: '🏡', title: 'Votre logement', badge: selectedType?.name }}>
+                  <div className="space-y-4">
+                    {/* Property name */}
+                    <div>
+                      <label className={b2bLabel} htmlFor="setup-homename">Nom de l'annonce</label>
+                      <input
+                        id="setup-homename"
+                        type="text"
+                        placeholder="ex : Loft Canal Saint-Martin"
+                        value={homeName}
+                        onChange={(e) => setHomeName(e.target.value)}
+                        className={b2bInput}
+                      />
+                    </div>
+
+                    {/* Address */}
+                    <div>
+                      <label className={b2bLabel} htmlFor="setup-address">Adresse précise</label>
+                      <input
+                        id="setup-address"
+                        type="text"
+                        placeholder="12 rue de la Paix, 75002 Paris"
+                        value={address}
+                        onChange={(e) => setAddress(e.target.value)}
+                        className={b2bInput}
+                      />
+                      <p className="text-[11px] text-slate-400 mt-1.5 leading-relaxed">
+                        📍 Utilisée pour localiser les prestataires près du logement (ménage, maintenance…)
+                      </p>
+                    </div>
+
+                    {/* Geolocate button */}
+                    <button
+                      type="button"
+                      onClick={handleLocate}
+                      disabled={locating}
+                      className="w-full flex items-center justify-center gap-2 border border-slate-300 bg-white rounded-xl py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-400 transition-all cursor-pointer disabled:opacity-50"
+                    >
+                      {locating ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Localisation...
+                        </>
+                      ) : coords ? (
+                        <>
+                          ✅ Position enregistrée
+                          <span className="text-xs font-mono text-slate-400">
+                            ({coords.lat}, {coords.lng})
+                          </span>
+                        </>
+                      ) : (
+                        <>📍 Utiliser ma position actuelle</>
+                      )}
+                    </button>
+                  </div>
+                </QRTCard>
+
+                <QRTActions onPrevious={goBack} onNext={handleInfoNext} nextAccent nextLabel="Continuer →" />
               </motion.div>
             )}
 
-            {/* ===== STEP 3: PIN ===== */}
+            {/* ===== STEP 3: HOST PIN ===== */}
             {step === 'pin' && (
               <motion.div
                 key={`pin-${pinKey}`}
@@ -574,17 +755,17 @@ export function SetupPageContent({ params }: { params: Promise<{ token: string }
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     transition={{ delay: 0.1, type: 'spring' }}
-                    className="mx-auto mb-3 w-14 h-14 bg-white border-2 border-black rounded-[12px] shadow-[3px_3px_0_rgba(0,0,0,0.08)] flex items-center justify-center"
+                    className="mx-auto mb-3"
                   >
-                    <span className="text-2xl">\uD83D\uDD11</span>
+                    <EmojiIcon emoji="🔐" size="lg" variant="accent" />
                   </motion.div>
-                  <h2 className="text-xl font-extrabold text-white">Cr\u00E9ez votre code secret</h2>
-                  <p className="text-white/60 text-sm mt-1">
-                    Ce code \u00E0 4 chiffres prot\u00E9gera l&rsquo;acc\u00E8s \u00E0 votre espace Famille
+                  <h2 className="text-xl font-bold text-slate-900">Créez votre code hôte</h2>
+                  <p className="text-slate-500 text-sm mt-1">
+                    Ce code à 4 chiffres protège votre <span className="font-semibold text-slate-700">Mode Hôte</span> sur l'écran du logement
                   </p>
                 </div>
 
-                {/* QRTags numeric keypad inside a card */}
+                {/* Numeric keypad inside a card */}
                 <QRTCard className="flex items-center justify-center">
                   <QRTNumericKeypad
                     key={pinKey}
@@ -607,7 +788,7 @@ export function SetupPageContent({ params }: { params: Promise<{ token: string }
               </motion.div>
             )}
 
-            {/* ===== STEP 4: CONFIG ===== */}
+            {/* ===== STEP 4: QUICK CONFIG ===== */}
             {step === 'config' && (
               <motion.div
                 key="config"
@@ -624,137 +805,96 @@ export function SetupPageContent({ params }: { params: Promise<{ token: string }
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     transition={{ delay: 0.1, type: 'spring' }}
-                    className="mx-auto mb-3 w-14 h-14 bg-white border-2 border-black rounded-[12px] shadow-[3px_3px_0_rgba(0,0,0,0.08)] flex items-center justify-center"
+                    className="mx-auto mb-3"
                   >
-                    <span className="text-2xl">\u2699\uFE0F</span>
+                    <EmojiIcon emoji="⚡" size="lg" />
                   </motion.div>
-                  <h2 className="text-xl font-extrabold text-white">Configuration rapide</h2>
-                  <p className="text-white/60 text-sm mt-1">
-                    {selectedPlan === 'famille'
-                      ? 'Configurez le Wi-Fi pour votre famille'
-                      : 'Param\u00E9trez votre logement Airbnb'}
+                  <h2 className="text-xl font-bold text-slate-900">Configuration rapide</h2>
+                  <p className="text-slate-500 text-sm mt-1">
+                    Le Wi-Fi et le Guidebook — modifiables à tout moment
                   </p>
                 </div>
 
-                {/* Plan selector in QRTags cards */}
-                <motion.div initial={fadeUp.initial} animate={fadeUp.animate} transition={{ delay: 0.15 }}>
-                  <label className="text-[11px] font-bold text-white/50 uppercase tracking-wider mb-2 block">
-                    \uD83C\uDFF7\uFE0F Votre offre
-                  </label>
-                  <div className="grid grid-cols-3 gap-3">
-                    {PLANS.map((plan) => {
-                      const isSelected = selectedPlan === plan.id;
-                      return (
-                        <button
-                          key={plan.id}
-                          type="button"
-                          onClick={() => setSelectedPlan(plan.id)}
-                          className={`relative border-2 rounded-[12px] p-3 text-center transition-all active:translate-y-[2px] cursor-pointer ${
-                            isSelected
-                              ? 'bg-white border-black shadow-[3px_3px_0_rgba(0,0,0,0.08)]'
-                              : 'bg-white/50 border-black/20 hover:bg-white/70'
-                          }`}
-                        >
-                          <span className="text-2xl block mb-1">{plan.emoji}</span>
-                          <p className={`text-xs font-bold ${isSelected ? 'text-black' : 'text-black/50'}`}>
-                            {plan.name}
-                          </p>
-                          <p className="text-[10px] text-black/40 mt-0.5 font-semibold">
-                            {plan.price}{plan.period}
-                          </p>
-                          {'popular' in plan && plan.popular && (
-                            <span className="absolute -top-1.5 -right-1.5 text-[8px] font-extrabold bg-[#6D28D9] text-white px-1.5 py-0.5 rounded-[4px] border border-black">
-                              TOP
-                            </span>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </motion.div>
-
-                {/* Home name */}
-                <motion.div initial={fadeUp.initial} animate={fadeUp.animate} transition={{ delay: 0.2 }}>
-                  <label className="text-[11px] font-bold text-white/50 uppercase tracking-wider mb-1.5 block">
-                    \uD83C\uDFE0 Nom du logement
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="ex: Maison Dupont, Appart Paris 15..."
-                    value={homeName}
-                    onChange={(e) => setHomeName(e.target.value)}
-                    className={qrtInput}
-                  />
-                </motion.div>
-
-                {/* Adaptive fields: Wi-Fi or Emergency */}
-                {selectedPlan === 'famille' ? (
-                  <QRTCard header={{ emoji: '\uD83D\uDCF1', title: 'Wi-Fi' }}>
-                    <div className="space-y-4">
-                      <div>
-                        <label className="text-[11px] font-bold text-black/50 uppercase tracking-wider mb-1.5 block">
-                          SSID (nom du r\u00E9seau)
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="MonWiFi"
-                          value={wifiSsid}
-                          onChange={(e) => setWifiSsid(e.target.value)}
-                          className={qrtInput}
-                        />
-                      </div>
-                      <div>
-                        <label className="text-[11px] font-bold text-black/50 uppercase tracking-wider mb-1.5 block">
-                          Mot de passe Wi-Fi
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="Mot de passe Wi-Fi"
-                          value={wifiPassword}
-                          onChange={(e) => setWifiPassword(e.target.value)}
-                          className={qrtInput}
-                        />
-                      </div>
-                    </div>
-                  </QRTCard>
-                ) : (
-                  <QRTCard header={{ emoji: '\uD83D\uDCDE', title: 'Contact d\'urgence' }}>
+                {/* Wi-Fi card */}
+                <QRTCard header={{ emoji: '📶', title: 'Wi-Fi invités' }} subtitle="Vos invités se connectent en 1 scan">
+                  <div className="space-y-4">
                     <div>
-                      <label className="text-[11px] font-bold text-black/50 uppercase tracking-wider mb-1.5 block">
-                        Num\u00E9ro d'urgence
-                      </label>
+                      <label className={b2bLabel} htmlFor="setup-wifi-ssid">Nom du réseau (SSID)</label>
                       <input
-                        type="tel"
-                        placeholder="+33 6 12 34 56 78"
-                        value={emergencyPhone}
-                        onChange={(e) => setEmergencyPhone(e.target.value)}
-                        className={qrtInput}
+                        id="setup-wifi-ssid"
+                        type="text"
+                        placeholder="MonWiFi"
+                        value={wifiSsid}
+                        onChange={(e) => setWifiSsid(e.target.value)}
+                        className={b2bInput}
                       />
                     </div>
-                  </QRTCard>
-                )}
+                    <div>
+                      <label className={b2bLabel} htmlFor="setup-wifi-password">Mot de passe Wi-Fi</label>
+                      <input
+                        id="setup-wifi-password"
+                        type="text"
+                        placeholder="Mot de passe du réseau"
+                        value={wifiPassword}
+                        onChange={(e) => setWifiPassword(e.target.value)}
+                        className={b2bInput}
+                      />
+                    </div>
+                  </div>
+                </QRTCard>
+
+                {/* Modules included */}
+                <QRTCard header={{ emoji: '🧩', title: 'Modules activés par défaut', badge: 'Inclus' }}>
+                  <div className="space-y-2.5">
+                    {[
+                      { emoji: '📶', name: 'Wi-Fi', desc: 'Connexion en 1 scan', on: true },
+                      { emoji: '📖', name: 'Guidebook', desc: 'Guide de bienvenue digital', on: true },
+                      { emoji: '🛎️', name: 'Annuaire de prestataires', desc: 'Activable après géolocalisation', on: false },
+                      { emoji: '💳', name: 'Upselling', desc: 'Services à la carte (déco, petit-déj…)', on: false },
+                    ].map((mod) => (
+                      <div key={mod.name} className="flex items-center gap-3 py-1.5">
+                        <EmojiIcon emoji={mod.emoji} size="sm" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-slate-900">{mod.name}</p>
+                          <p className="text-xs text-slate-500">{mod.desc}</p>
+                        </div>
+                        <span className={`text-[11px] font-semibold px-2 py-1 rounded-full border ${
+                          mod.on
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                            : 'bg-slate-50 text-slate-400 border-slate-200'
+                        }`}>
+                          {mod.on ? 'Activé' : 'Plus tard'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </QRTCard>
 
                 {/* Summary card */}
-                <QRTCard header={{ emoji: '\uD83D\uDCDD', title: 'R\u00E9capitulatif' }}>
+                <QRTCard header={{ emoji: '📋', title: 'Récapitulatif' }}>
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span className="text-black/50 font-medium">Compte</span>
-                      <span className="text-black font-bold truncate ml-3 max-w-[180px]">{fullName}</span>
+                      <span className="text-slate-500 font-medium">Compte</span>
+                      <span className="text-slate-900 font-semibold truncate ml-3 max-w-[180px]">{fullName}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-black/50 font-medium">Plan</span>
-                      <span className="text-black font-bold capitalize">{selectedPlan.replace('_', ' ')}</span>
+                      <span className="text-slate-500 font-medium">Type</span>
+                      <span className="text-slate-900 font-semibold">{selectedType?.name}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-black/50 font-medium">PIN</span>
-                      <span className="text-black font-bold font-mono">
-                        {pinValue ? '\u25CF\u25CF\u25CF\u25CF' : 'Non d\u00E9fini'}
+                      <span className="text-slate-500 font-medium">Offre</span>
+                      <span className="text-slate-900 font-semibold">{selectedType?.planLabel}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-500 font-medium">Code hôte</span>
+                      <span className="text-slate-900 font-semibold font-mono">
+                        {pinValue ? '●●●●' : 'Non défini'}
                       </span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-black/50 font-medium">Logement</span>
-                      <span className={`font-bold ${homeName.trim() ? 'text-black' : 'text-black/25 italic'}`}>
-                        {homeName.trim() || 'Non d\u00E9fini'}
+                      <span className="text-slate-500 font-medium">Logement</span>
+                      <span className={`font-semibold ${homeName.trim() ? 'text-slate-900' : 'text-slate-400 italic'}`}>
+                        {homeName.trim() || 'Non défini'}
                       </span>
                     </div>
                   </div>
@@ -763,10 +903,10 @@ export function SetupPageContent({ params }: { params: Promise<{ token: string }
                 {/* Submit */}
                 <div className="grid gap-4 mt-5 mb-10" style={{ gridTemplateColumns: '140px 1fr' }}>
                   <QRTButton variant="secondary" onClick={goBack}>
-                    \u2190 Pr\u00E9c\u00E9dent
+                    ← Précédent
                   </QRTButton>
                   <QRTButton
-                    variant="primary"
+                    variant="accent"
                     onClick={handleConfigSubmit}
                     disabled={!homeName.trim() || submitting}
                   >
@@ -776,7 +916,7 @@ export function SetupPageContent({ params }: { params: Promise<{ token: string }
                         <span>Configuration...</span>
                       </>
                     ) : (
-                      <span>\u2728 Configurer maintenant \u2192</span>
+                      <span>✨ Configurer maintenant →</span>
                     )}
                   </QRTButton>
                 </div>
@@ -795,42 +935,80 @@ export function SetupPageContent({ params }: { params: Promise<{ token: string }
                 transition={{ duration: 0.3, ease: 'easeInOut' }}
                 className="text-center space-y-5"
               >
-                {/* Big success emoji */}
+                {/* Animated success check */}
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ type: 'spring', duration: 0.8 }}
+                  className="relative mx-auto w-24 h-24"
                 >
-                  <div className="w-24 h-24 mx-auto bg-white border-2 border-black rounded-[16px] shadow-[4px_4px_0_rgba(0,0,0,0.08)] flex items-center justify-center">
-                    <span className="text-6xl">\uD83C\uDF89</span>
+                  {/* Confetti emojis */}
+                  {['🎉', '✨', '🗝️', '🎊', '⭐', '🧹'].map((e, i) => (
+                    <motion.span
+                      key={i}
+                      className="absolute text-xl"
+                      initial={{ opacity: 0, x: 0, y: 0, scale: 0.4 }}
+                      animate={{
+                        opacity: [0, 1, 0],
+                        x: Math.cos((i / 6) * Math.PI * 2) * 80,
+                        y: Math.sin((i / 6) * Math.PI * 2) * 80,
+                        scale: [0.4, 1.2, 0.8],
+                      }}
+                      transition={{ duration: 1.4, delay: 0.35 + i * 0.06, ease: 'easeOut' }}
+                    >
+                      {e}
+                    </motion.span>
+                  ))}
+                  {/* Green check circle */}
+                  <div className="w-24 h-24 rounded-full bg-emerald-600 shadow-lg shadow-emerald-600/30 flex items-center justify-center">
+                    <motion.svg
+                      width="44"
+                      height="44"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="white"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      initial={{ pathLength: 0 }}
+                      animate={{ pathLength: 1 }}
+                      transition={{ duration: 0.6, delay: 0.3, ease: 'easeOut' }}
+                    >
+                      <path d="M20 6 9 17l-5-5" />
+                    </motion.svg>
                   </div>
                 </motion.div>
 
-                <motion.div initial={fadeUp.initial} animate={fadeUp.animate} transition={{ delay: 0.3 }}>
-                  <h2 className="text-2xl font-extrabold text-white">
-                    Configuration termin\u00E9e !
+                <motion.div initial={fadeUp.initial} animate={fadeUp.animate} transition={{ delay: 0.4 }}>
+                  <h2 className="text-2xl font-bold text-slate-900">
+                    Configuration terminée !
                   </h2>
-                  <p className="text-white/70 text-sm mt-2 leading-relaxed">
-                    Votre Hub est maintenant actif.<br />
-                    Scannez-le \u00E0 nouveau pour commencer !
+                  <p className="text-slate-600 text-sm mt-2 leading-relaxed">
+                    Votre <span className="font-semibold text-slate-900">Conciergerie Hub</span> est maintenant actif.<br />
+                    Redirection vers votre tableau de bord...
                   </p>
                 </motion.div>
 
-                {/* Success info card */}
+                {/* Auto-redirect progress */}
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}>
-                  <QRTCard header={{ emoji: '\u2705', title: 'Votre Hub' }}>
+                  <ProgressBar value={100} size="sm" className="max-w-[240px] mx-auto" />
+                </motion.div>
+
+                {/* Success info card */}
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}>
+                  <QRTCard header={{ emoji: '✅', title: 'Votre Hub' }}>
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
-                        <span className="text-black/50 font-medium">Logement</span>
-                        <span className="text-black font-bold">{homeName}</span>
+                        <span className="text-slate-500 font-medium">Logement</span>
+                        <span className="text-slate-900 font-semibold">{homeName}</span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-black/50 font-medium">Plan</span>
-                        <span className="text-black font-bold capitalize">{selectedPlan.replace('_', ' ')}</span>
+                        <span className="text-slate-500 font-medium">Offre</span>
+                        <span className="text-slate-900 font-semibold">{selectedType?.planLabel}</span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-black/50 font-medium">Essai gratuit</span>
-                        <span className="text-emerald-600 font-bold">14 jours</span>
+                        <span className="text-slate-500 font-medium">Essai gratuit</span>
+                        <span className="text-emerald-600 font-semibold">14 jours</span>
                       </div>
                     </div>
                   </QRTCard>
@@ -840,16 +1018,16 @@ export function SetupPageContent({ params }: { params: Promise<{ token: string }
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.7 }}
+                  transition={{ delay: 0.8 }}
                   className="space-y-3"
                 >
                   {hubSlug && (
                     <QRTButton onClick={() => router.push(`/hub/${hubSlug}`)}>
-                      Tester mon Hub \u2192
+                      Tester mon Hub →
                     </QRTButton>
                   )}
-                  <QRTButton variant="secondary" onClick={() => router.push('/')}>
-                    Aller au dashboard
+                  <QRTButton variant="secondary" onClick={() => { window.location.href = '/'; }}>
+                    Aller au tableau de bord
                   </QRTButton>
                 </motion.div>
               </motion.div>
@@ -860,9 +1038,9 @@ export function SetupPageContent({ params }: { params: Promise<{ token: string }
 
       {/* Footer */}
       <div className="mt-auto px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] text-center">
-        <img src="/logo-ordomotik.png" alt="ORDOMOTIK" className="h-6 w-auto object-contain rounded opacity-30 mx-auto mb-1" />
-        <p className="text-[10px] text-white/30 font-medium">
-          qrdomotik.roomscan.pro
+        <BrandLogo size="sm" className="opacity-30 justify-center w-full" />
+        <p className="text-[10px] text-slate-400 font-medium mt-1">
+          La conciergerie digitale des hôtes
         </p>
       </div>
     </div>

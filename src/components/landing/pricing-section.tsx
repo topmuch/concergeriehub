@@ -38,63 +38,63 @@ interface PricingPlan {
 
 const PLANS: PricingPlan[] = [
   {
-    name: 'Famille',
-    price: '49\u20ac',
-    period: '/ an',
-    description: 'Le quotidien de votre foyer, simplifie.',
+    name: 'Découverte',
+    price: '0€',
+    period: '',
+    description: 'Testez la conciergerie digitale sur un logement.',
     icon: <Sparkles className="w-5 h-5" />,
-    gradient: 'from-violet-500 to-purple-600',
+    gradient: 'from-slate-500 to-slate-700',
     features: [
-      { text: '1 maison avec pièces illimitées', included: true },
-      { text: 'Wi-Fi, listes de courses, tâches', included: true },
-      { text: 'Messages vocaux familiaux', included: true },
+      { text: '1 logement, pièces illimitées', included: true },
+      { text: 'Wi-Fi invités & Guidebook', included: true },
       { text: 'Mode invité (QR public)', included: true },
-      { text: 'Plaque QR en aluminium gravée', included: true },
-      { text: 'Multi-propriétaires', included: false },
+      { text: 'Mode Hôte protégé par code', included: true },
+      { text: 'Plaque QR en aluminium gravée', included: false },
+      { text: 'Annuaire de prestataires géolocalisés', included: false },
       { text: 'Statistiques avancées', included: false },
     ],
-    cta: 'Choisir Famille',
+    cta: 'Commencer gratuitement',
   },
   {
-    name: 'Airbnb',
+    name: 'Airbnb Solo',
     badge: 'Le plus populaire',
     badgeColor: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
-    price: '9,90\u20ac',
+    price: '9,90€',
     period: '/ mois',
     description: "Sublimez l'expérience de vos invités.",
     icon: <Star className="w-5 h-5" />,
     gradient: 'from-amber-500 to-orange-600',
     highlight: true,
     features: [
-      { text: '1 maison avec pièces illimitées', included: true },
-      { text: 'Wi-Fi, guide du logement, règles', included: true },
+      { text: '1 logement, pièces illimitées', included: true },
+      { text: 'Wi-Fi, Guidebook, check-out', included: true },
       { text: 'Bouclier d\'avis automatique', included: true },
-      { text: 'Upsell & services locaux', included: true },
+      { text: 'Upselling & services à la carte', included: true },
+      { text: 'Annuaire de prestataires géolocalisés', included: true },
       { text: 'Plaque QR en aluminium gravée', included: true },
       { text: 'Statistiques de scans', included: true },
-      { text: 'Mode multi-propriétaires', included: false },
     ],
-    cta: 'Choisir Airbnb',
+    cta: 'Choisir Solo',
   },
   {
-    name: 'Airbnb Pro',
+    name: 'Agence',
     badge: 'Multi-biens',
     badgeColor: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-    price: '199\u20ac',
-    period: '/ an',
-    description: 'Pour les gestionnaires de plusieurs logements.',
+    price: '49€',
+    period: '/ mois',
+    description: 'Pour les gestionnaires et co-hôtelleries.',
     icon: <Zap className="w-5 h-5" />,
     gradient: 'from-emerald-500 to-teal-600',
     features: [
-      { text: 'Jusqu\'à 3 logements', included: true },
+      { text: 'Jusqu\'à 10 logements', included: true },
       { text: 'Pièces et modules illimités', included: true },
-      { text: 'Tous les modules Airbnb inclus', included: true },
+      { text: 'Tous les modules Solo inclus', included: true },
+      { text: 'Équipe : co-hôtes, staff, cleaning', included: true },
       { text: 'Statistiques avancées multi-biens', included: true },
-      { text: 'Plaques QR gravées (x3)', included: true },
+      { text: 'Plaques QR gravées incluses', included: true },
       { text: 'Support prioritaire dédié', included: true },
-      { text: 'Dashboard multi-biens', included: true },
     ],
-    cta: 'Choisir Pro',
+    cta: 'Choisir Agence',
   },
 ];
 
@@ -118,7 +118,7 @@ export function PricingSection() {
           </FadeIn>
           <FadeIn delay={0.1}>
             <p className="text-white/50 text-lg md:text-xl max-w-2xl mx-auto">
-              Choisissez l'offre qui vous correspond. Pas de frais cachés.
+              Hôte solo, multi-biens ou agence : choisissez l'offre qui vous correspond. 14 jours d'essai, sans engagement.
             </p>
           </FadeIn>
         </div>

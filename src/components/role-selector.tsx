@@ -16,7 +16,7 @@ export function RoleSelector({ onSelectAdmin, onSelectClient }: RoleSelectorProp
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
             <QrCode className="h-5 w-5 text-primary-foreground" />
           </div>
-          <h1 className="text-lg font-bold tracking-tight">QR Domotik</h1>
+          <h1 className="text-lg font-bold tracking-tight">Conciergerie Hub</h1>
         </div>
       </header>
 
@@ -26,7 +26,7 @@ export function RoleSelector({ onSelectAdmin, onSelectClient }: RoleSelectorProp
           {/* Title */}
           <div className="space-y-2">
             <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-              Bienvenue sur QR Domotik
+              Bienvenue sur Conciergerie Hub
             </h2>
             <p className="text-muted-foreground text-base">
               Choisissez votre espace pour continuer
@@ -63,7 +63,7 @@ export function RoleSelector({ onSelectAdmin, onSelectClient }: RoleSelectorProp
               <div className="space-y-1">
                 <h3 className="text-lg font-semibold">Espace Client</h3>
                 <p className="text-sm text-muted-foreground">
-                  Mes QR codes, maisons, modules et marketplace
+                  Mes QR codes, logements, modules et marketplace
                 </p>
               </div>
               <ArrowRight className="h-5 w-5 text-muted-foreground transition-all group-hover:translate-x-1 group-hover:text-primary" />
@@ -80,7 +80,7 @@ export function RoleSelector({ onSelectAdmin, onSelectClient }: RoleSelectorProp
       {/* Footer */}
       <footer className="border-t bg-card/80 backdrop-blur-sm px-4 py-3">
         <p className="text-center text-xs text-muted-foreground">
-          QR Domotik v1.0.0 &middot; Plateforme SaaS de QR codes domotiques
+          Conciergerie Hub v2.0 &middot; Plateforme SaaS pour h&ocirc;tes &amp; gestionnaires de biens
         </p>
       </footer>
     </div>

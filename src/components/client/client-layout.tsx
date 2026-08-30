@@ -21,6 +21,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { BrandLogo } from '@/components/ui/brand-logo';
 
 export type ClientPage =
   | 'client-home'
@@ -106,10 +107,9 @@ export function ClientLayout({ activePage, onPageChange, onSwitchToAdmin, onLogo
       )}>
         {/* Brand */}
         <div className="flex h-16 items-center gap-3 px-5">
-          <img src="/logo-ordomotik.png" alt="ORDOMOTIK" className="h-9 w-auto object-contain rounded-lg" />
           <div className="flex flex-col">
-            <span className="text-sm font-semibold text-white tracking-tight">ORDOMOTIK</span>
-            <span className="text-[10px] text-slate-500 font-medium">Espace Client</span>
+            <BrandLogo variant="light" size="md" />
+            <span className="mt-1 text-[10px] text-slate-500 font-medium">Espace Client</span>
           </div>
           <Button variant="ghost" size="icon" className="ml-auto lg:hidden h-8 w-8 text-slate-400 hover:text-white hover:bg-slate-800" onClick={() => setSidebarOpen(false)}>
             <X className="h-4 w-4" />
@@ -230,8 +230,7 @@ export function ClientLayout({ activePage, onPageChange, onSwitchToAdmin, onLogo
         <footer className="border-t px-6 py-3 lg:px-8">
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <div className="flex items-center gap-2">
-              <img src="/logo-ordomotik.png" alt="ORDOMOTIK" className="h-5 w-auto object-contain rounded opacity-40" />
-              <span>ORDOMOTIK</span>
+              <BrandLogo variant="light" size="sm" />
             </div>
             <span>Espace Client</span>
           </div>

@@ -3,8 +3,8 @@
 import { type ReactNode } from 'react';
 
 /**
- * QRTags-style card : fond blanc, bordure noire 2px, radius 12px,
- * ombre décalée 4px. Inspire du design QRTags adapte en violet.
+ * Carte style B2B (ex QRTags) : fond blanc, bordure slate-200 fine,
+ * radius xl, ombre douce. Épuré, professionnel, sans gradients.
  */
 interface QRTCardProps {
   children: ReactNode;
@@ -22,7 +22,7 @@ interface QRTCardProps {
 export function QRTCard({ children, className = '', header, subtitle }: QRTCardProps) {
   return (
     <div
-      className={`bg-white border-2 border-black rounded-[12px] shadow-[4px_4px_0_rgba(0,0,0,0.08)] ${className}`}
+      className={`bg-white border border-slate-200 rounded-xl shadow-sm ${className}`}
     >
       {header && (
         <div className="px-5 pt-5 pb-2">
@@ -30,17 +30,17 @@ export function QRTCard({ children, className = '', header, subtitle }: QRTCardP
             {header.emoji && (
               <span className="text-lg leading-none">{header.emoji}</span>
             )}
-            <h3 className="text-base font-extrabold uppercase tracking-wide text-black">
+            <h3 className="text-sm font-semibold text-slate-900">
               {header.title}
             </h3>
             {header.badge && (
-              <span className="ml-auto bg-gray-100 border border-gray-300 text-xs font-bold px-2 py-0.5 rounded">
+              <span className="ml-auto bg-slate-100 border border-slate-200 text-slate-600 text-xs font-semibold px-2 py-0.5 rounded-full">
                 {header.badge}
               </span>
             )}
           </div>
           {subtitle && (
-            <p className="text-[11px] text-gray-500 -mt-1">{subtitle}</p>
+            <p className="text-xs text-slate-500 -mt-1">{subtitle}</p>
           )}
         </div>
       )}

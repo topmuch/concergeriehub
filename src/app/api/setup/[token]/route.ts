@@ -30,8 +30,14 @@ function getDefaultRooms(opts: {
   wifiPassword?: string;
   emergencyPhone?: string;
   homeName?: string;
+  propertyType?: string;
 }): DefaultRoom[] {
-  const { fullName, wifiSsid, wifiPassword, emergencyPhone, homeName } = opts;
+  const { fullName, wifiSsid, wifiPassword, emergencyPhone, homeName, propertyType } = opts;
+  const typeLabel =
+    propertyType === 'GITE' ? 'votre gîte'
+    : propertyType === 'CHAMBRE_HOTE' ? 'votre chambre d\'hôtes'
+    : propertyType === 'BOOKING' ? 'votre logement'
+    : 'votre logement';
 
   return [
     {
@@ -51,11 +57,20 @@ function getDefaultRooms(opts: {
         },
         {
           type: 'contact',
-          name: 'Contact propriétaire',
+          name: 'Contact hôte',
           isPrivate: false,
           content: {
             name: fullName,
             phone: emergencyPhone || '',
+          },
+        },
+        {
+          type: 'home_manual',
+          name: 'Guidebook',
+          isPrivate: false,
+          content: {
+            title: 'Guidebook — Guide de bienvenue',
+            body: `Bienvenue dans ${homeName || typeLabel} ! 🗝️\n\nCe guide digital regroupe toutes les infos utiles de votre séjour :\n• Wi-Fi et équipements\n• Bonnes adresses autour du logement\n• Consignes d\'arrivée et de départ\n\nScannez les QR codes de la maison pour tout découvrir.`,
           },
         },
         {
@@ -261,6 +276,10 @@ export async function POST(
       wifiSsid,
       wifiPassword,
       emergencyPhone,
+      propertyType,
+      address,
+      latitude,
+      longitude,
     } = body;
 
     // ── DEMO MODE ──
@@ -288,9 +307,15 @@ export async function POST(
       return NextResponse.json({ error: 'Code PIN à 4 chiffres requis' }, { status: 400 });
     }
     if (!homeName?.trim()) return NextResponse.json({ error: 'Nom du logement requis' }, { status: 400 });
-    if (!plan || !['airbnb_solo', 'airbnb_pro', 'free'].includes(plan)) {
+    if (!plan || !['airbnb_solo', 'airbnb_pro', 'agency', 'free'].includes(plan)) {
       return NextResponse.json({ error: 'Plan invalide' }, { status: 400 });
     }
+    const VALID_PROPERTY_TYPES = ['AIRBNB', 'BOOKING', 'GITE', 'CHAMBRE_HOTE'];
+    if (propertyType && !VALID_PROPERTY_TYPES.includes(propertyType)) {
+      return NextResponse.json({ error: 'Type de logement invalide' }, { status: 400 });
+    }
+    const lat = typeof latitude === 'number' ? latitude : (latitude != null && latitude !== '' ? parseFloat(String(latitude)) : null);
+    const lng = typeof longitude === 'number' ? longitude : (longitude != null && longitude !== '' ? parseFloat(String(longitude)) : null);
 
     // Find plaque
     let plaque = await db.physicalQrCode.findUnique({
@@ -350,9 +375,17 @@ export async function POST(
     }
     if (slugExists) hubSlug = `home-${plaque.id.slice(0, 8)}`;
 
-    // ── Create home ──
+    // ── Create property ──
     const home = await db.property.create({
-      data: { name: homeName.trim(), ownerId: userId!, pinHash, address: '' },
+      data: {
+        name: homeName.trim(),
+        ownerId: userId!,
+        pinHash,
+        address: typeof address === 'string' ? address.trim() : '',
+        propertyType: propertyType || 'AIRBNB',
+        latitude: lat != null && Number.isFinite(lat) ? lat : null,
+        longitude: lng != null && Number.isFinite(lng) ? lng : null,
+      },
     });
 
     // ── Get default rooms & modules config ──
@@ -362,6 +395,7 @@ export async function POST(
       wifiPassword: wifiPassword?.trim() || '',
       emergencyPhone: emergencyPhone?.trim() || '',
       homeName: homeName.trim(),
+      propertyType: propertyType || 'AIRBNB',
     });
 
     // ── Find all physical QR codes in the same batch (to link to modules) ──
@@ -481,6 +515,7 @@ export async function POST(
       const planConfig: Record<string, { amount: number; cycle: string; maxProperties: number }> = {
         airbnb_solo: { amount: 9.9, cycle: 'monthly', maxProperties: 1 },
         airbnb_pro: { amount: 199, cycle: 'annual', maxProperties: 3 },
+        agency: { amount: 49, cycle: 'monthly', maxProperties: 10 },
         free: { amount: 0, cycle: 'annual', maxProperties: 1 },
       };
       const pc = planConfig[plan] || planConfig.free;

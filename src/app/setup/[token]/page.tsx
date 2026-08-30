@@ -9,12 +9,12 @@ export default function SetupPage(props: { params: Promise<{ token: string }> })
     <SessionProvider>
       <Suspense
         fallback={
-          <div className="min-h-screen bg-[#8B5CF6] flex items-center justify-center">
+          <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
             <div className="flex flex-col items-center gap-3">
-              <div className="h-10 w-10 rounded-[8px] border-2 border-black bg-white flex items-center justify-center shadow-[2px_2px_0_rgba(0,0,0,0.08)]">
-                <span className="text-lg">🟨</span>
+              <div className="h-12 w-12 rounded-xl border border-slate-200 bg-white flex items-center justify-center shadow-sm">
+                <span className="text-xl">🗝️</span>
               </div>
-              <p className="text-sm text-white/80 font-bold">Chargement...</p>
+              <p className="text-sm text-slate-500 font-semibold">Chargement...</p>
             </div>
           </div>
         }

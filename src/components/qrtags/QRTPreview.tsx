@@ -14,14 +14,14 @@ export function QRTPreview() {
   const [pin, setPin] = useState('');
 
   return (
-    <div className="min-h-screen bg-[#8B5CF6] p-6">
+    <div className="min-h-screen bg-[#10B981] p-6">
       <div className="max-w-[520px] mx-auto flex flex-col gap-5">
 
         {/* Logo QRTags style */}
         <div className="flex justify-center">
           <div className="bg-white border-2 border-black rounded-[12px] px-8 py-2.5 shadow-[3px_3px_0_rgba(0,0,0,0.15)]">
             <span className="text-2xl font-black tracking-tight">
-              QR <span className="text-[#6D28D9]">Domotik</span>
+              QR <span className="text-[#059669]">Domotik</span>
             </span>
           </div>
         </div>
@@ -30,7 +30,7 @@ export function QRTPreview() {
           ✨ Composants QRTags
         </h2>
         <p className="text-center text-sm text-white/70">
-          Fond violet #8B5CF6 — Cartes blanches — Bordures noires
+          Fond violet #10B981 — Cartes blanches — Bordures noires
         </p>
 
         {/* 1. Progress Bar */}
@@ -87,7 +87,7 @@ export function QRTPreview() {
 
         {/* 8. Numeric Keypad */}
         <QRTCard header={{ emoji: '🔐', title: 'Code secret' }} subtitle="4 chiffres pour protéger l\'espace Famille">
-          {pin && <p className="text-center text-sm font-bold text-[#6D28D9] mb-4">PIN saisi : {pin}</p>}
+          {pin && <p className="text-center text-sm font-bold text-[#059669] mb-4">PIN saisi : {pin}</p>}
           <QRTNumericKeypad onComplete={(p) => setPin(p)} />
         </QRTCard>
 
@@ -113,7 +113,7 @@ export function QRTPreview() {
 
         {/* Footer */}
         <p className="text-center text-xs text-white/60 font-semibold py-6">
-          Propulse par <span className="font-extrabold text-white">QR Domotik</span> 🏠
+          Propulsé par <span className="font-extrabold text-white">Conciergerie Hub</span> 🗝️
         </p>
       </div>
     </div>

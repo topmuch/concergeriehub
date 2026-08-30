@@ -15,14 +15,14 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ORDOMOTIK - Smart Home Solutions",
-  description: "Plateforme phygitale QR pour maisons connectées et Airbnb. Hub intelligent avec modules domotiques.",
-  keywords: ["ORDOMOTIK", "QR codes", "domotique", "maison intelligente", "Smart Home", "Airbnb", "hub"],
+  title: "Conciergerie Hub — La conciergerie digitale des hôtes",
+  description: "SaaS B2B pour hôtes Airbnb et gestionnaires de biens : Wi-Fi, guidebook, check-out, upselling et annuaire de prestataires via une seule plaque QR. Sans application.",
+  keywords: ["Conciergerie Hub", "conciergerie Airbnb", "QR codes", "hôtes", "location courte durée", "guidebook", "check-out", "prestataires", "property management"],
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "ORDOMOTIK",
+    title: "Conciergerie Hub",
   },
   icons: {
     icon: "/icon-512.png",

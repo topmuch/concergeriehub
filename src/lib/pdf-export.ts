@@ -86,7 +86,7 @@ export function generatePdf({
     pdf.setFont('helvetica', 'normal');
     pdf.setTextColor(150, 150, 150);
     pdf.text(
-      `QR Domotik - ${new Date().toLocaleDateString('fr-FR')} - ${qrCodes.length} codes`,
+      `Conciergerie Hub - ${new Date().toLocaleDateString('fr-FR')} - ${qrCodes.length} codes`,
       pageWidth / 2,
       pageHeight - 5,
       { align: 'center' }

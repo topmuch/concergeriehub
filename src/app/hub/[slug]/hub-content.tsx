@@ -125,7 +125,7 @@ function VoicePlayer({ msg }: { msg: VoiceMsg }) {
         </div>
         <div className="h-1.5 rounded-full bg-black/10 overflow-hidden">
           <motion.div
-            className="h-full rounded-full bg-[#6D28D9]"
+            className="h-full rounded-full bg-[#059669]"
             animate={{ width: `${progress}%` }}
             transition={{ duration: 0.2 }}
           />
@@ -253,7 +253,7 @@ function VoiceRecorder({ slug, onSent }: { slug: string; onSent: () => void }) {
             <input
               type="text" placeholder="Votre nom (optionnel)" maxLength={50}
               value={senderName} onChange={(e) => setSenderName(e.target.value)}
-              className="w-full h-11 bg-gray-50 border-2 border-black rounded-[8px] p-3.5 text-sm text-black focus:border-[#6D28D9] focus:bg-white outline-none transition-all"
+              className="w-full h-11 bg-gray-50 border-2 border-black rounded-[8px] p-3.5 text-sm text-black focus:border-[#059669] focus:bg-white outline-none transition-all"
               autoFocus
             />
             <div className="flex gap-2">
@@ -317,7 +317,7 @@ function PinModal({
 
           {verifying ? (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-8 w-8 text-[#6D28D9] animate-spin" />
+              <Loader2 className="h-8 w-8 text-[#059669] animate-spin" />
             </div>
           ) : (
             <QRTNumericKeypad
@@ -441,7 +441,7 @@ function ContactQuickCard({ content }: { content: Record<string, unknown> }) {
         {displayPhone && (
           <a
             href={`tel:${displayPhone}`}
-            className="inline-flex items-center gap-1.5 mt-1.5 text-sm text-black font-medium hover:text-[#6D28D9] transition-colors"
+            className="inline-flex items-center gap-1.5 mt-1.5 text-sm text-black font-medium hover:text-[#059669] transition-colors"
           >
             📞 {displayPhone}
           </a>
@@ -511,7 +511,7 @@ function RulesInlineCard({ content }: { content: Record<string, unknown> }) {
           <ul className="space-y-2.5">
             {rules.map((rule, i) => (
               <li key={i} className="flex items-start gap-2.5">
-                <span className="h-5 min-w-5 rounded-full bg-[#6D28D9] text-white text-[10px] font-bold flex items-center justify-center mt-0.5">
+                <span className="h-5 min-w-5 rounded-full bg-[#059669] text-white text-[10px] font-bold flex items-center justify-center mt-0.5">
                   {i + 1}
                 </span>
                 <p className="text-sm text-black leading-relaxed flex-1">{rule}</p>
@@ -623,7 +623,7 @@ function GuestbookInlineCard({ content }: { content: Record<string, unknown> }) 
     <motion.div variants={itemVariants}>
       <QRTCard header={{ emoji: '📖', title: title || "Livre d'or" }}>
         {welcome && (
-          <p className="text-sm font-medium text-[#6D28D9] mb-2 leading-relaxed">{welcome}</p>
+          <p className="text-sm font-medium text-[#059669] mb-2 leading-relaxed">{welcome}</p>
         )}
         <p className="text-sm text-black leading-relaxed whitespace-pre-wrap">{text || 'Aucun contenu'}</p>
       </QRTCard>
@@ -699,7 +699,7 @@ function RecipeInlineCard({ content }: { content: Record<string, unknown> }) {
           <ul className="space-y-1.5">
             {ingredients.map((ing, i) => (
               <li key={i} className="flex items-start gap-2 text-sm text-black">
-                <span className="text-[#6D28D9] mt-0.5">•</span>
+                <span className="text-[#059669] mt-0.5">•</span>
                 {ing}
               </li>
             ))}
@@ -713,7 +713,7 @@ function RecipeInlineCard({ content }: { content: Record<string, unknown> }) {
           {steps.map((step, i) => (
             <QRTCard key={i} className="!p-3">
               <div className="flex items-start gap-2.5">
-                <span className="h-5 min-w-5 rounded-full bg-[#6D28D9] text-white text-[10px] font-bold flex items-center justify-center mt-0.5">{i + 1}</span>
+                <span className="h-5 min-w-5 rounded-full bg-[#059669] text-white text-[10px] font-bold flex items-center justify-center mt-0.5">{i + 1}</span>
                 <p className="text-sm text-black leading-relaxed flex-1">{step}</p>
               </div>
             </QRTCard>
@@ -739,7 +739,7 @@ function ExternalLinkInlineCard({ content }: { content: Record<string, unknown> 
             href={url}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 h-11 bg-[#6D28D9] text-white font-bold text-sm rounded-[8px] border-2 border-black shadow-[3px_3px_0_rgba(0,0,0,0.15)] active:translate-y-[1px] active:shadow-none transition-all hover:bg-[#5B21B6]"
+            className="flex items-center justify-center gap-2 h-11 bg-[#059669] text-white font-bold text-sm rounded-[8px] border-2 border-black shadow-[3px_3px_0_rgba(0,0,0,0.15)] active:translate-y-[1px] active:shadow-none transition-all hover:bg-[#047857]"
           >
             <ExternalLink className="h-4 w-4" />
             Ouvrir le lien
@@ -1073,7 +1073,7 @@ export function HubPageContent({ params }: { params: Promise<{ slug: string }> }
   // ── Loading state ──
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#8B5CF6] flex items-center justify-center">
+      <div className="min-h-screen bg-[#10B981] flex items-center justify-center">
         <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center gap-4">
           <QRTCard className="!p-6">
             <span className="text-4xl">🏠</span>
@@ -1087,7 +1087,7 @@ export function HubPageContent({ params }: { params: Promise<{ slug: string }> }
   // ── Error state ──
   if (error || !data) {
     return (
-      <div className="min-h-screen bg-[#8B5CF6] flex items-center justify-center p-4">
+      <div className="min-h-screen bg-[#10B981] flex items-center justify-center p-4">
         <QRTCard className="w-full max-w-sm">
           <div className="text-center">
             <span className="text-5xl">❌</span>
@@ -1125,7 +1125,7 @@ export function HubPageContent({ params }: { params: Promise<{ slug: string }> }
 
   return (
     <>
-      <div className="min-h-screen bg-[#8B5CF6]">
+      <div className="min-h-screen bg-[#10B981]">
         <div className="min-h-screen flex flex-col relative z-10">
           {/* Header */}
           <header className="w-full px-5 sm:px-6 pt-[max(1.5rem,env(safe-area-inset-top))] pb-2">
@@ -1150,7 +1150,7 @@ export function HubPageContent({ params }: { params: Promise<{ slug: string }> }
                     <motion.span
                       initial={{ scale: 0.8, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
-                      className="text-[10px] font-bold bg-white text-[#6D28D9] px-2.5 py-1 rounded-[6px] border-2 border-black shadow-[2px_2px_0_rgba(0,0,0,0.08)]"
+                      className="text-[10px] font-bold bg-white text-[#059669] px-2.5 py-1 rounded-[6px] border-2 border-black shadow-[2px_2px_0_rgba(0,0,0,0.08)]"
                     >
                       INVITÉ
                     </motion.span>
@@ -1159,7 +1159,7 @@ export function HubPageContent({ params }: { params: Promise<{ slug: string }> }
                     <motion.span
                       initial={{ scale: 0.8, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
-                      className="text-[10px] font-bold bg-[#6D28D9] text-white px-2.5 py-1 rounded-[6px] border-2 border-black shadow-[2px_2px_0_rgba(0,0,0,0.08)]"
+                      className="text-[10px] font-bold bg-[#059669] text-white px-2.5 py-1 rounded-[6px] border-2 border-black shadow-[2px_2px_0_rgba(0,0,0,0.08)]"
                     >
                       FAMILLE
                     </motion.span>
@@ -1248,13 +1248,13 @@ export function HubPageContent({ params }: { params: Promise<{ slug: string }> }
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.3, type: 'spring' }}
-                        className="w-full bg-[#6D28D9] border-2 border-black rounded-[12px] p-6 shadow-[4px_4px_0_rgba(0,0,0,0.15)] hover:shadow-[2px_2px_0_rgba(0,0,0,0.15)] transition-all text-left"
+                        className="w-full bg-emerald-600 border border-emerald-700 rounded-[12px] p-6 shadow-lg shadow-emerald-900/40 hover:shadow-md transition-all text-left"
                       >
                         <div className="flex items-center gap-4">
-                          <span className="text-4xl">👨‍👩‍👧‍👦</span>
+                          <span className="text-4xl">🗝️</span>
                           <div>
-                            <h2 className="text-2xl font-bold text-white">Mode Famille</h2>
-                            <p className="text-white/80 text-sm">Accès complet à votre maison</p>
+                            <h2 className="text-2xl font-bold text-white">Mode Hôte</h2>
+                            <p className="text-white/80 text-sm">Accès complet au logement</p>
                           </div>
                         </div>
                         <div className="mt-3 flex items-center gap-2 pl-14">
@@ -1412,7 +1412,7 @@ export function HubPageContent({ params }: { params: Promise<{ slug: string }> }
                   <div>
                     <h2 className="text-xl font-bold text-white">{data.property.name}</h2>
                     <p className="text-sm text-white/50 mt-1">
-                      Mode Famille{data.property.address && ` · ${data.property.address}`}
+                      Mode Hôte{data.property.address && ` · ${data.property.address}`}
                     </p>
                   </div>
 
@@ -1471,7 +1471,7 @@ export function HubPageContent({ params }: { params: Promise<{ slug: string }> }
                         subtitle="Accès au tableau de bord"
                         badge="Sécurisé"
                         onTap={() => {
-                          toast.info('Connectez-vous sur qrdomotik.roomscan.pro pour gérer votre maison');
+                          toast.info('Connectez-vous à votre tableau de bord Conciergerie Hub pour gérer votre logement');
                         }}
                       />
                     </motion.div>
@@ -1518,9 +1518,11 @@ export function HubPageContent({ params }: { params: Promise<{ slug: string }> }
 
           {/* Footer */}
           <div className="mt-auto px-6 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] text-center">
-            <img src="/logo-ordomotik.png" alt="ORDOMOTIK" className="h-6 w-auto object-contain rounded opacity-30 mx-auto mb-1" />
+            <p className="text-xs font-bold text-white/40 tracking-wide mb-0.5">
+              🗝️ Conciergerie <span className="text-emerald-400">Hub</span>
+            </p>
             <p className="text-[10px] text-white/25">
-              qrdomotik.roomscan.pro
+              La conciergerie digitale des hôtes
             </p>
           </div>
         </div>

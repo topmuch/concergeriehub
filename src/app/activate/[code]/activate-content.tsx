@@ -17,9 +17,9 @@ type CodeCheckResult =
 
 // ── Plans ──
 const PLANS: { id: ProfileType; emoji: string; label: string; price: string; color: string }[] = [
-  { id: 'famille', emoji: '\uD83C\uDFE0', label: 'Famille', price: '49\u20AC/an', color: 'bg-[#6D28D9] text-white' },
+  { id: 'famille', emoji: '\uD83C\uDFE0', label: 'Famille', price: '49\u20AC/an', color: 'bg-[#059669] text-white' },
   { id: 'airbnb_solo', emoji: '\uD83C\uDFE8', label: 'Airbnb Solo', price: '9,90\u20AC/mois', color: 'bg-[#7C3AED] text-white' },
-  { id: 'airbnb_pro', emoji: '\u2B50', label: 'Airbnb Pro', price: '199\u20AC/an', color: 'bg-[#5B21B6] text-white' },
+  { id: 'airbnb_pro', emoji: '\u2B50', label: 'Airbnb Pro', price: '199\u20AC/an', color: 'bg-[#047857] text-white' },
 ];
 
 const STEP_TITLES: Record<string, string> = {
@@ -42,7 +42,7 @@ const slideVariants = {
 
 // ── Input style QRTags ──
 const qrtInput =
-  'w-full h-12 px-4 bg-gray-50 border-2 border-gray-200 rounded-[8px] text-[15px] font-medium text-black placeholder:text-gray-400 focus:outline-none focus:border-[#6D28D9] focus:bg-white transition-colors';
+  'w-full h-12 px-4 bg-gray-50 border-2 border-gray-200 rounded-[8px] text-[15px] font-medium text-black placeholder:text-gray-400 focus:outline-none focus:border-[#059669] focus:bg-white transition-colors';
 
 // ════════════════════════════════════════════════════════
 export function ActivatePageContent({ params }: { params: Promise<{ code: string }> }) {
@@ -213,7 +213,7 @@ export function ActivatePageContent({ params }: { params: Promise<{ code: string
   // ══════════════════════════════════════════════════════
   if (authStatus === 'loading' || step === 'check') {
     return (
-      <div className="min-h-screen bg-[#8B5CF6] flex items-center justify-center">
+      <div className="min-h-screen bg-[#10B981] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="h-10 w-10 border-4 border-white/30 border-t-white rounded-full animate-spin" />
           <p className="text-white/70 text-sm font-medium">Vérification du QR code...</p>
@@ -227,7 +227,7 @@ export function ActivatePageContent({ params }: { params: Promise<{ code: string
   // ══════════════════════════════════════════════════════
   if (step === 'error') {
     return (
-      <div className="min-h-screen bg-[#8B5CF6] flex items-center justify-center p-6">
+      <div className="min-h-screen bg-[#10B981] flex items-center justify-center p-6">
         <QRTCard className="max-w-sm w-full text-center">
           <p className="text-4xl mb-4">\u274C</p>
           <h2 className="text-lg font-extrabold text-black uppercase mb-2">QR Code indisponible</h2>
@@ -246,7 +246,7 @@ export function ActivatePageContent({ params }: { params: Promise<{ code: string
   // ══════════════════════════════════════════════════════
   if (step === 'success') {
     return (
-      <div className="min-h-screen bg-[#8B5CF6] flex items-center justify-center p-6">
+      <div className="min-h-screen bg-[#10B981] flex items-center justify-center p-6">
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -259,7 +259,7 @@ export function ActivatePageContent({ params }: { params: Promise<{ code: string
             {hubSlug && (
               <div className="bg-gray-50 border-2 border-gray-200 rounded-[8px] p-4 mb-5 text-left">
                 <p className="text-[11px] font-bold text-gray-400 uppercase mb-1">Votre Hub</p>
-                <p className="text-sm font-bold text-[#6D28D9] font-mono break-all">qrdomotik.roomscan.pro/hub/{hubSlug}</p>
+                <p className="text-sm font-bold text-[#059669] font-mono break-all">qrdomotik.roomscan.pro/hub/{hubSlug}</p>
               </div>
             )}
             <QRTButton
@@ -281,7 +281,7 @@ export function ActivatePageContent({ params }: { params: Promise<{ code: string
   const showProgress = !['check', 'error', 'success'].includes(step);
 
   return (
-    <div className="min-h-screen bg-[#8B5CF6] flex flex-col">
+    <div className="min-h-screen bg-[#10B981] flex flex-col">
       {/* Top brand */}
       <div className="px-5 pt-12 pb-2">
         <div className="max-w-sm mx-auto flex items-center gap-2.5">
@@ -328,7 +328,7 @@ export function ActivatePageContent({ params }: { params: Promise<{ code: string
                         onClick={() => setProfile(p.id)}
                         className={`w-full flex items-center gap-4 p-4 rounded-[10px] border-2 transition-all cursor-pointer text-left
                           ${profile === p.id
-                            ? 'border-[#6D28D9] bg-[#6D28D9]/5 shadow-[2px_2px_0_rgba(109,40,217,0.15)]'
+                            ? 'border-[#059669] bg-[#059669]/5 shadow-[2px_2px_0_rgba(109,40,217,0.15)]'
                             : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`}
                       >
                         <span className="text-2xl">{p.emoji}</span>
@@ -337,7 +337,7 @@ export function ActivatePageContent({ params }: { params: Promise<{ code: string
                           <p className="text-xs text-gray-400">{p.price}</p>
                         </div>
                         {profile === p.id && (
-                          <div className="h-5 w-5 rounded-full bg-[#6D28D9] flex items-center justify-center">
+                          <div className="h-5 w-5 rounded-full bg-[#059669] flex items-center justify-center">
                             <span className="text-white text-xs font-bold">\u2713</span>
                           </div>
                         )}

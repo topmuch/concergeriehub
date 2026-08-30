@@ -9,6 +9,7 @@ import { InteractiveDemo } from './interactive-demo';
 import { HowItWorks } from './how-it-works';
 import { PricingSection } from './pricing-section';
 import { ModulesShowcase } from './modules-showcase';
+import { BrandLogo } from '@/components/ui/brand-logo';
 
 interface LandingPageProps { onGoToDashboard: () => void; onGoToSetup?: () => void; onGoToHub?: () => void }
 
@@ -58,7 +59,7 @@ function Navbar({ onGoToDashboard, onGoToSetup, onGoToHub }: { onGoToDashboard: 
     }`}>
       <div className="max-w-[1600px] mx-auto px-4 md:px-8 flex items-center justify-between h-16">
         <a href="#hero" onClick={(e) => handleNavClick(e, '#hero')} className="flex items-center gap-2.5 group">
-          <img src="/logo-ordomotik.png" alt="ORDOMOTIK" className="h-10 w-auto object-contain rounded-lg" />
+          <BrandLogo variant="light" size="md" />
         </a>
         <div className="hidden md:flex items-center gap-8">
           {links.map((link) => (
@@ -68,7 +69,7 @@ function Navbar({ onGoToDashboard, onGoToSetup, onGoToHub }: { onGoToDashboard: 
           ))}
           <button
             onClick={onGoToDashboard}
-            className="ml-2 px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold transition-all shadow-lg shadow-violet-600/20 hover:shadow-violet-600/40 hover:scale-[1.02] cursor-pointer"
+            className="ml-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold transition-all shadow-lg shadow-emerald-600/20 hover:shadow-emerald-600/40 hover:scale-[1.02] cursor-pointer"
           >
             Se connecter
           </button>
@@ -84,7 +85,7 @@ function Navbar({ onGoToDashboard, onGoToSetup, onGoToHub }: { onGoToDashboard: 
               {link.label}
             </a>
           ))}
-          <button onClick={() => { setMobileOpen(false); onGoToDashboard(); }} className="w-full mt-2 px-5 py-3 rounded-xl bg-violet-600 text-white text-sm font-semibold hover:bg-violet-500 transition-all">
+          <button onClick={() => { setMobileOpen(false); onGoToDashboard(); }} className="w-full mt-2 px-5 py-3 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-500 transition-all">
             Se connecter
           </button>
         </div>
@@ -103,13 +104,12 @@ function HeroSection({ onGoToDashboard, onGoToSetup, onGoToHub }: { onGoToDashbo
       ref={heroRef}
       className="relative min-h-screen flex items-center overflow-hidden scroll-mt-16"
       style={{
-        background: 'linear-gradient(135deg, #020617 0%, #1e1042 40%, #0f172a 70%, #020617 100%)',
+        background: 'linear-gradient(135deg, #020617 0%, #0f172a 50%, #020617 100%)',
       }}
     >
       {/* Ambient glow orbs */}
-      <div className="absolute top-1/4 -left-32 w-[500px] h-[500px] bg-violet-600/[0.07] rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute top-1/4 -left-32 w-[500px] h-[500px] bg-emerald-600/[0.06] rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-1/4 -right-32 w-[400px] h-[400px] bg-emerald-500/[0.05] rounded-full blur-[100px] pointer-events-none" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-purple-500/[0.04] rounded-full blur-[150px] pointer-events-none" />
 
       {/* Subtle grid pattern */}
       <div
@@ -135,10 +135,10 @@ function HeroSection({ onGoToDashboard, onGoToSetup, onGoToHub }: { onGoToDashbo
               initial={{ opacity: 0, y: 20 }}
               animate={heroInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="inline-flex items-center gap-2 bg-violet-500/10 border border-violet-500/20 text-violet-300 rounded-full px-4 py-1.5 text-sm font-medium mb-8"
+              className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 rounded-full px-4 py-1.5 text-sm font-medium mb-8"
             >
               <Sparkles className="w-4 h-4" />
-              Nouveau : Configuration en 1 scan
+              La conciergerie digitale des hôtes Airbnb
             </motion.span>
 
             {/* H1 */}
@@ -148,9 +148,9 @@ function HeroSection({ onGoToDashboard, onGoToSetup, onGoToHub }: { onGoToDashbo
               transition={{ duration: 0.6, delay: 0.3 }}
               className="text-4xl sm:text-5xl md:text-[3.4rem] font-extrabold leading-[1.1] mb-6 text-white"
             >
-              Transformez n&apos;importe quelle maison en{' '}
-              <span className="bg-gradient-to-r from-violet-400 via-purple-400 to-fuchsia-400 bg-clip-text text-transparent">
-                maison connectée
+              Transformez vos locations en{' '}
+              <span className="bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent">
+                expériences 5 étoiles
               </span>
               {' '}
               <span className="text-white/40 text-3xl sm:text-4xl md:text-5xl font-medium">Sans application.</span>
@@ -163,8 +163,8 @@ function HeroSection({ onGoToDashboard, onGoToSetup, onGoToHub }: { onGoToDashbo
               transition={{ duration: 0.6, delay: 0.4 }}
               className="text-lg md:text-xl text-white/50 mb-8 leading-relaxed"
             >
-              Une seule plaque élégante. Un scan pour les invités, un code PIN pour la famille.
-              <span className="text-white/80 font-medium"> À partir de 49 €/an.</span>
+              Une seule plaque QR pour vos invités, un tableau de bord pour vous et votre équipe.
+              <span className="text-white/80 font-medium"> Dès 9,90 €/mois.</span>
             </motion.p>
 
             {/* CTA Buttons */}
@@ -176,11 +176,11 @@ function HeroSection({ onGoToDashboard, onGoToSetup, onGoToHub }: { onGoToDashbo
             >
               <button
                 onClick={onGoToDashboard}
-                className="group relative flex items-center justify-center gap-2.5 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-semibold px-8 py-4 rounded-xl transition-all shadow-[0_0_30px_rgba(139,92,246,0.3)] hover:shadow-[0_0_50px_rgba(139,92,246,0.5)] hover:scale-[1.02] cursor-pointer"
+                className="group relative flex items-center justify-center gap-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-8 py-4 rounded-xl transition-all shadow-[0_0_30px_rgba(5,150,105,0.3)] hover:shadow-[0_0_50px_rgba(5,150,105,0.5)] hover:scale-[1.02] cursor-pointer"
               >
-                Choisir mon offre
+                Démarrer gratuitement
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 opacity-0 group-hover:opacity-100 blur-xl transition-opacity -z-10" />
+                <div className="absolute inset-0 rounded-xl bg-emerald-600 opacity-0 group-hover:opacity-100 blur-xl transition-opacity -z-10" />
               </button>
               <a
                 href="#pricing"
@@ -239,7 +239,7 @@ function HeroSection({ onGoToDashboard, onGoToSetup, onGoToHub }: { onGoToDashbo
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-emerald-500/60 font-bold">2 500+</span>
-                <span>foyers</span>
+                <span>logements gérés</span>
               </div>
             </motion.div>
           </motion.div>
@@ -261,25 +261,24 @@ function HeroSection({ onGoToDashboard, onGoToSetup, onGoToHub }: { onGoToDashbo
 
 function CtaFinal({ onGoToDashboard, onGoToSetup, onGoToHub }: { onGoToDashboard: () => void; onGoToSetup?: () => void; onGoToHub?: () => void }) {
   return (
-    <section id="cta-final" className="relative py-24 md:py-32 px-4 md:px-8 scroll-mt-16 overflow-hidden"
-      style={{ background: 'linear-gradient(135deg, #1e1042 0%, #2e1065 50%, #1e1042 100%)' }}
+    <section id="cta-final" className="relative py-24 md:py-32 px-4 md:px-8 scroll-mt-16 overflow-hidden bg-slate-950"
     >
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-violet-500/10 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none" />
       <FadeIn>
         <div className="max-w-[1000px] mx-auto text-center relative z-10">
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-white">
-            Prêt à transformer votre maison ?
+            Prêt à passer en mode Hôte ?
           </h2>
           <p className="text-white/50 text-lg mb-10">
-            Rejoignez les 2 500+ foyers qui ont déjà fait le choix de la simplicité.
+            Rejoignez les 2 500+ hôtes qui automatisent déjà leurs locations.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
               onClick={onGoToDashboard}
-              className="group relative px-8 py-4 rounded-xl bg-white text-violet-700 font-semibold hover:bg-violet-50 transition-all shadow-lg hover:shadow-xl hover:scale-[1.02] cursor-pointer"
+              className="group relative px-8 py-4 rounded-xl bg-emerald-600 text-white font-semibold hover:bg-emerald-500 transition-all shadow-lg hover:shadow-xl hover:scale-[1.02] cursor-pointer"
             >
-              Commencer gratuitement
-              <div className="absolute inset-0 rounded-xl bg-white opacity-0 group-hover:opacity-100 blur-xl -z-10 transition-opacity" />
+              Démarrer gratuitement
+              <div className="absolute inset-0 rounded-xl bg-emerald-600 opacity-0 group-hover:opacity-100 blur-xl -z-10 transition-opacity" />
             </button>
           </div>
         </div>
@@ -295,10 +294,10 @@ function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
           <div className="col-span-2 md:col-span-1">
             <div className="flex items-center gap-2.5 mb-4">
-              <img src="/logo-ordomotik.png" alt="ORDOMOTIK" className="h-9 w-auto object-contain rounded-lg" />
+              <BrandLogo variant="light" size="md" />
             </div>
             <p className="text-sm text-white/30 leading-relaxed">
-              Transformez votre maison grâce à la puissance des QR codes.
+              La plateforme QR qui automatise l&apos;expérience invités de vos locations courte durée.
             </p>
           </div>
           <div>
@@ -327,7 +326,7 @@ function Footer() {
           </div>
         </div>
         <div className="border-t border-white/[0.06] pt-8 text-center">
-          <p className="text-sm text-white/20">2025 ORDOMOTIK. Smart Home Solutions.</p>
+          <p className="text-sm text-white/20">2025 Conciergerie Hub. La conciergerie digitale des hôtes.</p>
         </div>
       </div>
     </footer>

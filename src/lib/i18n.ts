@@ -40,7 +40,7 @@ const TRANSLATIONS: Record<string, TranslationMap> = {
     retry: 'Réessayer',
     loading: 'Chargement...',
     error: 'Erreur',
-    powered_by: 'Propulsé par QR Domotik',
+    powered_by: 'Propulsé par Conciergerie Hub',
     scan_to_access: 'Scannez le QR pour accéder',
     // WiFi
     guest_wifi: 'Wi-Fi Invités',
@@ -100,7 +100,7 @@ const TRANSLATIONS: Record<string, TranslationMap> = {
     retry: 'Retry',
     loading: 'Loading...',
     error: 'Error',
-    powered_by: 'Powered by QR Domotik',
+    powered_by: 'Powered by Conciergerie Hub',
     scan_to_access: 'Scan the QR to access',
     // WiFi
     guest_wifi: 'Guest Wi-Fi',
@@ -160,7 +160,7 @@ const TRANSLATIONS: Record<string, TranslationMap> = {
     retry: 'Reintentar',
     loading: 'Cargando...',
     error: 'Error',
-    powered_by: 'Desarrollado por QR Domotik',
+    powered_by: 'Desarrollado por Conciergerie Hub',
     scan_to_access: 'Escanea el QR para acceder',
     // WiFi
     guest_wifi: 'Wi-Fi Invitados',
@@ -220,7 +220,7 @@ const TRANSLATIONS: Record<string, TranslationMap> = {
     retry: 'Erneut versuchen',
     loading: 'Laden...',
     error: 'Fehler',
-    powered_by: 'Angetrieben von QR Domotik',
+    powered_by: 'Angetrieben von Conciergerie Hub',
     scan_to_access: 'QR scannen für Zugriff',
     // WiFi
     guest_wifi: 'Gäste-WLAN',
@@ -280,7 +280,7 @@ const TRANSLATIONS: Record<string, TranslationMap> = {
     retry: 'Opnieuw proberen',
     loading: 'Laden...',
     error: 'Fout',
-    powered_by: 'Aangedreven door QR Domotik',
+    powered_by: 'Aangedreven door Conciergerie Hub',
     scan_to_access: 'Scan de QR voor toegang',
     // WiFi
     guest_wifi: 'Gasten-WiFi',
@@ -340,7 +340,7 @@ const TRANSLATIONS: Record<string, TranslationMap> = {
     retry: 'Riprova',
     loading: 'Caricamento...',
     error: 'Errore',
-    powered_by: 'Alimentato da QR Domotik',
+    powered_by: 'Alimentato da Conciergerie Hub',
     scan_to_access: 'Scansiona il QR per accedere',
     // WiFi
     guest_wifi: 'Wi-Fi Ospiti',
@@ -400,7 +400,7 @@ const TRANSLATIONS: Record<string, TranslationMap> = {
     retry: 'Tentar novamente',
     loading: 'Carregando...',
     error: 'Erro',
-    powered_by: 'Desenvolvido por QR Domotik',
+    powered_by: 'Desenvolvido por Conciergerie Hub',
     scan_to_access: 'Escaneie o QR para acessar',
     // WiFi
     guest_wifi: 'Wi-Fi para Convidados',
@@ -460,7 +460,7 @@ const TRANSLATIONS: Record<string, TranslationMap> = {
     retry: 'إعادة المحاولة',
     loading: 'جارٍ التحميل...',
     error: 'خطأ',
-    powered_by: 'مدعوم بواسطة QR Domotik',
+    powered_by: 'مدعوم بواسطة Conciergerie Hub',
     scan_to_access: 'امسح QR للوصول',
     // WiFi
     guest_wifi: 'واي فاي الضيوف',

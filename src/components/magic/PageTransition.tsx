@@ -111,7 +111,7 @@ export function BrandedFooter({ delay = 1 }: { delay?: number }) {
           rel="noopener noreferrer"
           className="font-bold text-white/80 hover:text-white transition-colors underline underline-offset-2 decoration-white/30"
         >
-          QR Domotik
+          Conciergerie Hub
         </a>
         {' '}•{' '}
         <a
