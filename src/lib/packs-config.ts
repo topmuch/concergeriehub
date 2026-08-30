@@ -236,7 +236,7 @@ export const PACKS: PackDefinition[] = [
     name: 'Upselling Automatisé',
     description: 'Générez des revenus additionnels à chaque séjour avec des services à la carte.',
     icon: 'TrendingUp',
-    color: 'from-violet-500 to-purple-600',
+    color: 'from-emerald-500 to-emerald-600',
     targetAudience: 'Hôtes Airbnb & locations',
     badge: 'Revenue',
     qrCodes: [

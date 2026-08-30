@@ -774,7 +774,7 @@ export function MarketplaceManager() {
       {/* Section 1 - Header + Stats */}
       <div>
         <div className="flex items-center gap-3 mb-1">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-purple-600">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-slate-900 to-slate-800">
             <Store className="h-5 w-5 text-white" />
           </div>
           <div>
@@ -789,7 +789,7 @@ export function MarketplaceManager() {
       {/* Stat cards - per tab */}
       {activeTab === 'merchants' && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-400 via-violet-500 to-purple-600 p-5 text-white shadow-lg">
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 p-5 text-white shadow-lg">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
                 <p className="text-sm font-medium text-white/80">Commerçants</p>
@@ -833,7 +833,7 @@ export function MarketplaceManager() {
 
       {activeTab === 'promos' && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-400 via-violet-500 to-purple-600 p-5 text-white shadow-lg">
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 p-5 text-white shadow-lg">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
                 <p className="text-sm font-medium text-white/80">Total promos</p>
@@ -877,7 +877,7 @@ export function MarketplaceManager() {
 
       {activeTab === 'flash' && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-400 via-violet-500 to-purple-600 p-5 text-white shadow-lg">
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 p-5 text-white shadow-lg">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
                 <p className="text-sm font-medium text-white/80">Total</p>
@@ -936,7 +936,7 @@ export function MarketplaceManager() {
 
       {activeTab === 'coupons' && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-400 via-violet-500 to-purple-600 p-5 text-white shadow-lg">
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 p-5 text-white shadow-lg">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
                 <p className="text-sm font-medium text-white/80">Mes coupons</p>
@@ -989,7 +989,7 @@ export function MarketplaceManager() {
 
       {activeTab === 'transactions' && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-400 via-violet-500 to-purple-600 p-5 text-white shadow-lg">
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 p-5 text-white shadow-lg">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
                 <p className="text-sm font-medium text-white/80">Total transactions</p>
@@ -1048,7 +1048,7 @@ export function MarketplaceManager() {
               onClick={() => setActiveTab(key)}
               className={
                 activeTab === key
-                  ? 'bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white shadow-sm'
+                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm'
                   : ''
               }
             >
@@ -1063,7 +1063,7 @@ export function MarketplaceManager() {
           {activeTab === 'merchants' && (
             <Dialog open={createMerchantOpen} onOpenChange={setCreateMerchantOpen}>
               <DialogTrigger asChild>
-                <Button className="gap-2 bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white shadow-md">
+                <Button className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md">
                   <Plus className="h-4 w-4" />
                   Nouveau commerçant
                 </Button>
@@ -1071,7 +1071,7 @@ export function MarketplaceManager() {
               <DialogContent className="sm:max-w-[520px] max-h-[85vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2">
-                    <Store className="h-5 w-5 text-violet-500" />
+                    <Store className="h-5 w-5 text-emerald-500" />
                     Nouveau commerçant
                   </DialogTitle>
                 </DialogHeader>
@@ -1125,7 +1125,7 @@ export function MarketplaceManager() {
                   <Button
                     onClick={handleCreateMerchant}
                     disabled={!merchFormName.trim() || merchSubmitting}
-                    className="bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white"
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white"
                   >
                     {merchSubmitting ? 'Création...' : 'Créer'}
                   </Button>
@@ -1137,7 +1137,7 @@ export function MarketplaceManager() {
           {activeTab === 'promos' && (
             <Dialog open={createPromoOpen} onOpenChange={setCreatePromoOpen}>
               <DialogTrigger asChild>
-                <Button className="gap-2 bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white shadow-md">
+                <Button className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md">
                   <Plus className="h-4 w-4" />
                   Nouvelle promo
                 </Button>
@@ -1145,7 +1145,7 @@ export function MarketplaceManager() {
               <DialogContent className="sm:max-w-[520px] max-h-[85vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2">
-                    <Tag className="h-5 w-5 text-violet-500" />
+                    <Tag className="h-5 w-5 text-emerald-500" />
                     Nouvelle promotion
                   </DialogTitle>
                 </DialogHeader>
@@ -1222,7 +1222,7 @@ export function MarketplaceManager() {
                   <Button
                     onClick={handleCreatePromo}
                     disabled={!promoFormTitle.trim() || promoSubmitting}
-                    className="bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white"
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white"
                   >
                     {promoSubmitting ? 'Création...' : 'Créer'}
                   </Button>
@@ -1234,7 +1234,7 @@ export function MarketplaceManager() {
           {activeTab === 'flash' && (
             <Dialog open={createFlashOpen} onOpenChange={setCreateFlashOpen}>
               <DialogTrigger asChild>
-                <Button className="gap-2 bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white shadow-md">
+                <Button className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md">
                   <Plus className="h-4 w-4" />
                   Nouvelle vente flash
                 </Button>
@@ -1323,7 +1323,7 @@ export function MarketplaceManager() {
                   <Button
                     onClick={handleCreateFlashSale}
                     disabled={!flashFormMerchantId || !flashFormPromoId || !flashFormFlashPrice || !flashFormStartsAt || !flashFormEndsAt || flashSubmitting}
-                    className="bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white"
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white"
                   >
                     {flashSubmitting ? 'Création...' : 'Créer'}
                   </Button>
@@ -1335,7 +1335,7 @@ export function MarketplaceManager() {
           {activeTab === 'coupons' && (
             <Dialog open={createCouponOpen} onOpenChange={setCreateCouponOpen}>
               <DialogTrigger asChild>
-                <Button className="gap-2 bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white shadow-md">
+                <Button className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md">
                   <Plus className="h-4 w-4" />
                   Réclamer un coupon
                 </Button>
@@ -1343,7 +1343,7 @@ export function MarketplaceManager() {
               <DialogContent className="sm:max-w-[520px] max-h-[85vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2">
-                    <Ticket className="h-5 w-5 text-violet-500" />
+                    <Ticket className="h-5 w-5 text-emerald-500" />
                     Réclamer un coupon
                   </DialogTitle>
                 </DialogHeader>
@@ -1407,7 +1407,7 @@ export function MarketplaceManager() {
                   <Button
                     onClick={handleClaimCoupon}
                     disabled={!couponFormMerchantId || !couponFormDiscountValue || couponSubmitting}
-                    className="bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white"
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white"
                   >
                     {couponSubmitting ? 'Réclamation...' : 'Réclamer'}
                   </Button>
@@ -1474,7 +1474,7 @@ export function MarketplaceManager() {
                               {m.isVerified && (
                                 <ShieldCheck className="h-3.5 w-3.5 text-blue-500 shrink-0" />
                               )}
-                              <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-0 bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300">
+                              <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-0 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
                                 {m.category || 'Autre'}
                               </Badge>
                             </div>
@@ -1527,7 +1527,7 @@ export function MarketplaceManager() {
                       </DialogHeader>
                       <div className="space-y-4">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <Badge variant="outline" className="border-0 bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300">
+                          <Badge variant="outline" className="border-0 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
                             {selectedMerchant.category || 'Autre'}
                           </Badge>
                           <Badge variant="outline" className={`border-0 ${selectedMerchant.isActive ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'}`}>
@@ -1583,7 +1583,7 @@ export function MarketplaceManager() {
 
                         {/* Promo count */}
                         <div className="flex items-center gap-2 text-sm">
-                          <Tag className="h-4 w-4 text-violet-500" />
+                          <Tag className="h-4 w-4 text-emerald-500" />
                           <span className="text-muted-foreground">
                             {getMerchantPromos(selectedMerchant.id).length} promotion(s)
                           </span>
@@ -1672,7 +1672,7 @@ export function MarketplaceManager() {
                                 <span className="line-through text-muted-foreground">{formatEur(p.originalPrice)}</span>
                               )}
                               {p.promoPrice != null && (
-                                <span className="font-semibold text-violet-600 dark:text-violet-400">{formatEur(p.promoPrice)}</span>
+                                <span className="font-semibold text-emerald-600 dark:text-emerald-400">{formatEur(p.promoPrice)}</span>
                               )}
                             </div>
                             <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
@@ -1687,7 +1687,7 @@ export function MarketplaceManager() {
                             size="sm"
                             variant="outline"
                             onClick={() => handleRedeemPromo(p.id)}
-                            className="shrink-0 text-violet-600 hover:bg-violet-50"
+                            className="shrink-0 text-emerald-600 hover:bg-emerald-50"
                           >
                             Récupérer
                           </Button>
@@ -1823,7 +1823,7 @@ export function MarketplaceManager() {
                     onClick={() => { setCouponStatusFilter(st); fetchTabData('coupons'); }}
                     className={
                       couponStatusFilter === st
-                        ? 'bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white'
+                        ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
                         : ''
                     }
                   >
@@ -1863,7 +1863,7 @@ export function MarketplaceManager() {
                           </div>
 
                           {/* Discount display */}
-                          <div className="mt-2 text-lg font-bold text-violet-600 dark:text-violet-400">
+                          <div className="mt-2 text-lg font-bold text-emerald-600 dark:text-emerald-400">
                             {c.discountType === 'percentage'
                               ? `-${c.discountValue}%`
                               : c.discountType === 'bogof'
@@ -1910,7 +1910,7 @@ export function MarketplaceManager() {
                             size="sm"
                             variant="outline"
                             onClick={() => handleScanCoupon(c.id, c.merchantId)}
-                            className="shrink-0 text-violet-600 hover:bg-violet-50"
+                            className="shrink-0 text-emerald-600 hover:bg-emerald-50"
                           >
                             <QrCode className="h-3.5 w-3.5 mr-1.5" />
                             Scanner

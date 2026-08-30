@@ -8,7 +8,7 @@ import { QRTCard, QRTButton, QRTActions, QRTProgressBar, QRTNumericKeypad } from
 
 // ── Types ──
 type ActivateStep = 'check' | 'profile' | 'account' | 'pin' | 'config' | 'success' | 'error';
-type ProfileType = 'famille' | 'airbnb_solo' | 'airbnb_pro';
+type ProfileType = 'free' | 'airbnb_solo' | 'agency';
 
 type CodeCheckResult =
   | { ok: true; status: 'available'; physicalQrId: string }
@@ -17,9 +17,9 @@ type CodeCheckResult =
 
 // ── Plans ──
 const PLANS: { id: ProfileType; emoji: string; label: string; price: string; color: string }[] = [
-  { id: 'famille', emoji: '\uD83C\uDFE0', label: 'Famille', price: '49\u20AC/an', color: 'bg-[#059669] text-white' },
-  { id: 'airbnb_solo', emoji: '\uD83C\uDFE8', label: 'Airbnb Solo', price: '9,90\u20AC/mois', color: 'bg-[#7C3AED] text-white' },
-  { id: 'airbnb_pro', emoji: '\u2B50', label: 'Airbnb Pro', price: '199\u20AC/an', color: 'bg-[#047857] text-white' },
+  { id: 'free', emoji: '\uD83C\uDFE0', label: 'Découverte', price: '0€ — 1 logement', color: 'bg-slate-800 text-white' },
+  { id: 'airbnb_solo', emoji: '\uD83C\uDFE8', label: 'Airbnb Solo', price: '9,90€/mois', color: 'bg-[#059669] text-white' },
+  { id: 'agency', emoji: '\uD83C\uDFE2', label: 'Agence', price: '49€/mois — 10 logements', color: 'bg-[#047857] text-white' },
 ];
 
 const STEP_TITLES: Record<string, string> = {
@@ -55,7 +55,7 @@ export function ActivatePageContent({ params }: { params: Promise<{ code: string
   const [physicalQrId, setPhysicalQrId] = useState('');
 
   // Step data
-  const [profile, setProfile] = useState<ProfileType>('famille');
+  const [profile, setProfile] = useState<ProfileType>('airbnb_solo');
   const [email, setEmail] = useState('');
   const [fullName, setFullName] = useState('');
   const [password, setPassword] = useState('');
@@ -398,7 +398,7 @@ export function ActivatePageContent({ params }: { params: Promise<{ code: string
               {step === 'pin' && (
                 <QRTCard header={{ emoji: '\uD83D\uDD10', title: 'Code secret', badge: 'Étape 3' }}>
                   <p className="text-sm text-gray-500 mb-6 text-center">
-                    Choisissez un code à 4 chiffres pour protéger l\'accès Famille.
+                    Choisissez un code à 4 chiffres pour protéger le Mode Hôte.
                   </p>
                   <QRTNumericKeypad onComplete={handlePinComplete} />
                   {pinValue && (
@@ -426,34 +426,30 @@ export function ActivatePageContent({ params }: { params: Promise<{ code: string
                       />
                     </div>
 
-                    {profile === 'famille' && (
-                      <>
-                        <div className="h-px bg-gray-100 my-2" />
-                        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide">WiFi (optionnel)</p>
-                        <div className="space-y-3">
-                          <div>
-                            <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-1.5">Nom du réseau</label>
-                            <input
-                              type="text"
-                              placeholder="MonWiFi_5G"
-                              value={wifiSsid}
-                              onChange={(e) => setWifiSsid(e.target.value)}
-                              className={qrtInput}
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-1.5">Mot de passe WiFi</label>
-                            <input
-                              type="text"
-                              placeholder="MonMotDePasse"
-                              value={wifiPassword}
-                              onChange={(e) => setWifiPassword(e.target.value)}
-                              className={qrtInput}
-                            />
-                          </div>
-                        </div>
-                      </>
-                    )}
+                    <div className="h-px bg-gray-100 my-2" />
+                    <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide">Wi-Fi (optionnel)</p>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-1.5">Nom du réseau</label>
+                        <input
+                          type="text"
+                          placeholder="MonWiFi_5G"
+                          value={wifiSsid}
+                          onChange={(e) => setWifiSsid(e.target.value)}
+                          className={qrtInput}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-1.5">Mot de passe Wi-Fi</label>
+                        <input
+                          type="text"
+                          placeholder="MonMotDePasse"
+                          value={wifiPassword}
+                          onChange={(e) => setWifiPassword(e.target.value)}
+                          className={qrtInput}
+                        />
+                      </div>
+                    </div>
 
                     <div>
                       <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-1.5">

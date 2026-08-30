@@ -10,7 +10,7 @@ import {
   SelectContent,
   SelectItem,
 } from '@/components/ui/select';
-import { Wifi, Link, BookOpen, StickyNote, User, Bell, UtensilsCrossed, Pill, Zap, KeyRound, Sparkles } from 'lucide-react';
+import { Wifi, Link, BookOpen, StickyNote, User, Bell, KeyRound, Star, Wrench } from 'lucide-react';
 
 // ---------------------------------------------------------------------------
 //  Types
@@ -68,14 +68,6 @@ export const MODULE_ACTIVATION_CONFIG: Record<string, {
       { key: 'body', label: 'Message', type: 'textarea', placeholder: 'Poulet au four à 180°', required: true },
     ],
   },
-  meal_planner: {
-    icon: UtensilsCrossed,
-    description: 'Menu du jour pour la famille',
-    fields: [
-      { key: 'title', label: 'Titre', type: 'text', placeholder: 'Menu de la semaine', required: false },
-      { key: 'body', label: 'Menu du jour', type: 'textarea', placeholder: 'Midi : Poulet rôti avec légumes\nSoir : Pâtes carbonara', required: true },
-    ],
-  },
   guestbook: {
     icon: BookOpen,
     description: 'Messages des invités',
@@ -93,7 +85,7 @@ export const MODULE_ACTIVATION_CONFIG: Record<string, {
     ],
   },
   emergency: {
-    icon: Pill,
+    icon: Bell,
     description: 'Contacts d\'urgence',
     fields: [
       { key: 'title', label: 'Titre', type: 'text', placeholder: 'En cas d\'urgence', required: false },
@@ -109,36 +101,12 @@ export const MODULE_ACTIVATION_CONFIG: Record<string, {
       { key: 'email', label: 'Email', type: 'email', placeholder: 'jean@example.com', required: false },
     ],
   },
-  medication: {
-    icon: Pill,
-    description: 'Suivi de prise de médicaments',
-    fields: [
-      { key: 'title', label: 'Nom du médicament', type: 'text', placeholder: 'Vitamine D', required: true },
-      { key: 'body', label: 'Posologie / Instructions', type: 'textarea', placeholder: '1 comprimé par jour le matin à jeun', required: false },
-    ],
-  },
-  energy_monitor: {
-    icon: Zap,
-    description: 'Suivi des compteurs d\'énergie',
-    fields: [
-      { key: 'title', label: 'Titre', type: 'text', placeholder: 'Compteur électrique', required: false },
-      { key: 'body', label: 'Note', type: 'textarea', placeholder: 'Relevé à faire le 1er de chaque mois', required: false },
-    ],
-  },
   key_location: {
     icon: KeyRound,
     description: 'Suivi d\'emprunt de clés et objets',
     fields: [
       { key: 'title', label: 'Objet suivi', type: 'text', placeholder: 'Clés de la voiture', required: true },
       { key: 'body', label: 'Emplacement habituel', type: 'textarea', placeholder: 'Porte-clés sur le crochet à gauche de l\'entrée', required: false },
-    ],
-  },
-  cleaning_schedule: {
-    icon: Sparkles,
-    description: 'Checklist de ménage profond',
-    fields: [
-      { key: 'title', label: 'Titre', type: 'text', placeholder: 'Ménage hebdomadaire', required: false },
-      { key: 'body', label: 'Tâches', type: 'textarea', placeholder: '- Nettoyer le filtre de la machine à laver\n- Vider les gouttières\n- Dépoussiérer les hauts', required: false },
     ],
   },
   shopping_list: {
@@ -151,24 +119,36 @@ export const MODULE_ACTIVATION_CONFIG: Record<string, {
   },
   checklist: {
     icon: BookOpen,
-    description: 'To-Do list administrative',
+    description: 'Check-list de check-out pour les voyageurs',
     fields: [
-      { key: 'title', label: 'Titre', type: 'text', placeholder: 'Tâches à faire', required: false },
-      { key: 'body', label: 'Tâches', type: 'textarea', placeholder: '- Payer la facture d\'électricité\n- Renvoyer le courrier', required: false },
+      { key: 'title', label: 'Titre', type: 'text', placeholder: 'Check-out — avant votre départ', required: false },
+      { key: 'body', label: 'Étapes', type: 'textarea', placeholder: '- Jeter les poubelles\n- Lancer le lave-vaisselle\n- Fermer les fenêtres', required: false },
+    ],
+  },
+  promo: {
+    icon: Star,
+    description: 'Offre de service payant (upselling)',
+    fields: [
+      { key: 'title', label: 'Titre de l\'offre', type: 'text', placeholder: 'Petit-déjeuner continental', required: true },
+      { key: 'body', label: 'Description', type: 'textarea', placeholder: 'Livré à votre porte chaque matin à 8h — 12€ / personne', required: false },
+      { key: 'price', label: 'Prix affiché', type: 'text', placeholder: '12€ / pers.', required: false },
+    ],
+  },
+  artisan_directory: {
+    icon: Wrench,
+    description: 'Prestataire de confiance (ménage, maintenance…)',
+    fields: [
+      { key: 'name', label: 'Nom du prestataire', type: 'text', placeholder: 'CleanPro Ménage', required: true },
+      { key: 'phone', label: 'Téléphone', type: 'text', placeholder: '+33 6 12 34 56 78', required: false },
+      { key: 'body', label: 'Détails', type: 'textarea', placeholder: 'Interventions lundi et jeudi — réservé par l\'hôte', required: false },
     ],
   },
 };
 
 /** Modules that have no special content fields — just use defaults */
 export const MODULES_WITHOUT_CONTENT_FIELDS = new Set([
-  'inventory', 'chore', 'timer', 'recipe', 'pet_info', 'plant_care',
-  'visitor_info', 'delivery', 'baby_sitter', 'house_rules', 'wifi_reset',
-  'appliance_manual', 'laundry_guide', 'recycling_info', 'utility_shutoff',
-  'first_aid', 'pet_sitter', 'rental_guest', 'airbnb_guest',
-  'emergency_contacts', 'package_tracking', 'home_network',
-  'entertainment', 'music_room', 'game_room', 'library',
-  'photo_gallery', 'family_board', 'announcement', 'mood_tracker',
-  'habit_tracker', 'weather_station', 'smart_home_control', 'voice_assistant',
+  'inventory', 'house_rules', 'guestbook', 'key_location',
+  'doorbell', 'emergency',
 ]);
 
 // ---------------------------------------------------------------------------

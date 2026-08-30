@@ -20,13 +20,13 @@ interface DemoSlide {
 
 const DEMOS: DemoSlide[] = [
   {
-    id: 'family',
+    id: 'guest',
     title: 'Mode Invité',
     subtitle: 'Tout le séjour de vos invités en un scan',
     price: '49\u20ac / an',
     badge: 'Invité',
     badgeColor: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-    qrValue: 'https://qrdomotik.roomscan.pro/demo/family-hub',
+    qrValue: 'https://conciergerie-hub.app/demo/hub',
     phoneGradient: 'from-emerald-600 via-teal-600 to-cyan-700',
     phoneTitle: 'Villa Martin',
     phoneModules: [
@@ -43,7 +43,7 @@ const DEMOS: DemoSlide[] = [
     price: '9,90\u20ac / mois',
     badge: 'Airbnb',
     badgeColor: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
-    qrValue: 'https://qrdomotik.roomscan.pro/demo/airbnb-hub',
+    qrValue: 'https://conciergerie-hub.app/demo/hub',
     phoneGradient: 'from-amber-500 via-orange-600 to-red-600',
     phoneTitle: 'Loft Paris 11',
     phoneModules: [

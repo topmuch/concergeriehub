@@ -95,7 +95,7 @@ export function HowItWorks() {
                       <div
                         className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${step.color} flex items-center justify-center text-white shadow-lg`}
                         style={{
-                          boxShadow: `0 8px 30px -4px ${step.glowColor === 'violet' ? 'rgba(139,92,246,0.35)' : step.glowColor === 'emerald' ? 'rgba(16,185,129,0.35)' : 'rgba(245,158,11,0.35)'}`,
+                          boxShadow: `0 8px 30px -4px ${step.glowColor === 'emerald' ? 'rgba(16,185,129,0.35)' : 'rgba(245,158,11,0.35)'}`,
                         }}
                       >
                         {step.icon}

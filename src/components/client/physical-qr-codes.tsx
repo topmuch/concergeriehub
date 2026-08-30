@@ -83,13 +83,11 @@ import {
   AlertCircle,
   CheckCircle2,
   XCircle,
-  Clock,
   User,
   Link,
-  UtensilsCrossed,
-  Pill,
   KeyRound,
-  Sparkles,
+  Star,
+  Wrench,
   Palette,
 } from 'lucide-react';
 
@@ -135,26 +133,14 @@ interface QrCodeItem {
 //  Constants
 // ---------------------------------------------------------------------------
 
+/** Catalogue B2B Conciergerie Hub — les 6 modules métier proposés aux hôtes. */
 const POPULAR_MODULES = [
   'wifi',
-  'external_link',
   'home_manual',
-  'note',
-  'meal_planner',
-  'guestbook',
-  'doorbell',
-  'emergency',
-  'contact',
-  'shopping_list',
   'checklist',
-  'medication',
-  'energy_monitor',
-  'key_location',
-  'cleaning_schedule',
-  'inventory',
-  'chore',
-  'timer',
-  'recipe',
+  'contact',
+  'promo',
+  'artisan_directory',
 ] as const;
 
 const MODULE_ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -166,17 +152,12 @@ const MODULE_ICON_MAP: Record<string, React.ComponentType<{ className?: string }
   contact: User,
   shopping_list: List,
   inventory: Package,
-  chore: CheckCircle2,
   checklist: List,
-  timer: Clock,
-  recipe: FileText,
   external_link: Link,
   home_manual: FileText,
-  meal_planner: UtensilsCrossed,
-  medication: Pill,
-  energy_monitor: Zap,
   key_location: KeyRound,
-  cleaning_schedule: Sparkles,
+  promo: Star,
+  artisan_directory: Wrench,
 };
 
 const ITEMS_PER_PAGE = 10;

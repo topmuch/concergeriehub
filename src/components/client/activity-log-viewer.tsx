@@ -75,7 +75,7 @@ export function ActivityLogViewer() {
     if (type.includes('activ')) return 'bg-emerald-500/15 text-emerald-700';
     if (type.includes('deactiv')) return 'bg-red-500/15 text-red-700';
     if (type.includes('creat')) return 'bg-blue-500/15 text-blue-700';
-    if (type.includes('invit')) return 'bg-violet-500/15 text-violet-700';
+    if (type.includes('invit')) return 'bg-emerald-500/15 text-emerald-700';
     return 'bg-muted text-muted-foreground';
   };
 

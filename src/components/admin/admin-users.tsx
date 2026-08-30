@@ -65,7 +65,7 @@ interface PaginationMeta {
 function RoleBadge({ role }: { role: string }) {
   if (role === 'SUPERADMIN') {
     return (
-      <Badge className="bg-purple-600 hover:bg-purple-700">Superadmin</Badge>
+      <Badge className="bg-amber-500 hover:bg-amber-600">Superadmin</Badge>
     );
   }
   return <Badge variant="default">{role === 'USER' ? 'Utilisateur' : role}</Badge>;

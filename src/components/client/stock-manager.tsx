@@ -85,8 +85,8 @@ const CATEGORY_COLORS: Record<string, string> = {
   'Viandes & Poissons': 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300',
   'Épicerie': 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
   'Boissons': 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300',
-  'Surgelés': 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300',
-  "Produits d'entretien": 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300',
+  'Surgelés': 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+  "Produits d'entretien": 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
   'Autre': 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
 };
 

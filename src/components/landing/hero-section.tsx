@@ -212,11 +212,11 @@ function HeroSection({ onGoToDashboard, onGoToSetup, onGoToHub }: { onGoToDashbo
                 {onGoToHub && (
                   <button
                     onClick={onGoToHub}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-fuchsia-500/10 border border-fuchsia-500/25 text-fuchsia-300 text-sm font-medium hover:bg-fuchsia-500/20 hover:border-fuchsia-500/40 transition-all cursor-pointer"
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 text-sm font-medium hover:bg-emerald-500/20 hover:border-emerald-500/40 transition-all cursor-pointer"
                   >
                     <QrCode className="w-4 h-4" />
                     Voir le hub QR
-                    <span className="text-[10px] bg-fuchsia-500/20 px-1.5 py-0.5 rounded-full ml-1">LIVE</span>
+                    <span className="text-[10px] bg-emerald-500/20 px-1.5 py-0.5 rounded-full ml-1">LIVE</span>
                   </button>
                 )}
               </motion.div>

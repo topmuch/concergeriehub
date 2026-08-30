@@ -71,3 +71,26 @@ Stage Summary:
 - Wizard onboarding B2B fonctionnel (4 étapes + succès) aligné sur le schéma Property (propertyType/address/lat/lng) et le catalogue modules (Wi-Fi + Guidebook activés, Annuaire/Upselling plus tard).
 - Login unifié Prisma + comptes démo seedés : la démo est utilisable de bout en bout.
 - Reste pour ÉTAPE 4 : de-violetiser l'intérieur du dashboard client (cartes stats "SCANS HUB" violet, tableaux, boutons internes), narrowing catalogue modules dans types/database.ts + hub/view renderers, ajustements hub-content restants (variables totalFamilyModules), QRTags preview restant.
+
+---
+Task ID: 4
+Agent: Z.ai Code (orchestrator)
+Task: ÉTAPE 4 — Finalisation UI B2B : dé-violetisation dashboard, narrowing catalogue modules, hub famille→hôte, QRTags preview.
+
+Work Log:
+- types/database.ts : ajout B2B_MODULES (6 modules métier : WIFI/GUIDEBOOK/CHECKOUT/COMPLAINT/UPSELLING/PROVIDER_DIRECTORY mappés sur dbTypes wifi/home_manual/checklist/contact/promo/artisan_directory), B2BModuleKey, ALL_QR_MODULE_TYPES réduit aux 6 dbTypes, QR_MODULE_TYPES gardé en legacy minimal (V1+5 V2+2 V3), QR_MODULE_LABELS typé Record<string,string> avec labels B2B (Wi-Fi, Guidebook, Check-out, Réclamations, Upselling, Annuaire prestataires) + fallbacks legacy.
+- module-content-fields.tsx : configs legacy famille supprimées (meal_planner, medication, energy_monitor, cleaning_schedule), checklist rewordée check-out, +promo (Star) et +artisan_directory (Wrench) avec champs dédiés, MODULES_WITHOUT_CONTENT_FIELDS réduit aux legacy affichables, emergency icon Pill→Bell.
+- view-content.tsx : +4 renderers B2B (GuidebookView, CheckoutView interactive, UpsellingView avec prix, DirectoryView avec tel:), branchés dans le switch.
+- hub-content.tsx : +4 cartes inline B2B équivalentes ; renommage global famille→hôte (familyRooms→hostRooms, view 'family'→'host', HostRoomCard/HostActionCard, totalHostModules, goToHostRoom), badge FAMILLE→HÔTE.
+- api/public/hub/[slug]/route.ts : champ familyRooms→hostRooms (démo + réel), données démo hôte B2B (chore→checklist check-out, medication→inventory stock d'accueil, 'Contacts Famille'→'Contacts Hôte' avec intervenants Ménage/Maintenance, 'Bienvenue dans la famille !'→'Bienvenue chez vous !').
+- physical-qr-codes.tsx (code mort, préventif) : POPULAR_MODULES → 6 modules B2B, MODULE_ICON_MAP nettoyé (+Star, +Wrench), imports icônes purgés.
+- Dé-violetisation par sed ordonné sur 25 fichiers (client/admin/landing/app) : gradients violet→purple→fuchsia → slate-900/800 (headers, tuiles, bannières), boutons CTA → emerald-600/700, textes/badges/fonds violet → emerald, Crown purple → amber, badges subscription → slate, artisan banner blue/indigo → slate-900, stock catégories indigo/violet → amber/teal, Admin badge → slate. 107 occurrences → 0 (hors picker couleurs fonctionnel generate-batch + AnimatedGradient mort).
+- Cas spécifiques : stats-overview gradients → slate/emerald + 'plateforme QR Domotik'→'Conciergerie Hub', packs-config upselling color → emerald, settings border-l violet→emerald, scan-analytics gradient → slate, admin-users Superadmin → amber, hero-section badge LIVE fuchsia → emerald, how-it-works ternaire violet mort supprimé, qr-demo #8B5CF6 → #059669, interactive-demo id 'family'→'guest' + URLs qrValue conciergerie-hub.app, pages hub/view/activate bg-[#8B5CF6]→#F8FAFC (loading), activate-content plans Famille/Solo/Pro → Découverte 0€/Airbnb Solo/Agence (ProfileType free|airbnb_solo|agency, défaut airbnb_solo, Wi-Fi désormais pour tous les profils, PIN "protéger le Mode Hôte"), hub-manager getPlanBadge +agency/+free sans famille, QRTPreview 'QR Domotik'→'QR Hub' + 'Fond violet'→'Fond émeraude'.
+- Vérifications : tsc --noEmit 0 erreur, eslint 0 erreur, agent-browser : hub démo Mode Hôte PIN→Salon (Wi-Fi privé/Contacts Hôte/Courses réassort)→Cuisine (check-out cochable ✓), badge HÔTE, wizard démo 4 étapes→'Tout est prêt !', login démo→dashboard (Zap emerald, footer sticky, Paramètres emerald), landing mobile 390px OK, footer bottom=docH (pas de gap flottant), 64 requêtes 200, console propre (JWT_SESSION_ERROR = cookie antérieur au changement de secret NextAuth, bénin).
+
+Stage Summary:
+- Zéro violet/indigo/fuchsia sur les surfaces produit ; palette B2B Slate-900 + Emerald homogène du landing jusqu'aux vues hub/view.
+- Catalogue modules officiellement réduit aux 6 modules métier B2B (B2B_MODULES) avec renderers dédiés complets côté hub ET view ; legacy conservé en fallback labels.
+- Contrat API hub renommé hostRooms + données démo 100% B2B ; identifiants internes hub-content alignés (view 'host', HostRoomCard…).
+- Page d'activation alignée sur les plans vendus (Découverte/Airbnb Solo/Agence).
+- ÉTAPE 4 livrée — en attente de validation utilisateur pour la suite (feuille de route : Stripe checkout réel, notifications email/SMS, génération PDF plaques, ou autre priorité selon l'utilisateur).

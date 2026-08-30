@@ -122,7 +122,7 @@ export function HomesManager() {
   const roleBadge = (role: string) => {
     switch (role) {
       case 'owner': return <Badge className="bg-amber-500/15 text-amber-700">Propriétaire</Badge>;
-      case 'admin': return <Badge className="bg-violet-500/15 text-violet-700">Admin</Badge>;
+      case 'admin': return <Badge className="bg-slate-500/15 text-slate-700">Admin</Badge>;
       case 'child': return <Badge className="bg-emerald-500/15 text-emerald-700">Enfant</Badge>;
       default: return <Badge variant="secondary">Membre</Badge>;
     }

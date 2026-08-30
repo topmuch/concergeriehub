@@ -73,14 +73,14 @@ export function StatsOverview() {
       value: stats.activeQrCount,
       sublabel: `${stats.inactiveQrCount} en attente`,
       icon: <CheckCircle2 className="h-6 w-6 text-white" />,
-      gradient: 'from-violet-500 via-purple-600 to-fuchsia-700',
+      gradient: 'from-slate-900 to-slate-700',
     },
     {
       label: 'Utilisateurs',
       value: stats.totalUsers,
       sublabel: `${stats.totalHomes} foyers`,
       icon: <Users className="h-6 w-6 text-white" />,
-      gradient: 'from-rose-400 via-pink-500 to-fuchsia-600',
+      gradient: 'from-emerald-600 to-emerald-800',
     },
   ];
 
@@ -89,7 +89,7 @@ export function StatsOverview() {
       <div>
         <h2 className="text-2xl font-bold tracking-tight">Tableau de bord</h2>
         <p className="text-muted-foreground">
-          Vue d'ensemble de la plateforme QR Domotik.
+          Vue d'ensemble de la plateforme Conciergerie Hub.
         </p>
       </div>
 

@@ -431,7 +431,7 @@ export function GenerateBatch() {
           <Card className="border-0 shadow-sm">
             <CardHeader className="bg-gradient-to-r from-muted/50 to-transparent border-b">
               <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <Palette className="h-4 w-4 text-violet-500" />
+                <Palette className="h-4 w-4 text-emerald-500" />
                 Style & Design
               </CardTitle>
             </CardHeader>

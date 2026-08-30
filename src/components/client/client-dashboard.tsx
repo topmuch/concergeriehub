@@ -108,7 +108,7 @@ export function ClientDashboard() {
       {/* 3 KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* Scans Hub - Hero card */}
-        <Card className="rounded-2xl border-0 bg-gradient-to-br from-violet-600 to-purple-700 text-white shadow-lg shadow-violet-500/20">
+        <Card className="rounded-2xl border-0 bg-gradient-to-br from-slate-900 to-slate-800 text-white shadow-lg shadow-slate-900/20">
           <CardContent className="p-5 flex items-start justify-between">
             <div>
               <p className="text-xs font-medium text-white/70 uppercase tracking-wider">Scans Hub</p>
@@ -157,10 +157,10 @@ export function ClientDashboard() {
 
       {/* Main CTA: Gérer mon Hub */}
       <Card className="rounded-2xl overflow-hidden">
-        <div className="bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 p-0.5">
+        <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-0.5">
           <CardContent className="p-6 bg-background rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-violet-500/20">
+              <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center flex-shrink-0 shadow-lg shadow-slate-900/20">
                 <LayoutDashboard className="h-6 w-6 text-white" />
               </div>
               <div>
@@ -187,7 +187,7 @@ export function ClientDashboard() {
               <h3 className="text-sm font-semibold">Activité des 14 derniers jours</h3>
               <button
                 onClick={() => window.dispatchEvent(new CustomEvent('navigate', { detail: 'client-analytics' }))}
-                className="text-xs text-violet-600 hover:text-violet-700 font-medium flex items-center gap-0.5 transition-colors cursor-pointer"
+                className="text-xs text-emerald-600 hover:text-emerald-700 font-medium flex items-center gap-0.5 transition-colors cursor-pointer"
               >
                 Voir les statistiques <ArrowUpRight className="h-3 w-3" />
               </button>
@@ -236,8 +236,8 @@ export function ClientDashboard() {
       {!hasAnyData && (
         <Card className="rounded-2xl border-dashed">
           <CardContent className="py-16 flex flex-col items-center text-center">
-            <div className="h-16 w-16 rounded-2xl bg-violet-50 flex items-center justify-center mb-4">
-              <Zap className="h-8 w-8 text-violet-500" />
+            <div className="h-16 w-16 rounded-2xl bg-emerald-50 flex items-center justify-center mb-4">
+              <Zap className="h-8 w-8 text-emerald-500" />
             </div>
             <h3 className="font-semibold text-lg">Scannez votre plaque QR pour commencer</h3>
             <p className="text-sm text-muted-foreground mt-2 max-w-sm">

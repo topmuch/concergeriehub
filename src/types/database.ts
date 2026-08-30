@@ -256,11 +256,10 @@ export const NOTIFICATION_TYPES: readonly NotificationType[] = [
 // ---------------------------------------------------------------------------
 
 /**
- * All QR code module type identifiers, organised by product version.
- *
- * V1 — Foundational smart-home modules.
- * V2 — Extended daily-life & utility modules.
- * V3 — Marketplace & provider-service modules.
+ * Legacy QR module type identifiers (Qrdoo V1/V2/V3).
+ * Conservé uniquement pour la rétro-compatibilité d'affichage :
+ * les labels et les renderers doivent savoir traiter les données existantes.
+ * Le catalogue SÉLECTIONNABLE côté B2B est `B2B_MODULES` ci-dessous.
  */
 export const QR_MODULE_TYPES = {
   V1: [
@@ -275,73 +274,87 @@ export const QR_MODULE_TYPES = {
   V2: [
     'shopping_list',
     'inventory',
-    'chore',
     'checklist',
-    'timer',
-    'recipe',
-    'medication',
-    'pet_info',
-    'plant_care',
     'home_manual',
-    'visitor_info',
-    'delivery',
-    'baby_sitter',
     'house_rules',
-    'wifi_reset',
-    'appliance_manual',
-    'energy_monitor',
-    'cleaning_schedule',
-    'meal_planner',
     'external_link',
-    'shared_calendar',
-    'key_location',
-    'garage_instructions',
-    'laundry_guide',
-    'recycling_info',
-    'utility_shutoff',
-    'first_aid',
-    'pet_sitter',
-    'rental_guest',
-    'airbnb_guest',
-    'emergency_contacts',
-    'package_tracking',
-    'home_network',
-    'entertainment',
-    'music_room',
-    'game_room',
-    'library',
-    'photo_gallery',
-    'family_board',
-    'announcement',
-    'mood_tracker',
-    'habit_tracker',
-    'weather_station',
-    'smart_home_control',
-    'voice_assistant',
   ] as const,
 
   V3: [
-    'merchant',
-    'service_request',
     'promo',
-    'flash_sale',
-    'coupon',
-    'emergency_service',
     'artisan_directory',
   ] as const,
 } as const;
 
-/** Union of every QR module type across all versions. */
+// ---------------------------------------------------------------------------
+//  Catalogue B2B Conciergerie Hub — 6 modules métier
+// ---------------------------------------------------------------------------
+
+/**
+ * Les 6 modules métier de Conciergerie Hub (spécification B2B).
+ * Chaque module est mappé sur un type DB concret (compatibles legacy).
+ * Tout nouveau module proposé aux hôtes doit être ajouté ici.
+ */
+export const B2B_MODULES = [
+  {
+    key: 'WIFI',
+    dbType: 'wifi',
+    label: 'Wi-Fi',
+    emoji: '📶',
+    description: 'Identifiants Wi-Fi accessibles aux voyageurs',
+  },
+  {
+    key: 'GUIDEBOOK',
+    dbType: 'home_manual',
+    label: 'Guidebook',
+    emoji: '📖',
+    description: 'Guide de bienvenue : accès, équipements, bonnes adresses',
+  },
+  {
+    key: 'CHECKOUT',
+    dbType: 'checklist',
+    label: 'Check-out',
+    emoji: '🧹',
+    description: 'Check-list de départ pour les voyageurs et l’équipe de ménage',
+  },
+  {
+    key: 'COMPLAINT',
+    dbType: 'contact',
+    label: 'Réclamations',
+    emoji: '🛎️',
+    description: 'Canal direct voyageur → hôte pour signalements et demandes',
+  },
+  {
+    key: 'UPSELLING',
+    dbType: 'promo',
+    label: 'Upselling',
+    emoji: '⭐',
+    description: 'Services payants : petit-déjeuner, ménage, sorties…',
+  },
+  {
+    key: 'PROVIDER_DIRECTORY',
+    dbType: 'artisan_directory',
+    label: 'Annuaire prestataires',
+    emoji: '🛠️',
+    description: 'Ménage, plomberie, maintenance : vos prestataires de confiance',
+  },
+] as const;
+
+/** Union of the B2B module identifiers (as stored in DB). */
 export type QrModuleType =
   | (typeof QR_MODULE_TYPES.V1)[number]
   | (typeof QR_MODULE_TYPES.V2)[number]
   | (typeof QR_MODULE_TYPES.V3)[number];
 
-/** Flat, read-only array with every module type (useful for iteration). */
+/** Union of the 6 B2B business module keys (WIFI, GUIDEBOOK, …). */
+export type B2BModuleKey = (typeof B2B_MODULES)[number]['key'];
+
+/**
+ * Flat, read-only array with every selectable module type.
+ * B2B : limité au catalogue Conciergerie Hub (les 6 modules métier).
+ */
 export const ALL_QR_MODULE_TYPES: readonly QrModuleType[] = [
-  ...QR_MODULE_TYPES.V1,
-  ...QR_MODULE_TYPES.V2,
-  ...QR_MODULE_TYPES.V3,
+  ...B2B_MODULES.map((m) => m.dbType),
 ] as const;
 
 // ---------------------------------------------------------------------------
@@ -349,73 +362,29 @@ export const ALL_QR_MODULE_TYPES: readonly QrModuleType[] = [
 // ---------------------------------------------------------------------------
 
 /**
- * Maps every QR module type key to its human-readable French label.
- * Used throughout the UI for display in selects, headings, badges, etc.
+ * Maps QR module type keys to their human-readable French label.
+ * Typé souplement (Record<string, string>) pour que les données legacy
+ * déjà en base continuent d'afficher un label lisible.
  */
-export const QR_MODULE_LABELS: Record<QrModuleType, string> = {
-  // V1
+export const QR_MODULE_LABELS: Record<string, string> = {
+  // Catalogue B2B Conciergerie Hub
   wifi: 'Wi-Fi',
+  home_manual: 'Guidebook',
+  checklist: 'Check-out',
+  contact: 'Réclamations',
+  promo: 'Upselling',
+  artisan_directory: 'Annuaire prestataires',
+
+  // Legacy conservés pour l'affichage des données existantes
   guestbook: "Livre d'or",
   doorbell: 'Sonnette',
   emergency: 'Urgence',
   note: 'Note',
-  contact: 'Contact',
-
-  // V2
   shopping_list: 'Liste de courses',
   inventory: 'Inventaire',
-  chore: 'Corvées',
-  checklist: 'Liste de contrôle',
-  timer: 'Minuterie',
-  recipe: 'Recette',
-  medication: 'Médicaments',
-  pet_info: 'Info animal',
-  plant_care: 'Soins des plantes',
-  home_manual: "Page Info / Guide",
-  visitor_info: 'Info visiteur',
-  delivery: 'Livraison',
-  baby_sitter: 'Baby-sitter',
   house_rules: 'Règles de la maison',
-  wifi_reset: 'Réinitialisation Wi-Fi',
-  appliance_manual: "Manuel d'appareil",
-  energy_monitor: 'Moniteur énergétique',
-  cleaning_schedule: 'Planning de nettoyage',
-  meal_planner: 'Planificateur de repas',
   external_link: 'Lien externe',
-  shared_calendar: 'Calendrier partagé',
   key_location: 'Emplacement des clés',
-  garage_instructions: 'Instructions garage',
-  laundry_guide: 'Guide de lavage',
-  recycling_info: 'Info recyclage',
-  utility_shutoff: "Coupe utilités",
-  first_aid: 'Premiers secours',
-  pet_sitter: 'Pet-sitter',
-  rental_guest: 'Locataire invité',
-  airbnb_guest: "Invité Airbnb",
-  emergency_contacts: "Contacts d'urgence",
-  package_tracking: 'Suivi de colis',
-  home_network: 'Réseau domestique',
-  entertainment: 'Divertissement',
-  music_room: "Salle de musique",
-  game_room: 'Salle de jeux',
-  library: 'Bibliothèque',
-  photo_gallery: 'Galerie photos',
-  family_board: 'Tableau familial',
-  announcement: 'Annonce',
-  mood_tracker: 'Suivi d\'humeur',
-  habit_tracker: 'Suivi d\'habitudes',
-  weather_station: 'Station météo',
-  smart_home_control: 'Domotique',
-  voice_assistant: 'Assistant vocal',
-
-  // V3
-  merchant: 'Commerçant',
-  service_request: 'Demande de service',
-  promo: 'Promotion',
-  flash_sale: 'Vente flash',
-  coupon: 'Coupon numérique',
-  emergency_service: 'Service d\'urgence',
-  artisan_directory: 'Annuaire artisans',
 };
 
 // ---------------------------------------------------------------------------

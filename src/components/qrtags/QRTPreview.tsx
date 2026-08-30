@@ -21,7 +21,7 @@ export function QRTPreview() {
         <div className="flex justify-center">
           <div className="bg-white border-2 border-black rounded-[12px] px-8 py-2.5 shadow-[3px_3px_0_rgba(0,0,0,0.15)]">
             <span className="text-2xl font-black tracking-tight">
-              QR <span className="text-[#059669]">Domotik</span>
+              QR <span className="text-[#059669]">Hub</span>
             </span>
           </div>
         </div>
@@ -30,7 +30,7 @@ export function QRTPreview() {
           ✨ Composants QRTags
         </h2>
         <p className="text-center text-sm text-white/70">
-          Fond violet #10B981 — Cartes blanches — Bordures noires
+          Fond émeraude #10B981 — Cartes blanches — Bordures noires
         </p>
 
         {/* 1. Progress Bar */}

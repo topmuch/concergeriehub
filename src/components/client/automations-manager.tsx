@@ -270,7 +270,7 @@ export function AutomationsManager() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="h-8 w-8 border-2 border-violet-300/30 border-t-violet-500 rounded-full animate-spin" />
+        <div className="h-8 w-8 border-2 border-emerald-300/30 border-t-emerald-500 rounded-full animate-spin" />
       </div>
     );
   }
@@ -287,7 +287,7 @@ export function AutomationsManager() {
         </div>
         <Button
           onClick={() => setDialogOpen(true)}
-          className="bg-violet-600 hover:bg-violet-700"
+          className="bg-emerald-600 hover:bg-emerald-700"
           disabled={homes.length === 0}
         >
           <Plus className="h-4 w-4 mr-2" />
@@ -307,8 +307,8 @@ export function AutomationsManager() {
       {automations.length === 0 && homes.length > 0 && (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16 gap-4">
-          <div className="rounded-2xl bg-violet-100 dark:bg-violet-500/10 p-4">
-            <Plug className="h-8 w-8 text-violet-600" />
+          <div className="rounded-2xl bg-emerald-100 dark:bg-emerald-500/10 p-4">
+            <Plug className="h-8 w-8 text-emerald-600" />
           </div>
           <div className="text-center">
             <p className="font-medium">Aucune automatisation configurée</p>
@@ -630,7 +630,7 @@ export function AutomationsManager() {
             <Button
               onClick={handleCreate}
               disabled={saving || !newName || !newBaseUrl || !selectedHomeId}
-              className="bg-violet-600 hover:bg-violet-700"
+              className="bg-emerald-600 hover:bg-emerald-700"
             >
               {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Zap className="h-4 w-4 mr-2" />}
               Créer

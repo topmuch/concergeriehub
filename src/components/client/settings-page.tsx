@@ -77,7 +77,7 @@ export function SettingsPage() {
 
   const sectionIcon = (icon: React.ReactNode, title: string, badge?: string) => (
     <div className="flex items-center gap-3">
-      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-md shadow-violet-500/20">
+      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-slate-900 to-slate-800 text-white shadow-md shadow-slate-900/20">
         {icon}
       </div>
       <div className="flex items-center gap-2">
@@ -87,14 +87,14 @@ export function SettingsPage() {
     </div>
   );
 
-  const cardClass = 'border-l-4 border-l-violet-500';
+  const cardClass = 'border-l-4 border-l-emerald-500';
 
   return (
     <div className="space-y-6">
       {/* Page header */}
-      <div className="rounded-xl bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 p-6 text-white shadow-lg shadow-violet-500/20">
+      <div className="rounded-xl bg-gradient-to-r from-slate-900 to-slate-800 p-6 text-white shadow-lg shadow-slate-900/20">
         <h2 className="text-2xl font-bold tracking-tight">Paramètres</h2>
-        <p className="mt-1 text-sm text-violet-100">Gérez votre profil, préférences et sécurité</p>
+        <p className="mt-1 text-sm text-slate-300">Gérez votre profil, préférences et sécurité</p>
       </div>
 
       {/* Cards grid */}
@@ -106,7 +106,7 @@ export function SettingsPage() {
           </CardHeader>
           <CardContent className="space-y-5">
             <div className="flex items-center gap-4">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-purple-600 text-lg font-bold text-white shadow-md">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-slate-900 to-slate-800 text-lg font-bold text-white shadow-md">
                 UD
               </div>
               <div className="space-y-1">
@@ -134,7 +134,7 @@ export function SettingsPage() {
             </div>
 
             <Button
-              className="w-full bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white"
+              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
               onClick={() => toast.success('Profil mis à jour')}
             >
               <Save className="mr-2 h-4 w-4" />
@@ -189,7 +189,7 @@ export function SettingsPage() {
             </div>
 
             <Button
-              className="w-full bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white"
+              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
               onClick={() => toast.success('Préférences du Hub sauvegardées')}
             >
               <Save className="mr-2 h-4 w-4" />
@@ -364,7 +364,7 @@ export function SettingsPage() {
                     Annuler
                   </Button>
                   <Button
-                    className="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white"
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white"
                     onClick={() => {
                       setPasswordDialogOpen(false);
                       setCurrentPassword('');
@@ -444,14 +444,14 @@ export function SettingsPage() {
             <div className="space-y-3">
               <p className="text-sm font-medium">Statistiques</p>
               <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-lg bg-gradient-to-br from-violet-500/10 to-purple-500/10 p-4 text-center">
-                  <p className="text-2xl font-bold text-violet-600 dark:text-violet-400">
+                <div className="rounded-lg bg-gradient-to-br from-emerald-500/10 to-teal-500/10 p-4 text-center">
+                  <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
                     {statsLoading ? '…' : stats.qrCount}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">QR codes actifs</p>
                 </div>
-                <div className="rounded-lg bg-gradient-to-br from-violet-500/10 to-purple-500/10 p-4 text-center">
-                  <p className="text-2xl font-bold text-violet-600 dark:text-violet-400">
+                <div className="rounded-lg bg-gradient-to-br from-emerald-500/10 to-teal-500/10 p-4 text-center">
+                  <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
                     {statsLoading ? '…' : stats.homeCount}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">Maisons</p>

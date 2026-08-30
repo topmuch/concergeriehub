@@ -450,6 +450,128 @@ function ExternalLinkView({ content }: { content: Record<string, unknown> }) {
 // ══════════════════════════════════════════════════════════════
 // Generic JSON View (fallback)
 // ══════════════════════════════════════════════════════════════
+// ──────────────────────────────────────────────────────────────
+// Guidebook View (home_manual — module B2B Guidebook)
+// ──────────────────────────────────────────────────────────────
+function GuidebookView({ content }: { content: Record<string, unknown> }) {
+  const title = (content.title as string) || 'Guide de bienvenue';
+  const body = (content.body as string) || (content.text as string) || '';
+  const sections = body.split('\n\n').filter(Boolean);
+
+  return (
+    <motion.div variants={itemVariants} initial="hidden" animate="visible" className="space-y-3">
+      <QRTCard header={{ emoji: '📖', title }}>
+        {sections.length === 0 && <p className="text-sm text-black/40">Guide vide</p>}
+        {sections.map((section, i) => (
+          <div key={i} className={i > 0 ? 'mt-4 pt-4 border-t-2 border-dashed border-gray-100' : ''}>
+            <p className="text-sm text-black leading-relaxed whitespace-pre-wrap">{section}</p>
+          </div>
+        ))}
+      </QRTCard>
+    </motion.div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────
+// Checkout View (checklist — module B2B Check-out)
+// ──────────────────────────────────────────────────────────────
+function CheckoutView({ content }: { content: Record<string, unknown> }) {
+  const title = (content.title as string) || 'Check-out — avant votre départ';
+  const body = (content.body as string) || '';
+  const items = Array.isArray(content.items)
+    ? (content.items as string[])
+    : body.split('\n').map((l) => l.replace(/^[-•*]\s*/, '').trim()).filter(Boolean);
+  const [checked, setChecked] = useState<Set<number>>(new Set());
+
+  const toggle = (i: number) => {
+    setChecked(prev => {
+      const next = new Set(prev);
+      if (next.has(i)) next.delete(i); else next.add(i);
+      return next;
+    });
+  };
+
+  return (
+    <motion.div variants={itemVariants} initial="hidden" animate="visible" className="space-y-2">
+      <div className="text-center py-1">
+        <span className="text-3xl">🧹</span>
+        <p className="text-sm font-bold text-white mt-1">{title}</p>
+        {items.length > 0 && (
+          <p className="text-xs text-white/60 mt-0.5">{checked.size}/{items.length} fait{checked.size > 1 ? 's' : ''}</p>
+        )}
+      </div>
+      {items.length > 0 ? (
+        items.map((item, i) => (
+          <motion.button
+            key={i}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => toggle(i)}
+            className={`w-full text-left bg-white border-2 rounded-[12px] p-3.5 flex items-center gap-3 shadow-[3px_3px_0_rgba(0,0,0,0.08)] active:translate-y-[1px] active:shadow-none transition-all ${checked.has(i) ? 'border-green-400 bg-green-50' : 'border-black'}`}
+          >
+            <div className={`h-5 w-5 rounded-[6px] border-2 flex items-center justify-center shrink-0 transition-colors ${checked.has(i) ? 'bg-green-500 border-green-500' : 'border-black'}`}>
+              {checked.has(i) && <span className="text-white text-xs">✓</span>}
+            </div>
+            <span className={`text-sm ${checked.has(i) ? 'text-black/40 line-through' : 'text-black font-medium'}`}>{item}</span>
+          </motion.button>
+        ))
+      ) : (
+        <QRTCard>
+          <p className="text-sm text-black/40 text-center py-4">Aucune étape configurée</p>
+        </QRTCard>
+      )}
+    </motion.div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────
+// Upselling View (promo — module B2B Upselling)
+// ──────────────────────────────────────────────────────────────
+function UpsellingView({ content }: { content: Record<string, unknown> }) {
+  const title = (content.title as string) || 'Offre spéciale';
+  const body = (content.body as string) || (content.description as string) || '';
+  const price = (content.price as string) || '';
+
+  return (
+    <motion.div variants={itemVariants} initial="hidden" animate="visible">
+      <QRTCard header={{ emoji: '⭐', title, badge: price || 'Offre' }}>
+        {body && <p className="text-sm text-black leading-relaxed whitespace-pre-wrap">{body}</p>}
+        {price && (
+          <div className="mt-4 flex items-center justify-between bg-[#059669]/10 border-2 border-[#059669] rounded-[10px] px-4 py-3">
+            <span className="text-xs font-bold uppercase tracking-wide text-[#047857]">Prix</span>
+            <span className="text-lg font-black text-[#047857]">{price}</span>
+          </div>
+        )}
+        <p className="text-xs text-black/40 mt-3">👋 Demandez à votre hôte pour en profiter</p>
+      </QRTCard>
+    </motion.div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────
+// Provider Directory View (artisan_directory — module B2B Annuaire)
+// ──────────────────────────────────────────────────────────────
+function DirectoryView({ content }: { content: Record<string, unknown> }) {
+  const name = (content.name as string) || 'Prestataire';
+  const phone = (content.phone as string) || '';
+  const body = (content.body as string) || (content.details as string) || '';
+
+  return (
+    <motion.div variants={itemVariants} initial="hidden" animate="visible">
+      <QRTCard header={{ emoji: '🛠️', title: name, badge: 'Prestataire' }}>
+        {body && <p className="text-sm text-black leading-relaxed whitespace-pre-wrap">{body}</p>}
+        {phone && (
+          <a
+            href={`tel:${phone.replace(/\s/g, '')}`}
+            className="mt-4 flex items-center justify-center gap-2 h-12 bg-[#059669] text-white font-bold text-sm rounded-[8px] border-2 border-black shadow-[3px_3px_0_rgba(0,0,0,0.15)] active:translate-y-[1px] active:shadow-none transition-all hover:bg-[#047857]"
+          >
+            📞 Appeler {name}
+          </a>
+        )}
+      </QRTCard>
+    </motion.div>
+  );
+}
+
 function GenericView({ content, type }: { content: Record<string, unknown>; type: string }) {
   const entries = Object.entries(content).filter(([k]) => !['id', 'createdAt', 'updatedAt'].includes(k));
 
@@ -766,6 +888,11 @@ export function ViewPageContent({ params }: { params: Promise<{ slug: string }> 
       case 'guestbook': return <NoteView content={content} />;
       case 'shopping_list': return <ShoppingListView content={content} />;
       case 'external_link': return <ExternalLinkView content={content} />;
+      // Modules B2B Conciergerie Hub
+      case 'home_manual': return <GuidebookView content={content} />;
+      case 'checklist': return <CheckoutView content={content} />;
+      case 'promo': return <UpsellingView content={content} />;
+      case 'artisan_directory': return <DirectoryView content={content} />;
       default: return <GenericView content={content} type={qrData.type} />;
     }
   };

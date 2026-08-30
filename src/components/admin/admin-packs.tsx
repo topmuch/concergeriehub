@@ -89,8 +89,8 @@ export function AdminPacks() {
         {/* ── Stats Bar ────────────────────────────────────────── */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div className="flex items-center gap-3 rounded-lg border p-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-100 dark:bg-violet-900/30">
-              <BoxesIcon className="h-5 w-5 text-violet-600 dark:text-violet-400" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/30">
+              <BoxesIcon className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
             </div>
             <div>
               <p className="text-2xl font-bold">{totalPacks}</p>

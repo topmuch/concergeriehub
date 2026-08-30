@@ -31,7 +31,7 @@ const DEMO_MODULES = [
     id: 'guide',
     label: 'Manuel Maison',
     icon: BookOpen,
-    color: '#8B5CF6',
+    color: '#059669',
     description: 'Guide pour vos invites',
   },
   {

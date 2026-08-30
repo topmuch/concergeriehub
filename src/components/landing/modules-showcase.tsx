@@ -118,7 +118,7 @@ const MODULES: ModuleItem[] = [
     icon: <ExternalLink className="w-5 h-5" />,
     name: 'Lien externe',
     description: 'Redirigez vers n\'importe quel site.',
-    gradient: 'from-indigo-500 to-emerald-600',
+    gradient: 'from-slate-800 to-emerald-600',
     category: 'business',
   },
   {

@@ -101,7 +101,7 @@ const DEMO_HUB_DATA = {
       ],
     },
   ],
-  familyRooms: [
+  hostRooms: [
     {
       id: 'froom-salon',
       name: 'Salon',
@@ -117,15 +117,15 @@ const DEMO_HUB_DATA = {
         },
         {
           id: 'fqr-contact-1',
-          name: 'Contacts Famille',
+          name: 'Contacts Hôte',
           type: 'contact',
           publicSlug: null,
           isPrivate: true,
-          content: { contacts: [{ name: 'Maman', phone: '+33 6 12 34 56 78' }, { name: 'Papa', phone: '+33 6 98 76 54 32' }] },
+          content: { contacts: [{ name: 'Ménage — Awa', phone: '+33 6 12 34 56 78' }, { name: 'Maintenance — Karim', phone: '+33 6 98 76 54 32' }] },
         },
         {
           id: 'fqr-list-1',
-          name: 'Liste de courses',
+          name: 'Courses de réassort',
           type: 'shopping_list',
           publicSlug: null,
           isPrivate: true,
@@ -147,12 +147,12 @@ const DEMO_HUB_DATA = {
           content: { title: 'Quiche Lorraine Maison' },
         },
         {
-          id: 'fqr-chore-1',
-          name: 'Tâches ménagères',
-          type: 'chore',
+          id: 'fqr-checkout-1',
+          name: 'Check-out — avant votre départ',
+          type: 'checklist',
           publicSlug: null,
           isPrivate: true,
-          content: { chores: ['Vider le lave-vaisselle', 'Sortir les poubelles', 'Essuyer les plans de travail'] },
+          content: { title: 'Check-out — avant votre départ', body: '- Vider le lave-vaisselle\n- Sortir les poubelles\n- Fermer les fenêtres et volets\n- Baisser le chauffe-eau' },
         },
       ],
     },
@@ -167,15 +167,15 @@ const DEMO_HUB_DATA = {
           type: 'guestbook',
           publicSlug: null,
           isPrivate: false,
-          content: { text: 'Bienvenue dans la famille !' },
+          content: { text: 'Bienvenue chez vous !' },
         },
         {
-          id: 'fqr-medication-1',
-          name: 'Médicaments',
-          type: 'medication',
+          id: 'fqr-inventory-1',
+          name: "Stock d'accueil",
+          type: 'inventory',
           publicSlug: null,
           isPrivate: true,
-          content: { medications: ['Doliprane - étagère haute', 'Ibuprofène - pharmacie salle de bain'] },
+          content: { items: ['Linge de lit (x4)', "Savons d'accueil (x6)", 'Rouleaux papier (x8)', 'Capsules café (x24)'] },
         },
       ],
     },
@@ -274,8 +274,8 @@ export async function GET(
       },
     });
 
-    // Fetch ALL active QR codes (including private) for family mode
-    const familyRooms = await db.room.findMany({
+    // Fetch ALL active QR codes (including private) for host mode
+    const hostRooms = await db.room.findMany({
       where: { propertyId: home.id },
       orderBy: { createdAt: 'asc' },
       include: {
@@ -331,7 +331,7 @@ export async function GET(
       },
       ownerName: plaque.claimedBy?.fullName || null,
       guestRooms: buildRoomData(guestRooms),
-      familyRooms: buildRoomData(familyRooms),
+      hostRooms: buildRoomData(hostRooms),
       voiceMessages,
     });
   } catch (error) {
@@ -340,7 +340,7 @@ export async function GET(
   }
 }
 
-// POST: Verify PIN for family mode
+// POST: Verify PIN for host mode
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ slug: string }> }

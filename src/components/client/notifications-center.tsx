@@ -30,7 +30,7 @@ const TYPE_CONFIG: Record<NotificationType, { color: string; bgClass: string; ic
   success: { color: 'text-emerald-600', bgClass: 'bg-emerald-500/15', icon: <CheckCircle className="h-4 w-4 text-emerald-600" /> },
   warning: { color: 'text-amber-600', bgClass: 'bg-amber-500/15', icon: <AlertTriangle className="h-4 w-4 text-amber-600" /> },
   error: { color: 'text-red-600', bgClass: 'bg-red-500/15', icon: <XCircle className="h-4 w-4 text-red-600" /> },
-  chore: { color: 'text-violet-600', bgClass: 'bg-violet-500/15', icon: <Sparkles className="h-4 w-4 text-violet-600" /> },
+  chore: { color: 'text-emerald-600', bgClass: 'bg-emerald-500/15', icon: <Sparkles className="h-4 w-4 text-emerald-600" /> },
   member: { color: 'text-teal-600', bgClass: 'bg-teal-500/15', icon: <Users className="h-4 w-4 text-teal-600" /> },
   stock: { color: 'text-orange-600', bgClass: 'bg-orange-500/15', icon: <Package className="h-4 w-4 text-orange-600" /> },
   dlc: { color: 'text-rose-600', bgClass: 'bg-rose-500/15', icon: <Clock className="h-4 w-4 text-rose-600" /> },
@@ -176,7 +176,7 @@ export function NotificationCenter() {
             <div
               key={notif.id}
               className={`flex items-start gap-4 p-4 transition-colors hover:bg-muted/50 ${
-                !notif.isRead ? 'bg-violet-50/50 dark:bg-violet-950/10' : ''
+                !notif.isRead ? 'bg-emerald-50/50 dark:bg-emerald-950/10' : ''
               }`}
             >
               <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${config.bgClass}`}>
@@ -187,7 +187,7 @@ export function NotificationCenter() {
                   <p className={`text-sm leading-snug ${!notif.isRead ? 'font-semibold text-foreground' : 'font-medium text-muted-foreground'}`}>
                     {notif.title}
                   </p>
-                  {!notif.isRead && <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-violet-500" />}
+                  {!notif.isRead && <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-emerald-500" />}
                 </div>
                 {notif.body && (
                   <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{notif.body}</p>
@@ -196,7 +196,7 @@ export function NotificationCenter() {
               </div>
               <div className="flex items-center gap-1 shrink-0">
                 {!notif.isRead && (
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-violet-600" onClick={() => handleMarkAsRead(notif.id)} title="Marquer comme lu">
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-emerald-600" onClick={() => handleMarkAsRead(notif.id)} title="Marquer comme lu">
                     <Check className="h-4 w-4" />
                   </Button>
                 )}
@@ -220,7 +220,7 @@ export function NotificationCenter() {
         </div>
         <div className="flex items-center gap-3">
           {unreadCount > 0 && (
-            <Badge className="bg-violet-600 hover:bg-violet-700 text-white px-3 py-1">
+            <Badge className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1">
               {unreadCount} non lue{unreadCount > 1 ? 's' : ''}
             </Badge>
           )}
@@ -236,7 +236,7 @@ export function NotificationCenter() {
           <TabsTrigger value="all" className="gap-2">
             Toutes
             {unreadCount > 0 && (
-              <span className="ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-violet-600 text-[10px] font-bold text-white">
+              <span className="ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-[10px] font-bold text-white">
                 {unreadCount}
               </span>
             )}

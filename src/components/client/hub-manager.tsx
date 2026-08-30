@@ -80,12 +80,14 @@ function getRoomIcon(icon?: string | null) {
 // ── Plan badge config ──
 function getPlanBadge(plan?: string | null) {
   switch (plan) {
-    case 'famille':
-      return { label: 'Famille', variant: 'default' as const, className: 'bg-emerald-100 text-emerald-700 border-emerald-200' };
     case 'airbnb_solo':
-      return { label: 'Airbnb Solo', variant: 'default' as const, className: 'bg-violet-100 text-violet-700 border-violet-200' };
+      return { label: 'Airbnb Solo', variant: 'default' as const, className: 'bg-emerald-100 text-emerald-700 border-emerald-200' };
     case 'airbnb_pro':
       return { label: 'Airbnb Pro', variant: 'default' as const, className: 'bg-amber-100 text-amber-700 border-amber-200' };
+    case 'agency':
+      return { label: 'Agence', variant: 'default' as const, className: 'bg-amber-100 text-amber-700 border-amber-200' };
+    case 'free':
+      return { label: 'Découverte', variant: 'default' as const, className: 'bg-slate-100 text-slate-700 border-slate-200' };
     default:
       return null;
   }
@@ -179,7 +181,7 @@ export function HubManager() {
       <div className="max-w-4xl">
         <Card className="rounded-2xl border-dashed">
           <CardContent className="py-20 flex flex-col items-center text-center">
-            <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center mb-5 shadow-lg shadow-violet-500/20">
+            <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center mb-5 shadow-lg shadow-slate-900/20">
               <Link2 className="h-8 w-8 text-white" />
             </div>
             <h3 className="text-lg font-semibold">Aucun Hub configuré</h3>
@@ -243,14 +245,14 @@ export function HubManager() {
 
       {/* ── Hub URL Card ── */}
       <Card className="rounded-2xl overflow-hidden">
-        <div className="bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 p-1">
+        <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-1">
           <CardContent className="p-6 bg-background rounded-xl">
             <div className="flex flex-col sm:flex-row sm:items-center gap-6">
               {/* QR Code visual placeholder */}
               <div className="flex-shrink-0">
-                <div className="h-28 w-28 rounded-2xl bg-gradient-to-br from-violet-50 to-purple-50 border-2 border-violet-200 flex flex-col items-center justify-center gap-1.5">
-                  <QrCode className="h-8 w-8 text-violet-600" />
-                  <span className="text-[10px] font-medium text-violet-500 uppercase tracking-wider">Hub</span>
+                <div className="h-28 w-28 rounded-2xl bg-gradient-to-br from-emerald-50 to-teal-50 border-2 border-emerald-200 flex flex-col items-center justify-center gap-1.5">
+                  <QrCode className="h-8 w-8 text-emerald-600" />
+                  <span className="text-[10px] font-medium text-emerald-500 uppercase tracking-wider">Hub</span>
                 </div>
               </div>
 
@@ -309,8 +311,8 @@ export function HubManager() {
         <Card className="rounded-2xl">
           <CardContent className="p-5">
             <div className="flex items-center justify-between mb-3">
-              <div className="h-9 w-9 rounded-xl bg-violet-50 flex items-center justify-center">
-                <Eye className="h-4.5 w-4.5 text-violet-600" />
+              <div className="h-9 w-9 rounded-xl bg-emerald-50 flex items-center justify-center">
+                <Eye className="h-4.5 w-4.5 text-emerald-600" />
               </div>
             </div>
             <p className="text-2xl font-bold tabular-nums">{stats?.totalScans ?? 0}</p>
@@ -424,7 +426,7 @@ export function HubManager() {
           }}
           disabled={!hubSlug}
         >
-          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center flex-shrink-0">
             <ExternalLink className="h-5 w-5 text-white" />
           </div>
           <div className="text-left">

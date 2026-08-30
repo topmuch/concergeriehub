@@ -223,8 +223,8 @@ export function ScanAnalytics({ propertyId: initialHomeId, qrCodeId }: ScanAnaly
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="rounded-lg bg-violet-500/10 p-2">
-            <BarChart3 className="h-6 w-6 text-violet-600" />
+          <div className="rounded-lg bg-emerald-500/10 p-2">
+            <BarChart3 className="h-6 w-6 text-emerald-600" />
           </div>
           <div>
             <h2 className="text-2xl font-bold tracking-tight">Statistiques de Scan</h2>
@@ -285,7 +285,7 @@ export function ScanAnalytics({ propertyId: initialHomeId, qrCodeId }: ScanAnaly
           title="Ce mois"
           value={stats?.scansThisMonth ?? 0}
           icon={<CalendarRange className="h-5 w-5" />}
-          gradient="bg-gradient-to-br from-violet-500 to-violet-700"
+          gradient="bg-gradient-to-br from-slate-900 to-slate-800"
           loading={loading}
         />
       </div>
