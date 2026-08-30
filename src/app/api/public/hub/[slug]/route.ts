@@ -1,221 +1,78 @@
 import { NextResponse } from 'next/server';
 import { compare } from 'bcryptjs';
 import { db } from '@/lib/db';
+import { haversineKm, providerCategoryMeta, formatEur, propertyTypeMeta } from '@/lib/b2b';
 
-// ── Demo mock data ──
+// =============================================================
+// Hub public Conciergerie Hub — /hub/[slug]
+// GET  : payload de l'écran d'accueil + données Mode Invité.
+//        Le slug est le hubSlug de la PLAQUE QR (PhysicalQrCode).
+// POST : vérification du PIN Mode Hôte (bcrypt sur property.pinHash)
+//
+// Sécurité : la GET n'expose QUE les données invité (Wi-Fi, guide,
+// services, contact). Les données hôte (QRs privés, prestataires,
+// messages) sont servies par /host après vérification du PIN.
+// =============================================================
+
 const DEMO_SLUG = 'demo-hub';
 const isDemo = (slug: string) => slug === DEMO_SLUG;
 
-const DEMO_HUB_DATA = {
+interface GuestService {
+  id: string;
+  name: string;
+  emoji: string;
+  categoryLabel: string;
+  description: string;
+  priceLabel: string;
+}
+
+const DEMO_PAYLOAD = {
+  active: true,
   property: {
     id: 'demo-home-001',
     name: 'Le Petit Nid',
+    propertyType: 'AIRBNB',
+    propertyTypeLabel: 'Airbnb',
+    propertyTypeEmoji: '🏠',
     address: '12 Rue de la Paix, 75002 Paris',
     hasPin: true,
   },
   ownerName: 'Marie Dupont',
-  guestRooms: [
-    {
-      id: 'room-salon',
-      name: 'Salon',
-      icon: 'salon',
-      qrCodes: [
-        {
-          id: 'qr-wifi-1',
-          name: 'WiFi Maison',
-          type: 'wifi',
-          publicSlug: null,
-          isPrivate: false,
-          content: {
-            network_name: 'LePetitNid_5G',
-            password: 'Demo2025!',
-            security_type: 'WPA2',
-          },
-        },
-        {
-          id: 'qr-rules-1',
-          name: 'Règles de la maison',
-          type: 'house_rules',
-          publicSlug: null,
-          isPrivate: false,
-          content: {
-            rules: [
-              'Pas de fumer à l\'intérieur',
-              'Pas d\'animaux sans autorisation',
-              'Départ avant 11h le jour du checkout',
-              'Merci de ne pas faire de bruit après 22h',
-              'Climatisation éteinte en votre absence',
-            ],
-            description: 'Merci de respecter ces quelques règles pour le confort de tous.',
-          },
-        },
-        {
-          id: 'qr-emergency-1',
-          name: 'Urgences',
-          type: 'emergency',
-          publicSlug: null,
-          isPrivate: false,
-          content: {
-            phone: '+33 1 42 60 31 70',
-            contact_name: 'Marie Dupont',
-            nearest_hospital: 'Hôtel-Dieu (1.2 km)',
-            pharmacy: 'Pharmacie de la Paix (200m)',
-          },
-        },
-      ],
-    },
-    {
-      id: 'room-cuisine',
-      name: 'Cuisine',
-      icon: 'cuisine',
-      qrCodes: [
-        {
-          id: 'qr-recipe-1',
-          name: 'Recette locale',
-          type: 'recipe',
-          publicSlug: null,
-          isPrivate: false,
-          content: {
-            title: 'Quiche Lorraine Maison',
-            ingredients: ['200g de lardons', '3 œufs', '20cl de crème', '1 pâte brisée', '100g de gruyère râpé'],
-            steps: ['Préchauffez le four à 180°C', 'Étalez la pâte dans un moule', 'Faites revenir les lardons', 'Mélangez œufs et crème', 'Versez sur la pâte, ajoutez lardons et gruyère', 'Cuisez 35 min'],
-          },
-        },
-      ],
-    },
-    {
-      id: 'room-chambre',
-      name: 'Chambre Principale',
-      icon: 'chambre',
-      qrCodes: [
-        {
-          id: 'qr-note-1',
-          name: 'Livre d\'or',
-          type: 'guestbook',
-          publicSlug: null,
-          isPrivate: false,
-          content: {
-            text: 'Bienvenue ! N\'hésitez pas à laisser un petit mot pour les prochains voyageurs.',
-          },
-        },
-      ],
-    },
-  ],
-  hostRooms: [
-    {
-      id: 'froom-salon',
-      name: 'Salon',
-      icon: 'salon',
-      qrCodes: [
-        {
-          id: 'fqr-wifi-1',
-          name: 'WiFi Maison',
-          type: 'wifi',
-          publicSlug: null,
-          isPrivate: false,
-          content: { network_name: 'LePetitNid_5G', password: 'Demo2025!', security_type: 'WPA2' },
-        },
-        {
-          id: 'fqr-contact-1',
-          name: 'Contacts Hôte',
-          type: 'contact',
-          publicSlug: null,
-          isPrivate: true,
-          content: { contacts: [{ name: 'Ménage — Awa', phone: '+33 6 12 34 56 78' }, { name: 'Maintenance — Karim', phone: '+33 6 98 76 54 32' }] },
-        },
-        {
-          id: 'fqr-list-1',
-          name: 'Courses de réassort',
-          type: 'shopping_list',
-          publicSlug: null,
-          isPrivate: true,
-          content: { items: ['Lait', 'Pain', 'Œufs', 'Fromage', 'Fruits'] },
-        },
-      ],
-    },
-    {
-      id: 'froom-cuisine',
-      name: 'Cuisine',
-      icon: 'cuisine',
-      qrCodes: [
-        {
-          id: 'fqr-recipe-1',
-          name: 'Recette locale',
-          type: 'recipe',
-          publicSlug: null,
-          isPrivate: false,
-          content: { title: 'Quiche Lorraine Maison' },
-        },
-        {
-          id: 'fqr-checkout-1',
-          name: 'Check-out — avant votre départ',
-          type: 'checklist',
-          publicSlug: null,
-          isPrivate: true,
-          content: { title: 'Check-out — avant votre départ', body: '- Vider le lave-vaisselle\n- Sortir les poubelles\n- Fermer les fenêtres et volets\n- Baisser le chauffe-eau' },
-        },
-      ],
-    },
-    {
-      id: 'froom-chambre',
-      name: 'Chambre Principale',
-      icon: 'chambre',
-      qrCodes: [
-        {
-          id: 'fqr-guestbook-1',
-          name: 'Livre d\'or',
-          type: 'guestbook',
-          publicSlug: null,
-          isPrivate: false,
-          content: { text: 'Bienvenue chez vous !' },
-        },
-        {
-          id: 'fqr-inventory-1',
-          name: "Stock d'accueil",
-          type: 'inventory',
-          publicSlug: null,
-          isPrivate: true,
-          content: { items: ['Linge de lit (x4)', "Savons d'accueil (x6)", 'Rouleaux papier (x8)', 'Capsules café (x24)'] },
-        },
-      ],
-    },
-    {
-      id: 'froom-bureau',
-      name: 'Bureau',
-      icon: 'bureau',
-      qrCodes: [
-        {
-          id: 'fqr-inventory-1',
-          name: 'Inventaire',
-          type: 'inventory',
-          publicSlug: null,
-          isPrivate: true,
-          content: { items: ['Cartouches d\'encre (x2)', 'Papier A4 (5 ramettes)', 'Câble HDMI'] },
-        },
-      ],
-    },
-  ],
-  voiceMessages: [
-    {
-      id: 'vm-1',
-      senderName: 'Marie',
-      senderType: 'owner',
-      audioUrl: '',
-      durationSec: 12,
-      createdAt: new Date(Date.now() - 3600000).toISOString(),
-    },
-    {
-      id: 'vm-2',
-      senderName: 'Pierre',
-      senderType: 'guest',
-      audioUrl: '',
-      durationSec: 8,
-      createdAt: new Date(Date.now() - 7200000).toISOString(),
-    },
-  ],
+  guest: {
+    wifi: { networkName: 'LePetitNid_5G', password: 'Demo2025!', securityType: 'WPA2' },
+    guidebookSlug: null as string | null,
+    services: [
+      {
+        id: 'demo-svc-1',
+        name: 'Morning Box Paris',
+        emoji: '🥐',
+        categoryLabel: 'Petit-déjeuner',
+        description: 'Petit-déjeuner gourmand livré avant 8 h : viennoiseries artisanales, jus pressés.',
+        priceLabel: 'dès 12,00 €',
+      },
+      {
+        id: 'demo-svc-2',
+        name: 'Sommelier à Domicile',
+        emoji: '🍷',
+        categoryLabel: 'Sommelier',
+        description: 'Dégustation privée de 5 vins nature dans votre logement.',
+        priceLabel: 'dès 90,00 €',
+      },
+    ] as GuestService[],
+    contact: { name: 'Marie Dupont', phone: '+33 6 12 34 56 78', email: 'marie@conciergerie-hub.fr' },
+  },
 };
 
-// GET: Public hub info — home, rooms, active non-private QR codes
+function parseContent(json: string | null | undefined): Record<string, unknown> {
+  if (!json) return {};
+  try {
+    return JSON.parse(json) as Record<string, unknown>;
+  } catch {
+    return {};
+  }
+}
+
+// GET: Public hub info — QR actif ? + écran d'accueil + Mode Invité
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ slug: string }> }
@@ -224,119 +81,148 @@ export async function GET(
     const { slug } = await params;
 
     if (!slug || slug.length < 2) {
-      return NextResponse.json({ error: 'Slug invalide' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'not_found', message: 'Adresse du hub invalide.' },
+        { status: 400 }
+      );
     }
 
-    // ── DEMO MODE: return rich mock data ──
+    // ── DEMO MODE ──
     if (isDemo(slug)) {
-      return NextResponse.json(DEMO_HUB_DATA);
+      return NextResponse.json(DEMO_PAYLOAD);
     }
 
-    // Find the plaque by hubSlug
+    // ── 1. La plaque (QR physique) derrière ce slug ──
     const plaque = await db.physicalQrCode.findUnique({
       where: { hubSlug: slug },
-      include: {
-        claimedBy: { select: { id: true, fullName: true } },
-      },
+      include: { claimedBy: { select: { id: true, fullName: true } } },
     });
 
     if (!plaque || !plaque.isClaimed || !plaque.propertyId) {
-      return NextResponse.json({ error: 'Hub non trouvé' }, { status: 404 });
+      return NextResponse.json(
+        {
+          error: 'not_found',
+          message: 'Ce hub est introuvable ou la plaque n’a pas encore été activée par son hôte.',
+        },
+        { status: 404 }
+      );
     }
 
-    // Fetch the home
-    const home = await db.property.findUnique({
+    // ── 2. Le QR est-il actif ? ──
+    if (plaque.status !== 'active') {
+      return NextResponse.json(
+        {
+          error: 'inactive',
+          message:
+            plaque.status === 'lost'
+              ? 'Cette plaque a été signalée perdue par son hôte.'
+              : 'Cette plaque QR a été désactivée par son hôte.',
+        },
+        { status: 410 }
+      );
+    }
+
+    // ── 3. Le bien + son propriétaire ──
+    const property = await db.property.findUnique({
       where: { id: plaque.propertyId },
       select: {
         id: true,
         name: true,
+        propertyType: true,
         address: true,
+        latitude: true,
+        longitude: true,
         pinHash: true,
+        owner: {
+          select: {
+            fullName: true,
+            email: true,
+            profile: { select: { phone: true } },
+          },
+        },
       },
     });
 
-    if (!home) {
-      return NextResponse.json({ error: 'Logement non trouvé' }, { status: 404 });
+    if (!property) {
+      return NextResponse.json(
+        { error: 'not_found', message: 'Le logement lié à cette plaque est introuvable.' },
+        { status: 404 }
+      );
     }
 
-    // Fetch rooms with their active non-private QR codes (guest mode)
-    const guestRooms = await db.room.findMany({
-      where: { propertyId: home.id },
+    // ── 4. QRs actifs publics → Wi-Fi + Guidebook ──
+    const activeQrs = await db.qrCode.findMany({
+      where: { propertyId: property.id, isActive: true, isPrivate: false },
       orderBy: { createdAt: 'asc' },
-      include: {
-        qrCodes: {
-          where: { isActive: true, isPrivate: false },
-          orderBy: { createdAt: 'asc' },
-          include: {
-            content: { select: { contentJson: true } },
-          },
-        },
-      },
+      include: { content: { select: { contentJson: true } } },
     });
 
-    // Fetch ALL active QR codes (including private) for host mode
-    const hostRooms = await db.room.findMany({
-      where: { propertyId: home.id },
-      orderBy: { createdAt: 'asc' },
-      include: {
-        qrCodes: {
-          where: { isActive: true },
-          orderBy: { createdAt: 'asc' },
-          include: {
-            content: { select: { contentJson: true } },
-          },
-        },
-      },
-    });
+    const wifiQr = activeQrs.find((qr) => qr.type === 'wifi');
+    const guidebookQr = activeQrs.find((qr) => qr.type === 'home_manual' && qr.publicSlug);
+    const wifiContent = wifiQr ? parseContent(wifiQr.content?.contentJson) : {};
 
-    // Fetch recent voice messages (last 10)
-    const voiceMessages = await db.voiceMessage.findMany({
-      where: { propertyId: home.id },
-      orderBy: { createdAt: 'desc' },
-      take: 10,
-      select: {
-        id: true,
-        senderName: true,
-        senderType: true,
-        audioUrl: true,
-        durationSec: true,
-        createdAt: true,
-      },
-    });
+    const wifi =
+      wifiQr && (wifiContent.network_name || wifiContent.password)
+        ? {
+            networkName: (wifiContent.network_name as string) || 'Wi-Fi du logement',
+            password: (wifiContent.password as string) || '',
+            securityType: (wifiContent.security_type as string) || 'WPA2',
+          }
+        : null;
 
-    // Build room data helper
-    const buildRoomData = (roomList: typeof guestRooms) =>
-      roomList.map((room) => ({
-        id: room.id,
-        name: room.name,
-        icon: room.icon,
-        qrCodes: room.qrCodes.map((qr) => ({
-          id: qr.id,
-          name: qr.name,
-          type: qr.type,
-          publicSlug: qr.publicSlug,
-          isPrivate: qr.isPrivate,
-          content: qr.content?.contentJson
-            ? (() => { try { return JSON.parse(qr.content.contentJson); } catch { return {}; } })()
-            : {},
-        })),
-      }));
+    // ── 5. Services invité = prestataires GUEST_EXPERIENCE dans le rayon ──
+    const services: GuestService[] = [];
+    if (property.latitude != null && property.longitude != null) {
+      const geoProviders = await db.provider.findMany({
+        where: { isActive: true, audience: 'GUEST_EXPERIENCE' },
+        include: { user: { select: { fullName: true } } },
+      });
+      for (const p of geoProviders) {
+        if (p.latitude == null || p.longitude == null) continue;
+        const d = haversineKm(property.latitude, property.longitude, p.latitude, p.longitude);
+        if (d > p.serviceRadiusKm) continue;
+        const cat = providerCategoryMeta(p.category);
+        services.push({
+          id: p.id,
+          name: p.businessName,
+          emoji: cat.emoji,
+          categoryLabel: cat.label,
+          description: p.description ?? 'Service proposé par un partenaire local vérifié.',
+          priceLabel: p.hourlyRate != null ? `dès ${formatEur(p.hourlyRate)}` : 'Sur devis',
+        });
+      }
+      services.sort((a, b) => a.name.localeCompare(b.name));
+    }
 
     return NextResponse.json({
+      active: true,
       property: {
-        id: home.id,
-        name: home.name,
-        address: home.address,
-        hasPin: !!home.pinHash,
+        id: property.id,
+        name: property.name,
+        propertyType: property.propertyType,
+        propertyTypeLabel: propertyTypeMeta(property.propertyType).label,
+        propertyTypeEmoji: propertyTypeMeta(property.propertyType).emoji,
+        address: property.address,
+        hasPin: !!property.pinHash,
       },
-      ownerName: plaque.claimedBy?.fullName || null,
-      guestRooms: buildRoomData(guestRooms),
-      hostRooms: buildRoomData(hostRooms),
-      voiceMessages,
+      ownerName: plaque.claimedBy?.fullName || property.owner?.fullName || null,
+      guest: {
+        wifi,
+        guidebookSlug: guidebookQr?.publicSlug ?? null,
+        services,
+        contact: {
+          name: property.owner?.fullName || 'Votre hôte',
+          phone: property.owner?.profile?.phone ?? null,
+          email: property.owner?.email ?? null,
+        },
+      },
     });
   } catch (error) {
     console.error('Hub GET error:', error);
-    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'server', message: 'Erreur serveur. Réessayez dans un instant.' },
+      { status: 500 }
+    );
   }
 }
 
@@ -366,6 +252,13 @@ export async function POST(
 
     if (!plaque || !plaque.isClaimed || !plaque.propertyId) {
       return NextResponse.json({ error: 'Hub non trouvé' }, { status: 404 });
+    }
+
+    if (plaque.status !== 'active') {
+      return NextResponse.json(
+        { error: 'Cette plaque QR est désactivée.' },
+        { status: 410 }
+      );
     }
 
     const home = await db.property.findUnique({

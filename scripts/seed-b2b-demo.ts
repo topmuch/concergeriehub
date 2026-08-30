@@ -281,14 +281,28 @@ const PROVIDERS: ProviderSeed[] = [
   },
 ];
 
-// QR codes B2B du bien
+// QR codes B2B du bien (avec contenus utilisés par le Hub /hub/[slug])
 const QR_CODES = [
-  { type: 'wifi', name: 'Wi-Fi & Réseau', slug: 'loft-canal-wifi' },
-  { type: 'home_manual', name: 'Guidebook du Loft', slug: 'loft-canal-guide' },
-  { type: 'promo', name: 'Morning Box & Services', slug: 'loft-canal-upselling' },
-  { type: 'contact', name: 'Contact hôte / Réclamations', slug: 'loft-canal-contact' },
-  { type: 'checklist', name: 'Check-list Check-out', slug: 'loft-canal-checkout' },
-  { type: 'artisan_directory', name: 'Annuaire prestataires', slug: 'loft-canal-prestataires' },
+  {
+    type: 'wifi',
+    name: 'Wi-Fi & Réseau',
+    slug: 'loft-canal-wifi',
+    content: { network_name: 'Loft-Canal-Fiber', password: 'bienvenue2024', security_type: 'WPA2' },
+  },
+  {
+    type: 'home_manual',
+    name: 'Guidebook du Loft',
+    slug: 'loft-canal-guide',
+    content: {
+      title: 'Guide de bienvenue — Loft Canal Saint-Martin',
+      body:
+        '👋 Bienvenue !\n\nLa clé du portail se trouve dans la boîte à clés (code fourni par SMS). L\'appartement est au 2e étage, porte de gauche.\n\n🔑 Accès\n\nBoîte à clés : code 4821A. Porte d\'entrée : poussez fort la poignée en la tournant à gauche.\n\n🛠️ Équipements\n\nMachine à café Nespresso (capsules dans le tiroir du bas), lave-linge (lessive sous l\'évier), TV Connectée (vos comptes Netflix/Prime).\n\n📜 Bonnes adresses\n\nBoulangerie "Le Petit Mitron" à 50 m à gauche en sortant, marché Alibreu le dimanche matin, restaurant "Chez Camille" au bord du canal (réservez !).\n\n🌙 Règles de vie\n\nCalme après 22 h (voisins adorables mais sensibles), pas de fête, tri des déchets : verre à droite du portail.',
+    },
+  },
+  { type: 'promo', name: 'Morning Box & Services', slug: 'loft-canal-upselling', content: {} },
+  { type: 'contact', name: 'Contact hôte / Réclamations', slug: 'loft-canal-contact', content: {} },
+  { type: 'checklist', name: 'Check-list Check-out', slug: 'loft-canal-checkout', content: {} },
+  { type: 'artisan_directory', name: 'Annuaire prestataires', slug: 'loft-canal-prestataires', content: {} },
 ];
 
 function randInt(min: number, max: number) {
@@ -349,12 +363,55 @@ async function main() {
         publicSlug: qr.slug,
         isActive: true,
         isPrivate: qr.type === 'artisan_directory',
-        content: { create: { contentJson: '{}' } },
+        content: {
+          create: { contentJson: JSON.stringify('content' in qr ? qr.content : {}) },
+        },
       },
     });
     createdQrs.push(created);
   }
-  console.log(`🔗 ${createdQrs.length} QR codes B2B créés`);
+  console.log(`🔗 ${createdQrs.length} QR codes B2B créés (Wi-Fi + Guidebook renseignés)`);
+
+  // ---------- Téléphone de l'hôte (bouton "Appeler" du Hub) ----------
+  await db.profile.upsert({
+    where: { userId: demoUser.id },
+    create: { userId: demoUser.id, phone: '+33 6 12 34 56 78' },
+    update: { phone: '+33 6 12 34 56 78' },
+  });
+
+  // ---------- Plaques physiques (hubSlug → /hub/[slug]) ----------
+  const batch = await db.qrBatch.create({
+    data: { quantity: 2, createdBy: demoUser.id },
+  });
+  await db.physicalQrCode.create({
+    data: {
+      batchId: batch.id,
+      activationCode: 'PLQ-LOFT-0001',
+      setupToken: 'SETUP-LOFT01',
+      status: 'active',
+      isClaimed: true,
+      claimedByUserId: demoUser.id,
+      claimedAt: new Date(),
+      activatedByUserId: demoUser.id,
+      activatedAt: new Date(),
+      propertyId: property.id,
+      hubSlug: 'loft-canal-hub',
+    },
+  });
+  await db.physicalQrCode.create({
+    data: {
+      batchId: batch.id,
+      activationCode: 'PLQ-LOFT-0002',
+      setupToken: 'SETUP-LOFT02',
+      status: 'cancelled',
+      isClaimed: true,
+      claimedByUserId: demoUser.id,
+      claimedAt: new Date(),
+      propertyId: property.id,
+      hubSlug: 'loft-canal-hub-off',
+    },
+  });
+  console.log('🔌 2 plaques : /hub/loft-canal-hub (active) + /hub/loft-canal-hub-off (désactivée, démo erreur)');
 
   // ---------- Scans : 48 ce mois, 21 le mois précédent ----------
   const now = new Date();

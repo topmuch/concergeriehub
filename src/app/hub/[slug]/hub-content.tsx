@@ -1,1656 +1,1288 @@
 'use client';
 
-import { use, useState, useEffect, useCallback, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, Send, Copy, Check, Phone, ExternalLink } from 'lucide-react';
-import { QRCodeSVG } from 'qrcode.react';
+import { use, useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { QRTCard, QRTButton, QRTNumericKeypad } from '@/components/qrtags';
-import { QR_MODULE_LABELS } from '@/types/database';
+import {
+  BookOpen,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Copy,
+  Eye,
+  EyeOff,
+  Loader2,
+  Mail,
+  Mic,
+  PencilLine,
+  Phone,
+  Square,
+  TriangleAlert,
+  Wrench,
+} from 'lucide-react';
+import { QRTNumericKeypad } from '@/components/qrtags';
+import { BrandLogo } from '@/components/ui/brand-logo';
+import { EmojiIcon } from '@/components/ui/emoji-icon';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Toaster } from '@/components/ui/sonner';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { cn } from '@/lib/utils';
+import { formatDistance } from '@/lib/b2b';
 
-// ── Types ──
-interface QrCodeInfo {
+// =============================================================
+// ÉTAPE 5 — LE HUB QR CODE (expérience de scan, ultra-mobile-first)
+//
+// Écran d'accueil : 2 cartes principales
+//   👤 MODE INVITÉ (libre) : Wi-Fi (copie MDP), Guidebook,
+//      Commander un service, Signaler un problème / Contacter l'hôte
+//   🔐 MODE HÔTE (PIN 4 chiffres via QRTNumericKeypad) :
+//      grille de gestion rapide — Modifier le Wi-Fi, Réclamations
+//      en attente, Gérer les prestataires.
+//
+// Design QRTags : fond dégradé subtil slate, cartes blanches
+// border-slate-200 rounded-xl p-4 shadow-sm, emojis 24–32 px.
+// =============================================================
+
+interface GuestService {
   id: string;
   name: string;
-  type: string;
-  publicSlug: string | null;
-  isPrivate: boolean;
-  content: Record<string, unknown>;
+  emoji: string;
+  categoryLabel: string;
+  description: string;
+  priceLabel: string;
 }
 
-interface RoomInfo {
-  id: string;
-  name: string;
-  icon: string | null;
-  qrCodes: QrCodeInfo[];
-}
-
-interface VoiceMsg {
-  id: string;
-  senderName: string;
-  senderType: string;
-  audioUrl: string;
-  durationSec: number;
-  createdAt: string;
-}
-
-interface HubData {
-  property: { id: string; name: string; address: string | null; hasPin: boolean };
-  ownerName: string | null;
-  guestRooms: RoomInfo[];
-  hostRooms: RoomInfo[];
-  voiceMessages: VoiceMsg[];
-}
-
-type HubView = 'mode-select' | 'guest' | 'host' | 'room-detail' | 'voice-detail';
-type PinModalFor = 'host' | 'settings' | null;
-
-// ── Emoji mappings ──
-const ROOM_EMOJIS: Record<string, string> = {
-  salon: '\uD83D\uDECB\uFE0F', cuisine: '\uD83C\uDF73', chambre: '\uD83D\uDECF\uFE0F', 'chambre-principale': '\uD83D\uDECF\uFE0F',
-  'salle-de-bain': '\uD83D\uDEBF', sdb: '\uD83D\uDEBF', bureau: '\uD83D\uDCBC', 'chambre-amis': '\uD83D\uDECF\uFE0F',
-  entree: '\uD83D\uDEAA', 'piece-a-vivre': '\uD83D\uDECB\uFE0F', jardin: '\uD83C\uDF3F', garage: '\uD83D\uDE97',
-  'salle-de-jeux': '\uD83C\uDFAE', musique: '\uD83C\uDFB5', sport: '\uD83D\uDCAA', bibliotheque: '\uD83D\uDCDA',
-  tv: '\uD83D\uDCFA', sejour: '\uD83D\uDECB\uFE0F', 'salle-a-manger': '\uD83C\uDF7D\uFE0F', couloir: '\uD83D\uDEAA',
-  wc: '\uD83D\uDEBD', cave: '\uD83C\uDF77', grenier: '\uD83D\uDCE6', balcon: '\uD83C\uDF3F', terrasse: '\uD83C\uDF3F',
-};
-
-const MODULE_EMOJIS: Record<string, string> = {
-  wifi: '\uD83D\uDCF1', guestbook: '\uD83D\uDCD6', doorbell: '\uD83D\uDD14', emergency: '\uD83D\uDEA8',
-  note: '\uD83D\uDCDD', contact: '\uD83D\uDC65', shopping_list: '\uD83D\uDED2', inventory: '\uD83D\uDCE6',
-  chore: '\u2705', checklist: '\u2705', timer: '\u23F1\uFE0F', recipe: '\uD83C\uDF73',
-  medication: '\uD83D\uDC8A', meal_planner: '\uD83C\uDF7D\uFE0F', external_link: '\uD83D\uDD17',
-  home_manual: '\uD83D\uDCCB', house_rules: '\uD83D\uDEE1\uFE0F', voice_assistant: '\uD83C\uDFA4',
-  merchant: '\uD83C\uDFEA', flash_sale: '\u26A1', coupon: '\uD83C\uDFAB',
-};
-
-function getModuleLabel(type: string) { return (QR_MODULE_LABELS as Record<string, string>)[type] || type; }
-function getRoomEmoji(iconStr: string | null) { return iconStr ? (ROOM_EMOJIS[iconStr.toLowerCase()] || '\uD83C\uDFE0') : '\uD83C\uDFE0'; }
-function getModuleEmoji(type: string) { return MODULE_EMOJIS[type] || '\uD83D\uDCCE'; }
-
-const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.06 } } };
-const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } };
-const slideVariants = {
-  enter: (direction: number) => ({ x: direction > 0 ? 300 : -300, opacity: 0 }),
-  center: { x: 0, opacity: 1 },
-  exit: (direction: number) => ({ x: direction > 0 ? -300 : 300, opacity: 0 }),
-};
-
-// ── Voice Player Component ──
-function VoicePlayer({ msg }: { msg: VoiceMsg }) {
-  const audioRef = useRef<HTMLAudioElement>(null);
-  const [playing, setPlaying] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const togglePlay = () => {
-    if (!audioRef.current) return;
-    if (playing) {
-      audioRef.current.pause();
-      if (intervalRef.current != null) clearInterval(intervalRef.current);
-    } else {
-      audioRef.current.play().then(() => {
-        intervalRef.current = setInterval(() => {
-          if (audioRef.current) {
-            const pct = audioRef.current.duration ? (audioRef.current.currentTime / audioRef.current.duration) * 100 : 0;
-            setProgress(pct);
-          }
-        }, 200);
-      }).catch(() => {});
-    }
-    setPlaying(!playing);
+interface HubPayload {
+  active: boolean;
+  property: {
+    id: string;
+    name: string;
+    propertyType: string;
+    propertyTypeLabel: string;
+    propertyTypeEmoji: string;
+    address: string | null;
+    hasPin: boolean;
   };
+  ownerName: string | null;
+  guest: {
+    wifi: { networkName: string; password: string; securityType: string } | null;
+    guidebookSlug: string | null;
+    services: GuestService[];
+    contact: { name: string; phone: string | null; email: string | null };
+  };
+}
 
+interface HostProvider {
+  id: string;
+  name: string;
+  emoji: string;
+  categoryLabel: string;
+  distanceKm: number;
+  audience: string;
+  priceLabel: string;
+}
+
+interface HostData {
+  wifi: {
+    qrCodeId: string;
+    networkName: string;
+    password: string;
+    securityType: string;
+  } | null;
+  unreadMessages: {
+    id: string;
+    senderName: string;
+    audioUrl: string;
+    durationSec: number;
+    createdAt: string;
+  }[];
+  pendingRequests: number;
+  providers: HostProvider[];
+}
+
+type HubView = 'loading' | 'error' | 'home' | 'guest' | 'host';
+
+export function HubPageContent({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = use(params);
+
+  const [view, setView] = useState<HubView>('loading');
+  const [payload, setPayload] = useState<HubPayload | null>(null);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [retryTick, setRetryTick] = useState(0);
+
+  // Mode Hôte
+  const [pinModal, setPinModal] = useState(false);
+  const [pinError, setPinError] = useState('');
+  const [pinLoading, setPinLoading] = useState(false);
+  const [keypadKey, setKeypadKey] = useState(0); // remonte le clavier après un échec
+  const [verifiedPin, setVerifiedPin] = useState('');
+  const [hostData, setHostData] = useState<HostData | null>(null);
+
+  // ----- Chargement du hub (fonction async déclarée DANS l'effet) -----
   useEffect(() => {
-    const onEnded = () => {
-      setPlaying(false);
-      setProgress(0);
-      if (intervalRef.current != null) clearInterval(intervalRef.current);
-    };
-    const el = audioRef.current;
-    el?.addEventListener('ended', onEnded);
-    return () => { el?.removeEventListener('ended', onEnded); if (intervalRef.current != null) clearInterval(intervalRef.current); };
+    async function run() {
+      try {
+        const res = await fetch(`/api/public/hub/${encodeURIComponent(slug)}`);
+        const json = await res.json();
+        if (res.status === 410) {
+          setErrorMsg(json.message || 'Cette plaque QR a été désactivée.');
+          setView('error');
+          return;
+        }
+        if (!res.ok) {
+          setErrorMsg(json.message || 'Ce hub est introuvable.');
+          setView('error');
+          return;
+        }
+        setPayload(json as HubPayload);
+        setView('home');
+      } catch {
+        setErrorMsg('Impossible de charger le hub. Vérifiez votre connexion.');
+        setView('error');
+      }
+    }
+    run();
+  }, [slug, retryTick]);
+
+  /** Bouton Réessayer : retour au chargement + relance de l'effet. */
+  const retryLoad = useCallback(() => {
+    setView('loading');
+    setRetryTick((t) => t + 1);
+  }, []);
+
+  // ----- Vérification PIN + chargement des données hôte -----
+  const verifyPin = useCallback(
+    async (pin: string) => {
+      setPinLoading(true);
+      setPinError('');
+      try {
+        const res = await fetch(`/api/public/hub/${encodeURIComponent(slug)}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pin }),
+        });
+        const json = await res.json();
+        if (!res.ok) {
+          setPinError(json.error || 'PIN incorrect');
+          setPinLoading(false);
+          setKeypadKey((k) => k + 1); // clavier neuf pour la prochaine tentative
+          return;
+        }
+        const hostRes = await fetch(`/api/public/hub/${encodeURIComponent(slug)}/host`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pin }),
+        });
+        if (!hostRes.ok) {
+          setPinError('Impossible de charger les données hôte.');
+          setPinLoading(false);
+          return;
+        }
+        setHostData((await hostRes.json()) as HostData);
+        setVerifiedPin(pin);
+        setPinModal(false);
+        setPinLoading(false);
+        setView('host');
+      } catch {
+        setPinError('Erreur réseau. Réessayez.');
+        setPinLoading(false);
+      }
+    },
+    [slug],
+  );
+
+  // ----- Copie presse-papier -----
+  const copy = useCallback(async (text: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success(`${label} copié !`, { description: text });
+    } catch {
+      toast.error('Copie impossible sur ce navigateur.');
+    }
   }, []);
 
   return (
-    <div className="flex items-center gap-3 bg-white border-2 border-black rounded-[12px] p-4">
-      <audio ref={audioRef} src={msg.audioUrl} preload="metadata" />
-      <button onClick={togglePlay} className="h-10 w-10 rounded-[8px] bg-white border-2 border-black flex items-center justify-center shrink-0 active:translate-y-[1px] transition-all shadow-[2px_2px_0_rgba(0,0,0,0.08)]">
-        <span className="text-base">{playing ? '⏸️' : '▶️'}</span>
-      </button>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between mb-1.5">
-          <p className="text-sm font-medium text-black truncate">{msg.senderName}</p>
-          <span className="text-[10px] text-black/40 shrink-0 ml-2">{msg.durationSec}s</span>
-        </div>
-        <div className="h-1.5 rounded-full bg-black/10 overflow-hidden">
-          <motion.div
-            className="h-full rounded-full bg-[#059669]"
-            animate={{ width: `${progress}%` }}
-            transition={{ duration: 0.2 }}
-          />
-        </div>
-      </div>
-      <span className="text-[10px] text-black/40 shrink-0">
-        {new Date(msg.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
-      </span>
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-100 to-slate-200">
+      <Toaster position="top-center" richColors />
+
+      {view === 'loading' && <LoadingScreen />}
+      {view === 'error' && <ErrorScreen message={errorMsg} onRetry={retryLoad} />}
+
+      {view === 'home' && payload && (
+        <HomeView
+          payload={payload}
+          onGuestClick={() => setView('guest')}
+          onHostClick={() => {
+            setPinError('');
+            setPinModal(true);
+          }}
+        />
+      )}
+
+      {view === 'guest' && payload && (
+        <GuestView payload={payload} slug={slug} onBack={() => setView('home')} copy={copy} />
+      )}
+
+      {view === 'host' && payload && (
+        <HostView
+          payload={payload}
+          hostData={hostData}
+          slug={slug}
+          pin={verifiedPin}
+          onBack={() => setView('home')}
+          onHostRefresh={(d) => setHostData(d)}
+        />
+      )}
+
+      {/* ----- Modale PIN Mode Hôte ----- */}
+      <Dialog open={pinModal} onOpenChange={(open) => !open && !pinLoading && setPinModal(false)}>
+        <DialogContent className="max-w-sm bg-white border border-slate-200 rounded-xl p-6 [&>button]:hidden">
+          <DialogHeader className="items-center text-center">
+            <span className="mx-auto" aria-hidden="true">
+              <EmojiIcon emoji="🔐" size="lg" variant="dark" />
+            </span>
+            <DialogTitle className="text-lg font-bold text-slate-900 text-center">Mode Hôte</DialogTitle>
+            <DialogDescription className="text-sm text-slate-600 text-center">
+              Saisissez votre code à 4 chiffres pour accéder à la gestion du logement.
+            </DialogDescription>
+          </DialogHeader>
+
+          {pinLoading ? (
+            <div className="flex flex-col items-center gap-3 py-8" aria-busy="true">
+              <Loader2 className="h-8 w-8 animate-spin text-emerald-600" aria-hidden="true" />
+              <p className="text-sm text-slate-500">Vérification du code…</p>
+            </div>
+          ) : (
+            <div className="mt-2">
+              <QRTNumericKeypad key={keypadKey} onComplete={verifyPin} />
+              {pinError && (
+                <p role="alert" className="mt-4 text-center text-sm font-semibold text-red-600">
+                  {pinError}
+                </p>
+              )}
+              <Button
+                type="button"
+                variant="outline"
+                className="mt-4 w-full h-11 border-slate-300 text-slate-600"
+                onClick={() => setPinModal(false)}
+              >
+                Annuler
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
 
-// ── Voice Recorder Component ──
-function VoiceRecorder({ slug, onSent }: { slug: string; onSent: () => void }) {
+// =============================================================
+// Écran de chargement
+// =============================================================
+function LoadingScreen() {
+  return (
+    <div className="flex-1 w-full max-w-lg mx-auto px-4 py-10 space-y-5" aria-busy="true" aria-label="Chargement du hub">
+      <div className="flex justify-center">
+        <BrandLogo size="sm" />
+      </div>
+      <Skeleton className="h-32 w-full rounded-xl" />
+      <Skeleton className="h-24 w-full rounded-xl" />
+      <Skeleton className="h-24 w-full rounded-xl" />
+    </div>
+  );
+}
+
+// =============================================================
+// Écran d'erreur (QR introuvable / inactif / réseau)
+// =============================================================
+function ErrorScreen({ message, onRetry }: { message: string; onRetry: () => void }) {
+  return (
+    <div className="flex-1 w-full max-w-lg mx-auto px-4 py-16 flex flex-col items-center justify-center text-center">
+      <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-8 w-full">
+        <span className="text-5xl" aria-hidden="true">🔌</span>
+        <h1 className="mt-4 text-xl font-bold text-slate-900">Hub indisponible</h1>
+        <p className="mt-2 text-sm text-slate-600 leading-relaxed">{message}</p>
+        <Button
+          type="button"
+          onClick={onRetry}
+          className="mt-6 h-11 px-6 bg-slate-900 hover:bg-slate-800 text-white font-semibold"
+        >
+          Réessayer
+        </Button>
+        <p className="mt-6 text-xs text-slate-400">
+          Propulsé par 🗝️ <span className="font-semibold text-slate-500">Conciergerie Hub</span>
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// =============================================================
+// ÉCRAN D'ACCUEIL — 2 cartes principales
+// =============================================================
+function HomeView({
+  payload,
+  onGuestClick,
+  onHostClick,
+}: {
+  payload: HubPayload;
+  onGuestClick: () => void;
+  onHostClick: () => void;
+}) {
+  const { property, ownerName } = payload;
+  return (
+    <div className="flex-1 w-full max-w-lg mx-auto px-4 py-8 flex flex-col">
+      {/* Logo */}
+      <div className="flex justify-center mb-6">
+        <BrandLogo size="sm" />
+      </div>
+
+      {/* Carte bienvenue */}
+      <section
+        aria-label="Bienvenue"
+        className="bg-white border border-slate-200 rounded-xl shadow-sm p-5 flex items-center gap-4"
+      >
+        <span className="text-4xl leading-none select-none" aria-hidden="true">
+          {property.propertyTypeEmoji}
+        </span>
+        <div className="min-w-0">
+          <h1 className="text-xl font-bold text-slate-900 leading-tight">{property.name}</h1>
+          {property.address && (
+            <p className="text-sm text-slate-600 mt-0.5 truncate">{property.address}</p>
+          )}
+          <Badge className="mt-1.5 bg-emerald-50 border-emerald-200 text-emerald-700 font-semibold hover:bg-emerald-50">
+            {property.propertyTypeLabel} · Hub officiel
+          </Badge>
+        </div>
+      </section>
+
+      <p className="text-center text-sm text-slate-600 font-medium mt-6 mb-3">Bienvenue ! Qui êtes-vous ?</p>
+
+      {/* 2 choix principaux */}
+      <div className="grid gap-4">
+        {/* 👤 MODE INVITÉ */}
+        <button
+          type="button"
+          onClick={onGuestClick}
+          aria-label="Mode Invité — Wi-Fi, Guide, Services et Contact"
+          className="text-left bg-white border border-slate-200 rounded-xl shadow-sm p-5 hover:shadow-md hover:border-slate-300 active:scale-[0.99] transition-all cursor-pointer"
+        >
+          <ModeCardInner
+            emoji="👤"
+            variant="accent"
+            title="MODE INVITÉ"
+            subtitle="Wi-Fi, Guide, Services & Contact"
+            sub2="Accès libre, sans code"
+          />
+        </button>
+
+        {/* 🔐 MODE HÔTE */}
+        <button
+          type="button"
+          onClick={onHostClick}
+          aria-label="Mode Hôte — Gestion et paramètres du logement"
+          className="text-left bg-white border border-slate-200 rounded-xl shadow-sm p-5 hover:shadow-md hover:border-slate-300 active:scale-[0.99] transition-all cursor-pointer"
+        >
+          <ModeCardInner
+            emoji="🔐"
+            variant="dark"
+            title="MODE HÔTE"
+            subtitle="Gestion et paramètres du logement"
+            sub2="Protégé par code à 4 chiffres"
+          />
+        </button>
+      </div>
+
+      {/* Footer */}
+      <footer className="mt-auto pt-10 pb-6 text-center">
+        <p className="text-xs text-slate-500">
+          {ownerName ? `Votre hôte : ${ownerName} · ` : ''}Propulsé par 🗝️{' '}
+          <span className="font-semibold text-slate-600">Conciergerie Hub</span>
+        </p>
+      </footer>
+    </div>
+  );
+}
+
+function ModeCardInner({
+  emoji,
+  variant,
+  title,
+  subtitle,
+  sub2,
+}: {
+  emoji: string;
+  variant: 'accent' | 'dark';
+  title: string;
+  subtitle: string;
+  sub2: string;
+}) {
+  return (
+    <div className="flex items-center gap-4">
+      <EmojiIcon emoji={emoji} size="xl" variant={variant} />
+      <div className="flex-1 min-w-0">
+        <h2 className="text-base font-bold text-slate-900 tracking-wide">{title}</h2>
+        <p className="text-sm text-slate-600 mt-0.5">{subtitle}</p>
+        <p className="text-[11px] text-slate-400 mt-1">{sub2}</p>
+      </div>
+      <ChevronRight className="h-5 w-5 text-slate-400 shrink-0" aria-hidden="true" />
+    </div>
+  );
+}
+
+// =============================================================
+// MODE INVITÉ — 4 cartes de service
+// =============================================================
+function GuestView({
+  payload,
+  slug,
+  onBack,
+  copy,
+}: {
+  payload: HubPayload;
+  slug: string;
+  onBack: () => void;
+  copy: (text: string, label: string) => Promise<void>;
+}) {
+  const [wifiOpen, setWifiOpen] = useState(false);
+  const [showPwd, setShowPwd] = useState(false);
+  const [contactOpen, setContactOpen] = useState(false);
+  const { property, guest } = payload;
+
+  return (
+    <div className="flex-1 w-full max-w-lg mx-auto px-4 py-8 flex flex-col">
+      {/* Retour + titre */}
+      <div className="flex items-center gap-3 mb-5">
+        <button
+          type="button"
+          onClick={onBack}
+          aria-label="Retour à l'accueil"
+          className="h-10 w-10 shrink-0 inline-flex items-center justify-center rounded-xl bg-white border border-slate-200 shadow-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors"
+        >
+          <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+        </button>
+        <div className="min-w-0">
+          <h1 className="text-lg font-bold text-slate-900 leading-tight">👤 Espace Invité</h1>
+          <p className="text-xs text-slate-500 truncate">{property.name}</p>
+        </div>
+      </div>
+
+      <div className="grid gap-3">
+        {/* 1. 📶 Wi-Fi */}
+        {guest.wifi ? (
+          <GuestCard
+            emoji="📶"
+            title="Se connecter au Wi-Fi"
+            subtitle={`${guest.wifi.networkName} · ${guest.wifi.securityType}`}
+            onClick={() => setWifiOpen((v) => !v)}
+            expanded={wifiOpen}
+            arrow
+          >
+            {wifiOpen && (
+              <div className="mt-3 pt-3 border-t border-slate-100 space-y-2.5">
+                <div className="flex items-center justify-between gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5">
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Réseau</p>
+                    <p className="text-sm font-semibold text-slate-900 truncate">{guest.wifi.networkName}</p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 shrink-0 border-slate-300 text-slate-700"
+                    onClick={() => copy(guest.wifi!.networkName, 'Nom du réseau')}
+                  >
+                    <Copy className="h-3.5 w-3.5" aria-hidden="true" /> Copier
+                  </Button>
+                </div>
+                <div className="flex items-center justify-between gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5">
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Mot de passe</p>
+                    <p className="text-sm font-semibold text-slate-900 truncate font-mono">
+                      {showPwd ? guest.wifi.password : '••••••••••'}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setShowPwd((v) => !v)}
+                      aria-label={showPwd ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                      className="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:text-slate-900"
+                    >
+                      {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="h-8 bg-slate-900 hover:bg-slate-800 text-white font-semibold"
+                      onClick={() => copy(guest.wifi!.password, 'Mot de passe Wi-Fi')}
+                    >
+                      <Copy className="h-3.5 w-3.5" aria-hidden="true" /> Copier le mot de passe
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </GuestCard>
+        ) : (
+          <GuestCard emoji="📶" title="Wi-Fi" subtitle="Informations en cours de préparation" disabled />
+        )}
+
+        {/* 2. 📖 Guidebook */}
+        {guest.guidebookSlug ? (
+          <a
+            href={`/view/${guest.guidebookSlug}`}
+            className="block bg-white border border-slate-200 rounded-xl shadow-sm p-4 hover:shadow-md hover:border-slate-300 active:scale-[0.99] transition-all"
+            aria-label="Voir le Guidebook"
+          >
+            <div className="flex items-center gap-3.5">
+              <EmojiIcon emoji="📖" size="lg" variant="accent" />
+              <div className="flex-1 min-w-0">
+                <h3 className="text-sm font-bold text-slate-900">Voir le Guidebook</h3>
+                <p className="text-xs text-slate-500 mt-0.5">Accès, équipements, règles et bonnes adresses</p>
+              </div>
+              <BookOpen className="h-4 w-4 text-slate-400 shrink-0" aria-hidden="true" />
+            </div>
+          </a>
+        ) : (
+          <GuestCard emoji="📖" title="Guidebook" subtitle="Votre hôte prépare son guide de bienvenue" disabled />
+        )}
+
+        {/* 3. 🥐 Commander un service */}
+        <ServicesCard services={guest.services} contact={guest.contact} property={property} />
+
+        {/* 4. 🚨 Signaler un problème */}
+        <GuestCard
+          emoji="🚨"
+          title="Signaler un problème"
+          subtitle="Contacter l'hôte — réponse rapide garantie"
+          onClick={() => setContactOpen(true)}
+          arrow
+        />
+      </div>
+
+      <footer className="mt-auto pt-10 pb-6 text-center">
+        <p className="text-xs text-slate-500">
+          Propulsé par 🗝️ <span className="font-semibold text-slate-600">Conciergerie Hub</span>
+        </p>
+      </footer>
+
+      <ContactDialog
+        open={contactOpen}
+        onClose={() => setContactOpen(false)}
+        slug={slug}
+        contact={guest.contact}
+        propertyName={property.name}
+      />
+    </div>
+  );
+}
+
+/** Carte de service générique (accueil / invité) avec contenu dépliable.
+ * NB : div role="button" (et pas <button>) car elle peut contenir des
+ * boutons interactifs (copier, commander) — pas de button imbriqué. */
+function GuestCard({
+  emoji,
+  title,
+  subtitle,
+  onClick,
+  expanded,
+  disabled,
+  arrow,
+  children,
+}: {
+  emoji: string;
+  title: string;
+  subtitle: string;
+  onClick?: () => void;
+  expanded?: boolean;
+  disabled?: boolean;
+  arrow?: boolean;
+  children?: React.ReactNode;
+}) {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!onClick) return;
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onClick();
+    }
+  };
+
+  return (
+    <div
+      {...(disabled || !onClick
+        ? { 'aria-disabled': disabled ? true : undefined }
+        : { role: 'button', tabIndex: 0, onClick, onKeyDown: handleKeyDown })}
+      aria-expanded={onClick ? expanded : undefined}
+      className={cn(
+        'w-full text-left bg-white border border-slate-200 rounded-xl shadow-sm p-4 transition-all',
+        disabled
+          ? 'opacity-60 cursor-not-allowed'
+          : onClick
+            ? 'hover:shadow-md hover:border-slate-300 active:scale-[0.99] cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500'
+            : 'cursor-default',
+      )}
+    >
+      <div className="flex items-center gap-3.5">
+        <EmojiIcon emoji={emoji} size="lg" variant={disabled ? 'default' : 'accent'} />
+        <div className="flex-1 min-w-0">
+          <h3 className="text-sm font-bold text-slate-900">{title}</h3>
+          <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>
+        </div>
+        {arrow && !disabled && (
+          <ChevronRight
+            className={cn('h-5 w-5 text-slate-400 shrink-0 transition-transform', expanded && 'rotate-90')}
+            aria-hidden="true"
+          />
+        )}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+/** Carte "Commander un service" avec liste dépliable des expériences. */
+function ServicesCard({
+  services,
+  contact,
+  property,
+}: {
+  services: GuestService[];
+  contact: HubPayload['guest']['contact'];
+  property: HubPayload['property'];
+}) {
+  const [open, setOpen] = useState(false);
+
+  const order = (svc: GuestService) => {
+    if (!contact.email) {
+      toast.info('Commande bientôt disponible', {
+        description: 'Votre hôte n’a pas encore renseigné de email de contact.',
+      });
+      return;
+    }
+    const subject = encodeURIComponent(`Demande de service — ${svc.name} (${property.name})`);
+    const body = encodeURIComponent(
+      `Bonjour ${contact.name},\n\nJe séjourne au "${property.name}" et je souhaite commander :\n\n• ${svc.name} (${svc.categoryLabel}) — ${svc.priceLabel}\n\nMerci de me confirmer la disponibilité.\n\nMerci !`,
+    );
+    window.location.assign(`mailto:${contact.email}?subject=${subject}&body=${body}`);
+  };
+
+  return (
+    <GuestCard
+      emoji="🥐"
+      title="Commander un service"
+      subtitle={
+        services.length > 0
+          ? `${services.length} expérience(s) proposée(s) par votre hôte`
+          : 'Aucun service pour le moment'
+      }
+      onClick={() => services.length > 0 && setOpen((v) => !v)}
+      expanded={open}
+      arrow={services.length > 0}
+      disabled={services.length === 0}
+    >
+      {open && (
+        <div className="mt-3 pt-3 border-t border-slate-100 space-y-2.5">
+          {services.map((svc) => (
+            <div key={svc.id} className="bg-slate-50 border border-slate-200 rounded-lg p-3">
+              <div className="flex items-start gap-3">
+                <span className="text-2xl leading-none select-none" aria-hidden="true">
+                  {svc.emoji}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <p className="text-sm font-bold text-slate-900">{svc.name}</p>
+                    <Badge className="bg-emerald-50 border-emerald-200 text-emerald-700 font-semibold hover:bg-emerald-50 shrink-0">
+                      {svc.priceLabel}
+                    </Badge>
+                  </div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 mt-0.5">
+                    {svc.categoryLabel}
+                  </p>
+                  <p className="text-xs text-slate-600 mt-1 leading-relaxed">{svc.description}</p>
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="mt-2.5 h-8 bg-slate-900 hover:bg-slate-800 text-white font-semibold"
+                    onClick={() => order(svc)}
+                  >
+                    <Mail className="h-3.5 w-3.5" aria-hidden="true" /> Commander
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ))}
+          <p className="text-[11px] text-slate-400 text-center">
+            Votre demande est transmise à votre hôte qui confirme la réservation.
+          </p>
+        </div>
+      )}
+    </GuestCard>
+  );
+}
+
+// =============================================================
+// MODE HÔTE — grille de gestion rapide (après PIN)
+// =============================================================
+function HostView({
+  payload,
+  hostData,
+  slug,
+  pin,
+  onBack,
+  onHostRefresh,
+}: {
+  payload: HubPayload;
+  hostData: HostData | null;
+  slug: string;
+  pin: string;
+  onBack: () => void;
+  onHostRefresh: (d: HostData) => void;
+}) {
+  const [wifiEditOpen, setWifiEditOpen] = useState(false);
+  const [complaintsOpen, setComplaintsOpen] = useState(false);
+  const [providersOpen, setProvidersOpen] = useState(false);
+  const unread = hostData?.unreadMessages.length ?? 0;
+
+  return (
+    <div className="flex-1 w-full max-w-lg mx-auto px-4 py-8 flex flex-col">
+      <div className="flex items-center gap-3 mb-2">
+        <button
+          type="button"
+          onClick={onBack}
+          aria-label="Retour à l'accueil"
+          className="h-10 w-10 shrink-0 inline-flex items-center justify-center rounded-xl bg-white border border-slate-200 shadow-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors"
+        >
+          <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+        </button>
+        <div className="min-w-0">
+          <h1 className="text-lg font-bold text-slate-900 leading-tight">🔐 Espace Hôte</h1>
+          <p className="text-xs text-slate-500 truncate">{payload.property.name}</p>
+        </div>
+        <Badge className="ml-auto bg-emerald-50 border-emerald-200 text-emerald-700 font-semibold hover:bg-emerald-50 shrink-0">
+          ✓ Déverrouillé
+        </Badge>
+      </div>
+      <p className="text-sm text-slate-600 mb-5">Gestion rapide du logement</p>
+
+      {!hostData ? (
+        <div className="space-y-3" aria-busy="true">
+          <Skeleton className="h-20 rounded-xl" />
+          <Skeleton className="h-20 rounded-xl" />
+          <Skeleton className="h-20 rounded-xl" />
+        </div>
+      ) : (
+        <div className="grid gap-3">
+          {/* 📶 Modifier le Wi-Fi */}
+          <HostActionCard
+            emoji="📶"
+            title="Modifier le Wi-Fi"
+            subtitle={
+              hostData.wifi?.networkName ? `Réseau : ${hostData.wifi.networkName}` : 'Aucun réseau configuré'
+            }
+            onClick={() => setWifiEditOpen(true)}
+          />
+          {/* 🚨 Réclamations en attente */}
+          <HostActionCard
+            emoji="🚨"
+            title="Réclamations en attente"
+            subtitle={
+              unread > 0
+                ? `${unread} message(s) voyageur à traiter${
+                    hostData.pendingRequests > 0 ? ` · ${hostData.pendingRequests} demande(s) de service` : ''
+                  }`
+                : 'Aucune réclamation en attente ✓'
+            }
+            badge={unread > 0 ? String(unread) : undefined}
+            onClick={() => setComplaintsOpen(true)}
+          />
+          {/* 🧹 Gérer les prestataires */}
+          <HostActionCard
+            emoji="🧹"
+            title="Gérer les prestataires"
+            subtitle={`${hostData.providers.length} intervenant(s) autour du bien`}
+            onClick={() => setProvidersOpen(true)}
+          />
+        </div>
+      )}
+
+      <footer className="mt-auto pt-10 pb-6 text-center">
+        <p className="text-xs text-slate-500">
+          Propulsé par 🗝️ <span className="font-semibold text-slate-600">Conciergerie Hub</span>
+        </p>
+      </footer>
+
+      {/* ----- Dialog : Modifier le Wi-Fi ----- */}
+      {hostData && wifiEditOpen && (
+        <WifiEditDialog
+          onClose={() => setWifiEditOpen(false)}
+          slug={slug}
+          pin={pin}
+          wifi={hostData.wifi}
+          onSaved={(w) => onHostRefresh({ ...hostData, wifi: w })}
+        />
+      )}
+
+      {/* ----- Dialog : Réclamations ----- */}
+      <Dialog open={complaintsOpen} onOpenChange={setComplaintsOpen}>
+        <DialogContent className="max-w-md bg-white border border-slate-200 rounded-xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <TriangleAlert className="h-4 w-4 text-amber-500" aria-hidden="true" /> Réclamations en attente
+            </DialogTitle>
+            <DialogDescription className="text-xs text-slate-500">
+              Messages vocaux laissés par vos voyageurs.
+            </DialogDescription>
+          </DialogHeader>
+          {hostData && hostData.unreadMessages.length === 0 ? (
+            <div className="text-center py-8">
+              <span className="text-4xl" aria-hidden="true">✅</span>
+              <p className="mt-2 text-sm font-semibold text-slate-900">Tout est traité</p>
+              <p className="text-xs text-slate-500 mt-1">Aucun message en attente.</p>
+            </div>
+          ) : (
+            <div className="space-y-2.5">
+              {hostData?.unreadMessages.map((m) => (
+                <div key={m.id} className="bg-slate-50 border border-slate-200 rounded-lg p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-bold text-slate-900">{m.senderName}</p>
+                    <span className="text-[11px] text-slate-400 shrink-0">
+                      {new Date(m.createdAt).toLocaleDateString('fr-FR', {
+                        day: 'numeric',
+                        month: 'short',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </span>
+                  </div>
+                  <div className="mt-2 flex items-center gap-2">
+                    {m.audioUrl && !m.audioUrl.startsWith('/demo/') ? (
+                      <audio
+                        controls
+                        preload="none"
+                        src={m.audioUrl}
+                        className="h-9 w-full max-w-[260px]"
+                        aria-label={`Message de ${m.senderName}`}
+                      />
+                    ) : (
+                      <span className="text-xs text-slate-400">
+                        🎙️ Message vocal de {m.durationSec} s (audio indisponible en démo)
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* ----- Dialog : Prestataires ----- */}
+      <Dialog open={providersOpen} onOpenChange={setProvidersOpen}>
+        <DialogContent className="max-w-md bg-white border border-slate-200 rounded-xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <Wrench className="h-4 w-4 text-slate-500" aria-hidden="true" /> Prestataires autour du bien
+            </DialogTitle>
+            <DialogDescription className="text-xs text-slate-500">
+              Dans leur rayon d&apos;intervention. Gestion complète depuis le dashboard hôte.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {(['OWNER_SERVICE', 'GUEST_EXPERIENCE'] as const).map((aud) => {
+              const list = hostData?.providers.filter((p) => p.audience === aud) ?? [];
+              return (
+                <div key={aud}>
+                  <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400 mb-2">
+                    {aud === 'OWNER_SERVICE' ? '🔧 Services Propriétaire' : '🥂 Expériences Invité'} ({list.length})
+                  </p>
+                  {list.length === 0 ? (
+                    <p className="text-xs text-slate-400">Aucun prestataire dans le rayon.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {list.map((p) => (
+                        <div
+                          key={p.id}
+                          className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-lg p-2.5"
+                        >
+                          <span className="text-xl select-none" aria-hidden="true">
+                            {p.emoji}
+                          </span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-bold text-slate-900 truncate">{p.name}</p>
+                            <p className="text-[11px] text-slate-500">
+                              {p.categoryLabel} · {formatDistance(p.distanceKm)}
+                            </p>
+                          </div>
+                          <span className="text-[11px] font-semibold text-slate-600 shrink-0">{p.priceLabel}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+/** Carte d'action hôte. */
+function HostActionCard({
+  emoji,
+  title,
+  subtitle,
+  badge,
+  onClick,
+}: {
+  emoji: string;
+  title: string;
+  subtitle: string;
+  badge?: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="relative w-full text-left bg-white border border-slate-200 rounded-xl shadow-sm p-4 hover:shadow-md hover:border-slate-300 active:scale-[0.99] transition-all cursor-pointer"
+    >
+      {badge && (
+        <span className="absolute top-3 right-3 inline-flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full bg-red-500 text-white text-[11px] font-bold">
+          {badge}
+        </span>
+      )}
+      <div className="flex items-center gap-3.5">
+        <EmojiIcon emoji={emoji} size="lg" variant="default" />
+        <div className="flex-1 min-w-0">
+          <h3 className="text-sm font-bold text-slate-900">{title}</h3>
+          <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{subtitle}</p>
+        </div>
+        <PencilLine className="h-4 w-4 text-slate-400 shrink-0" aria-hidden="true" />
+      </div>
+    </button>
+  );
+}
+
+/** Dialog : modification des identifiants Wi-Fi (PUT update + PIN).
+ * Monté uniquement quand ouvert → l'état initial repart du contenu courant. */
+function WifiEditDialog({
+  onClose,
+  slug,
+  pin,
+  wifi,
+  onSaved,
+}: {
+  onClose: () => void;
+  slug: string;
+  pin: string;
+  wifi: HostData['wifi'];
+  onSaved: (w: HostData['wifi']) => void;
+}) {
+  const [ssid, setSsid] = useState(wifi?.networkName ?? '');
+  const [password, setPassword] = useState(wifi?.password ?? '');
+  const [saving, setSaving] = useState(false);
+
+  const save = async () => {
+    if (!wifi || !ssid.trim() || !password.trim()) {
+      toast.error('Renseignez le nom du réseau et le mot de passe.');
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/public/hub/${encodeURIComponent(slug)}/update`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pin,
+          updates: [
+            {
+              qrCodeId: wifi.qrCodeId,
+              content: {
+                network_name: ssid.trim(),
+                password: password.trim(),
+                security_type: wifi.securityType || 'WPA2',
+              },
+            },
+          ],
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        toast.error(json.error || 'Échec de la mise à jour.');
+        setSaving(false);
+        return;
+      }
+      onSaved({ ...wifi, networkName: ssid.trim(), password: password.trim() });
+      toast.success('Wi-Fi mis à jour ✅', {
+        description: 'Vos voyageurs voient le nouveau réseau immédiatement.',
+      });
+      setSaving(false);
+      onClose();
+    } catch {
+      toast.error('Erreur réseau.');
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Dialog
+      open
+      onOpenChange={(v) => {
+        if (!v && !saving) onClose();
+      }}
+    >
+      <DialogContent className="max-w-sm bg-white border border-slate-200 rounded-xl">
+        <DialogHeader>
+          <DialogTitle className="text-base font-bold text-slate-900">📶 Modifier le Wi-Fi</DialogTitle>
+          <DialogDescription className="text-xs text-slate-500">
+            Les nouveaux identifiants sont visibles immédiatement par vos voyageurs.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="wifi-ssid">Nom du réseau (SSID)</Label>
+            <Input
+              id="wifi-ssid"
+              value={ssid}
+              onChange={(e) => setSsid(e.target.value)}
+              placeholder="MonLogement_5G"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="wifi-pwd">Mot de passe</Label>
+            <Input
+              id="wifi-pwd"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+            />
+          </div>
+          <Button
+            type="button"
+            disabled={saving}
+            onClick={save}
+            className="w-full h-11 bg-slate-900 hover:bg-slate-800 text-white font-semibold"
+          >
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Check className="h-4 w-4" aria-hidden="true" />}
+            {saving ? 'Enregistrement…' : 'Enregistrer'}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// =============================================================
+// Dialog contact hôte + message vocal (répondeur)
+// =============================================================
+function ContactDialog({
+  open,
+  onClose,
+  slug,
+  contact,
+  propertyName,
+}: {
+  open: boolean;
+  onClose: () => void;
+  slug: string;
+  contact: HubPayload['guest']['contact'];
+  propertyName: string;
+}) {
   const [recording, setRecording] = useState(false);
-  const [duration, setDuration] = useState(0);
-  const [senderName, setSenderName] = useState('');
-  const [showNameInput, setShowNameInput] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const [seconds, setSeconds] = useState(0);
+  const [sending, setSending] = useState(false);
+  const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const startTimeRef = useRef<number>(0);
+  const secondsRef = useRef(0);
+
+  const stopTimers = () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  };
+
+  const cleanup = useCallback(() => {
+    stopTimers();
+    setRecording(false);
+    setSeconds(0);
+    secondsRef.current = 0;
+    recorderRef.current?.stream?.getTracks?.().forEach((t) => t.stop());
+    recorderRef.current = null;
+    chunksRef.current = [];
+  }, []);
+
+  useEffect(() => {
+    if (!open) cleanup();
+  }, [open, cleanup]);
+
+  const stopRecording = (send: boolean) => {
+    const recorder = recorderRef.current;
+    stopTimers();
+    if (!recorder) return;
+    const duration = secondsRef.current;
+    recorder.onstop = async () => {
+      recorder.stream.getTracks().forEach((t) => t.stop());
+      recorderRef.current = null;
+      setRecording(false);
+      if (!send) {
+        toast.info('Enregistrement annulé.');
+        return;
+      }
+      const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+      if (blob.size === 0) {
+        toast.error('Enregistrement vide. Réessayez.');
+        return;
+      }
+      setSending(true);
+      try {
+        const fd = new FormData();
+        fd.append('audio', new File([blob], 'message.webm', { type: 'audio/webm' }));
+        fd.append('senderName', 'Invité');
+        fd.append('durationSec', String(duration));
+        const res = await fetch(`/api/public/hub/${encodeURIComponent(slug)}/voice`, {
+          method: 'POST',
+          body: fd,
+        });
+        if (!res.ok) throw new Error('http');
+        toast.success('Message envoyé à votre hôte ✅');
+        onClose();
+      } catch {
+        toast.error('Envoi impossible. Réessayez.');
+      } finally {
+        setSending(false);
+      }
+    };
+    recorder.stop();
+  };
 
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mr = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
+      const recorder = new MediaRecorder(stream);
       chunksRef.current = [];
-      mr.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
-      mr.onstop = () => {
-        stream.getTracks().forEach((t) => t.stop());
-        if (chunksRef.current.length > 0) setShowNameInput(true);
-        else toast.error('Enregistrement vide');
-      };
-      mr.start();
-      mediaRecorderRef.current = mr;
-      startTimeRef.current = Date.now();
-      setDuration(0);
+      recorder.start();
+      recorderRef.current = recorder;
       setRecording(true);
+      setSeconds(0);
+      secondsRef.current = 0;
       timerRef.current = setInterval(() => {
-        const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
-        setDuration(elapsed);
-        if (elapsed >= 30) stopRecording();
-      }, 200);
-    } catch {
-      toast.error('Accès au micro refusé');
-    }
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current?.state === 'recording') mediaRecorderRef.current.stop();
-    if (timerRef.current != null) clearInterval(timerRef.current);
-    setRecording(false);
-  };
-
-  const cancelRecording = () => {
-    if (mediaRecorderRef.current?.state === 'recording') {
-      mediaRecorderRef.current.onstop = null;
-      mediaRecorderRef.current.stop();
-    }
-    if (timerRef.current != null) clearInterval(timerRef.current);
-    chunksRef.current = [];
-    setRecording(false);
-    setDuration(0);
-    setShowNameInput(false);
-  };
-
-  const handleSend = async () => {
-    if (chunksRef.current.length === 0) return;
-    setUploading(true);
-    try {
-      const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
-      const formData = new FormData();
-      formData.append('audio', blob, 'voice.webm');
-      formData.append('senderName', senderName.trim() || 'Invité');
-      formData.append('durationSec', String(duration));
-      const res = await fetch(`/api/public/hub/${encodeURIComponent(slug)}/voice`, { method: 'POST', body: formData });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Erreur');
-      toast.success('Message vocal envoyé !');
-      setShowNameInput(false); setDuration(0); setSenderName(''); chunksRef.current = [];
-      onSent();
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "Erreur d'envoi";
-      toast.error(msg);
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  useEffect(() => {
-    return () => { if (timerRef.current != null) clearInterval(timerRef.current); };
-  }, []);
-
-  return (
-    <div className="space-y-3">
-      {recording && (
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-          className="bg-red-50 border-2 border-red-300 rounded-[12px] p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="h-3 w-3 rounded-full bg-red-500 animate-pulse" />
-              <span className="text-sm font-semibold text-red-600">Enregistrement en cours</span>
-            </div>
-            <span className="text-sm font-mono text-red-500">
-              {String(Math.floor(duration / 60)).padStart(2, '0')}:{String(duration % 60).padStart(2, '0')}
-            </span>
-          </div>
-          <div className="h-1 rounded-full bg-red-100 overflow-hidden">
-            <motion.div className="h-full rounded-full bg-red-500" animate={{ width: `${Math.min((duration / 30) * 100, 100)}%` }} />
-          </div>
-          <div className="flex gap-2">
-            <QRTButton variant="secondary" onClick={cancelRecording} className="flex-1 !py-2.5 !text-sm">Annuler</QRTButton>
-            <QRTButton variant="primary" onClick={stopRecording} className="flex-1 !py-2.5 !text-sm !bg-red-600 hover:!bg-red-700">Arrêter</QRTButton>
-          </div>
-        </motion.div>
-      )}
-
-      <AnimatePresence>
-        {showNameInput && !recording && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-            className="bg-white border-2 border-black rounded-[12px] p-4 space-y-3 shadow-[4px_4px_0_rgba(0,0,0,0.08)]">
-            <p className="text-sm font-semibold text-black">Votre message ({duration}s)</p>
-            <input
-              type="text" placeholder="Votre nom (optionnel)" maxLength={50}
-              value={senderName} onChange={(e) => setSenderName(e.target.value)}
-              className="w-full h-11 bg-gray-50 border-2 border-black rounded-[8px] p-3.5 text-sm text-black focus:border-[#059669] focus:bg-white outline-none transition-all"
-              autoFocus
-            />
-            <div className="flex gap-2">
-              <QRTButton variant="secondary" onClick={() => { setShowNameInput(false); chunksRef.current = []; }} className="flex-1 !py-2.5 !text-sm">Annuler</QRTButton>
-              <QRTButton variant="primary" onClick={handleSend} disabled={uploading} className="flex-1 !py-2.5 !text-sm">
-                {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                {uploading ? 'Envoi...' : 'Envoyer'}
-              </QRTButton>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {!recording && !showNameInput && (
-        <motion.button whileTap={{ scale: 0.97 }} onClick={startRecording}
-          className="w-full bg-white border-2 border-black rounded-[12px] p-4 flex items-center justify-center gap-3 shadow-[4px_4px_0_rgba(0,0,0,0.08)] active:translate-y-[2px] active:shadow-[2px_2px_0_rgba(0,0,0,0.08)] transition-all hover:bg-gray-50">
-          <span className="text-3xl">🎙️</span>
-          <div className="text-left">
-            <p className="text-sm font-semibold text-black">Laisser un message vocal</p>
-            <p className="text-xs text-black/40">Appuyez pour enregistrer (max 30s)</p>
-          </div>
-        </motion.button>
-      )}
-    </div>
-  );
-}
-
-// ── PIN Modal Component ──
-function PinModal({
-  title,
-  onVerify,
-  onCancel,
-  verifying,
-}: {
-  title: string;
-  onVerify: (pin: string) => void;
-  onCancel: () => void;
-  verifying: boolean;
-}) {
-  const [key, setKey] = useState(0);
-
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-6"
-      onClick={(e) => { if (e.target === e.currentTarget) onCancel(); }}
-    >
-      <motion.div
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.9, opacity: 0 }}
-        transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-      >
-        <QRTCard className="w-full max-w-sm">
-          <div className="text-center mb-6">
-            <span className="text-3xl">🔐</span>
-            <h3 className="text-lg font-bold text-black mt-2">{title}</h3>
-          </div>
-
-          {verifying ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-8 w-8 text-[#059669] animate-spin" />
-            </div>
-          ) : (
-            <QRTNumericKeypad
-              key={key}
-              longueur={4}
-              onComplete={onVerify}
-            />
-          )}
-
-          <button
-            onClick={() => { setKey((k) => k + 1); onCancel(); }}
-            className="mt-6 text-black/40 hover:text-black/70 text-sm w-full text-center transition-colors"
-          >
-            Annuler
-          </button>
-        </QRTCard>
-      </motion.div>
-    </motion.div>
-  );
-}
-
-// ══════════════════════════════════════════════════════════════
-// Enhanced Guest Quick Access Cards
-// ══════════════════════════════════════════════════════════════
-
-// ── WiFi Card ──
-function WifiQuickCard({ content }: { content: Record<string, unknown> }) {
-  const [copied, setCopied] = useState(false);
-  const [showPw, setShowPw] = useState(false);
-  const networkName = (content.network_name as string) || (content.ssid as string) || 'Non configuré';
-  const password = (content.password as string) || '';
-  const securityType = (content.security_type as string) || (content.security as string) || 'WPA';
-
-  // Build WiFi QR string
-  const escWifi = (s: string) => s.replace(/([\\;,:":\'])/g, '\\$1');
-  const wifiQrStr = networkName && networkName !== 'Non configuré'
-    ? (password
-        ? `WIFI:T:${securityType.toUpperCase().includes('WEP') ? 'WEP' : 'WPA'};S:${escWifi(networkName)};P:${escWifi(password)};;`
-        : `WIFI:T:nopass;S:${escWifi(networkName)};;`)
-    : '';
-
-  const copyPassword = async () => {
-    if (!password) return;
-    try {
-      await navigator.clipboard.writeText(password);
-      setCopied(true);
-      toast.success('Mot de passe copié !');
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      toast.error('Impossible de copier');
-    }
-  };
-
-  return (
-    <motion.div variants={itemVariants}>
-      <QRTCard header={{ emoji: '📱', title: 'Wi-Fi' }}>
-        <div className="space-y-3">
-          {/* Scannable WiFi QR Code */}
-          {wifiQrStr && (
-            <div className="flex justify-center">
-              <div className="bg-white p-3 rounded-xl border-2 border-black/10">
-                <QRCodeSVG
-                  value={wifiQrStr}
-                  size={140}
-                  level="M"
-                  bgColor="#FFFFFF"
-                  fgColor="#000000"
-                />
-              </div>
-            </div>
-          )}
-          <p className="text-base font-bold text-black truncate">{networkName}</p>
-          {securityType && (
-            <p className="text-[10px] text-black/40">{securityType}</p>
-          )}
-
-          {password && (
-            <div className="flex items-center gap-2">
-              <div className="flex-1 h-10 bg-gray-50 border-2 border-black rounded-[8px] flex items-center px-3 gap-2">
-                <span className="text-sm font-mono text-black flex-1 truncate">
-                  {showPw ? password : '•'.repeat(Math.min(password.length, 16))}
-                </span>
-                <button
-                  onClick={() => setShowPw(s => !s)}
-                  className="text-black/40 hover:text-black/70 transition-colors text-sm"
-                >
-                  {showPw ? '🙈' : '👁️'}
-                </button>
-              </div>
-              <motion.button
-                whileTap={{ scale: 0.92 }}
-                onClick={copyPassword}
-                className="h-10 px-3 bg-white border-2 border-black rounded-[8px] text-black text-xs font-bold flex items-center gap-1.5 shadow-[2px_2px_0_rgba(0,0,0,0.08)] active:translate-y-[1px] active:shadow-none transition-all hover:bg-gray-50"
-              >
-                {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-                {copied ? 'Copié' : 'Copier'}
-              </motion.button>
-            </div>
-          )}
-        </div>
-      </QRTCard>
-    </motion.div>
-  );
-}
-
-// ── Contact Card ──
-function ContactQuickCard({ content }: { content: Record<string, unknown> }) {
-  const phone = (content.phone as string) || (content.telephone as string) || '';
-  const email = (content.email as string) || '';
-  const name = (content.name as string) || (content.owner_name as string) || '';
-  const contacts = content.contacts as { name: string; phone: string; relation?: string }[] | undefined;
-  const firstContact = contacts?.[0];
-
-  const displayPhone = phone || firstContact?.phone || '';
-  const displayName = name || firstContact?.name || '';
-
-  return (
-    <motion.div variants={itemVariants}>
-      <QRTCard header={{ emoji: '📞', title: 'Contact' }}>
-        {displayName && <p className="text-sm font-bold text-black truncate">{displayName}</p>}
-        {displayPhone && (
-          <a
-            href={`tel:${displayPhone}`}
-            className="inline-flex items-center gap-1.5 mt-1.5 text-sm text-black font-medium hover:text-[#059669] transition-colors"
-          >
-            📞 {displayPhone}
-          </a>
-        )}
-        {email && (
-          <a
-            href={`mailto:${email}`}
-            className="block mt-1 text-xs text-black/50 truncate hover:text-black/70 transition-colors"
-          >
-            {email}
-          </a>
-        )}
-      </QRTCard>
-    </motion.div>
-  );
-}
-
-// ── Messages Quick Card ──
-function MessagesQuickCard({
-  count,
-  latestSender,
-  latestDuration,
-  onTap,
-}: {
-  count: number;
-  latestSender: string | null;
-  latestDuration: number | null;
-  onTap: () => void;
-}) {
-  return (
-    <motion.div variants={itemVariants}>
-      <motion.button whileTap={{ scale: 0.97 }} onClick={onTap} className="w-full text-left">
-        <QRTCard header={{ emoji: '💬', title: 'Messages', badge: count > 0 ? String(count) : undefined }}>
-          <p className="text-sm font-bold text-black">
-            {count > 0 ? `${count} message${count > 1 ? 's' : ''}` : 'Aucun message'}
-          </p>
-          {latestSender && (
-            <p className="text-xs text-black/40 mt-0.5 truncate">
-              {latestSender}{latestDuration ? ` · ${latestDuration}s` : ''}
-            </p>
-          )}
-          {count > 0 && (
-            <div className="flex items-center justify-end mt-3 gap-1 text-black/50">
-              <span className="text-[11px]">Écouter →</span>
-            </div>
-          )}
-        </QRTCard>
-      </motion.button>
-    </motion.div>
-  );
-}
-
-// ══════════════════════════════════════════════════════════════
-// NEW: Inline Display Components for Guest View
-// ══════════════════════════════════════════════════════════════
-
-// ── Rules Inline Card (replaces RulesQuickCard + RulesDetailView) ──
-function RulesInlineCard({ content }: { content: Record<string, unknown> }) {
-  const rules = (content.rules as string[]) || [];
-  const text = (content.text as string) || '';
-  const description = (content.description as string) || '';
-
-  return (
-    <motion.div variants={itemVariants}>
-      <QRTCard header={{ emoji: '📜', title: 'Règles' }}>
-        {rules.length > 0 ? (
-          <ul className="space-y-2.5">
-            {rules.map((rule, i) => (
-              <li key={i} className="flex items-start gap-2.5">
-                <span className="h-5 min-w-5 rounded-full bg-[#059669] text-white text-[10px] font-bold flex items-center justify-center mt-0.5">
-                  {i + 1}
-                </span>
-                <p className="text-sm text-black leading-relaxed flex-1">{rule}</p>
-              </li>
-            ))}
-          </ul>
-        ) : text || description ? (
-          <p className="text-sm text-black leading-relaxed whitespace-pre-wrap">
-            {text || description}
-          </p>
-        ) : (
-          <p className="text-sm text-black/40">Aucune règle définie</p>
-        )}
-      </QRTCard>
-    </motion.div>
-  );
-}
-
-// ── Emergency Inline Card ──
-function EmergencyInlineCard({ content }: { content: Record<string, unknown> }) {
-  const phone = (content.phone as string) || (content.emergency_phone as string) || '112';
-  const hospital = (content.nearest_hospital as string) || '';
-  const pharmacy = (content.pharmacy as string) || '';
-  const contactName = (content.contact_name as string) || (content.name as string) || '';
-  const info = (content.info as string) || (content.instructions as string) || '';
-  const contacts = content.contacts as { name: string; phone: string; relation?: string }[] | undefined;
-
-  return (
-    <motion.div variants={itemVariants} className="space-y-2">
-      <QRTCard className="!border-red-300">
-        <div className="text-center">
-          <span className="text-3xl">🚨</span>
-          <p className="text-base font-bold text-red-600 mt-1.5">Urgences</p>
-        </div>
-      </QRTCard>
-
-      <a href={`tel:${phone}`} className="block">
-        <QRTCard className="!bg-red-50 !border-red-400 cursor-pointer hover:!bg-red-100 transition-colors">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-full bg-red-100 border-2 border-red-400 flex items-center justify-center">
-              <Phone className="h-4 w-4 text-red-600" />
-            </div>
-            <div>
-              <p className="text-[10px] text-red-400 font-semibold uppercase">Appeler</p>
-              <p className="text-sm font-bold text-red-700">{contactName || phone}</p>
-            </div>
-          </div>
-        </QRTCard>
-      </a>
-
-      {contacts && contacts.length > 0 && (
-        contacts.map((c, i) => (
-          <a key={i} href={`tel:${c.phone}`} className="block">
-            <QRTCard className="!bg-red-50 !border-red-300 cursor-pointer hover:!bg-red-100 transition-colors">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-red-100 border-2 border-red-300 flex items-center justify-center">
-                  <Phone className="h-4 w-4 text-red-600" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-bold text-black truncate">{c.name}</p>
-                  <p className="text-xs text-red-600">{c.phone}{c.relation ? ` · ${c.relation}` : ''}</p>
-                </div>
-              </div>
-            </QRTCard>
-          </a>
-        ))
-      )}
-
-      {hospital && (
-        <QRTCard header={{ emoji: '🏥', title: 'Hôpital le plus proche' }}>
-          <p className="text-sm text-black">{hospital}</p>
-        </QRTCard>
-      )}
-      {pharmacy && (
-        <QRTCard header={{ emoji: '💊', title: 'Pharmacie' }}>
-          <p className="text-sm text-black">{pharmacy}</p>
-        </QRTCard>
-      )}
-      {info && (
-        <QRTCard>
-          <p className="text-sm text-black leading-relaxed whitespace-pre-wrap">{info}</p>
-        </QRTCard>
-      )}
-    </motion.div>
-  );
-}
-
-// ── Note Inline Card ──
-function NoteInlineCard({ content }: { content: Record<string, unknown> }) {
-  const text = (content.text as string) || (content.note as string) || (content.description as string) || '';
-  const title = (content.title as string) || '';
-
-  return (
-    <motion.div variants={itemVariants}>
-      <QRTCard header={{ emoji: '📝', title: title || 'Note' }}>
-        <p className="text-sm text-black leading-relaxed whitespace-pre-wrap">{text || 'Aucun contenu'}</p>
-      </QRTCard>
-    </motion.div>
-  );
-}
-
-// ── Guestbook Inline Card ──
-function GuestbookInlineCard({ content }: { content: Record<string, unknown> }) {
-  const text = (content.text as string) || (content.note as string) || (content.description as string) || '';
-  const title = (content.title as string) || '';
-  const welcome = (content.welcome_message as string) || (content.welcome as string) || '';
-
-  return (
-    <motion.div variants={itemVariants}>
-      <QRTCard header={{ emoji: '📖', title: title || "Livre d'or" }}>
-        {welcome && (
-          <p className="text-sm font-medium text-[#059669] mb-2 leading-relaxed">{welcome}</p>
-        )}
-        <p className="text-sm text-black leading-relaxed whitespace-pre-wrap">{text || 'Aucun contenu'}</p>
-      </QRTCard>
-    </motion.div>
-  );
-}
-
-// ── Shopping List Inline Card ──
-function ShoppingListInlineCard({ content }: { content: Record<string, unknown> }) {
-  const items = (content.items as string[]) || [];
-  const [checked, setChecked] = useState<Set<number>>(new Set());
-
-  const toggle = (i: number) => {
-    setChecked(prev => {
-      const next = new Set(prev);
-      if (next.has(i)) next.delete(i); else next.add(i);
-      return next;
-    });
-  };
-
-  return (
-    <motion.div variants={itemVariants}>
-      <QRTCard header={{ emoji: '🛒', title: 'Liste de courses' }}>
-        {items.length > 0 ? (
-          <ul className="space-y-1.5">
-            {items.map((item, i) => (
-              <li key={i}>
-                <button
-                  onClick={() => toggle(i)}
-                  className={`w-full text-left flex items-center gap-2.5 py-0.5 transition-colors`}
-                >
-                  <div className={`h-4.5 w-4.5 min-w-[18px] rounded-[4px] border-2 flex items-center justify-center transition-colors ${checked.has(i) ? 'bg-green-500 border-green-500' : 'border-black'}`}>
-                    {checked.has(i) && <span className="text-white text-[10px]">✓</span>}
-                  </div>
-                  <span className={`text-sm ${checked.has(i) ? 'text-black/40 line-through' : 'text-black font-medium'}`}>{item}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <div className="text-center py-4">
-            <span className="text-2xl">🛒</span>
-            <p className="text-xs text-black/40 mt-1">Liste vide</p>
-          </div>
-        )}
-      </QRTCard>
-    </motion.div>
-  );
-}
-
-// ── Recipe Inline Card ──
-function RecipeInlineCard({ content }: { content: Record<string, unknown> }) {
-  const title = (content.title as string) || 'Recette';
-  const ingredients = (content.ingredients as string[]) || [];
-  const steps = (content.steps as string[]) || [];
-  const description = (content.description as string) || '';
-  const prepTime = (content.prep_time as string) || '';
-  const cookTime = (content.cook_time as string) || '';
-
-  return (
-    <motion.div variants={itemVariants} className="space-y-2">
-      <QRTCard header={{ emoji: '🍳', title }}>
-        {description && <p className="text-sm text-black/60 mb-2">{description}</p>}
-        <div className="flex items-center gap-3 text-xs text-black/40">
-          {prepTime && <span>⏱️ Préparation : {prepTime}</span>}
-          {cookTime && <span>🔥 Cuisson : {cookTime}</span>}
-        </div>
-      </QRTCard>
-
-      {ingredients.length > 0 && (
-        <QRTCard>
-          <p className="text-[10px] text-black/40 font-semibold uppercase tracking-wider mb-2">Ingrédients</p>
-          <ul className="space-y-1.5">
-            {ingredients.map((ing, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm text-black">
-                <span className="text-[#059669] mt-0.5">•</span>
-                {ing}
-              </li>
-            ))}
-          </ul>
-        </QRTCard>
-      )}
-
-      {steps.length > 0 && (
-        <div className="space-y-2">
-          <p className="text-[10px] text-black/40 font-semibold uppercase tracking-wider px-1">Préparation</p>
-          {steps.map((step, i) => (
-            <QRTCard key={i} className="!p-3">
-              <div className="flex items-start gap-2.5">
-                <span className="h-5 min-w-5 rounded-full bg-[#059669] text-white text-[10px] font-bold flex items-center justify-center mt-0.5">{i + 1}</span>
-                <p className="text-sm text-black leading-relaxed flex-1">{step}</p>
-              </div>
-            </QRTCard>
-          ))}
-        </div>
-      )}
-    </motion.div>
-  );
-}
-
-// ── External Link Inline Card ──
-function ExternalLinkInlineCard({ content }: { content: Record<string, unknown> }) {
-  const url = (content.url as string) || '';
-  const title = (content.title as string) || (content.name as string) || 'Lien externe';
-  const description = (content.description as string) || '';
-
-  return (
-    <motion.div variants={itemVariants}>
-      <QRTCard header={{ emoji: '🔗', title }}>
-        {description && <p className="text-sm text-black/60 mb-3">{description}</p>}
-        {url && (
-          <a
-            href={url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 h-11 bg-[#059669] text-white font-bold text-sm rounded-[8px] border-2 border-black shadow-[3px_3px_0_rgba(0,0,0,0.15)] active:translate-y-[1px] active:shadow-none transition-all hover:bg-[#047857]"
-          >
-            <ExternalLink className="h-4 w-4" />
-            Ouvrir le lien
-          </a>
-        )}
-      </QRTCard>
-    </motion.div>
-  );
-}
-
-// ── Guidebook Inline Card (home_manual — module B2B) ──
-function GuidebookInlineCard({ content }: { content: Record<string, unknown> }) {
-  const title = (content.title as string) || 'Guide de bienvenue';
-  const body = (content.body as string) || (content.text as string) || '';
-  const sections = body.split('\n\n').filter(Boolean);
-
-  return (
-    <motion.div variants={itemVariants}>
-      <QRTCard header={{ emoji: '📖', title }}>
-        {sections.length === 0 && <p className="text-sm text-black/40">Guide vide</p>}
-        {sections.map((section, i) => (
-          <div key={i} className={i > 0 ? 'mt-3 pt-3 border-t-2 border-dashed border-gray-100' : ''}>
-            <p className="text-sm text-black leading-relaxed whitespace-pre-wrap">{section}</p>
-          </div>
-        ))}
-      </QRTCard>
-    </motion.div>
-  );
-}
-
-// ── Checkout Inline Card (checklist — module B2B) ──
-function CheckoutInlineCard({ content }: { content: Record<string, unknown> }) {
-  const title = (content.title as string) || 'Check-out — avant votre départ';
-  const body = (content.body as string) || '';
-  const items = Array.isArray(content.items)
-    ? (content.items as string[])
-    : body.split('\n').map((l) => l.replace(/^[-•*]\s*/, '').trim()).filter(Boolean);
-  const [checked, setChecked] = useState<Set<number>>(new Set());
-
-  const toggle = (i: number) => {
-    setChecked(prev => {
-      const next = new Set(prev);
-      if (next.has(i)) next.delete(i); else next.add(i);
-      return next;
-    });
-  };
-
-  return (
-    <motion.div variants={itemVariants} className="space-y-2">
-      {items.length > 0 ? (
-        items.map((item, i) => (
-          <motion.button
-            key={i}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => toggle(i)}
-            className={`w-full text-left bg-white border-2 rounded-[12px] p-3 flex items-center gap-2.5 shadow-[3px_3px_0_rgba(0,0,0,0.08)] active:translate-y-[1px] active:shadow-none transition-all ${checked.has(i) ? 'border-green-400 bg-green-50' : 'border-black'}`}
-          >
-            <div className={`h-5 w-5 rounded-[6px] border-2 flex items-center justify-center shrink-0 transition-colors ${checked.has(i) ? 'bg-green-500 border-green-500' : 'border-black'}`}>
-              {checked.has(i) && <span className="text-white text-xs">✓</span>}
-            </div>
-            <span className={`text-sm flex-1 ${checked.has(i) ? 'text-black/40 line-through' : 'text-black font-medium'}`}>{item}</span>
-          </motion.button>
-        ))
-      ) : (
-        <QRTCard header={{ emoji: '🧹', title }}>
-          <p className="text-sm text-black/40">Aucune étape configurée</p>
-        </QRTCard>
-      )}
-    </motion.div>
-  );
-}
-
-// ── Upselling Inline Card (promo — module B2B) ──
-function UpsellingInlineCard({ content }: { content: Record<string, unknown> }) {
-  const title = (content.title as string) || 'Offre spéciale';
-  const body = (content.body as string) || (content.description as string) || '';
-  const price = (content.price as string) || '';
-
-  return (
-    <motion.div variants={itemVariants}>
-      <QRTCard header={{ emoji: '⭐', title, badge: price || 'Offre' }}>
-        {body && <p className="text-sm text-black leading-relaxed whitespace-pre-wrap">{body}</p>}
-        {price && (
-          <div className="mt-3 flex items-center justify-between bg-[#059669]/10 border-2 border-[#059669] rounded-[10px] px-3.5 py-2.5">
-            <span className="text-[10px] font-bold uppercase tracking-wide text-[#047857]">Prix</span>
-            <span className="text-base font-black text-[#047857]">{price}</span>
-          </div>
-        )}
-        <p className="text-xs text-black/40 mt-2">👋 Demandez à votre hôte pour en profiter</p>
-      </QRTCard>
-    </motion.div>
-  );
-}
-
-// ── Provider Directory Inline Card (artisan_directory — module B2B) ──
-function DirectoryInlineCard({ content }: { content: Record<string, unknown> }) {
-  const name = (content.name as string) || 'Prestataire';
-  const phone = (content.phone as string) || '';
-  const body = (content.body as string) || (content.details as string) || '';
-
-  return (
-    <motion.div variants={itemVariants}>
-      <QRTCard header={{ emoji: '🛠️', title: name, badge: 'Prestataire' }}>
-        {body && <p className="text-sm text-black leading-relaxed whitespace-pre-wrap">{body}</p>}
-        {phone && (
-          <a
-            href={`tel:${phone.replace(/\s/g, '')}`}
-            className="mt-3 flex items-center justify-center gap-2 h-11 bg-[#059669] text-white font-bold text-sm rounded-[8px] border-2 border-black shadow-[3px_3px_0_rgba(0,0,0,0.15)] active:translate-y-[1px] active:shadow-none transition-all hover:bg-[#047857]"
-          >
-            📞 Appeler {name}
-          </a>
-        )}
-      </QRTCard>
-    </motion.div>
-  );
-}
-
-// ── Generic Inline Card (fallback for any other module type) ──
-function GenericInlineCard({ qr }: { qr: QrCodeInfo }) {
-  const label = getModuleLabel(qr.type);
-  const emoji = getModuleEmoji(qr.type);
-  const entries = Object.entries(qr.content).filter(([k]) => !['id', 'createdAt', 'updatedAt'].includes(k));
-
-  return (
-    <motion.div variants={itemVariants}>
-      <QRTCard header={{ emoji, title: qr.name || label }}>
-        {entries.length > 0 ? (
-          <div className="space-y-2">
-            {entries.map(([key, value]) => (
-              <div key={key} className="flex items-start gap-2">
-                <span className="text-[10px] text-black/40 font-semibold uppercase tracking-wider min-w-[80px] pt-0.5">{key}</span>
-                <span className="text-sm text-black flex-1">
-                  {Array.isArray(value) ? value.join(', ') : String(value)}
-                </span>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-black/40">Aucun contenu configuré</p>
-        )}
-      </QRTCard>
-    </motion.div>
-  );
-}
-
-// ── Inline Module Renderer ──
-function renderModuleInline(qr: QrCodeInfo) {
-  switch (qr.type) {
-    case 'wifi': return <WifiQuickCard content={qr.content} />;
-    case 'house_rules': return <RulesInlineCard content={qr.content} />;
-    case 'emergency': return <EmergencyInlineCard content={qr.content} />;
-    case 'emergency_contacts': return <EmergencyInlineCard content={qr.content} />;
-    case 'contact': return <ContactQuickCard content={qr.content} />;
-    case 'note': return <NoteInlineCard content={qr.content} />;
-    case 'guestbook': return <GuestbookInlineCard content={qr.content} />;
-    case 'shopping_list': return <ShoppingListInlineCard content={qr.content} />;
-    case 'recipe': return <RecipeInlineCard content={qr.content} />;
-    case 'external_link': return <ExternalLinkInlineCard content={qr.content} />;
-    // Modules B2B Conciergerie Hub
-    case 'home_manual': return <GuidebookInlineCard content={qr.content} />;
-    case 'checklist': return <CheckoutInlineCard content={qr.content} />;
-    case 'promo': return <UpsellingInlineCard content={qr.content} />;
-    case 'artisan_directory': return <DirectoryInlineCard content={qr.content} />;
-    default: return <GenericInlineCard qr={qr} />;
-  }
-}
-
-// ── Room Inline Section (shows all modules with full content inline) ──
-function RoomInlineSection({ room }: { room: RoomInfo }) {
-  const emoji = getRoomEmoji(room.icon);
-
-  // Filter out modules that are already shown in the quick-access area
-  const QUICK_ACCESS_TYPES = ['wifi', 'house_rules', 'contact', 'emergency_contacts', 'emergency'];
-  const modules = room.qrCodes.filter(qr => !QUICK_ACCESS_TYPES.includes(qr.type));
-
-  if (modules.length === 0) return null;
-
-  return (
-    <motion.div variants={itemVariants} className="space-y-3">
-      <div className="flex items-center gap-2 px-1">
-        <span className="text-sm">{emoji}</span>
-        <h3 className="text-sm font-semibold text-white/70 uppercase tracking-wider">{room.name}</h3>
-        <span className="text-xs text-white/20">({modules.length})</span>
-      </div>
-      <div className="space-y-3">
-        {modules.map((qr) => (
-          <div key={qr.id}>{renderModuleInline(qr)}</div>
-        ))}
-      </div>
-    </motion.div>
-  );
-}
-
-// ══════════════════════════════════════════════════════════════
-// Host Dashboard Cards
-// ══════════════════════════════════════════════════════════════
-
-function HostRoomCard({ room, onTap }: { room: RoomInfo; gradientIndex: number; onTap: () => void }) {
-  const emoji = getRoomEmoji(room.icon);
-
-  return (
-    <motion.button
-      whileTap={{ scale: 0.95 }}
-      onClick={onTap}
-      className="w-full bg-white border-2 border-black rounded-[12px] p-4 text-left shadow-[4px_4px_0_rgba(0,0,0,0.08)] active:translate-y-[2px] active:shadow-[2px_2px_0_rgba(0,0,0,0.08)] transition-all hover:shadow-[2px_2px_0_rgba(0,0,0,0.08)] group"
-    >
-      <span className="text-2xl">{emoji}</span>
-      <h3 className="text-base font-bold text-black truncate mt-2">{room.name}</h3>
-      <p className="text-xs text-black/50 mt-0.5">
-        {room.qrCodes.length} module{room.qrCodes.length !== 1 ? 's' : ''}
-      </p>
-
-      {room.qrCodes.some(qr => qr.isPrivate) && (
-        <div className="mt-2 inline-flex items-center gap-1 text-[10px] text-red-600 bg-red-50 border border-red-200 rounded-[6px] font-bold px-2 py-0.5">
-          🔒 Privé
-        </div>
-      )}
-    </motion.button>
-  );
-}
-
-function HostActionCard({
-  emoji,
-  label,
-  subtitle,
-  badge,
-  onTap,
-}: {
-  emoji: string;
-  label: string;
-  subtitle: string;
-  badge?: string;
-  onTap: () => void;
-}) {
-  return (
-    <motion.button
-      whileTap={{ scale: 0.95 }}
-      onClick={onTap}
-      className="w-full bg-white border-2 border-black rounded-[12px] p-4 text-left shadow-[4px_4px_0_rgba(0,0,0,0.08)] active:translate-y-[2px] active:shadow-[2px_2px_0_rgba(0,0,0,0.08)] transition-all hover:shadow-[2px_2px_0_rgba(0,0,0,0.08)]"
-    >
-      <span className="text-2xl">{emoji}</span>
-      <h3 className="text-base font-bold text-black truncate mt-2">{label}</h3>
-      <p className="text-xs text-black/50 mt-0.5">{subtitle}</p>
-      {badge && (
-        <div className="mt-2 inline-flex items-center text-[10px] font-bold text-black/60 bg-gray-100 border border-gray-300 px-2 py-0.5 rounded-[6px]">
-          {badge}
-        </div>
-      )}
-    </motion.button>
-  );
-}
-
-// ══════════════════════════════════════════════════════════════
-// Room Detail View (Host sub-view)
-// ══════════════════════════════════════════════════════════════
-
-function RoomDetailView({ room, onBack }: { room: RoomInfo; onBack: () => void }) {
-  return (
-    <div className="space-y-6 pb-4">
-      <div className="flex items-center gap-4">
-        <QRTButton variant="secondary" onClick={onBack} className="!w-11 !h-11 !p-0 !rounded-[8px]">←</QRTButton>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2.5">
-            <span className="text-xl">{getRoomEmoji(room.icon)}</span>
-            <h2 className="text-xl font-bold text-white truncate">{room.name}</h2>
-          </div>
-          <p className="text-sm text-white/40 mt-0.5 ml-8">
-            {room.qrCodes.length} module{room.qrCodes.length !== 1 ? 's' : ''}
-          </p>
-        </div>
-      </div>
-
-      {room.qrCodes.length > 0 ? (
-        <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-3">
-          {room.qrCodes.map((qr) => (
-            <motion.div key={qr.id} variants={itemVariants}>
-              {renderModuleInline(qr)}
-            </motion.div>
-          ))}
-        </motion.div>
-      ) : (
-        <div className="text-center py-16">
-          <span className="text-4xl">📋</span>
-          <p className="text-sm text-white/60 mt-3">Aucun module dans cette pièce</p>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ══════════════════════════════════════════════════════════════
-// Voice Detail View (Host sub-view)
-// ══════════════════════════════════════════════════════════════
-
-function VoiceDetailView({
-  slug,
-  voiceMsgs,
-  onBack,
-  onRefresh,
-}: {
-  slug: string;
-  voiceMsgs: VoiceMsg[];
-  onBack: () => void;
-  onRefresh: () => void;
-}) {
-  return (
-    <div className="space-y-6 pb-4">
-      <div className="flex items-center gap-4">
-        <QRTButton variant="secondary" onClick={onBack} className="!w-11 !h-11 !p-0 !rounded-[8px]">←</QRTButton>
-        <div>
-          <h2 className="text-xl font-bold text-white">Répondeur</h2>
-          <p className="text-sm text-white/40 mt-0.5">
-            {voiceMsgs.length} message{voiceMsgs.length !== 1 ? 's' : ''} vocal{voiceMsgs.length !== 1 ? 'aux' : ''}
-          </p>
-        </div>
-      </div>
-
-      <VoiceRecorder slug={slug} onSent={onRefresh} />
-
-      {voiceMsgs.length > 0 ? (
-        <motion.div
-          variants={containerVariants} initial="hidden" animate="visible"
-          className="space-y-2.5 max-h-[50vh] overflow-y-auto scrollbar-thin pr-1"
-        >
-          {voiceMsgs.map((vm) => (
-            <motion.div key={vm.id} variants={itemVariants}>
-              <VoicePlayer msg={vm} />
-            </motion.div>
-          ))}
-        </motion.div>
-      ) : (
-        <div className="text-center py-12">
-          <span className="text-4xl">🎙️</span>
-          <p className="text-sm text-white/60 mt-3">Aucun message vocal</p>
-          <p className="text-xs text-white/40 mt-1">Enregistrez le premier message !</p>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ══════════════════════════════════════════════════════════════
-// Main Component
-// ══════════════════════════════════════════════════════════════
-
-export function HubPageContent({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = use(params);
-  const [data, setData] = useState<HubData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [view, setView] = useState<HubView>('mode-select');
-  const [pinModalFor, setPinModalFor] = useState<PinModalFor>(null);
-  const [pinVerifying, setPinVerifying] = useState(false);
-  const [voiceMsgs, setVoiceMsgs] = useState<VoiceMsg[]>([]);
-  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
-  const [slideDirection, setSlideDirection] = useState(0);
-
-  const fetchHub = useCallback(async () => {
-    try {
-      const res = await fetch(`/api/public/hub/${encodeURIComponent(slug)}`);
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Hub non trouvé');
-      setData(json);
-      setVoiceMsgs(json.voiceMessages || []);
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'Erreur';
-      setError(msg);
-    } finally {
-      setLoading(false);
-    }
-  }, [slug]);
-
-  const refreshVoice = useCallback(async () => {
-    try {
-      const res = await fetch(`/api/public/hub/${encodeURIComponent(slug)}/voice?limit=10`);
-      if (res.ok) { const json = await res.json(); setVoiceMsgs(json.messages || []); }
-    } catch { /* silent */ }
-  }, [slug]);
-
-  useEffect(() => { fetchHub(); }, [fetchHub]);
-  useEffect(() => { if (view === 'guest' || view === 'host') refreshVoice(); }, [view, refreshVoice]);
-
-  // Navigation helpers
-  const parentViewRef = useRef<'guest' | 'host'>('guest');
-
-  const goBack = useCallback(() => {
-    setSlideDirection(-1);
-    if (view === 'room-detail' || view === 'voice-detail') {
-      setView(parentViewRef.current);
-      setSelectedRoomId(null);
-    } else {
-      setView('mode-select');
-    }
-  }, [view]);
-
-  const goToHostRoom = useCallback((roomId: string) => {
-    setSlideDirection(1);
-    setSelectedRoomId(roomId);
-    setView('room-detail');
-  }, []);
-
-  const goToVoiceDetail = useCallback(() => {
-    setSlideDirection(1);
-    parentViewRef.current = view === 'host' ? 'host' : 'guest';
-    setView('voice-detail');
-  }, [view]);
-
-  const goToGuest = useCallback(() => {
-    setSlideDirection(1);
-    parentViewRef.current = 'guest';
-    setView('guest');
-  }, []);
-
-  // PIN verification
-  const doVerifyPin = useCallback((pinVal: string) => {
-    setPinVerifying(true);
-    fetch(`/api/public/hub/${encodeURIComponent(slug)}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pin: pinVal }),
-    })
-      .then((r) => r.json())
-      .then((j) => {
-        if (!j.success) {
-          toast.error(j.error || 'PIN incorrect');
-          setPinModalFor(null);
-        } else {
-          setPinModalFor(null);
-          if (pinModalFor === 'host') {
-            setSlideDirection(1);
-            parentViewRef.current = 'host';
-            setView('host');
-          } else if (pinModalFor === 'settings') {
-            toast.success('Bienvenue ! Redirection vers le dashboard...');
-            setTimeout(() => { window.location.href = '/dashboard'; }, 1000);
-          }
+        secondsRef.current += 1;
+        setSeconds(secondsRef.current);
+        if (secondsRef.current >= 30) {
+          stopRecording(true);
         }
-      })
-      .catch(() => { toast.error('Erreur réseau'); setPinModalFor(null); })
-      .finally(() => setPinVerifying(false));
-  }, [slug, pinModalFor]);
-
-  // ── Loading state ──
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#10B981] flex items-center justify-center">
-        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center gap-4">
-          <QRTCard className="!p-6">
-            <span className="text-4xl">🏠</span>
-          </QRTCard>
-          <p className="text-sm text-white/60">Chargement du Hub...</p>
-        </motion.div>
-      </div>
-    );
-  }
-
-  // ── Error state ──
-  if (error || !data) {
-    return (
-      <div className="min-h-screen bg-[#10B981] flex items-center justify-center p-4">
-        <QRTCard className="w-full max-w-sm">
-          <div className="text-center">
-            <span className="text-5xl">❌</span>
-            <h1 className="text-xl font-bold text-black mt-3 mb-2">Hub introuvable</h1>
-            <p className="text-sm text-black/50 mb-6">{error || "Ce Hub n'existe pas ou a été désactivé."}</p>
-            <div className="h-10 bg-gray-50 border-2 border-black rounded-[8px] flex items-center justify-center gap-2 text-sm text-black/60">
-              <span>📱</span><span className="font-mono text-xs">{slug}</span>
-            </div>
-          </div>
-        </QRTCard>
-      </div>
-    );
-  }
-
-  // Extract quick-access modules from guest rooms
-  const allGuestQrs = data.guestRooms.flatMap(r => r.qrCodes);
-  const wifiQr = allGuestQrs.find(qr => qr.type === 'wifi');
-  const rulesQr = allGuestQrs.find(qr => qr.type === 'house_rules');
-  const contactQr = allGuestQrs.find(qr => qr.type === 'contact' || qr.type === 'emergency_contacts');
-  const emergencyQr = allGuestQrs.find(qr => qr.type === 'emergency' || qr.type === 'emergency_contacts');
-
-  // Get the selected room for detail view
-  const selectedRoom = selectedRoomId
-    ? data.hostRooms.find(r => r.id === selectedRoomId) || null
-    : null;
-
-  const totalGuestModules = data.guestRooms.reduce((s, r) => s + r.qrCodes.length, 0);
-  const totalHostModules = data.hostRooms.reduce((s, r) => s + r.qrCodes.length, 0);
-
-  // Rooms for guest view (excluding quick-access modules from the grid display)
-  const QUICK_ACCESS_TYPES = ['wifi', 'house_rules', 'contact', 'emergency_contacts', 'emergency'];
-  const guestModuleRooms = data.guestRooms.filter(r =>
-    r.qrCodes.some(qr => !QUICK_ACCESS_TYPES.includes(qr.type))
-  );
+      }, 1000);
+    } catch {
+      toast.error('Micro inaccessible. Vérifiez les autorisations du navigateur.');
+    }
+  };
 
   return (
-    <>
-      <div className="min-h-screen bg-[#10B981]">
-        <div className="min-h-screen flex flex-col relative z-10">
-          {/* Header */}
-          <header className="w-full px-5 sm:px-6 pt-[max(1.5rem,env(safe-area-inset-top))] pb-2">
-            <div className="max-w-lg lg:max-w-xl mx-auto">
-              <div className="flex items-center justify-between">
-                {view !== 'mode-select' ? (
-                  <motion.button
-                    whileTap={{ scale: 0.95 }}
-                    onClick={goBack}
-                    className="flex items-center gap-1.5 text-sm text-white/60 hover:text-white transition-colors"
-                  >
-                    ← Retour
-                  </motion.button>
-                ) : (
-                  <h1 className="text-2xl font-bold text-white">
-                    {data.property.name}
-                  </h1>
-                )}
+    <Dialog open={open} onOpenChange={(v) => !sending && onClose()}>
+      <DialogContent className="max-w-sm bg-white border border-slate-200 rounded-xl">
+        <DialogHeader>
+          <DialogTitle className="text-base font-bold text-slate-900">🚨 Contacter votre hôte</DialogTitle>
+          <DialogDescription className="text-xs text-slate-500">
+            Un souci dans {propertyName} ? {contact.name} vous répond rapidement.
+          </DialogDescription>
+        </DialogHeader>
 
-                <div className="flex items-center gap-2">
-                  {view === 'guest' && (
-                    <motion.span
-                      initial={{ scale: 0.8, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      className="text-[10px] font-bold bg-white text-[#059669] px-2.5 py-1 rounded-[6px] border-2 border-black shadow-[2px_2px_0_rgba(0,0,0,0.08)]"
-                    >
-                      INVITÉ
-                    </motion.span>
-                  )}
-                  {(view === 'host' || view === 'room-detail' || view === 'voice-detail') && (
-                    <motion.span
-                      initial={{ scale: 0.8, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      className="text-[10px] font-bold bg-[#059669] text-white px-2.5 py-1 rounded-[6px] border-2 border-black shadow-[2px_2px_0_rgba(0,0,0,0.08)]"
-                    >
-                      HÔTE
-                    </motion.span>
-                  )}
-
-                  {view === 'mode-select' && data.property.hasPin && (
-                    <motion.button
-                      whileTap={{ scale: 0.9 }}
-                      onClick={() => setPinModalFor('settings')}
-                      className="h-10 w-10 bg-white border-2 border-black rounded-[8px] flex items-center justify-center shadow-[2px_2px_0_rgba(0,0,0,0.08)] active:translate-y-[1px] active:shadow-none transition-all"
-                    >
-                      ⚙️
-                    </motion.button>
-                  )}
-                </div>
+        <div className="space-y-2.5">
+          {contact.phone && (
+            <a
+              href={`tel:${contact.phone.replace(/\s/g, '')}`}
+              className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-xl p-3.5 hover:bg-slate-100 transition-colors"
+            >
+              <span className="text-2xl select-none" aria-hidden="true">
+                📞
+              </span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-slate-900">Appeler {contact.name}</p>
+                <p className="text-xs text-slate-500">{contact.phone}</p>
               </div>
-            </div>
-          </header>
+              <Phone className="h-4 w-4 text-slate-400" aria-hidden="true" />
+            </a>
+          )}
+          {contact.email && (
+            <a
+              href={`mailto:${contact.email}?subject=${encodeURIComponent(`Message du Hub — ${propertyName}`)}`}
+              className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-xl p-3.5 hover:bg-slate-100 transition-colors"
+            >
+              <span className="text-2xl select-none" aria-hidden="true">
+                ✉️
+              </span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-slate-900">Écrire un email</p>
+                <p className="text-xs text-slate-500 truncate">{contact.email}</p>
+              </div>
+              <Mail className="h-4 w-4 text-slate-400" aria-hidden="true" />
+            </a>
+          )}
 
-          {/* Main content */}
-          <main className="flex-1 flex flex-col px-5 sm:px-6 py-5 sm:py-6 max-w-lg lg:max-w-xl mx-auto w-full">
-            <AnimatePresence mode="wait" custom={slideDirection}>
-
-              {/* ══════════ MODE SELECT ══════════ */}
-              {view === 'mode-select' && (
-                <motion.div
-                  key="mode-select"
-                  custom={slideDirection}
-                  variants={slideVariants}
-                  initial="enter"
-                  animate="center"
-                  exit="exit"
-                  transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                  className="flex-1 flex flex-col gap-6"
-                >
-                  {/* Home info */}
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.1 }}
-                    className="text-center space-y-2"
-                  >
-                    {data.ownerName && (
-                      <p className="text-sm text-white/50">
-                        Propriété de{' '}
-                        <span className="text-white/80 font-medium">{data.ownerName}</span>
-                      </p>
-                    )}
-                    <div className="flex items-center justify-center gap-4 text-xs text-white/30">
-                      <span className="flex items-center gap-1">🏠 {data.guestRooms.length} pièces</span>
-                      <span className="flex items-center gap-1">📱 {totalGuestModules} modules</span>
-                    </div>
-                  </motion.div>
-
-                  {/* Two big mode buttons */}
-                  <div className="flex-1 flex flex-col gap-4">
-                    {/* INVITÉ button */}
-                    <motion.button
-                      onClick={goToGuest}
-                      whileHover={{ scale: 1.01 }}
-                      whileTap={{ scale: 0.98, translateY: 2 }}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.2, type: 'spring' }}
-                      className="w-full bg-white border-2 border-black rounded-[12px] p-6 shadow-[4px_4px_0_rgba(0,0,0,0.08)] hover:shadow-[2px_2px_0_rgba(0,0,0,0.08)] transition-all text-left"
-                    >
-                      <div className="flex items-center gap-4">
-                        <span className="text-4xl">👤</span>
-                        <div>
-                          <h2 className="text-2xl font-bold text-black">Mode Invité</h2>
-                          <p className="text-black/50 text-sm">Wi-Fi, messages, infos pratiques</p>
-                        </div>
-                      </div>
-                      <div className="mt-3 flex items-center gap-2 pl-14">
-                        <span className="text-[11px] bg-gray-100 border border-gray-300 rounded-[6px] font-bold px-2.5 py-0.5">{totalGuestModules} modules</span>
-                        <span className="text-[11px] bg-gray-100 border border-gray-300 rounded-[6px] font-bold px-2.5 py-0.5">Sans code</span>
-                      </div>
-                    </motion.button>
-
-                    {/* FAMILLE button */}
-                    {data.property.hasPin && (
-                      <motion.button
-                        onClick={() => setPinModalFor('host')}
-                        whileHover={{ scale: 1.01 }}
-                        whileTap={{ scale: 0.98, translateY: 2 }}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.3, type: 'spring' }}
-                        className="w-full bg-emerald-600 border border-emerald-700 rounded-[12px] p-6 shadow-lg shadow-emerald-900/40 hover:shadow-md transition-all text-left"
-                      >
-                        <div className="flex items-center gap-4">
-                          <span className="text-4xl">🗝️</span>
-                          <div>
-                            <h2 className="text-2xl font-bold text-white">Mode Hôte</h2>
-                            <p className="text-white/80 text-sm">Accès complet au logement</p>
-                          </div>
-                        </div>
-                        <div className="mt-3 flex items-center gap-2 pl-14">
-                          <span className="text-[11px] bg-white/15 rounded-[6px] font-bold px-2.5 py-0.5 text-white">{totalHostModules} modules</span>
-                          <span className="text-[11px] bg-white/15 rounded-[6px] font-bold px-2.5 py-0.5 text-white flex items-center gap-1">
-                            🔒 PIN requis
-                          </span>
-                        </div>
-                      </motion.button>
-                    )}
-                  </div>
-
-                  {/* Recent voice messages preview */}
-                  {voiceMsgs.length > 0 && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.4 }}
-                      className="space-y-2"
-                    >
-                      <div className="flex items-center gap-2 text-sm text-white/50">
-                        <span>💬</span>
-                        <span>{voiceMsgs.length} message{voiceMsgs.length > 1 ? 's' : ''} vocal{voiceMsgs.length > 1 ? 'aux' : ''}</span>
-                      </div>
-                      <div className="space-y-2 max-h-40 overflow-y-auto scrollbar-thin">
-                        {voiceMsgs.slice(0, 3).map((vm) => (
-                          <QRTCard key={vm.id} className="!p-3">
-                            <div className="flex items-center gap-3">
-                              <span className="text-xl">🔊</span>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-black truncate">{vm.senderName}</p>
-                                <p className="text-xs text-black/40">{vm.durationSec}s</p>
-                              </div>
-                            </div>
-                          </QRTCard>
-                        ))}
-                      </div>
-                    </motion.div>
-                  )}
-                </motion.div>
-              )}
-
-              {/* ══════════ GUEST VIEW (ALL INLINE) ══════════ */}
-              {view === 'guest' && (
-                <motion.div
-                  key="guest"
-                  custom={slideDirection}
-                  variants={slideVariants}
-                  initial="enter"
-                  animate="center"
-                  exit="exit"
-                  transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                  className="space-y-6 pb-4"
-                >
-                  {/* 1. Home name + address subtitle */}
-                  <div>
-                    <h2 className="text-xl font-bold text-white">{data.property.name}</h2>
-                    {data.property.address && (
-                      <p className="text-sm text-white/50 mt-1">{data.property.address}</p>
-                    )}
-                  </div>
-
-                  {/* 2. WiFi full card (if exists) */}
-                  {wifiQr && (
-                    <motion.div variants={itemVariants} initial="hidden" animate="visible">
-                      <WifiQuickCard content={wifiQr.content} />
-                    </motion.div>
-                  )}
-
-                  {/* 3. Quick access 2-col grid: Messages, Emergency, Rules, Contact */}
-                  <motion.div
-                    variants={containerVariants}
-                    initial="hidden"
-                    animate="visible"
-                    className="grid grid-cols-2 gap-3"
-                  >
-                    <MessagesQuickCard
-                      count={voiceMsgs.length}
-                      latestSender={voiceMsgs[0]?.senderName ?? null}
-                      latestDuration={voiceMsgs[0]?.durationSec ?? null}
-                      onTap={goToVoiceDetail}
-                    />
-
-                    {emergencyQr && (
-                      <motion.div variants={itemVariants}>
-                        <motion.button whileTap={{ scale: 0.97 }} className="w-full text-left">
-                          <QRTCard header={{ emoji: '🚨', title: 'Urgences' }}>
-                            <div className="flex items-center gap-2">
-                              <Phone className="h-4 w-4 text-red-500" />
-                              <p className="text-sm font-bold text-red-600">
-                                {(emergencyQr.content.emergency_phone as string) || (emergencyQr.content.phone as string) || '112'}
-                              </p>
-                            </div>
-                            <p className="text-xs text-black/40 mt-1">Appeler en cas d'urgence</p>
-                          </QRTCard>
-                        </motion.button>
-                      </motion.div>
-                    )}
-
-                    {rulesQr && <RulesInlineCard content={rulesQr.content} />}
-                    {contactQr && <ContactQuickCard content={contactQr.content} />}
-                  </motion.div>
-
-                  {/* 4. Emergency full inline content (if exists, shown full-width below grid) */}
-                  {emergencyQr && (
-                    <motion.div variants={itemVariants} initial="hidden" animate="visible">
-                      <EmergencyInlineCard content={emergencyQr.content} />
-                    </motion.div>
-                  )}
-
-                  {/* 5. Voice recorder */}
-                  <div className="space-y-3">
-                    <VoiceRecorder slug={slug} onSent={refreshVoice} />
-                  </div>
-
-                  {/* 6. Voice messages list */}
-                  {voiceMsgs.length > 0 && (
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2 text-sm font-semibold text-white/70">
-                        <span>🔊</span> Messages vocaux
-                      </div>
-                      <div className="space-y-2 max-h-48 overflow-y-auto scrollbar-thin">
-                        {voiceMsgs.map((vm) => <VoicePlayer key={vm.id} msg={vm} />)}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 7. All remaining modules by room section (full inline content) */}
-                  {guestModuleRooms.length > 0 && (
-                    <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
-                      <div className="flex items-center gap-2 text-sm font-semibold text-white/70">
-                        <span>📱</span> Modules par pièce
-                      </div>
-                      {guestModuleRooms.map((room) => (
-                        <RoomInlineSection key={room.id} room={room} />
-                      ))}
-                    </motion.div>
-                  )}
-                </motion.div>
-              )}
-
-              {/* ══════════ FAMILY VIEW ══════════ */}
-              {view === 'host' && (
-                <motion.div
-                  key="host"
-                  custom={slideDirection}
-                  variants={slideVariants}
-                  initial="enter"
-                  animate="center"
-                  exit="exit"
-                  transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                  className="space-y-6 pb-4"
-                >
-                  {/* Title */}
-                  <div>
-                    <h2 className="text-xl font-bold text-white">{data.property.name}</h2>
-                    <p className="text-sm text-white/50 mt-1">
-                      Mode Hôte{data.property.address && ` · ${data.property.address}`}
-                    </p>
-                  </div>
-
-                  {/* 6-card Dashboard Grid */}
-                  <motion.div
-                    variants={containerVariants}
-                    initial="hidden"
-                    animate="visible"
-                    className="grid grid-cols-2 gap-3"
-                  >
-                    {/* Room cards (up to 4) */}
-                    {data.hostRooms.slice(0, 4).map((room, i) => (
-                      <motion.div key={room.id} variants={itemVariants}>
-                        <HostRoomCard
-                          room={room}
-                          gradientIndex={i}
-                          onTap={() => goToHostRoom(room.id)}
-                        />
-                      </motion.div>
-                    ))}
-
-                    {/* More rooms indicator */}
-                    {data.hostRooms.length > 4 && (
-                      <motion.div variants={itemVariants}>
-                        <HostActionCard
-                          emoji="🏠"
-                          label="Plus de pièces"
-                          subtitle={`${data.hostRooms.length - 4} autre${data.hostRooms.length - 4 > 1 ? 's' : ''}`}
-                          badge={`${data.hostRooms.length} pièces au total`}
-                          onTap={() => {
-                            toast.info('Utilisez l\'application complète pour voir toutes les pièces');
-                          }}
-                        />
-                      </motion.div>
-                    )}
-
-                    {/* Répondeur Card */}
-                    <motion.div variants={itemVariants}>
-                      <HostActionCard
-                        emoji="📞"
-                        label="Répondeur"
-                        subtitle={voiceMsgs.length > 0
-                          ? `${voiceMsgs.length} message${voiceMsgs.length > 1 ? 's' : ''}`
-                          : 'Aucun message'
-                        }
-                        badge={voiceMsgs.length > 0 ? `${voiceMsgs.length} nouveau${voiceMsgs.length > 1 ? 'x' : ''}` : undefined}
-                        onTap={goToVoiceDetail}
-                      />
-                    </motion.div>
-
-                    {/* Paramètres Card */}
-                    <motion.div variants={itemVariants}>
-                      <HostActionCard
-                        emoji="⚙️"
-                        label="Paramètres"
-                        subtitle="Accès au tableau de bord"
-                        badge="Sécurisé"
-                        onTap={() => {
-                          toast.info('Connectez-vous à votre tableau de bord Conciergerie Hub pour gérer votre logement');
-                        }}
-                      />
-                    </motion.div>
-                  </motion.div>
-                </motion.div>
-              )}
-
-              {/* ══════════ ROOM DETAIL VIEW ══════════ */}
-              {view === 'room-detail' && selectedRoom && (
-                <motion.div
-                  key={`room-${selectedRoom.id}`}
-                  custom={slideDirection}
-                  variants={slideVariants}
-                  initial="enter"
-                  animate="center"
-                  exit="exit"
-                  transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                >
-                  <RoomDetailView room={selectedRoom} onBack={goBack} />
-                </motion.div>
-              )}
-
-              {/* ══════════ VOICE DETAIL VIEW ══════════ */}
-              {view === 'voice-detail' && (
-                <motion.div
-                  key="voice-detail"
-                  custom={slideDirection}
-                  variants={slideVariants}
-                  initial="enter"
-                  animate="center"
-                  exit="exit"
-                  transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                >
-                  <VoiceDetailView
-                    slug={slug}
-                    voiceMsgs={voiceMsgs}
-                    onBack={goBack}
-                    onRefresh={refreshVoice}
-                  />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </main>
-
-          {/* Footer */}
-          <div className="mt-auto px-6 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] text-center">
-            <p className="text-xs font-bold text-white/40 tracking-wide mb-0.5">
-              🗝️ Conciergerie <span className="text-emerald-400">Hub</span>
+          {/* Répondeur vocal */}
+          <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3.5">
+            <p className="text-sm font-bold text-emerald-900">🎙️ Laisser un message vocal</p>
+            <p className="text-[11px] text-emerald-800 mt-0.5">
+              Décrivez le problème en 30 s max — votre hôte reçoit un audible.
             </p>
-            <p className="text-[10px] text-white/25">
-              La conciergerie digitale des hôtes
-            </p>
+            {sending ? (
+              <div className="mt-3 flex items-center gap-2 text-sm text-emerald-800">
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Envoi en cours…
+              </div>
+            ) : recording ? (
+              <div className="mt-3 flex items-center gap-2.5 flex-wrap">
+                <span className="inline-flex items-center gap-1.5 text-sm font-bold text-red-600">
+                  <span className="h-2.5 w-2.5 rounded-full bg-red-500 animate-pulse" aria-hidden="true" />
+                  {String(Math.floor(seconds / 60)).padStart(2, '0')}:{String(seconds % 60).padStart(2, '0')}
+                </span>
+                <Button
+                  type="button"
+                  size="sm"
+                  className="h-9 bg-slate-900 hover:bg-slate-800 text-white font-semibold"
+                  onClick={() => stopRecording(true)}
+                >
+                  <Square className="h-3.5 w-3.5" aria-hidden="true" /> Envoyer
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="h-9 border-slate-300 text-slate-600"
+                  onClick={() => stopRecording(false)}
+                >
+                  Annuler
+                </Button>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                className="mt-3 w-full h-10 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
+                onClick={startRecording}
+              >
+                <Mic className="h-4 w-4" aria-hidden="true" /> Démarrer l&apos;enregistrement
+              </Button>
+            )}
           </div>
         </div>
-      </div>
-
-      {/* ══════════ PIN MODAL ══════════ */}
-      <AnimatePresence>
-        {pinModalFor && (
-          <PinModal
-            title={pinModalFor === 'host' ? 'Entrez votre code PIN' : 'Accès Paramètres'}
-            onVerify={doVerifyPin}
-            onCancel={() => setPinModalFor(null)}
-            verifying={pinVerifying}
-          />
-        )}
-      </AnimatePresence>
-    </>
+      </DialogContent>
+    </Dialog>
   );
 }
