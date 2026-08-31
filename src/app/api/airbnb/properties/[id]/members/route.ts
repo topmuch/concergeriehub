@@ -24,6 +24,7 @@ import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { getUserRoleForProperty } from '@/lib/b2b-server';
 import { canManageTeam, normalizeMemberRole, MEMBER_ROLES, type MemberRole } from '@/lib/team';
+import { runAutomationTrigger } from '@/lib/automations-server';
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -241,6 +242,18 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
           where: { id: member.id },
           data: { acceptedAt: new Date() },
           select: { id: true, acceptedAt: true, role: true },
+        });
+        // ÉTAPE 13 : automatisation MEMBER_ACCEPTED (prévient l'équipe)
+        const joinedUser = await db.user.findUnique({
+          where: { id: member.userId },
+          select: { fullName: true, email: true },
+        });
+        await runAutomationTrigger(propertyId, 'MEMBER_ACCEPTED', {
+          kind: 'member',
+          member: {
+            displayName: joinedUser?.fullName?.trim() || joinedUser?.email || 'Un nouveau membre',
+            role: normalizeMemberRole(member.role),
+          },
         });
         return NextResponse.json({
           member: { ...updated, acceptedAt: updated.acceptedAt?.toISOString() ?? null },

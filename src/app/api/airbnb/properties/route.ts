@@ -24,6 +24,7 @@ import {
   resolveUserMemberships,
 } from '@/lib/b2b-server';
 import { PROPERTY_TYPE_META } from '@/lib/b2b';
+import { ensureDefaultRules } from '@/lib/automations-server';
 
 const DAYS = 30;
 const MS_PER_DAY = 86_400_000;
@@ -265,6 +266,9 @@ export async function POST(req: NextRequest) {
       });
       return created;
     });
+
+    // ÉTAPE 13 : déploie le catalogue d'automatisations sur le bien
+    await ensureDefaultRules(property.id);
 
     return NextResponse.json({ property }, { status: 201 });
   } catch (error) {

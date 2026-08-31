@@ -7,6 +7,7 @@ import { signOut } from 'next-auth/react';
 import { LogOut } from 'lucide-react';
 import { BrandLogo } from '@/components/ui/brand-logo';
 import { Toaster } from '@/components/ui/sonner';
+import { NotificationsBell } from '@/components/airbnb/notifications-bell';
 import { cn } from '@/lib/utils';
 
 /**
@@ -17,6 +18,7 @@ import { cn } from '@/lib/utils';
 
 const NAV_ITEMS = [
   { href: '/airbnb/dashboard', label: 'Dashboard', emoji: '📊' },
+  { href: '/airbnb/dashboard/automations', label: 'Automatisations', emoji: '⚡' },
   { href: '/airbnb/dashboard/plaques', label: 'Plaques', emoji: '🏷️' },
   { href: '/airbnb/dashboard/providers', label: 'Prestataires', emoji: '🧹' },
   { href: '/airbnb/billing', label: 'Abonnement', emoji: '💳' },
@@ -76,6 +78,8 @@ export function DashboardShell({ children, userName }: DashboardShellProps) {
 
           {userName && (
             <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+              {/* ÉTAPE 13 : centre de notifications hôte */}
+              <NotificationsBell />
               <div className="flex items-center gap-2 min-w-0">
                 <span
                   aria-hidden="true"

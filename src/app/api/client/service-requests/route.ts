@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { sendPushToUser } from '@/lib/push-sender';
+import { runAutomationTrigger } from '@/lib/automations-server';
 import { SERVICE_REQUEST_STATUSES, URGENCY_LEVELS } from '@/types/database';
 
 // GET: List service requests for a home
@@ -166,6 +167,16 @@ export async function POST(request: NextRequest) {
     } catch (pushError) {
       console.error('[service-requests POST] Push notification failed:', pushError);
     }
+
+    // ÉTAPE 13 : automatisation MAINTENANCE_REQUESTED (équipe du bien)
+    await runAutomationTrigger(propertyId, 'MAINTENANCE_REQUESTED', {
+      kind: 'maintenance',
+      request: {
+        id: serviceRequest.id,
+        description: serviceRequest.description,
+        urgencyLevel: serviceRequest.urgencyLevel,
+      },
+    });
 
     return NextResponse.json(serviceRequest, { status: 201 });
   } catch (error) {

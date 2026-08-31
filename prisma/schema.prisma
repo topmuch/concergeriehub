@@ -109,11 +109,46 @@ model Property {
   voiceMessages     VoiceMessage[]
   plaqueQrCodes     PhysicalQrCode[] @relation("PlaqueQrProperty")
   bookings          Booking[]
+  automationRules   AutomationRule[]
 
   @@index([ownerId])
   @@index([propertyType])
   @@index([qrHubSlug])
   @@map("properties")
+}
+
+// ==============================================================
+// TABLE 38: automation_rules (ÉTAPE 13 V2 — Automatisations)
+// Catalogue fixe de règles trigger → action par bien.
+// `key`     : identifiant du catalogue (voir src/lib/automations.ts)
+//   'booking_created_team'   | 'booking_created_cleaning'
+//   | 'cleaning_done_owner'  | 'checkin_today_reminder'
+//   | 'checkout_today_reminder' | 'maintenance_alert'
+//   | 'member_accepted_owner'
+// `trigger` : 'BOOKING_CREATED' | 'CLEANING_DONE' | 'CHECK_IN_TODAY'
+//   | 'CHECK_OUT_TODAY' | 'MAINTENANCE_REQUESTED' | 'MEMBER_ACCEPTED'
+// `action`  : audience notifiée — 'NOTIFY_OWNERS' | 'NOTIFY_CLEANERS'
+//   | 'NOTIFY_TEAM' | 'NOTIFY_MAINTENANCE'
+// Les rappels quotidiens (CHECK_IN_TODAY / CHECK_OUT_TODAY) sont
+// évalués en lazy (à la lecture) ; `lastRunAt` garantit 1 run/jour.
+// ==============================================================
+model AutomationRule {
+  id         String    @id @default(cuid())
+  propertyId String    @map("property_id")
+  key        String
+  trigger    String
+  action     String
+  isActive   Boolean   @default(true) @map("is_active")
+  lastRunAt  DateTime? @map("last_run_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@unique([propertyId, key])
+  @@index([propertyId])
+  @@index([trigger, isActive])
+  @@map("automation_rules")
 }
 
 // ==============================================================

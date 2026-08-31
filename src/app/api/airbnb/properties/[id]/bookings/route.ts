@@ -22,6 +22,7 @@ import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { getUserRoleForProperty } from '@/lib/b2b-server';
 import { canManageTeam } from '@/lib/team';
+import { runAutomationTrigger } from '@/lib/automations-server';
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -157,6 +158,12 @@ export async function POST(req: NextRequest, ctx: Ctx) {
       },
     });
 
+    // ÉTAPE 13 : automatisations BOOKING_CREATED (équipe + ménage)
+    await runAutomationTrigger(propertyId, 'BOOKING_CREATED', {
+      kind: 'booking',
+      booking,
+    });
+
     return NextResponse.json(
       { booking: { ...booking, checkIn: booking.checkIn.toISOString(), checkOut: booking.checkOut.toISOString() } },
       { status: 201 },
@@ -227,8 +234,15 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
       const updated = await db.booking.update({
         where: { id: booking.id },
         data: { cleaningStatus },
-        select: { id: true, cleaningStatus: true },
+        select: { id: true, cleaningStatus: true, guestName: true, checkIn: true, checkOut: true },
       });
+      // ÉTAPE 13 : automatisation CLEANING_DONE (le ménage termine)
+      if (cleaningStatus === 'DONE') {
+        await runAutomationTrigger(propertyId, 'CLEANING_DONE', {
+          kind: 'booking',
+          booking: updated,
+        });
+      }
       return NextResponse.json({ booking: updated });
     }
 
@@ -278,8 +292,24 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
     const updated = await db.booking.update({
       where: { id: booking.id },
       data,
-      select: { id: true, status: true, cleaningStatus: true, guestName: true, guests: true },
+      select: {
+        id: true,
+        status: true,
+        cleaningStatus: true,
+        guestName: true,
+        guests: true,
+        checkIn: true,
+        checkOut: true,
+      },
     });
+
+    // ÉTAPE 13 : automatisation CLEANING_DONE (clôture manuelle)
+    if (data.cleaningStatus === 'DONE') {
+      await runAutomationTrigger(propertyId, 'CLEANING_DONE', {
+        kind: 'booking',
+        booking: updated,
+      });
+    }
 
     return NextResponse.json({ booking: updated });
   } catch (error) {
