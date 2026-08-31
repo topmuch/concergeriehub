@@ -29,11 +29,17 @@ export const authOptions: NextAuthOptions = {
               fullName: true,
               passwordHash: true,
               role: true,
+              isActive: true,
             },
           });
 
           if (!user) {
             console.log('[auth] User not found:', credentials.email);
+            return null;
+          }
+
+          if (user.isActive === false) {
+            console.log('[auth] Account disabled (superadmin):', credentials.email);
             return null;
           }
 

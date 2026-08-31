@@ -521,8 +521,10 @@ export async function POST(
       const pc = planConfig[plan] || planConfig.free;
       await db.subscription.create({
         data: {
-          subscriberId: userId!,
+          // Abonnement HÔTE : userId = FK dédiée (subscriberId est réservé
+          // aux merchants/providers — cf. schema.prisma TABLE 25)
           subscriberType: 'user',
+          userId: userId!,
           plan,
           amount: pc.amount,
           billingCycle: pc.cycle,

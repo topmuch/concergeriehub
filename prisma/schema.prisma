@@ -29,6 +29,7 @@ model User {
   fullName     String?  @map("full_name")
   passwordHash String?  @map("password_hash")
   role         String   @default("user")             // 'user' | 'superadmin'
+  isActive     Boolean  @default(true) @map("is_active") // false = compte désactivé par le Superadmin (login bloqué)
   selectedPlan      String?   @map("selected_plan")      // 'airbnb_solo' | 'airbnb_pro' | 'agency' | 'free' — choisi avant paiement
   onboardingCompleted Boolean @default(false) @map("onboarding_completed")
   createdAt DateTime @default(now()) @map("created_at")
@@ -47,6 +48,7 @@ model User {
   providerProfile               Provider?
   promoRedemptions              PromoRedemption[]
   reviews                       Review[]
+  subscriptions                 Subscription[]     @relation("UserSubscriptions")
   activationLogs                ActivationLog[] @relation("ActivationLogUser")
   coupons                       Coupon[]             @relation("UserCoupons")
   couponScans                   CouponScan[]          @relation("CouponScanUser")
@@ -656,8 +658,9 @@ model EmergencyQrCode {
 // ==============================================================
 model Subscription {
   id                    String    @id @default(cuid())
-  subscriberId          String    @map("subscriber_id")
+  subscriberId          String?   @map("subscriber_id")                    // FK merchant/provider — null pour un abonnement HÔTE (cf. userId)
   subscriberType        String    @map("subscriber_type") // 'user' | 'merchant' | 'provider'
+  userId                String?   @map("user_id")                          // FK dédiée pour les abonnements HÔTE (Stripe Étape 10)
   plan                  String
   amount                Float
   currency              String    @default("EUR")
@@ -671,9 +674,11 @@ model Subscription {
 
   merchant Merchant? @relation("MerchantSubscriptions", fields: [subscriberId], references: [id], onDelete: Cascade)
   provider Provider? @relation("ProviderSubscriptions", fields: [subscriberId], references: [id], onDelete: Cascade)
+  user     User?     @relation("UserSubscriptions", fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([subscriberId])
   @@index([subscriberType])
+  @@index([userId])
   @@index([status])
   @@index([stripeSubscriptionId])
   @@map("subscriptions")

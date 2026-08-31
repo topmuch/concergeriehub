@@ -171,3 +171,31 @@ Stage Summary:
 - ÉTAPE 6 livrée : la boucle produit est fermée — l'hôte génère une plaque, l'imprime en sticker A6 (PDF via la boîte d'impression), la colle au logement ; le voyageur scanne → Hub ÉTAPE 5 ; si la plaque est perdue/volée, l'hôte la désactive et le QR meurt instantanément (410).
 - Les 3 états de plaque de l'ÉTAPE 5 (active/cancelled/lost) sont désormais actionnables par de vrais utilisateurs depuis le dashboard.
 - Reste en feuille de route : Stripe checkout (nécessite clés réelles), items d'audit legacy (sync schema.sql) — ordre défini par l'utilisateur.
+
+---
+Task ID: 9 (SOUS-ÉTAPE A / ÉTAPE 9)
+Agent: Z.ai Code (orchestrator)
+Task: Dashboard Superadmin & gestion stricte des prestataires — routes protégées /admin/* (vue d'ensemble, prestataires avec carte Leaflet + CRUD géolocalisé + audiences, hôtes & propriétés avec désactivation de compte).
+
+Work Log:
+- Découverte : compte superadmin déjà présent (admin@qrdomotik.roomscan.pro / QrDomotik2024!, vérifié bcrypt) + User.role ('user'|'superadmin') existant dans le schema.
+- Schema : ajout User.isActive (désactivation de compte) ; CORRECTION FK majeure sur Subscription — subscriberId était une FK obligatoire vers merchants/providers, empêchant tout abonnement hôte (P2003). subscriberId rendu optionnel + nouvelle FK dédiée Subscription.userId (→ User, cascade) + index. Le write legacy silencieusement cassé de /api/setup/[token] (subscriberId: userId!) corrigé (userId + subscriberId null).
+- lib/auth.ts : authorize() rejette les comptes isActive=false (log "[auth] Account disabled").
+- lib/admin.ts : requireSuperadmin() (session + role==='superadmin') + adminUnauthorized() 403 standardisé.
+- APIs 🔒 superadmin : GET /api/admin/overview (4 KPI + MRR normalisé monthly=plein/annual=/12 + 6 derniers hôtes + 10 dernières activités) ; GET/POST /api/admin/providers-admin (création en transaction User+Provider, email auto-généré "contact.<slug>@pro.conciergerie-hub.fr", passwordHash null) ; PATCH/DELETE /api/admin/providers-admin/[id] (delete = Provider + User en transaction) ; GET /api/admin/hosts (plan = abonnement actif en priorité, sinon selectedPlan ; subs regroupées en JS — pas de DISTINCT ON SQLite) ; GET+PATCH /api/admin/hosts/[id] (biens avec QR/plaques/hubSlug ; toggle isActive).
+- UI /admin : layout.tsx (garde serveur → AdminLoginGate si non-superadmin, vérifié : aucun contenu admin dans le DOM, seuls <title>/metadata visibles) ; /admin → redirect /admin/dashboard ; AdminShell (badge SUPERADMIN, nav 3 onglets, footer sticky mt-auto) ; AdminLoginGate (identifiants pré-remplis).
+- /admin/dashboard : bento 4 KPI (4 hôtes, 4 propriétés, MRR 34,73 € / 3 abonnements, 13 prestataires 7 owner + 6 guest) + derniers hôtes (badges Solo/Pro/Free) + flux d'activité (labels FR des action_type) + carte rappel règle d'or.
+- /admin/providers : carte Leaflet (react-leaflet 5 + leaflet 1.9.4 installés ; divIcon emoji par catégorie, cercles de rayon, fitBounds initial, FocusProvider au clic liste) ; filtres recherche + audience ; switch Actif/Inactif inline optimiste ; Sheet latéral NON-MODAL (modal={false} sur Sheet root + preventDefault onPointerDownOutside/onInteractOutside/onFocusOutside) pour laisser la carte cliquable : clic carte → lat/lng (6 décimales) + pastille brouillon verte + cercle rayon ; formulaire complet (nom, catégorie 14 choix, description, adresse affichée, email, photos URLs 6 max, audience 2 choix stricts OWNER_SERVICE/GUEST_EXPERIENCE en cartes radio, lat/lng/rayon, tarif horaire, urgences/vérifié/actif) ; validation serveur (lat ∈ [-90,90], lng ∈ [-180,180], rayon 1-200, audience dans enum, email unique 409).
+- /admin/hosts : liste hôtes (avatar initiales, badge plan + source mensuel/annuel/intention, onboarding incomplet, nb biens, switch désactivation) ; dépliage → biens (type, adresse, nb QR, nb plaques, slug Hub, bien désactivé).
+- Seed scripts/seed-admin-demo.ts (idempotent, réparé 2× après FK) : Sofia (Solo mensuel 9,90 € + Studio Montmartre), Thomas (Pro annuel 199 € + 2 biens Arcachon/Bordeaux), Nadia (Free), abonnement Solo annuel 99 € pour Marie démo → MRR 34,73 € ; 6 entrées ActivityLog sur le Loft.
+- Tests curl (cookie jar) : 403 sans session, login 302, overview/providers/hosts 200, POST create 201 + validations 400 (lat 200, audience FOO), PATCH 200, DELETE 200, host toggle 200×2, désactivation → login Nadia sans session (API 403) + log "[auth] Account disabled", hôte actif (Marie) sur /admin/dashboard → gate (0 contenu admin dans le DOM).
+- E2E Agent Browser : login → dashboard (screenshot bento conforme), prestataires (tuiles OSM chargées, 13 marqueurs), création "Le Petit Déj de Marie" via clic carte (48.852517/2.153320 remplis auto) → toast + marqueur + carte liste ; switch Inactif + badge ⛔ ; édition rayon 6→14 km persisté ; suppression → retour à 13 cartes ; hôtes : dépliage Thomas (2 biens QR/plaques), désactivation Nadia (badge rouge + toast "connexion bloquée") puis réactivation ; responsive 390px (grille 2×2, nav emojis, footer bas) et 1280px OK ; console 0 erreur (2 warnings corrigés en route : modal sur SheetContent déplacé sur Sheet root, classe whitespace-hidden invalide retirée).
+- Incidents résolus : FK Subscription (P2003 ×2 — seed partiel nettoyé, subscriberId nullable) ; tsc h.id dans select Prisma (regroupement JS) ; dialog modal bloquait le clic carte → Sheet non-modal ; Radix fermeture au pointer-down outside → preventDefault ; ERR_CONNECTION_REFUSED fin d'E2E → dev server relancé (vérifié 200).
+
+Stage Summary:
+- ÉTAPE 9 livrée : console Superadmin complète et protégée (rôle dans JWT + double garde layout serveur + APIs 403).
+- Règle d'or implémentée : seul le Superadmin crée/géolocalise/modifie les prestataires ; les hôtes restent en lecture seule (Étape 4).
+- Décision structurante : Subscription.userId (FK dédiée hôte) — prêt pour le webhook Stripe de l'Étape 10 ; subscriberId désormais réservé aux merchants/providers.
+- Identifiants admin : admin@qrdomotik.roomscan.pro / QrDomotik2024! ; 4 hôtes démo (dont Nadia testable pour désactivation), MRR démo 34,73 €.
+- Qualité : tsc 0 err (src), ESLint 0/0, console navigateur 0 erreur, E2E complet vert (desktop + mobile).
+- Reste à venir : ÉTAPE 10 (Stripe checkout/webhook/billing/portal) puis ÉTAPE 11 (Coolify & Docker).
