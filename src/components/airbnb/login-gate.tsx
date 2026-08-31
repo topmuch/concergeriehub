@@ -10,21 +10,38 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
-/**
- * LoginGate — écran affiché sur /airbnb/dashboard quand l'utilisateur
- * n'est pas connecté. Connexion inline (comptes démo pré-remplis)
- * sans passer par la landing.
- */
+// =============================================================
+// LoginGate — écran affiché quand l'utilisateur n'est pas connecté.
+// Connexion inline (comptes démo pré-remplis) sans passer par la
+// landing. Réutilisable : props optionnelles pour un portail
+// différent (ex. Portail Prestataire ÉTAPE 17.4) sans dupliquer.
+// =============================================================
 
 const DEMO_CREDENTIALS = {
   email: 'demo@qrdomotik.roomscan.pro',
   password: 'Demo2024!',
 };
 
-export function LoginGate() {
+interface LoginGateProps {
+  title?: string;
+  subtitle?: string;
+  buttonLabel?: string;
+  demoEmail?: string;
+  demoPassword?: string;
+  demoLabel?: string;
+}
+
+export function LoginGate({
+  title = 'Espace Hôte',
+  subtitle = 'Connectez-vous pour accéder à votre tableau de bord.',
+  buttonLabel = 'Accéder à mon dashboard',
+  demoEmail = DEMO_CREDENTIALS.email,
+  demoPassword = DEMO_CREDENTIALS.password,
+  demoLabel = 'Compte démo',
+}: LoginGateProps) {
   const router = useRouter();
-  const [email, setEmail] = useState(DEMO_CREDENTIALS.email);
-  const [password, setPassword] = useState(DEMO_CREDENTIALS.password);
+  const [email, setEmail] = useState(demoEmail);
+  const [password, setPassword] = useState(demoPassword);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -51,10 +68,8 @@ export function LoginGate() {
       <div className="w-full max-w-md">
         <div className="flex flex-col items-center text-center mb-6">
           <BrandLogo size="lg" />
-          <h1 className="mt-5 text-2xl font-bold text-slate-900">Espace Hôte</h1>
-          <p className="text-sm text-slate-600 mt-1">
-            Connectez-vous pour accéder à votre tableau de bord.
-          </p>
+          <h1 className="mt-5 text-2xl font-bold text-slate-900">{title}</h1>
+          <p className="text-sm text-slate-600 mt-1">{subtitle}</p>
         </div>
 
         <B2BCard>
@@ -96,15 +111,15 @@ export function LoginGate() {
               className="w-full h-11 bg-slate-900 hover:bg-slate-800 text-white font-semibold"
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <LockKeyhole className="h-4 w-4" />}
-              {loading ? 'Connexion…' : 'Accéder à mon dashboard'}
+              {loading ? 'Connexion…' : buttonLabel}
             </Button>
           </form>
         </B2BCard>
 
         <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-center">
-          <p className="text-[11px] font-semibold text-emerald-800 uppercase tracking-wide">Compte démo</p>
+          <p className="text-[11px] font-semibold text-emerald-800 uppercase tracking-wide">{demoLabel}</p>
           <p className="text-xs text-emerald-900 font-mono mt-0.5">
-            {DEMO_CREDENTIALS.email} · {DEMO_CREDENTIALS.password}
+            {demoEmail} · {demoPassword}
           </p>
         </div>
 
