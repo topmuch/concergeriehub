@@ -391,3 +391,25 @@ Stage Summary:
 - items Json typé confirmé fonctionnel sur SQLite/Prisma 6.19 (première utilisation du type Json dans ce schéma — exception assumée vs convention JSON-as-String, car testé OK et plus riche pour 17.2+).
 - 4 commandes démo réalistes prêtes pour les sous-étapes suivantes (API guest de commande, dashboard hôte/prestataire, commissions).
 - Prochaine étape attendue : NEXT → ÉTAPE 17.2 (spec à confirmer — le message initial était tronqué après l'enum ; hypothèse : API de création de commande depuis l'app invitée + vue commandes côté hôte/prestataire).
+
+---
+Task ID: 17.2 (ÉTAPE 17.2 — V3 "Moteur de transaction" : API + UI invité + onglet Commandes hôte)
+Agent: Z.ai Code (orchestrator)
+Task: ÉTAPE 17.2 V3 — Donner vie au modèle ServiceOrder : commande in-app depuis l'onglet Services de l'app invitée (remplace le CTA mailto pour les services avec prix), suivi "Mes commandes", onglet dashboard 🧾 Commandes (stats financières + pilotage du cycle de vie), transitions sécurisées.
+
+Work Log:
+- src/lib/orders.ts : métier partagé — ORDER_STATUSES/transitions (PENDING→CONFIRMED|CANCELLED, CONFIRMED→PREPARING|CANCELLED, PREPARING→DELIVERED|CANCELLED, terminaux), parseOrderItems (validation stricte 1..20 lignes, qty 1..20, prix 0..10k), itemsTotal + computeSplit (rate défaut 15 %, round2, invariant total=commission+hostEarning), ORDER_STATUS_META, rateLimit mémoire (10/min/bien).
+- API publique POST /api/public/service-orders?slug=… : bien résolu par slug (plaque V1→hub V2), provider DOIT être GUEST_EXPERIENCE actif, total RECALCULÉ serveur (prix client jamais cru), guestName/Email = autorité Booking si bookingId (cross-bien rejeté), sinon nom saisi validé ; création PENDING. GET ?slug&b= : commandes du séjour SANS commission/hostEarning (séparation financière jamais exposée à l'invité), anti cross-bien.
+- API hôte /api/airbnb/service-orders : GET ?propertyId (auth + canAccessProperty, héritage V2) → 100 commandes + stats {revenue, commissionTotal, hostTotal, activeCount, pendingCount, deliveredCount} hors annulées ; PATCH ?id {status} → transitions validées serveur, DELIVERED horodate deliveryDate, 400 sinon.
+- UI guest tab-services.tsx : service unitPrice≠null → sheet "Commander" (qty ±, total live, état sending/done, blocage hors-ligne explicite) ; unitPrice null → mailto conservé (démo inclus) ; section "Mes commandes" (chips statut colorés, max-h-56 scroll, refresh après commande) ; guest-app.tsx passe slug/bookingId (état validé API) ; types.ts + GUEST_ORDER_STATUS_META/formatEurGuest.
+- API guest-app GET : services[] gagne unitPrice (= hourlyRate, null → Sur devis) ; démo-hub unitPrice null.
+- Dashboard : NAV_ITEMS + "🧾 Commandes" ; page /airbnb/dashboard/orders (LoginGate) ; orders-content.tsx — 4 stat cards (CA/Commission Hub/Part hôte/Actives), Select multi-propriétés, liste max-h-96 scroll, actions optimistes (rollback + toast sonner), badges statut explicites (fond blanc, compatible .dark sandbox).
+- Fix qualité : items → Prisma.InputJsonValue cast ; règle react-hooks/set-state-in-effect contournée via setTimeout(0) (pattern établi).
+- VALIDATION : tsc 0 err src, ESLint 0/0 ; E2E curl 13/13 (POST ok total 36 recalculé, qty 0→400, provider inconnu→400, cross-bien→400, GET invité sans commission vérifié, host 401 sans session, login démo 302, GET hôte stats 417=46.2+370.8 invariant, PATCH PENDING→CONFIRMED ok, CONFIRMED→DELIVERED 400, →PREPARING ok, →DELIVERED deliveryDate horodaté, terminal→400) ; browser 390 px : onglet Services (badge "Commandable", Mes commandes 5), sheet Morning Box qty 3 → "Commander — 36,00 €" → confirmation ✅ → suivi rafraîchi (🟡 En attente 36 €) ; browser dashboard : login démo → stats 453=51.6+401.4 (après nouvelle commande), 6 commandes, clic Confirmer → 🔵 Confirmée + boutons Préparer/Annuler + stats "1 à confirmer", console 0 err, automations + hub V1 non-régressés ; dev.log 0 erreur.
+
+Stage Summary:
+- ÉTAPE 17.2 livrée : le guest commande VRAIMENT (sans store, sans paiement encore) et l'hôte pilote le cycle de vie avec la séparation financière Hub/Hôte en clair. Le prix est recalculé serveur, les transitions sont verrouillées, la part plateforme n'est jamais exposée à l'invité.
+- Choix : offre standard commandable = hourlyRate du prestataire (catalogue fin Service[] → candidat 17.3) ; commission 15 % globale (config par bien/prestataire → 17.3+) ; note invité non ajoutée (hors spec schéma).
+- Démo enrichie : 6 commandes sur le séjour Camille (4 statuts + flux réel testé via browser).
+- Fichiers clés : src/lib/orders.ts, src/app/api/{public,airbnb}/service-orders/route.ts, src/components/guest-app/{tab-services,guest-app,types}.tsx/ts, src/components/airbnb/orders-content.tsx, src/app/airbnb/dashboard/orders/page.tsx, dashboard-shell.tsx (+ onglet), guest-app API (unitPrice).
+- Prochaine étape attendue : NEXT → ÉTAPE 17.3 (propositions : catalogue fin par service, paiement Stripe in-app, notification hôte "nouvelle commande" via moteur Étape 13, commission configurable).
