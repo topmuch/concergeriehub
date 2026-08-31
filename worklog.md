@@ -252,3 +252,26 @@ Stage Summary:
 - Credentials démo : admin@qrdomotik.roomscan.pro / QrDomotik2024! (gate pré-rempli), hôtes démo Host2024!
 - INFRA : [DEV-KEEPER] ajouté à chat-service (auto-relance next dev) ; .env restauré ; DB démo restaurée.
 - Prochaine étape (attendre "NEXT") : ÉTAPE 10 — Stripe (checkout/webhook/portal/billing).
+
+---
+Task ID: 10 (ÉTAPE 10)
+Agent: main (Z.ai Code)
+Task: ÉTAPE 10 — Stripe : abonnements Airbnb Solo (9,90 €/mois ou 99 €/an) & Airbnb Pro (199 €/an), checkout + webhook + portail + page billing
+
+Work Log:
+- src/lib/billing.ts : catalogue partagé (airbnb_solo monthly 9.9/annual 99 highlight, airbnb_pro annual 199, maxProperties 1/10, features, formatEur, monthlyEquivalent, subscriptionStatusMeta). "Famille" B2C du spec absorbée par le palier gratuit (pivot B2B) — Solo/Pro seuls achetables.
+- /api/stripe/checkout : POST {plan, billingCycle} — session hôte requise (401/403 sinon), validation prix (Pro → annual only). Mode STRIPE_SECRET_KEY présent → vraie Checkout Session (price_data inline, metadata userId/plan/billingCycle sur session + subscription, success/cancel → /airbnb/billing). Sans clé → MODE DÉMO : transaction (annule les subs actives, crée sub active + période +1mo/1yr, Transaction 'completed', User.selectedPlan=plan) → {url success&demo=1}. GET → {mode}.
+- /api/stripe/webhook : signature STRIPE_WEBHOOK_SECRET ; checkout.session.completed (activation idem démo + stripeSubscriptionId + transaction), customer.subscription.updated (STATUS_MAP + périodes via items.data[0] — Stripe v22 API basil), customer.subscription.deleted (cancelled + User→free), invoice.payment_failed (past_due, subscription via invoice.parent.subscription_details avec fallback legacy). Simulation → {received:true, mode:'demo'}.
+- /api/stripe/portal : Billing Portal via customer (récupéré du dernier sub Stripe → sinon lookup email → sinon create). Démo → 400 {error, hint:'Utilisez Résilier'}.
+- /api/stripe/cancel : Stripe → cancel_at_period_end:true (+ accessUntil) ; démo → cancelled immédiat + User→free.
+- /airbnb/billing (page serveur) : guard session (redirect / ou /admin/dashboard si superadmin), charge user + sub active (active/trialing/past_due) + stripeMode → BillingContent (client).
+- billing-content.tsx : style QRTags (fond slate-50, cartes blanches), Solo mis en avant (bordure ambre + badge "Le plus choisi"), toggle Mensuel/Annuel (switch a11y + "2 mois offerts"), Pro "—/annuel uniquement" désactivé en mensuel, prix "soit X €/mois", bandeaux success/canceled/mode démo, carte abonnement courant (statut, échéance, Gérer la facturation, Résilier), badges "✓ Plan actuel", boutons S'abonner → POST checkout → location.assign.
+- dashboard-shell : nav "💳 Abonnement" ajoutée. .env.example : STRIPE_SECRET_KEY/STRIPE_WEBHOOK_SECRET documentés.
+- Corrections typage Stripe v22 : périodes déplacées sur Subscription.items.data[0], Invoice.subscription → Invoice.parent.subscription_details.subscription (+ fallback legacy string) ; CurrentSubscriptionView|null ; window.location.assign (lint react-hooks/immutability).
+- VALIDATION : tsc src 0 erreur ; ESLint 0/0 ; API : GET mode=demo, POST anonyme 401, checkout Nadia (Free) → sub airbnb_solo/monthly/active 9,9 € + selectedPlan=airbnb_solo + 1 transaction, portal démo → 400+hint, cancel → cancelled + free ; E2E browser : login Nadia → /airbnb/billing (nav, bandeau démo, toggle, cartes), toggle annuel (99 € → 8,25 €/mois, 199 € → 16,58 €/mois), S'abonner Solo annuel → success banner + carte "Airbnb Solo / Actif / 99 € · prochaine échéance 31 août 2027" + "✓ Plan actuel" + Gérer disabled (démo) + Résilier ; résiliation → dialog confirm accepté → retour état free ; mobile 390px sans overflow ; 0 erreur console/serveur ; non-régression / (landing) OK.
+
+Stage Summary:
+- ÉTAPE 10 COMPLÈTE ET VALIDÉE : monétisation hôte opérationnelle de bout en bout, en mode démo (sandbox sans clés) ET prêt pour Stripe réel (ajouter STRIPE_SECRET_KEY + STRIPE_WEBHOOK_SECRET suffit — webhook endpoint /api/stripe/webhook).
+- État DB : Nadia revenue à free après test E2E ; 3 abonnements actifs démo inchangés (Sofia 9,90/mo, Thomas 199/an, Marie 99/an → MRR 34,73 €).
+- Choix : "Famille" non reprise (hors pivot B2B) ; le landing (#pricing) garde Découverte/Solo/Agence — harmonisation marketing éventuelle à faire plus tard.
+- Prochaine étape (attendre "NEXT") : ÉTAPE 11 — Coolify (.env.example, Dockerfile standalone, prisma migrate deploy, start.sh).

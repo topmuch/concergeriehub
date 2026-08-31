@@ -19,6 +19,7 @@ const NAV_ITEMS = [
   { href: '/airbnb/dashboard', label: 'Dashboard', emoji: '📊' },
   { href: '/airbnb/dashboard/plaques', label: 'Plaques', emoji: '🏷️' },
   { href: '/airbnb/dashboard/providers', label: 'Prestataires', emoji: '🧹' },
+  { href: '/airbnb/billing', label: 'Abonnement', emoji: '💳' },
 ];
 
 interface DashboardShellProps {
