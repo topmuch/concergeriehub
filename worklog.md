@@ -352,3 +352,23 @@ Stage Summary:
 - Aucun changement de schéma Prisma (16 = pure expérience guest) ; ServiceOrder prévu ÉTAPE 17.
 - Base E2E : /app/hub/loft-canal-saint-martin-11wz/guest?b=<id Camille> (cf. sortie seed), demo-hub pour la landing.
 - Fichiers clés : src/app/api/public/{guest-app,app-manifest,app-icon}/route.ts, public/{sw.js,offline.html,icon-512.png}, src/components/guest-app/* (8 fichiers), src/app/app/hub/[slug]/guest/page.tsx, scripts/seed-v3-guest-app.ts, patchs globals.css + voice route.
+
+---
+Task ID: 16-reval (ÉTAPE 16 — Re-validation post-compaction)
+Agent: Z.ai Code (orchestrator)
+Task: Re-vérification de bout en bout de l'ÉTAPE 16 après compaction de session (l'utilisateur a relancé "L'ÉTAPE 16" ; le worklog Task ID 16 montrait l'implémentation déjà livrée).
+
+Work Log:
+- Constat : tous les artefacts Étape 16 présents (9 composants src/components/guest-app/*, 3 APIs public/{guest-app,app-manifest,app-icon}, public/{sw.js,offline.html,icon-512.png}, page /app/hub/[slug]/guest, scripts/seed-v3-guest-app.ts).
+- Seed idempotent rejoué : Loft Canal Saint-Martin + QR rules/wifi + séjour Camille Laurent (CHECKED_IN, départ J+4) intacts.
+- E2E curl 5/5 : payload guest-app complet (Wi-Fi + guidebook + booking), manifest Content-Type application/manifest+json avec name="Loft Canal Saint-Martin" + start_url + scope /app/hub/ + 3 icons, PNG 192×192 valide, page guest HTTP 200, sw.js HTTP 200.
+- agent-browser 390 px : rendu complet (h1 bien, "Bonjour Camille 👋", carte séjour, Wi-Fi, bottom nav 4 onglets) ; SW contrôleur /sw.js ACTIF ; caches ch-guest-runtime (3) + ch-guest-assets (24) après reload (au 1er chargement le SW n'est pas encore contrôleur → comportement normal documenté).
+- TEST HORS-LIGNE : set offline on + reload → app intégralement rendue depuis cache (titre, accueil personnalisé, Wi-Fi), Guide complet (accès/clés, équipements, bonnes adresses, règles) avec badge "📴 HORS-LIGNE" présent.
+- Console 0 erreur ; dark mode auto : set media dark → .guest-scope.dark actif, retour light OK ; desktop 1280 px rendu propre ; hub V1 + landing HTTP 200 (non-régression).
+- ESLint 0 erreur, tsc 0 erreur dans src.
+- worklog.md : re-vérification documentée + rapport utilisateur.
+
+Stage Summary:
+- ÉTAPE 16 CONFIRMÉE LIVRÉE ET VALIDÉE après re-vérification complète : PWA guest installable (manifest dynamique par logement, icônes générées), hors-ligne fonctionnel (guidebook/règles/Wi-Fi en cache SW network-first), badge hors-ligne, dark mode auto, bottom nav 4 onglets, install button discret.
+- Note technique documentée : au tout premier visite, le SW n'intercepte pas encore les requêtes (pas encore contrôleur) → le cache se remplit au reload/visites suivantes. Comportement PWA standard, acceptable (l'install PWA requiert de toute façon une 2e visite côté Chrome).
+- Prochaine étape attendue : NEXT → ÉTAPE 17.1 (modèle ServiceOrder + enum OrderStatus, `bun run db:push`, relation Provider).
