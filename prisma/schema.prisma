@@ -108,6 +108,7 @@ model Property {
   propertyAutomations PropertyAutomation[]
   voiceMessages     VoiceMessage[]
   plaqueQrCodes     PhysicalQrCode[] @relation("PlaqueQrProperty")
+  serviceOffers     ServiceOffer[]
   bookings          Booking[]
   automationRules   AutomationRule[]
 
@@ -586,6 +587,7 @@ model Provider {
   reviews         Review[]
   subscriptions   Subscription[]   @relation("ProviderSubscriptions")
   serviceOrders   ServiceOrder[]
+  serviceOffers   ServiceOffer[]
 
   @@index([category])
   @@index([audience])
@@ -1092,4 +1094,35 @@ model ServiceOrder {
   @@index([status])
   @@index([createdAt])
   @@map("service_orders")
+}
+
+// ==============================================================
+// TABLE 32: service_offers (ÉTAPE 17.5 — catalogue fin par service)
+// Offres commandables d'un prestataire GUEST_EXPERIENCE POUR UN
+// BIEN donné. Le prix de l'offre est l'AUTORITÉ de facturation
+// côté serveur (le prix envoyé par le client n'est jamais cru).
+// unit : libellé libre ('prestation' | 'personne' | 'box' | …).
+// Unique (propertyId, providerId, name) — pas de doublon d'affichage.
+// ==============================================================
+model ServiceOffer {
+  id          String   @id @default(cuid())
+  propertyId  String   @map("property_id")
+  providerId  String   @map("provider_id")
+  name        String
+  description String?
+  unitPrice   Float    @map("unit_price") // prix de facturation (autorité serveur)
+  unit        String   @default("prestation")
+  isActive    Boolean  @default(true) @map("is_active")
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  provider Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  @@unique([propertyId, providerId, name])
+  @@index([propertyId])
+  @@index([providerId])
+  @@index([isActive])
+  @@map("service_offers")
 }

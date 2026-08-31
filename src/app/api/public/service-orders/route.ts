@@ -2,10 +2,11 @@ import { NextResponse } from 'next/server';
 import { Prisma } from '@prisma/client';
 import { db } from '@/lib/db';
 import {
-  parseOrderItems,
+  parseOrderLines,
   itemsTotal,
   computeSplit,
   rateLimit,
+  type OrderItem,
 } from '@/lib/orders';
 import {
   ensureDefaultRules,
@@ -15,7 +16,7 @@ import {
 // =============================================================
 // ÉTAPE 17.2 (V3) — Moteur de transaction côté INVITÉ :
 //   POST /api/public/service-orders?slug=<slug>
-//     { providerId, items[{name,qty,unitPrice}], bookingId?, guestName?, guestEmail? }
+//     { providerId, items[{offerId?|name, qty}], bookingId?, guestName?, guestEmail? }
 //     → crée une commande PENDING (prix & split recalculés SERVEUR)
 //   GET  /api/public/service-orders?slug=<slug>&b=<bookingId>
 //     → "Mes commandes" du séjour (SANS commission/hostEarning —
@@ -28,6 +29,9 @@ import {
 // ÉTAPE 17.3 : une commande déclenche le moteur d'automatisations
 // (rule ORDER_CREATED → notification hôte). Le moteur avale ses
 // erreurs : le flux invité n'échoue JAMAIS à cause de la notif.
+// ÉTAPE 17.5 : le prix n'est JAMAIS cru côté client — chaque ligne
+// est re-prixée serveur : offre catalogue (offerId, restreinte à
+// propertyId+providerId+active) sinon offre standard (hourlyRate).
 // =============================================================
 
 interface ResolvedProperty {
@@ -92,7 +96,7 @@ export async function POST(req: Request) {
     const provider = providerId
       ? await db.provider.findFirst({
           where: { id: providerId, isActive: true, audience: 'GUEST_EXPERIENCE' },
-          select: { id: true, businessName: true },
+          select: { id: true, businessName: true, hourlyRate: true },
         })
       : null;
     if (!provider) {
@@ -102,14 +106,56 @@ export async function POST(req: Request) {
       );
     }
 
-    // ── 2. Lignes de commande : validées + total RECALCULÉ serveur ──
-    const items = parseOrderItems(body.items);
-    if (!items) {
+    // ── 2. Lignes de commande : validées, puis prix RE-RÉSOLU SERVEUR ──
+    // (ÉTAPE 17.5 : le unitPrice envoyé par le client est ignoré —
+    //  une ligne "offre catalogue" est re-prixée depuis ServiceOffer
+    //  restreinte au couple bien+prestataire actif, une ligne sans
+    //  offerId est re-prixée sur l'offre standard hourlyRate.)
+    const lines = parseOrderLines(body.items);
+    if (!lines) {
       return NextResponse.json(
         { ok: false, message: 'Détail de la commande invalide.' },
         { status: 400 },
       );
     }
+
+    const offerIds = [...new Set(lines.map((l) => l.offerId).filter((id): id is string => id !== null))];
+    const offers = offerIds.length
+      ? await db.serviceOffer.findMany({
+          where: {
+            id: { in: offerIds },
+            propertyId: property.id,
+            providerId: provider.id,
+            isActive: true,
+          },
+          select: { id: true, name: true, unitPrice: true },
+        })
+      : [];
+    const offerById = new Map(offers.map((o) => [o.id, o]));
+
+    const items: (OrderItem & { offerId?: string })[] = [];
+    for (const line of lines) {
+      if (line.offerId) {
+        const offer = offerById.get(line.offerId);
+        if (!offer) {
+          return NextResponse.json(
+            { ok: false, message: 'Une offre sélectionnée n’est plus disponible. Actualisez la page.' },
+            { status: 400 },
+          );
+        }
+        items.push({ offerId: offer.id, name: offer.name, qty: line.qty, unitPrice: offer.unitPrice });
+      } else {
+        // Offre standard : prix serveur uniquement (le client n'a pas son mot à dire)
+        if (provider.hourlyRate == null) {
+          return NextResponse.json(
+            { ok: false, message: 'Ce service est sur devis — demandez-le à votre hôte.' },
+            { status: 400 },
+          );
+        }
+        items.push({ name: line.name, qty: line.qty, unitPrice: provider.hourlyRate });
+      }
+    }
+
     const totalAmount = itemsTotal(items);
     if (totalAmount <= 0) {
       return NextResponse.json({ ok: false, message: 'Le montant de la commande est nul.' }, { status: 400 });

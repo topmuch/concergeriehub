@@ -7,6 +7,10 @@ import { haversineKm, providerCategoryMeta, formatEur, propertyTypeMeta } from '
 // ÉTAPE 17.2 (V3) — services[] gagne unitPrice (prix numérique de
 // l'offre standard, = hourlyRate ; null → "Sur devis" → mise en
 // relation email conservée). C'est ce prix que l'invité commande.
+// ÉTAPE 17.5 (V3) — services[] gagne offers[] : le catalogue fin
+// par bien (ServiceOffer actifs de CE bien pour CE prestataire).
+// L'invité commande une offre précise (offerId) dont le prix est
+// re-résolu serveur au POST — jamais cru côté client.
 // (slug en QUERY PARAM — règle sandbox : pas de segments dynamiques
 // pour les nouvelles routes API)
 //
@@ -26,6 +30,14 @@ import { haversineKm, providerCategoryMeta, formatEur, propertyTypeMeta } from '
 
 const DEMO_SLUG = 'demo-hub';
 
+interface GuestServiceOffer {
+  id: string;
+  name: string;
+  description: string | null;
+  unitPrice: number;
+  unit: string;
+}
+
 interface GuestService {
   id: string;
   name: string;
@@ -34,6 +46,8 @@ interface GuestService {
   description: string;
   priceLabel: string;
   unitPrice: number | null;
+  /** Catalogue fin du prestataire pour CE bien (ÉTAPE 17.5). */
+  offers: GuestServiceOffer[];
 }
 
 function parseContent(json: string | null | undefined): Record<string, unknown> {
@@ -175,15 +189,60 @@ export async function GET(req: Request) {
     // ── 4. Services invité = prestataires GUEST_EXPERIENCE dans le rayon ──
     // (même logique métier que /api/public/hub/[slug] — duplications
     // maîtrisées pour ne pas retoucher au flux V1 validé)
+    // ÉTAPE 17.5 : + catalogue fin (ServiceOffer actifs du bien,
+    // une seule requête groupée puis répartition par providerId).
     const services: GuestService[] = [];
     if (property.latitude != null && property.longitude != null) {
       const geoProviders = await db.provider.findMany({
         where: { isActive: true, audience: 'GUEST_EXPERIENCE' },
       });
-      for (const p of geoProviders) {
-        if (p.latitude == null || p.longitude == null) continue;
-        const d = haversineKm(property.latitude, property.longitude, p.latitude, p.longitude);
-        if (d > p.serviceRadiusKm) continue;
+      const inRadius = geoProviders.filter((p) => {
+        if (p.latitude == null || p.longitude == null) return false;
+        const d = haversineKm(property.latitude!, property.longitude!, p.latitude, p.longitude);
+        return d <= p.serviceRadiusKm;
+      });
+
+      const offersByProvider = new Map<string, GuestServiceOffer[]>();
+      if (inRadius.length > 0) {
+        const offers = await db.serviceOffer.findMany({
+          where: {
+            propertyId: property.id,
+            providerId: { in: inRadius.map((p) => p.id) },
+            isActive: true,
+          },
+          orderBy: [{ sortOrder: 'asc' }, { unitPrice: 'asc' }, { name: 'asc' }],
+          select: {
+            id: true,
+            providerId: true,
+            name: true,
+            description: true,
+            unitPrice: true,
+            unit: true,
+          },
+        });
+        for (const o of offers) {
+          const list = offersByProvider.get(o.providerId) ?? [];
+          list.push({
+            id: o.id,
+            name: o.name,
+            description: o.description,
+            unitPrice: o.unitPrice,
+            unit: o.unit,
+          });
+          offersByProvider.set(o.providerId, list);
+        }
+      }
+
+      for (const p of inRadius) {
+        const offers = offersByProvider.get(p.id) ?? [];
+        // Affichage : "dès <min offre catalogue>" sinon tarif standard sinon Sur devis
+        const minOffer = offers.length > 0 ? offers[0].unitPrice : null;
+        const priceLabel =
+          minOffer != null
+            ? `dès ${formatEur(minOffer)}`
+            : p.hourlyRate != null
+              ? `dès ${formatEur(p.hourlyRate)}`
+              : 'Sur devis';
         const cat = providerCategoryMeta(p.category);
         services.push({
           id: p.id,
@@ -191,8 +250,9 @@ export async function GET(req: Request) {
           emoji: cat.emoji,
           categoryLabel: cat.label,
           description: p.description ?? 'Service proposé par un partenaire local vérifié.',
-          priceLabel: p.hourlyRate != null ? `dès ${formatEur(p.hourlyRate)}` : 'Sur devis',
+          priceLabel,
           unitPrice: p.hourlyRate ?? null,
+          offers,
         });
       }
       services.sort((a, b) => a.name.localeCompare(b.name));

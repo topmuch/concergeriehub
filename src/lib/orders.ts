@@ -41,9 +41,47 @@ export interface OrderItem {
   unitPrice: number;
 }
 
+/** Ligne de commande telle que le CLIENT peut l'envoyer.
+ *  ⚠️ Pas de prix ici : le prix est TOUJOURS résolu côté serveur
+ *  (offre catalogue via offerId, sinon offre standard du prestataire).
+ *  ÉTAPE 17.5 — catalogue fin par service. */
+export interface OrderLineInput {
+  offerId: string | null;
+  name: string; // informatif côté offre standard (recoupé côté serveur)
+  qty: number;
+}
+
 /**
- * Valide et normalise les lignes de commande reçues du client.
+ * Valide les lignes de commande reçues du client (ÉTAPE 17.5).
+ * Accepte aussi l'ancien format {name, qty, unitPrice} — le unitPrice
+ * client est alors IGNORÉ (le serveur re-résout toujours le prix).
  * Retourne null si le payload est invalide (jamais throw).
+ */
+export function parseOrderLines(raw: unknown): OrderLineInput[] | null {
+  if (!Array.isArray(raw) || raw.length === 0 || raw.length > 20) return null;
+  const lines: OrderLineInput[] = [];
+  for (const it of raw) {
+    if (!it || typeof it !== 'object') return null;
+    const o = it as Record<string, unknown>;
+    const qty = o.qty;
+    if (typeof qty !== 'number' || !Number.isInteger(qty) || qty < 1 || qty > 20) return null;
+    let offerId: string | null = null;
+    if (typeof o.offerId === 'string' && o.offerId.trim()) {
+      if (o.offerId.length > 64) return null;
+      offerId = o.offerId.trim();
+    }
+    let name = typeof o.name === 'string' ? o.name.trim() : '';
+    if (name.length > 120) return null;
+    if (!offerId && name.length < 1) return null; // offre standard : libellé requis
+    lines.push({ offerId, name, qty });
+  }
+  return lines;
+}
+
+/**
+ * (Compat 17.2) Valide et normalise des lignes AVEC prix — utilisée
+ * uniquement pour des données déjà résolues côté serveur, jamais pour
+ * croire le prix d'un client.
  */
 export function parseOrderItems(raw: unknown): OrderItem[] | null {
   if (!Array.isArray(raw) || raw.length === 0 || raw.length > 20) return null;
