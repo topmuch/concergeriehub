@@ -199,3 +199,24 @@ Stage Summary:
 - Identifiants admin : admin@qrdomotik.roomscan.pro / QrDomotik2024! ; 4 hôtes démo (dont Nadia testable pour désactivation), MRR démo 34,73 €.
 - Qualité : tsc 0 err (src), ESLint 0/0, console navigateur 0 erreur, E2E complet vert (desktop + mobile).
 - Reste à venir : ÉTAPE 10 (Stripe checkout/webhook/billing/portal) puis ÉTAPE 11 (Coolify & Docker).
+
+---
+Task ID: repo-github
+Agent: main (Z.ai Code)
+Task: Créer le repo GitHub "concergeriehub" sur github.com/topmuch et pousser le projet
+
+Work Log:
+- Vérifié l'état git local (working tree clean, aucun remote, branche main)
+- Détecté que .env (contenant NEXTAUTH_SECRET) était suivi par git -> git rm --cached .env
+- Ajouté l'exception !.env.example dans .gitignore (pattern .env* bloquait le fichier)
+- Créé .env.example (placeholders DATABASE_URL / NEXTAUTH_SECRET / NEXTAUTH_URL / NEXT_PUBLIC_APP_URL)
+- Créé README.md (features, getting started, credentials démo, roadmap ÉTAPES 9-11)
+- Commit 776e226 "chore: untrack .env, add .env.example and README for Conciergerie Hub"
+- Créé le repo via API GitHub (privé, auto_init=false) : topmuch/concergeriehub
+- Push main via credential helper éphémère (token NON stocké dans .git/config)
+- Vérifié : SHA remote = SHA local (776e226), aucun .env dans le repo distant, aucun token dans .git/config
+
+Stage Summary:
+- Repo GitHub créé : https://github.com/topmuch/concergeriehub (privé)
+- Sécurité : .env exclu du repo (NEXTAUTH_SECRET protégé), .env.example fourni pour le setup
+- Token PAT partagé en clair dans le chat -> recommandation forte de le révoquer/rotater
