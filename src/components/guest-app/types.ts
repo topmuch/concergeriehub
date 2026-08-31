@@ -3,7 +3,18 @@
 // (miroir du payload de /api/public/guest-app)
 // ÉTAPE 17.2 — unitPrice (commande transactionnelle) + GuestOrder
 // (miroir du GET /api/public/service-orders)
+// ÉTAPE 17.5 — GuestServiceOffer : catalogue fin par bien (offre
+// précise = offerId, prix re-résolu serveur au POST).
 // =============================================================
+
+/** Offre du catalogue fin d'un prestataire pour CE bien (17.5). */
+export interface GuestServiceOffer {
+  id: string;
+  name: string;
+  description: string | null;
+  unitPrice: number;
+  unit: string;
+}
 
 export interface GuestService {
   id: string;
@@ -14,6 +25,8 @@ export interface GuestService {
   priceLabel: string;
   /** Prix numérique de l'offre standard (null → "Sur devis" → email). */
   unitPrice: number | null;
+  /** Catalogue fin du prestataire pour CE bien — prioritaire sur l'offre standard. */
+  offers: GuestServiceOffer[];
 }
 
 export type GuestOrderStatus = 'PENDING' | 'CONFIRMED' | 'PREPARING' | 'DELIVERED' | 'CANCELLED';

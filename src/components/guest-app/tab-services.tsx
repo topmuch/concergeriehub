@@ -21,6 +21,9 @@ import {
 //     confirmation, création PENDING, suivi "Mes commandes"
 //   • service "Sur devis" (unitPrice null) → mise en relation
 //     email conservée (flux V1)
+// ÉTAPE 17.5 (V3) — CATALOGUE FIN : si le prestataire a des offres
+//   pour ce bien (offers[]), l'invité choisit SA formule (offerId)
+//   — le prix est re-résolu serveur, jamais envoyé par le client.
 // =============================================================
 
 export function TabServices({ slug, services, contact, propertyName, booking, bookingId, online }: {
@@ -99,7 +102,7 @@ export function TabServices({ slug, services, contact, propertyName, booking, bo
 
       <ul className="space-y-3">
         {services.map((svc) => {
-          const orderable = svc.unitPrice != null;
+          const orderable = svc.offers.length > 0 || svc.unitPrice != null;
           return (
             <li key={svc.id}>
               <button
@@ -190,21 +193,29 @@ function ServiceSheet({ slug, service, contact, propertyName, booking, bookingId
   onOrdered: () => void;
   onClose: () => void;
 }) {
-  const orderable = service.unitPrice != null;
+  const hasOffers = service.offers.length > 0;
   const [qty, setQty] = useState(1);
+  const [offerId, setOfferId] = useState<string>(service.offers[0]?.id ?? '');
   const [state, setState] = useState<'idle' | 'sending' | 'done'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
 
-  const total = orderable ? (service.unitPrice as number) * qty : 0;
+  const selectedOffer = service.offers.find((o) => o.id === offerId) ?? service.offers[0] ?? null;
+  const orderable = hasOffers || service.unitPrice != null;
+  const unitPrice = hasOffers ? selectedOffer?.unitPrice ?? 0 : (service.unitPrice as number);
+  const unitLabel = hasOffers ? selectedOffer?.unit || 'prestation' : 'prestation';
+  const total = orderable ? unitPrice * qty : 0;
 
   const order = () => {
     if (!orderable || state === 'sending') return;
+    if (hasOffers && !selectedOffer) return;
     if (!online) {
       setErrorMsg('Vous êtes hors-ligne — reconnectez-vous au Wi-Fi du logement pour commander.');
       return;
     }
     setState('sending');
     setErrorMsg('');
+    // ÉTAPE 17.5 : le client n'envoie JAMAIS de prix — offerId (offre
+    // catalogue) ou nom informatif (offre standard). Le serveur re-prix.
     fetch(`/api/public/service-orders?slug=${encodeURIComponent(slug)}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -212,7 +223,10 @@ function ServiceSheet({ slug, service, contact, propertyName, booking, bookingId
         providerId: service.id,
         bookingId: bookingId || undefined,
         guestName: booking?.guestName || undefined,
-        items: [{ name: `${service.name} — offre standard`, qty, unitPrice: service.unitPrice }],
+        items:
+          hasOffers && selectedOffer
+            ? [{ offerId: selectedOffer.id, qty }]
+            : [{ name: `${service.name} — offre standard`, qty }],
       }),
     })
       .then(async (res) => {
@@ -283,10 +297,59 @@ function ServiceSheet({ slug, service, contact, propertyName, booking, bookingId
 
         {orderable ? (
           <>
+            {/* ÉTAPE 17.5 — Sélecteur de formule (catalogue fin) */}
+            {hasOffers && (
+              <fieldset className="mt-4" disabled={state !== 'idle'}>
+                <legend className="text-xs font-bold text-card-foreground mb-1.5">
+                  Choisissez votre formule
+                </legend>
+                <div className="space-y-2" role="radiogroup" aria-label="Formules disponibles">
+                  {service.offers.map((o) => {
+                    const active = selectedOffer?.id === o.id;
+                    return (
+                      <button
+                        key={o.id}
+                        type="button"
+                        role="radio"
+                        aria-checked={active}
+                        onClick={() => setOfferId(o.id)}
+                        className={`w-full text-left rounded-xl border p-3 flex items-center justify-between gap-3 transition-all cursor-pointer ${
+                          active
+                            ? 'border-accent bg-accent/10 shadow-sm'
+                            : 'border-border bg-card hover:bg-secondary/60'
+                        }`}
+                      >
+                        <span className="min-w-0 flex-1">
+                          <span className="flex items-center gap-1.5">
+                            <span
+                              aria-hidden="true"
+                              className={`w-3.5 h-3.5 rounded-full border-2 shrink-0 ${
+                                active ? 'border-accent bg-accent' : 'border-muted-foreground/40 bg-transparent'
+                              }`}
+                            />
+                            <span className="text-xs font-bold text-card-foreground truncate">{o.name}</span>
+                          </span>
+                          {o.description && (
+                            <span className="block text-[11px] text-muted-foreground mt-0.5 pl-5 leading-snug">
+                              {o.description}
+                            </span>
+                          )}
+                        </span>
+                        <span className="shrink-0 text-right">
+                          <span className="text-xs font-bold text-accent">{formatEurGuest(o.unitPrice)}</span>
+                          <span className="block text-[10px] text-muted-foreground">/ {o.unit}</span>
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </fieldset>
+            )}
+
             {/* Sélecteur de quantité + total */}
             <div className="mt-4 rounded-xl bg-secondary border border-border p-3.5 flex items-center justify-between gap-3">
               <span className="text-xs text-muted-foreground font-medium shrink-0">
-                {formatEurGuest(service.unitPrice as number)} / prestation
+                {formatEurGuest(unitPrice)} / {unitLabel}
               </span>
               {state === 'idle' && (
                 <div className="flex items-center gap-2" role="group" aria-label="Quantité">

@@ -338,6 +338,7 @@ function buildDemoPayload() {
           description: 'Petit-déjeuner gourmand livré avant 8 h : viennoiseries artisanales, jus pressés.',
           priceLabel: 'dès 12,00 €',
           unitPrice: null, // démo : sans prix numérique → reste en mise en relation email
+          offers: [], // démo : pas de catalogue fin
         },
       ] as GuestService[],
       booking: null,
