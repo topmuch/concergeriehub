@@ -128,7 +128,7 @@ export function AutomationsContent() {
   if (error !== null) {
     return (
       <div className="max-w-4xl mx-auto w-full px-4 py-8">
-        <Card className="border-red-200">
+        <Card className="border-red-200 bg-white">
           <CardContent className="p-6 text-center space-y-3">
             <p className="text-sm font-semibold text-red-700">{error}</p>
             <Button variant="outline" size="sm" onClick={() => void load()}>
@@ -145,7 +145,7 @@ export function AutomationsContent() {
   if (groups.length === 0) {
     return (
       <div className="max-w-4xl mx-auto w-full px-4 py-8">
-        <Card>
+        <Card className="bg-white">
           <CardContent className="p-10 text-center space-y-2">
             <p className="text-3xl" aria-hidden="true">
               ⚡
@@ -178,7 +178,7 @@ export function AutomationsContent() {
 
       {/* Une carte par bien */}
       {groups.map((group) => (
-        <Card key={group.property.id} className="overflow-hidden">
+        <Card key={group.property.id} className="overflow-hidden bg-white">
           <CardHeader className="pb-3 pt-5 px-5 bg-white border-b border-slate-100">
             <CardTitle className="text-base font-bold text-slate-900 flex items-center justify-between gap-2">
               <span className="truncate">🏠 {group.property.name}</span>

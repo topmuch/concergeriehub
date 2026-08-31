@@ -6,7 +6,7 @@
 // panneau déroulant (Popover), marquage lu individuel/global.
 // Polling 45 s + rafraîchissement à l'ouverture.
 // =============================================================
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Bell, CheckCheck, Zap } from 'lucide-react';
 import {
@@ -31,7 +31,6 @@ export function NotificationsBell() {
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [open, setOpen] = useState(false);
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -50,11 +49,17 @@ export function NotificationsBell() {
     }
   }, []);
 
+  // Chargement initial (macrotâche) + polling léger (45 s)
   useEffect(() => {
-    void load();
-    pollRef.current = setInterval(() => void load(), 45_000);
+    const initial = setTimeout(() => {
+      load();
+    }, 0);
+    const poll = setInterval(() => {
+      load();
+    }, 45_000);
     return () => {
-      if (pollRef.current) clearInterval(pollRef.current);
+      clearTimeout(initial);
+      clearInterval(poll);
     };
   }, [load]);
 
@@ -114,7 +119,7 @@ export function NotificationsBell() {
         </button>
       </PopoverTrigger>
 
-      <PopoverContent align="end" className="w-[min(24rem,calc(100vw-2rem))] p-0">
+      <PopoverContent align="end" className="w-[min(24rem,calc(100vw-2rem))] p-0 bg-white text-slate-900">
         <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-slate-100">
           <p className="text-sm font-bold text-slate-900">Notifications</p>
           {unreadCount > 0 && (

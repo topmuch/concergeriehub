@@ -13,6 +13,9 @@ import { PrismaClient } from '@prisma/client';
 
 const db = new PrismaClient();
 
+const now = Date.now();
+const DAY = 86_400_000;
+
 const HOST_TYPES = [
   'host_booking',
   'host_cleaning',
@@ -55,19 +58,27 @@ async function main() {
   console.log(`→ ${properties.length} bien(s) trouvé(s)`);
 
   for (const p of properties) {
-    const result = await db.automationRule.createMany({
-      data: CATALOG.map((c) => ({
-        propertyId: p.id,
-        key: c.key,
-        trigger: c.trigger,
-        action: c.action,
-        isActive: true,
-      })),
-      skipDuplicates: true,
+    // ⚠️ SQLite : pas de createMany skipDuplicates — filtrage préalable
+    const existing = await db.automationRule.findMany({
+      where: { propertyId: p.id },
+      select: { key: true },
     });
+    const have = new Set(existing.map((r) => r.key));
+    const missing = CATALOG.filter((c) => !have.has(c.key));
+    if (missing.length > 0) {
+      await db.automationRule.createMany({
+        data: missing.map((c) => ({
+          propertyId: p.id,
+          key: c.key,
+          trigger: c.trigger,
+          action: c.action,
+          isActive: true,
+        })),
+      });
+    }
     console.log(
-      `  ✓ "${p.name}" : ${result.count} règle(s) créée(s)${
-        result.count === 0 ? ' (catalogue déjà en place)' : ''
+      `  ✓ "${p.name}" : ${missing.length} règle(s) créée(s)${
+        missing.length === 0 ? ' (catalogue déjà en place)' : ''
       }`,
     );
   }
@@ -83,7 +94,7 @@ async function main() {
       where: { propertyId: first.id, checkIn: { gte: start, lte: end }, status: { not: 'CANCELLED' } },
     });
     if (arrivingToday === 0) {
-      const out = new Date(start.getTime() + 3 * 86_400_000);
+      const out = new Date(start.getTime() + 3 * DAY);
       await db.booking.create({
         data: {
           propertyId: first.id,
@@ -120,7 +131,7 @@ async function main() {
             userId: marieId,
             type: 'host_booking',
             title: '📅 Nouvelle réservation',
-            body: `${propertyName} : séjour de Camille Fabre du ${new Date(now + 10 * 86_400_000).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })} au ${new Date(now + 14 * 86_400_000).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}.`,
+            body: `${propertyName} : séjour de Camille Fabre du ${new Date(now + 10 * DAY).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })} au ${new Date(now + 14 * DAY).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}.`,
             ...base,
           },
           {
@@ -179,8 +190,6 @@ async function main() {
   const ruleCount = await db.automationRule.count();
   console.log(`\n=== OK — ${ruleCount} règle(s) d'automatisation en base ===`);
 }
-
-const now = Date.now();
 
 main()
   .catch((e) => {

@@ -158,18 +158,28 @@ async function pushNotifications(
 // Déploiement du catalogue
 // -------------------------------------------------------------
 
-/** Crée les règles manquantes du catalogue pour un bien (idempotent). */
+/**
+ * Crée les règles manquantes du catalogue pour un bien (idempotent).
+ * ⚠️ SQLite ne supporte pas createMany({ skipDuplicates }) — on filtre
+ * les clés existantes avant insertion.
+ */
 export async function ensureDefaultRules(propertyId: string): Promise<void> {
   try {
+    const existing = await db.automationRule.findMany({
+      where: { propertyId },
+      select: { key: true },
+    });
+    const have = new Set(existing.map((r) => r.key));
+    const missing = AUTOMATIONS_CATALOG.filter((m) => !have.has(m.key));
+    if (missing.length === 0) return;
     await db.automationRule.createMany({
-      data: AUTOMATIONS_CATALOG.map((m) => ({
+      data: missing.map((m) => ({
         propertyId,
         key: m.key,
         trigger: m.trigger,
         action: m.action,
         isActive: true,
       })),
-      skipDuplicates: true,
     });
   } catch (error) {
     console.error('[automations] ensureDefaultRules failed:', error);
@@ -203,50 +213,55 @@ export async function runAutomationTrigger(
     });
     const propertyName = property?.name ?? 'Votre bien';
 
-    // 1 notification "porteuse" construite depuis le contexte
-    let payload: NotificationPayload;
-    switch (ctx.kind) {
-      case 'booking': {
-        const b = ctx.booking;
-        if (trigger === 'BOOKING_CREATED') {
-          payload = {
-            type: 'host_booking',
-            title: '📅 Nouvelle réservation',
-            body: `${propertyName} : séjour de ${b.guestName} du ${formatFrDate(b.checkIn)} au ${formatFrDate(b.checkOut)}.`,
-          };
-        } else {
+    // 1 payload "porteuse" par KIND + règle : le message dépend
+    // de l'audience (ex. BOOKING_CREATED → "Nouvelle réservation"
+    // pour l'équipe, "Ménage à planifier" pour le ménage).
+    const buildPayload = (ruleKey: string, ruleAction: string): NotificationPayload | null => {
+      switch (ctx.kind) {
+        case 'booking': {
+          const b = ctx.booking;
+          if (trigger === 'BOOKING_CREATED') {
+            if (ruleAction === 'NOTIFY_CLEANERS') {
+              return {
+                type: 'host_cleaning',
+                title: '🧹 Ménage à planifier',
+                body: `${propertyName} : nouveau séjour de ${b.guestName} (départ le ${formatFrDate(b.checkOut)}) — ménage à prévoir.`,
+              };
+            }
+            return {
+              type: 'host_booking',
+              title: '📅 Nouvelle réservation',
+              body: `${propertyName} : séjour de ${b.guestName} du ${formatFrDate(b.checkIn)} au ${formatFrDate(b.checkOut)}.`,
+            };
+          }
           // CLEANING_DONE
-          payload = {
+          return {
             type: 'host_cleaning',
             title: '✨ Ménage terminé',
             body: `${propertyName} : le ménage après le séjour de ${b.guestName} est terminé.`,
           };
         }
-        break;
+        case 'maintenance': {
+          const urgency =
+            ctx.request.urgencyLevel && ctx.request.urgencyLevel !== 'normal'
+              ? ` (urgence : ${ctx.request.urgencyLevel})`
+              : '';
+          return {
+            type: 'host_maintenance',
+            title: '🔧 Réclamation technique',
+            body: `${propertyName} : ${ctx.request.description?.trim() || 'nouvelle demande de service'}${urgency}.`,
+          };
+        }
+        case 'member':
+          return {
+            type: 'host_team',
+            title: '👥 Équipe',
+            body: `${ctx.member.displayName} a rejoint l’équipe de ${propertyName} en tant que ${memberRoleMeta(ctx.member.role).label}.`,
+          };
+        default:
+          return null;
       }
-      case 'maintenance': {
-        const urgency =
-          ctx.request.urgencyLevel && ctx.request.urgencyLevel !== 'normal'
-            ? ` (urgence : ${ctx.request.urgencyLevel})`
-            : '';
-        payload = {
-          type: 'host_maintenance',
-          title: '🔧 Réclamation technique',
-          body: `${propertyName} : ${ctx.request.description?.trim() || 'nouvelle demande de service'}${urgency}.`,
-        };
-        break;
-      }
-      case 'member': {
-        payload = {
-          type: 'host_team',
-          title: '👥 Équipe',
-          body: `${ctx.member.displayName} a rejoint l’équipe de ${propertyName} en tant que ${memberRoleMeta(ctx.member.role).label}.`,
-        };
-        break;
-      }
-      default:
-        return 0;
-    }
+    };
 
     const dataJson = JSON.stringify({
       propertyId,
@@ -259,6 +274,8 @@ export async function runAutomationTrigger(
 
     let created = 0;
     for (const rule of rules) {
+      const payload = buildPayload(rule.key, rule.action);
+      if (!payload) continue;
       const audience = await resolveAudience(propertyId, rule.action as AutomationAction);
       created += await pushNotifications(audience, payload, dataJson);
       await db.automationRule
