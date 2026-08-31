@@ -585,6 +585,7 @@ model Provider {
   serviceRequests ServiceRequest[] @relation("ProviderServiceRequests")
   reviews         Review[]
   subscriptions   Subscription[]   @relation("ProviderSubscriptions")
+  serviceOrders   ServiceOrder[]
 
   @@index([category])
   @@index([audience])
@@ -1045,4 +1046,50 @@ model Booking {
   @@index([checkOut])
   @@index([status])
   @@map("bookings")
+}
+
+// ==============================================================
+// TABLE 39: service_orders (ÉTAPE 17 V3 — Moteur de transaction)
+// Commandes invités sur le catalogue des prestataires (upselling,
+// Morning Box, expériences) passées depuis l'app invitée PWA.
+//
+// SÉPARATION FINANCIÈRE (règle métier V3) :
+//   totalAmount  = ce que paie l'invité
+//   commission   = part de Conciergerie Hub
+//   hostEarning  = part de l'hôte (si marge appliquée)
+//   invariant attendu côté application : totalAmount ≈ commission + hostEarning
+//
+// items : détails de la commande (ex: [{"name":"Morning Box M",
+//         "qty":2,"unitPrice":18}]).
+//
+// status (OrderStatus) — SQLite : String documenté (cf. header) :
+//   'PENDING' | 'CONFIRMED' | 'PREPARING' | 'DELIVERED' | 'CANCELLED'
+//
+// bookingId / propertyId : volontairement SANS contrainte FK → la
+// trace financière survit à la suppression d'un séjour ou d'un bien
+// (guestName/guestEmail dénormalisés dans le même but).
+// ==============================================================
+model ServiceOrder {
+  id           String    @id @default(uuid())
+  bookingId    String?   @map("booking_id")     // Lié à un séjour spécifique
+  propertyId   String    @map("property_id")
+  providerId   String    @map("provider_id")
+  guestName    String    @map("guest_name")
+  guestEmail   String?   @map("guest_email")
+  items        Json                             // Détails de la commande (ex: 2x Box M)
+  totalAmount  Float     @map("total_amount")   // Montant total payé par l'invité
+  commission   Float                            // La part de Conciergerie Hub
+  hostEarning  Float     @map("host_earning")   // La part de l'hôte (si marge appliquée)
+  status       String    @default("PENDING")    // OrderStatus : 'PENDING' | 'CONFIRMED' | 'PREPARING' | 'DELIVERED' | 'CANCELLED'
+  deliveryDate DateTime? @map("delivery_date")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  provider Provider @relation(fields: [providerId], references: [id])
+
+  @@index([propertyId])
+  @@index([providerId])
+  @@index([bookingId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("service_orders")
 }

@@ -372,3 +372,22 @@ Stage Summary:
 - ÉTAPE 16 CONFIRMÉE LIVRÉE ET VALIDÉE après re-vérification complète : PWA guest installable (manifest dynamique par logement, icônes générées), hors-ligne fonctionnel (guidebook/règles/Wi-Fi en cache SW network-first), badge hors-ligne, dark mode auto, bottom nav 4 onglets, install button discret.
 - Note technique documentée : au tout premier visite, le SW n'intercepte pas encore les requêtes (pas encore contrôleur) → le cache se remplit au reload/visites suivantes. Comportement PWA standard, acceptable (l'install PWA requiert de toute façon une 2e visite côté Chrome).
 - Prochaine étape attendue : NEXT → ÉTAPE 17.1 (modèle ServiceOrder + enum OrderStatus, `bun run db:push`, relation Provider).
+
+---
+Task ID: 17.1 (ÉTAPE 17.1 — V3 "Moteur de transaction" : modèle ServiceOrder)
+Agent: Z.ai Code (orchestrator)
+Task: ÉTAPE 17.1 V3 — Créer le modèle ServiceOrder + OrderStatus (fondation du moteur de transaction : commandes invités, séparation financière Hub/Hôte), spec exacte de l'utilisateur, db:push, vérification round-trip, seed démo idempotent.
+
+Work Log:
+- Analyse schéma préalable : SQLite → pas d'enums Prisma natifs (statut = String documenté, convention header du schéma) ; argent = Float partout (finalPrice, commissionAmount…) ; JSON historiquement en String. Décisions : status String + commentaire OrderStatus ; Decimal → Float (alignement codebase) ; items Json TESTÉ empiriquement → Prisma 6.19 supporte Json sur SQLite → conservé en Json typé (retour = tableau JS parsé).
+- Modèle ServiceOrder (TABLE 39, @@map("service_orders")) : id uuid() (spec), bookingId? / propertyId / providerId / guestName / guestEmail? / items Json / totalAmount / commission / hostEarning / status default PENDING / deliveryDate? / createdAt. bookingId+propertyId volontairement SANS FK (trace financière survit aux suppressions, guestName/Email dénormalisés — conforme spec) ; provider = seule relation (spec) + back-relation Provider.serviceOrders ; onDelete par défaut (Restrict → pas de perte d'ordre financier si suppression prestataire). Index propertyId/providerId/bookingId/status/createdAt.
+- `bun run db:push` OK (50 ms) + Prisma Client régénéré.
+- Round-trip script temporaire : CREATE OK (uuid) → include provider OK ("Morning Box Paris") → items parsé en tableau JS natif → séparation 36/5.4/30.6 → DELETE OK. Script supprimé après usage.
+- scripts/seed-v3-service-orders.ts (idempotent, clé naturelle bien+prestataire+invité) : 4 commandes démo Camille Laurent sur séjour CHECKED_IN — PENDING Morning Box 36€ (Hub 5.40/Hôte 30.60, livraison demain 8h30), CONFIRMED Sommelier 130€ (13/117, J+2 19h), PREPARING Chef Antoine 170€ (17/153, ce soir 20h), DELIVERED Transfer Premium 45€ (5.40/39.60, livré hier à l'arrivée). Taux de commission variés 10/12/15 %. 2e exécution : 0 créée / 4 déjà présentes.
+- Validation : tsc 0 erreur src, ESLint 0 erreur, guest-app API + hub V1 + dashboard HTTP 200, guest app rendue intégralement en browser 390 px ("Bonjour Camille" + h1 bien), console 0 erreur, dev.log propre.
+
+Stage Summary:
+- Fondation transactionnelle V3 en place : table service_orders avec séparation financière native (totalAmount = commission + hostEarning, invariant documenté dans le schéma) et cycle de vie PENDING→CONFIRMED→PREPARING→DELIVERED/CANCELLED.
+- items Json typé confirmé fonctionnel sur SQLite/Prisma 6.19 (première utilisation du type Json dans ce schéma — exception assumée vs convention JSON-as-String, car testé OK et plus riche pour 17.2+).
+- 4 commandes démo réalistes prêtes pour les sous-étapes suivantes (API guest de commande, dashboard hôte/prestataire, commissions).
+- Prochaine étape attendue : NEXT → ÉTAPE 17.2 (spec à confirmer — le message initial était tronqué après l'enum ; hypothèse : API de création de commande depuis l'app invitée + vue commandes côté hôte/prestataire).
