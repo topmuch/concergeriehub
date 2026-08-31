@@ -35,21 +35,32 @@ export async function POST(
       return NextResponse.json({ error: `Max ${MAX_DURATION_SEC} secondes` }, { status: 400 });
     }
 
-    // Find the home via hubSlug
+    // Find the home via hubSlug (plaque V1) OU qrHubSlug du bien (ÉTAPE 12/16 —
+    // l'app invitée PWA poste avec le slug du bien)
     const plaque = await db.physicalQrCode.findUnique({
       where: { hubSlug: slug },
       select: { propertyId: true, isClaimed: true },
     });
-    if (!plaque || !plaque.isClaimed || !plaque.propertyId) {
+    let resolvedPropertyId: string | null =
+      plaque && plaque.isClaimed && plaque.propertyId ? plaque.propertyId : null;
+    if (!resolvedPropertyId && !plaque) {
+      const propertyBySlug = await db.property.findUnique({
+        where: { qrHubSlug: slug },
+        select: { id: true, isActive: true },
+      });
+      if (propertyBySlug?.isActive) resolvedPropertyId = propertyBySlug.id;
+    }
+    if (!resolvedPropertyId) {
       return NextResponse.json({ error: 'Hub non trouvé' }, { status: 404 });
     }
+    const propertyId = resolvedPropertyId;
 
     // Ensure upload dir exists
     await mkdir(UPLOAD_DIR, { recursive: true });
 
     // Generate unique filename
     const ext = audio.name?.split('.').pop() || 'webm';
-    const filename = `${plaque.propertyId}-${crypto.randomBytes(8).toString('hex')}.${ext}`;
+    const filename = `${propertyId}-${crypto.randomBytes(8).toString('hex')}.${ext}`;
     const filePath = join(UPLOAD_DIR, filename);
 
     // Save file
@@ -59,7 +70,7 @@ export async function POST(
     // Create DB record
     const voiceMsg = await db.voiceMessage.create({
       data: {
-        propertyId: plaque.propertyId,
+        propertyId: propertyId,
         senderName: senderName.trim().slice(0, 50),
         senderType: 'guest',
         audioUrl: `/uploads/voice/${filename}`,

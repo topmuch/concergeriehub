@@ -180,3 +180,60 @@
     border-radius: 9999px;
   }
 }
+
+/* ─────────────────────────────────────────────────────────────
+   ÉTAPE 16 (V3) — Scope "App Invitée" (.guest-scope)
+   Le thème suit le TÉLÉPHONE DE L'INVITÉ (prefers-color-scheme),
+   indépendamment de l'Espace Hôte (classe .dark sur <html>).
+   Les tokens design sont re-déclarés sur .guest-scope pour
+   écraser l'héritage de :root / .dark sans toucher au reste.
+   NB : ne PAS utiliser de variantes dark: dans les composants
+   guest — uniquement les tokens (bg-card, text-foreground…).
+   ───────────────────────────────────────────────────────────── */
+.guest-scope {
+  --background: #F8FAFC;
+  --foreground: #0F172A;
+  --card: #FFFFFF;
+  --card-foreground: #0F172A;
+  --popover: #FFFFFF;
+  --popover-foreground: #0F172A;
+  --primary: #0F172A;
+  --primary-foreground: #F8FAFC;
+  --secondary: #F1F5F9;
+  --secondary-foreground: #0F172A;
+  --muted: #F1F5F9;
+  --muted-foreground: #64748B;
+  --accent: #059669;
+  --accent-foreground: #FFFFFF;
+  --destructive: #DC2626;
+  --border: #E2E8F0;
+  --input: #E2E8F0;
+  --ring: #059669;
+  background: var(--background);
+  color: var(--foreground);
+  color-scheme: light;
+}
+
+.guest-scope.dark {
+  --background: #0F172A;
+  --foreground: #F8FAFC;
+  --card: #1E293B;
+  --card-foreground: #F8FAFC;
+  --popover: #1E293B;
+  --popover-foreground: #F8FAFC;
+  --primary: #F8FAFC;
+  --primary-foreground: #0F172A;
+  --secondary: #1E293B;
+  --secondary-foreground: #F8FAFC;
+  --muted: #1E293B;
+  --muted-foreground: #94A3B8;
+  --accent: #10B981;
+  --accent-foreground: #FFFFFF;
+  --destructive: #EF4444;
+  --border: #334155;
+  --input: #334155;
+  --ring: #10B981;
+  background: var(--background);
+  color: var(--foreground);
+  color-scheme: dark;
+}

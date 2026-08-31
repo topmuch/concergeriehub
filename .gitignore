@@ -65,3 +65,4 @@ server.log
 skills/pptx/batch_html2pptx.js
 skills/pptx/html2pptx*.js
 skills/pptx/scripts/
+public/uploads/
