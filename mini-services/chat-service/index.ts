@@ -82,6 +82,42 @@ httpServer.listen(PORT, () => {
   console.log(`[ChatService] Chat WebSocket service running on port ${PORT}`);
 });
 
+// =============================================================
+// [DEV-KEEPER] Self-healing: relance `next dev` (port 3000) s'il
+// est absent. Ce process (bun --hot) survit aux rechargements du
+// sandbox, il agit donc comme gardien du serveur de dev.
+// Idempotent : ne spawn que si localhost:3000 ne répond pas.
+// =============================================================
+async function ensureNextDevServer() {
+  const probe = await fetch('http://127.0.0.1:3000/', {
+    signal: AbortSignal.timeout(2000),
+  })
+    .then(() => true)
+    .catch(() => false);
+
+  if (probe) {
+    console.log('[DEV-KEEPER] next dev déjà en ligne sur :3000 — rien à faire.');
+    return;
+  }
+
+  console.log('[DEV-KEEPER] next dev absent — relance de `bun run dev`…');
+  try {
+    const child = Bun.spawn(['bun', 'run', 'dev'], {
+      cwd: '/home/z/my-project',
+      stdin: 'ignore',
+      stdout: 'ignore',
+      stderr: 'ignore',
+    });
+    child.unref();
+    console.log(`[DEV-KEEPER] next dev relancé (pid ${child.pid}).`);
+  } catch (err) {
+    console.error('[DEV-KEEPER] Échec du spawn next dev :', err);
+  }
+}
+
+// Petit délai pour ne pas gêner le démarrage du service websocket.
+setTimeout(ensureNextDevServer, 1500);
+
 // Graceful shutdown
 process.on('SIGTERM', () => {
   console.log('[ChatService] Received SIGTERM signal, shutting down server...');
