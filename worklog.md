@@ -300,3 +300,7 @@ Stage Summary:
 - Monde démo enrichi : 4 comptes équipe (sophie/alex/nina/thomas), 12 réservations, occupation 30 % affichée.
 - Infra : serveur dev persistant via double-fork orphelin + keeper v2 (polling 20 s) — plus de mort subite de :3000.
 - Fichiers clés : src/lib/team.ts, src/lib/b2b-server.ts, src/app/api/airbnb/properties/**, src/app/api/airbnb/my-assignments, src/components/airbnb/{portfolio-content,team-panel,dashboard-content}.tsx, scripts/seed-v2-team.ts, mini-services/chat-service/index.ts.
+
+### Fix post-E2E (Task 12, même session)
+- BUG SANDBOX : le dossier dynamique `[memberId]` était renommé en `emberId]` par l'infra (caractère ESC + char-class), cassant la route au recompile. J'ai aussi supprimé par erreur `members/route.ts` pendant le diagnostic, restauré depuis git HEAD.
+- IMMUNISATION : PATCH/DELETE membres et bookings passent désormais par QUERY PARAMS (`?memberId=`, `?bookingId=`) dans `members/route.ts` et `bookings/route.ts` (segments dynamiques supprimés) ; fetchs client (team-panel, portfolio-content) alignés. Re-test E2E complet : invite → accept → role change → remove + ménage PATCH, tout vert. tsc/ESLint 0 erreur.

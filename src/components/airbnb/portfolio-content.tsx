@@ -148,7 +148,7 @@ export function PortfolioContent() {
 
   async function acceptInvitation(inv: PortfolioInvitation) {
     const res = await fetch(
-      `/api/airbnb/properties/${inv.property.id}/members/${inv.membershipId}`,
+      `/api/airbnb/properties/${inv.property.id}/members?memberId=${encodeURIComponent(inv.membershipId)}`,
       {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -166,7 +166,7 @@ export function PortfolioContent() {
 
   async function declineInvitation(inv: PortfolioInvitation) {
     const res = await fetch(
-      `/api/airbnb/properties/${inv.property.id}/members/${inv.membershipId}`,
+      `/api/airbnb/properties/${inv.property.id}/members?memberId=${encodeURIComponent(inv.membershipId)}`,
       {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -946,7 +946,9 @@ function AssignmentsView({
   }, [load]);
 
   async function setCleaning(bookingId: string, cleaningStatus: string, propertyId: string) {
-    const res = await fetch(`/api/airbnb/properties/${propertyId}/bookings/${bookingId}`, {
+    const res = await fetch(
+      `/api/airbnb/properties/${propertyId}/bookings?bookingId=${encodeURIComponent(bookingId)}`,
+      {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ cleaningStatus }),

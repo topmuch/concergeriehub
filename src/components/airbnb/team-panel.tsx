@@ -104,7 +104,9 @@ export function TeamPanel({ propertyId, propertyName }: TeamPanelProps) {
   }
 
   async function changeRole(memberId: string, role: MemberRole) {
-    const res = await fetch(`/api/airbnb/properties/${propertyId}/members/${memberId}`, {
+    const res = await fetch(
+      `/api/airbnb/properties/${propertyId}/members?memberId=${encodeURIComponent(memberId)}`,
+      {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ role }),
@@ -119,9 +121,10 @@ export function TeamPanel({ propertyId, propertyName }: TeamPanelProps) {
   }
 
   async function removeMember(member: TeamMember) {
-    const res = await fetch(`/api/airbnb/properties/${propertyId}/members/${member.id}`, {
-      method: 'DELETE',
-    });
+    const res = await fetch(
+      `/api/airbnb/properties/${propertyId}/members?memberId=${encodeURIComponent(member.id)}`,
+      { method: 'DELETE' },
+    );
     const json = (await res.json()) as { error?: string };
     if (!res.ok) {
       toast.error(json.error ?? 'Retrait impossible.');
