@@ -15,6 +15,7 @@ export const AUTOMATION_TRIGGERS = [
   'CHECK_OUT_TODAY',
   'MAINTENANCE_REQUESTED',
   'MEMBER_ACCEPTED',
+  'ORDER_CREATED', // ÉTAPE 17.3 : commande service depuis l'app invitée
 ] as const;
 export type AutomationTrigger = (typeof AUTOMATION_TRIGGERS)[number];
 
@@ -38,7 +39,7 @@ export interface AutomationMeta {
 }
 
 /**
- * Catalogue fixe — 7 automatisations. Déployé automatiquement sur
+ * Catalogue fixe — 8 automatisations. Déployé automatiquement sur
  * chaque bien (ensureDefaultRules), activé par défaut.
  */
 export const AUTOMATIONS_CATALOG: AutomationMeta[] = [
@@ -103,6 +104,15 @@ export const AUTOMATIONS_CATALOG: AutomationMeta[] = [
     trigger: 'MEMBER_ACCEPTED',
     action: 'NOTIFY_OWNERS',
   },
+  {
+    key: 'order_created_owner',
+    emoji: '🥐',
+    label: 'Nouvelle commande service',
+    description:
+      'Prévient le propriétaire et les gestionnaires dès qu’un invité commande un service depuis l’app de son logement (Étape 17).',
+    trigger: 'ORDER_CREATED',
+    action: 'NOTIFY_OWNERS',
+  },
 ];
 
 const CATALOG_BY_KEY = new Map(AUTOMATIONS_CATALOG.map((m) => [m.key, m]));
@@ -120,6 +130,7 @@ export const HOST_NOTIFICATION_TYPES = [
   'host_checkout',
   'host_maintenance',
   'host_team',
+  'host_order', // ÉTAPE 17.3 : commande service (moteur de transaction)
 ] as const;
 export type HostNotificationType = (typeof HOST_NOTIFICATION_TYPES)[number];
 
@@ -138,6 +149,8 @@ export function notificationEmoji(type: string): string {
       return '🔧';
     case 'host_team':
       return '👥';
+    case 'host_order':
+      return '🥐';
     default:
       return '🔔';
   }

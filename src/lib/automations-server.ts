@@ -5,7 +5,7 @@
 // - ensureDefaultRules(propertyId)  : déploie le catalogue sur un bien
 // - runAutomationTrigger(...)       : exécute les règles immédiates
 //   (BOOKING_CREATED, CLEANING_DONE, MAINTENANCE_REQUESTED,
-//    MEMBER_ACCEPTED)
+//    MEMBER_ACCEPTED, ORDER_CREATED)
 // - runDailyAutomations(propertyIds): tick lazy des rappels du jour
 //   (CHECK_IN_TODAY / CHECK_OUT_TODAY) — lastRunAt garantit 1 run/jour
 //
@@ -47,10 +47,22 @@ export interface MemberCtx {
   role: MemberRole;
 }
 
+export interface OrderCtx {
+  id: string;
+  guestName: string;
+  /** Montant total en euros (Float). */
+  totalAmount: number;
+  /** Nom commercial du prestataire (ex. "Morning Box Paris"). */
+  providerName: string;
+  /** Résumé lisible des lignes (ex. "2× Box M"). */
+  itemsSummary: string;
+}
+
 export type AutomationCtx =
   | { kind: 'booking'; booking: BookingCtx }
   | { kind: 'maintenance'; request: MaintenanceCtx }
-  | { kind: 'member'; member: MemberCtx };
+  | { kind: 'member'; member: MemberCtx }
+  | { kind: 'order'; order: OrderCtx }; // ÉTAPE 17.3
 
 interface NotificationPayload {
   type: string;
@@ -258,6 +270,16 @@ export async function runAutomationTrigger(
             title: '👥 Équipe',
             body: `${ctx.member.displayName} a rejoint l’équipe de ${propertyName} en tant que ${memberRoleMeta(ctx.member.role).label}.`,
           };
+        case 'order': {
+          // ÉTAPE 17.3 — commande service depuis l'app invitée.
+          const o = ctx.order;
+          const amount = `${o.totalAmount.toFixed(2).replace('.', ',')} €`;
+          return {
+            type: 'host_order',
+            title: '🥐 Nouvelle commande',
+            body: `${propertyName} : ${o.guestName} a commandé « ${o.itemsSummary} » (${amount}) auprès de ${o.providerName}. À confirmer dans l’onglet Commandes.`,
+          };
+        }
         default:
           return null;
       }
@@ -269,7 +291,9 @@ export async function runAutomationTrigger(
       trigger,
       bookingId: ctx.kind === 'booking' ? ctx.booking.id : undefined,
       requestId: ctx.kind === 'maintenance' ? ctx.request.id : undefined,
-      url: '/airbnb/dashboard',
+      orderId: ctx.kind === 'order' ? ctx.order.id : undefined, // ÉTAPE 17.3
+      // Deep-link : une commande atterrit directement sur l'onglet Commandes.
+      url: ctx.kind === 'order' ? '/airbnb/dashboard/orders' : '/airbnb/dashboard',
     });
 
     let created = 0;

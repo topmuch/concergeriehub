@@ -8,6 +8,7 @@
 // =============================================================
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Bell, CheckCheck, Zap } from 'lucide-react';
 import {
   Popover,
@@ -28,6 +29,7 @@ interface NotificationItem {
 }
 
 export function NotificationsBell() {
+  const router = useRouter();
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [open, setOpen] = useState(false);
@@ -87,6 +89,19 @@ export function NotificationsBell() {
       await fetch('/api/airbnb/notifications', { method: 'PUT' });
     } catch {
       // silencieux
+    }
+  };
+
+  // ÉTAPE 17.3 : une notification peut porter un deep-link (ex. une
+  // commande atterrit sur /airbnb/dashboard/orders). Au clic on
+  // marque comme lu puis on navigue.
+  const openNotification = (id: string) => {
+    void markRead(id);
+    const target = items.find((n) => n.id === id);
+    const url = typeof target?.data?.url === 'string' ? target.data.url : '';
+    if (url && url.startsWith('/')) {
+      setOpen(false);
+      router.push(url);
     }
   };
 
@@ -151,7 +166,12 @@ export function NotificationsBell() {
                 <li key={n.id}>
                   <button
                     type="button"
-                    onClick={() => void markRead(n.id)}
+                    onClick={() => openNotification(n.id)}
+                    aria-label={
+                      typeof n.data?.url === 'string'
+                        ? `${n.title} — ouvrir`
+                        : n.title
+                    }
                     className={cn(
                       'w-full text-left px-4 py-3 flex gap-3 hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-b-0',
                       !n.isRead && 'bg-amber-50/60',

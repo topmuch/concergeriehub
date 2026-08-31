@@ -7,6 +7,10 @@ import {
   computeSplit,
   rateLimit,
 } from '@/lib/orders';
+import {
+  ensureDefaultRules,
+  runAutomationTrigger,
+} from '@/lib/automations-server';
 
 // =============================================================
 // ÉTAPE 17.2 (V3) — Moteur de transaction côté INVITÉ :
@@ -21,6 +25,9 @@ import {
 // Sécurité : le bien est résolu par slug (plaque V1 → hub V2) ;
 // le booking est filtré par propertyId (pas de cross-bien) ;
 // guestName/guestEmail font FOI depuis le Booking si fourni.
+// ÉTAPE 17.3 : une commande déclenche le moteur d'automatisations
+// (rule ORDER_CREATED → notification hôte). Le moteur avale ses
+// erreurs : le flux invité n'échoue JAMAIS à cause de la notif.
 // =============================================================
 
 interface ResolvedProperty {
@@ -150,6 +157,26 @@ export async function POST(req: Request) {
         status: 'PENDING',
       },
       select: { id: true, status: true, createdAt: true },
+    });
+
+    // ── 5. ÉTAPE 17.3 : notification hôte via le moteur Étape 13 ──
+    // ensureDefaultRules est idempotent : garantit que la règle
+    // ORDER_CREATED existe même si le propriétaire n'a jamais ouvert
+    // la page Automatisations (ne recrée JAMAIS une règle désactivée).
+    await ensureDefaultRules(property.id);
+    const itemsSummary = items
+      .map((i) => `${i.qty}× ${i.name}`)
+      .join(', ')
+      .slice(0, 120);
+    await runAutomationTrigger(property.id, 'ORDER_CREATED', {
+      kind: 'order',
+      order: {
+        id: order.id,
+        guestName,
+        totalAmount,
+        providerName: provider.businessName,
+        itemsSummary: itemsSummary || 'commande service',
+      },
     });
 
     return NextResponse.json({
