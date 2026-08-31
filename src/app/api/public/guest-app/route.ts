@@ -4,6 +4,9 @@ import { haversineKm, providerCategoryMeta, formatEur, propertyTypeMeta } from '
 
 // =============================================================
 // ÉTAPE 16 (V3) — App Invitée PWA : GET /api/public/guest-app?slug=…
+// ÉTAPE 17.2 (V3) — services[] gagne unitPrice (prix numérique de
+// l'offre standard, = hourlyRate ; null → "Sur devis" → mise en
+// relation email conservée). C'est ce prix que l'invité commande.
 // (slug en QUERY PARAM — règle sandbox : pas de segments dynamiques
 // pour les nouvelles routes API)
 //
@@ -30,6 +33,7 @@ interface GuestService {
   categoryLabel: string;
   description: string;
   priceLabel: string;
+  unitPrice: number | null;
 }
 
 function parseContent(json: string | null | undefined): Record<string, unknown> {
@@ -188,6 +192,7 @@ export async function GET(req: Request) {
           categoryLabel: cat.label,
           description: p.description ?? 'Service proposé par un partenaire local vérifié.',
           priceLabel: p.hourlyRate != null ? `dès ${formatEur(p.hourlyRate)}` : 'Sur devis',
+          unitPrice: p.hourlyRate ?? null,
         });
       }
       services.sort((a, b) => a.name.localeCompare(b.name));
@@ -272,6 +277,7 @@ function buildDemoPayload() {
           categoryLabel: 'Petit-déjeuner',
           description: 'Petit-déjeuner gourmand livré avant 8 h : viennoiseries artisanales, jus pressés.',
           priceLabel: 'dès 12,00 €',
+          unitPrice: null, // démo : sans prix numérique → reste en mise en relation email
         },
       ] as GuestService[],
       booking: null,

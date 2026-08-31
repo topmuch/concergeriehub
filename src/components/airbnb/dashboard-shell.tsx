@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils';
 
 const NAV_ITEMS = [
   { href: '/airbnb/dashboard', label: 'Dashboard', emoji: '📊' },
+  { href: '/airbnb/dashboard/orders', label: 'Commandes', emoji: '🧾' },
   { href: '/airbnb/dashboard/automations', label: 'Automatisations', emoji: '⚡' },
   { href: '/airbnb/dashboard/plaques', label: 'Plaques', emoji: '🏷️' },
   { href: '/airbnb/dashboard/providers', label: 'Prestataires', emoji: '🧹' },

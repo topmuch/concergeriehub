@@ -1,0 +1,372 @@
+'use client';
+
+import { useCallback, useEffect, useState } from 'react';
+import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { providerCategoryMeta } from '@/lib/b2b';
+import { ORDER_STATUS_META, ORDER_TRANSITIONS, formatEur2, type OrderStatus } from '@/lib/orders';
+
+// =============================================================
+// ÉTAPE 17.2 (V3) — Onglet 🧾 Commandes (moteur de transaction)
+// • Stats financières : CA invités / commission Hub / part hôte /
+//   commandes actives (hors annulées)
+// • Liste des commandes du bien avec cycle de vie pilotable :
+//   PENDING → CONFIRMED → PREPARING → DELIVERED (+ CANCELLED)
+// • Switch multi-propriétés (héritage V2)
+// Optimiste : rollback + toast en cas d'échec.
+// =============================================================
+
+interface OrderDTO {
+  id: string;
+  bookingId: string | null;
+  guestName: string;
+  guestEmail: string | null;
+  items: unknown;
+  totalAmount: number;
+  commission: number;
+  hostEarning: number;
+  status: string;
+  deliveryDate: string | null;
+  createdAt: string;
+  provider: { businessName: string; category: string };
+}
+
+interface StatsDTO {
+  revenue: number;
+  commissionTotal: number;
+  hostTotal: number;
+  activeCount: number;
+  pendingCount: number;
+  deliveredCount: number;
+}
+
+interface PropertyLite {
+  id: string;
+  name: string;
+  propertyType: string;
+}
+
+interface ApiResponse {
+  properties: PropertyLite[];
+  property: PropertyLite | null;
+  orders: OrderDTO[];
+  stats: StatsDTO;
+  error?: string;
+}
+
+/** Label court de la prochaine étape de cycle de vie. */
+const NEXT_ACTION_LABEL: Partial<Record<OrderStatus, string>> = {
+  CONFIRMED: 'Confirmer',
+  PREPARING: 'Préparer',
+  DELIVERED: 'Marquer livrée',
+};
+
+export function OrdersContent() {
+  const [data, setData] = useState<ApiResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [propertyId, setPropertyId] = useState<string>('');
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  const load = useCallback(async (pid?: string) => {
+    setLoading(true);
+    setError('');
+    try {
+      const qs = pid ? `?propertyId=${encodeURIComponent(pid)}` : '';
+      const res = await fetch(`/api/airbnb/service-orders${qs}`);
+      const json = (await res.json()) as ApiResponse;
+      if (!res.ok) {
+        setError(json.error || 'Impossible de charger les commandes.');
+        setData(null);
+      } else {
+        setData(json);
+      }
+    } catch {
+      setError('Connexion impossible. Réessayez.');
+      setData(null);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const changeProperty = (pid: string) => {
+    setPropertyId(pid);
+    load(pid);
+  };
+
+  /** Transition de statut — mise à jour optimiste avec rollback. */
+  const transition = async (order: OrderDTO, next: OrderStatus) => {
+    const prevOrders = data?.orders ?? [];
+    setBusyId(order.id);
+    // Optimiste
+    setData((d) =>
+      d ? { ...d, orders: d.orders.map((o) => (o.id === order.id ? { ...o, status: next } : o)) } : d,
+    );
+    try {
+      const res = await fetch(`/api/airbnb/service-orders?id=${encodeURIComponent(order.id)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: next }),
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok || !json?.ok) {
+        // Rollback
+        setData((d) => (d ? { ...d, orders: prevOrders } : d));
+        toast.error(json?.error || 'La mise à jour a échoué.');
+        return;
+      }
+      const meta = ORDER_STATUS_META[next];
+      toast.success(
+        next === 'DELIVERED'
+          ? '📦 Commande marquée livrée — bien reçue !'
+          : `${meta.emoji} Commande ${meta.label.toLowerCase()}${next === 'CANCELLED' ? 'e' : ''}.`,
+      );
+      // Recharge silencieux pour rafraîchir les stats financières
+      load(propertyId || undefined);
+    } catch {
+      setData((d) => (d ? { ...d, orders: prevOrders } : d));
+      toast.error('Connexion impossible. Réessayez.');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  return (
+    <div className="max-w-6xl mx-auto w-full px-4 py-8 space-y-6">
+      {/* ----- En-tête + switch propriété ----- */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">🧾 Commandes invités</h1>
+          <p className="text-sm text-slate-500 mt-1">
+            Le moteur de transaction de votre conciergerie — suivez et pilotez chaque commande.
+          </p>
+        </div>
+        {data && data.properties.length > 0 && (
+          <Select value={data.property?.id ?? ''} onValueChange={changeProperty}>
+            <SelectTrigger className="w-full sm:w-64 bg-white" aria-label="Choisir le bien">
+              <SelectValue placeholder="Choisir un bien" />
+            </SelectTrigger>
+            <SelectContent>
+              {data.properties.map((p) => (
+                <SelectItem key={p.id} value={p.id}>
+                  {p.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+      </div>
+
+      {loading && !data && <LoadingSkeleton />}
+
+      {!loading && error && (
+        <div className="bg-white border border-slate-200 rounded-xl p-8 text-center" role="alert">
+          <p className="text-3xl" aria-hidden="true">🔌</p>
+          <p className="mt-2 text-sm text-slate-600">{error}</p>
+          <Button className="mt-4" onClick={() => load(propertyId || undefined)}>
+            Réessayer
+          </Button>
+        </div>
+      )}
+
+      {!loading && data && !error && (
+        <>
+          {/* ----- Stats financières ----- */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatCard
+              emoji="💰"
+              label="CA invités"
+              value={formatEur2(data.stats.revenue)}
+              hint="hors commandes annulées"
+              tone="slate"
+            />
+            <StatCard
+              emoji="🏦"
+              label="Commission Hub"
+              value={formatEur2(data.stats.commissionTotal)}
+              hint="vos revenus de plateforme"
+              tone="emerald"
+            />
+            <StatCard
+              emoji="🏠"
+              label="Part hôte"
+              value={formatEur2(data.stats.hostTotal)}
+              hint="reversée au propriétaire"
+              tone="slate"
+            />
+            <StatCard
+              emoji="⏳"
+              label="Commandes actives"
+              value={String(data.stats.activeCount)}
+              hint={`dont ${data.stats.pendingCount} à confirmer · ${data.stats.deliveredCount} livrée${data.stats.deliveredCount > 1 ? 's' : ''}`}
+              tone={data.stats.pendingCount > 0 ? 'amber' : 'slate'}
+            />
+          </div>
+
+          {/* ----- Liste des commandes ----- */}
+          {data.orders.length === 0 ? (
+            <div className="bg-white border border-slate-200 rounded-xl p-10 text-center">
+              <p className="text-4xl" aria-hidden="true">🛍️</p>
+              <h2 className="mt-3 text-lg font-bold text-slate-900">Aucune commande pour l&apos;instant</h2>
+              <p className="mt-1 text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
+                Vos invités peuvent commander les prestataires «&nbsp;Expérience invité&nbsp;» directement
+                depuis l&apos;app de leur logement (onglet Services). Les commandes apparaîtront ici.
+              </p>
+            </div>
+          ) : (
+            <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+              <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+                <h2 className="text-sm font-bold text-slate-900">
+                  {data.orders.length} commande{data.orders.length > 1 ? 's' : ''} — {data.property?.name}
+                </h2>
+                <p className="text-[11px] text-slate-400 hidden sm:block">
+                  Cycle : à confirmer → confirmée → préparation → livrée
+                </p>
+              </div>
+              <ul className="divide-y divide-slate-100 max-h-96 overflow-y-auto">
+                {data.orders.map((o) => (
+                  <OrderRow
+                    key={o.id}
+                    order={o}
+                    busy={busyId === o.id}
+                    onTransition={transition}
+                  />
+                ))}
+              </ul>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+function StatCard({ emoji, label, value, hint, tone }: {
+  emoji: string;
+  label: string;
+  value: string;
+  hint: string;
+  tone: 'slate' | 'emerald' | 'amber';
+}) {
+  const accent =
+    tone === 'emerald' ? 'text-emerald-600' : tone === 'amber' ? 'text-amber-600' : 'text-slate-900';
+  return (
+    <div className="bg-white border border-slate-200 rounded-xl p-4">
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+        <span aria-hidden="true">{emoji}</span> {label}
+      </p>
+      <p className={`mt-1.5 text-xl font-bold ${accent}`}>{value}</p>
+      <p className="mt-0.5 text-[11px] text-slate-400 leading-snug">{hint}</p>
+    </div>
+  );
+}
+
+function OrderRow({ order, busy, onTransition }: {
+  order: OrderDTO;
+  busy: boolean;
+  onTransition: (order: OrderDTO, next: OrderStatus) => Promise<void>;
+}) {
+  const status = (ORDER_STATUS_META[order.status as OrderStatus] ?? ORDER_STATUS_META.PENDING) as {
+    label: string;
+    emoji: string;
+    badge: string;
+  };
+  const cat = providerCategoryMeta(order.provider.category);
+  const items = Array.isArray(order.items) ? (order.items as { name: string; qty: number; unitPrice: number }[]) : [];
+  const nextSteps = ORDER_TRANSITIONS[order.status as OrderStatus] ?? [];
+
+  return (
+    <li className="px-4 py-3.5 flex flex-col lg:flex-row lg:items-center gap-3">
+      {/* Prestataire + invité + lignes */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-lg leading-none" aria-hidden="true">{cat.emoji}</span>
+          <p className="text-sm font-bold text-slate-900">{order.provider.businessName}</p>
+          <Badge className={`${status.badge} text-white border-0 text-[10px] px-2`}>
+            {status.emoji} {status.label}
+          </Badge>
+        </div>
+        <p className="text-xs text-slate-500 mt-1">
+          Invité&nbsp;: <span className="font-semibold text-slate-700">{order.guestName}</span>
+          {order.deliveryDate && (
+            <>
+              {' · '}Livraison prévue&nbsp;: {formatFr(order.deliveryDate)}
+            </>
+          )}
+          {' · '}Commandée le {formatFr(order.createdAt)}
+        </p>
+        <p className="text-[11px] text-slate-400 mt-0.5 line-clamp-1">
+          {items.map((it) => `${it.qty}× ${it.name}`).join(' · ') || '—'}
+        </p>
+      </div>
+
+      {/* Finances */}
+      <div className="flex lg:flex-col lg:text-right items-center lg:items-end gap-1.5 shrink-0">
+        <p className="text-sm font-bold text-slate-900">{formatEur2(order.totalAmount)}</p>
+        <p className="text-[11px] text-slate-400">
+          Hub {formatEur2(order.commission)} · Hôte {formatEur2(order.hostEarning)}
+        </p>
+      </div>
+
+      {/* Actions */}
+      {nextSteps.length > 0 && (
+        <div className="flex gap-2 shrink-0">
+          {nextSteps.filter((s) => s !== 'CANCELLED').map((s) => (
+            <Button
+              key={s}
+              size="sm"
+              disabled={busy}
+              onClick={() => onTransition(order, s)}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+            >
+              {busy ? '…' : NEXT_ACTION_LABEL[s] ?? s}
+            </Button>
+          ))}
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={busy}
+            onClick={() => onTransition(order, 'CANCELLED')}
+            className="text-rose-600 border-rose-200 hover:bg-rose-50"
+          >
+            Annuler
+          </Button>
+        </div>
+      )}
+    </li>
+  );
+}
+
+function LoadingSkeleton() {
+  return (
+    <div className="space-y-4" aria-busy="true" aria-label="Chargement des commandes">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {[0, 1, 2, 3].map((i) => (
+          <Skeleton key={i} className="h-24 rounded-xl" />
+        ))}
+      </div>
+      <Skeleton className="h-64 rounded-xl" />
+    </div>
+  );
+}
+
+function formatFr(iso: string): string {
+  try {
+    return new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  } catch {
+    return iso;
+  }
+}

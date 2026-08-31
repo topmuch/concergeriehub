@@ -27,6 +27,7 @@ export function GuestApp({ slug, initialBookingId }: { slug: string; initialBook
   const [tab, setTab] = useState<GuestTab>('home');
   const [direction, setDirection] = useState(1);
   const [online, setOnline] = useState(true);
+  const [bookingId, setBookingId] = useState<string | undefined>(initialBookingId);
   const bookingIdRef = useRef<string | undefined>(initialBookingId);
 
   const storageKey = `ch-guest-booking-${slug}`;
@@ -54,6 +55,7 @@ export function GuestApp({ slug, initialBookingId }: { slug: string; initialBook
         // Mémorise le booking validé par l'API → les prochaines
         // visites restent personnalisées (hors-ligne inclus).
         if (b && json.guest?.booking) {
+          setBookingId(b);
           try {
             window.localStorage.setItem(storageKey, b);
           } catch {
@@ -173,9 +175,13 @@ export function GuestApp({ slug, initialBookingId }: { slug: string; initialBook
               )}
               {tab === 'services' && (
                 <TabServices
+                  slug={slug}
                   services={payload.guest.services}
                   contact={payload.guest.contact}
                   propertyName={payload.property.name}
+                  booking={payload.guest.booking}
+                  bookingId={payload.guest.booking ? bookingId ?? null : null}
+                  online={online}
                 />
               )}
               {tab === 'help' && (

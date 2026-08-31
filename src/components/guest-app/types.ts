@@ -1,6 +1,8 @@
 // =============================================================
 // ÉTAPE 16 (V3) — Types partagés de l'App Invitée PWA
 // (miroir du payload de /api/public/guest-app)
+// ÉTAPE 17.2 — unitPrice (commande transactionnelle) + GuestOrder
+// (miroir du GET /api/public/service-orders)
 // =============================================================
 
 export interface GuestService {
@@ -10,6 +12,20 @@ export interface GuestService {
   categoryLabel: string;
   description: string;
   priceLabel: string;
+  /** Prix numérique de l'offre standard (null → "Sur devis" → email). */
+  unitPrice: number | null;
+}
+
+export type GuestOrderStatus = 'PENDING' | 'CONFIRMED' | 'PREPARING' | 'DELIVERED' | 'CANCELLED';
+
+export interface GuestOrder {
+  id: string;
+  status: GuestOrderStatus;
+  totalAmount: number;
+  items: { name: string; qty: number; unitPrice: number }[] | unknown;
+  deliveryDate: string | null;
+  createdAt: string;
+  provider: { businessName: string; category: string };
 }
 
 export interface GuestBookingInfo {
@@ -66,4 +82,18 @@ export function formatFrDate(iso: string): string {
 export function daysUntil(iso: string): number {
   const diff = new Date(iso).getTime() - Date.now();
   return Math.max(0, Math.ceil(diff / 86_400_000));
+}
+
+/** Métadonnées statut commande (chips invité) — lib orders côté serveur. */
+export const GUEST_ORDER_STATUS_META: Record<GuestOrderStatus, { label: string; emoji: string; className: string }> = {
+  PENDING: { label: 'En attente', emoji: '🟡', className: 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/40' },
+  CONFIRMED: { label: 'Confirmée', emoji: '🔵', className: 'bg-teal-500/15 text-teal-700 dark:text-teal-300 border-teal-500/40' },
+  PREPARING: { label: 'En préparation', emoji: '🟠', className: 'bg-orange-500/15 text-orange-700 dark:text-orange-300 border-orange-500/40' },
+  DELIVERED: { label: 'Livrée', emoji: '🟢', className: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/40' },
+  CANCELLED: { label: 'Annulée', emoji: '⚪', className: 'bg-rose-500/10 text-rose-600 dark:text-rose-300 border-rose-400/30' },
+};
+
+/** Format FR : "36,00 €" */
+export function formatEurGuest(n: number): string {
+  return n.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' });
 }
