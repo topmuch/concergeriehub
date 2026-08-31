@@ -89,6 +89,7 @@ model Property {
   longitude Float?
   isActive  Boolean  @default(true) @map("is_active")
   pinHash   String?  @map("pin_hash")                 // bcrypt du PIN 4 chiffres — "Mode Hôte" (protège l'accès tablette/QR)
+  qrHubSlug String?  @unique @map("qr_hub_slug")     // ÉTAPE 12 : slug du Hub QR du bien → /hub/[qrHubSlug] (fallback des plaques)
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -107,22 +108,33 @@ model Property {
   propertyAutomations PropertyAutomation[]
   voiceMessages     VoiceMessage[]
   plaqueQrCodes     PhysicalQrCode[] @relation("PlaqueQrProperty")
+  bookings          Booking[]
 
   @@index([ownerId])
   @@index([propertyType])
+  @@index([qrHubSlug])
   @@map("properties")
 }
 
 // ==============================================================
-// TABLE 4: property_members (équipe d'un bien)
-// Rôles B2B : 'owner' | 'cohost' | 'staff' | 'cleaner' | 'member'
+// TABLE 4: property_members (équipe d'un bien) — ÉTAPE 12 V2
+// Rôles canoniques V2 (MemberRole) :
+//   'OWNER'       — accès total (propriétaire)
+//   'MANAGER'     — gère bookings, messages, prestataires
+//   'CLEANER'     — voit uniquement le planning ménage
+//   'MAINTENANCE' — voit uniquement les réclamations techniques
+// Legacy V1 tolérés & mappés : 'owner'→OWNER, 'cohost'→MANAGER,
+// 'member'→MANAGER, 'staff'→MAINTENANCE, 'cleaner'→CLEANER
 // ==============================================================
 model PropertyMember {
   id       String   @id @default(cuid())
   propertyId String @map("property_id")
   userId   String   @map("user_id")
-  role     String   @default("member")               // 'owner' | 'cohost' | 'staff' | 'cleaner' | 'member'
+  role     String   @default("MANAGER")             // 'OWNER' | 'MANAGER' | 'CLEANER' | 'MAINTENANCE' (+ legacy mappés)
   nickname String?
+  permissions String? // JSON string : permissions granulaires (ex: {"managePricing":true}) — PostgreSQL Json en prod
+  invitedAt DateTime @default(now()) @map("invited_at")
+  acceptedAt DateTime? @map("accepted_at")           // null = invitation en attente (accès bloqué tant que non acceptée)
   joinedAt DateTime @default(now()) @map("joined_at")
 
   property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
@@ -965,4 +977,37 @@ model VoiceMessage {
   @@index([isRead])
   @@index([createdAt])
   @@map("voice_messages")
+}
+
+// ==============================================================
+// TABLE 37: bookings (ÉTAPE 12 V2 — planning multi-propriétés)
+// Séjours d'un bien : base du taux d'occupation (portfolio),
+// du planning ménage (rôle CLEANER) et des futures intégrations
+// iCal / Airbnb. source : 'AIRBNB' | 'BOOKING' | 'MANUAL' | 'ICAL'
+// status : 'CONFIRMED' | 'CHECKED_IN' | 'CHECKED_OUT' | 'CANCELLED'
+// cleaningStatus : 'PENDING' | 'IN_PROGRESS' | 'DONE'
+// ==============================================================
+model Booking {
+  id             String   @id @default(cuid())
+  propertyId     String   @map("property_id")
+  guestName      String   @map("guest_name")
+  guestEmail     String?  @map("guest_email")
+  checkIn        DateTime @map("check_in")
+  checkOut       DateTime @map("check_out")
+  guests         Int      @default(2)
+  source         String   @default("MANUAL")
+  status         String   @default("CONFIRMED")
+  cleaningStatus String   @default("PENDING") @map("cleaning_status")
+  externalRef    String?  @map("external_ref")      // code de réservation plateforme
+  notes          String?
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId])
+  @@index([checkIn])
+  @@index([checkOut])
+  @@index([status])
+  @@map("bookings")
 }

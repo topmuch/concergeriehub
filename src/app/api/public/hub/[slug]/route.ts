@@ -92,13 +92,47 @@ export async function GET(
       return NextResponse.json(DEMO_PAYLOAD);
     }
 
-    // ── 1. La plaque (QR physique) derrière ce slug ──
+    // ── 1a. La plaque (QR physique) derrière ce slug — flux V1 ──
     const plaque = await db.physicalQrCode.findUnique({
       where: { hubSlug: slug },
       include: { claimedBy: { select: { id: true, fullName: true } } },
     });
 
-    if (!plaque || !plaque.isClaimed || !plaque.propertyId) {
+    if (!plaque) {
+      // ── 1b. ÉTAPE 12 : fallback Hub QR du BIEN (Property.qrHubSlug) ──
+      const propertyBySlug = await db.property.findUnique({
+        where: { qrHubSlug: slug },
+        select: { id: true, isActive: true },
+      });
+      if (!propertyBySlug) {
+        return NextResponse.json(
+          {
+            error: 'not_found',
+            message: 'Ce hub est introuvable ou la plaque n’a pas encore été activée par son hôte.',
+          },
+          { status: 404 }
+        );
+      }
+      if (!propertyBySlug.isActive) {
+        return NextResponse.json(
+          {
+            error: 'inactive',
+            message: 'Ce bien a été désactivé par son hôte.',
+          },
+          { status: 410 }
+        );
+      }
+      const payload = await buildPropertyPayload(propertyBySlug.id, null);
+      if (!payload) {
+        return NextResponse.json(
+          { error: 'not_found', message: 'Le logement lié à ce hub est introuvable.' },
+          { status: 404 }
+        );
+      }
+      return NextResponse.json(payload);
+    }
+
+    if (!plaque.isClaimed || !plaque.propertyId) {
       return NextResponse.json(
         {
           error: 'not_found',
@@ -122,101 +156,18 @@ export async function GET(
       );
     }
 
-    // ── 3. Le bien + son propriétaire ──
-    const property = await db.property.findUnique({
-      where: { id: plaque.propertyId },
-      select: {
-        id: true,
-        name: true,
-        propertyType: true,
-        address: true,
-        latitude: true,
-        longitude: true,
-        pinHash: true,
-        owner: {
-          select: {
-            fullName: true,
-            email: true,
-            profile: { select: { phone: true } },
-          },
-        },
-      },
-    });
-
-    if (!property) {
+    const payload = await buildPropertyPayload(
+      plaque.propertyId,
+      plaque.claimedBy?.fullName ?? null,
+    );
+    if (!payload) {
       return NextResponse.json(
         { error: 'not_found', message: 'Le logement lié à cette plaque est introuvable.' },
         { status: 404 }
       );
     }
 
-    // ── 4. QRs actifs publics → Wi-Fi + Guidebook ──
-    const activeQrs = await db.qrCode.findMany({
-      where: { propertyId: property.id, isActive: true, isPrivate: false },
-      orderBy: { createdAt: 'asc' },
-      include: { content: { select: { contentJson: true } } },
-    });
-
-    const wifiQr = activeQrs.find((qr) => qr.type === 'wifi');
-    const guidebookQr = activeQrs.find((qr) => qr.type === 'home_manual' && qr.publicSlug);
-    const wifiContent = wifiQr ? parseContent(wifiQr.content?.contentJson) : {};
-
-    const wifi =
-      wifiQr && (wifiContent.network_name || wifiContent.password)
-        ? {
-            networkName: (wifiContent.network_name as string) || 'Wi-Fi du logement',
-            password: (wifiContent.password as string) || '',
-            securityType: (wifiContent.security_type as string) || 'WPA2',
-          }
-        : null;
-
-    // ── 5. Services invité = prestataires GUEST_EXPERIENCE dans le rayon ──
-    const services: GuestService[] = [];
-    if (property.latitude != null && property.longitude != null) {
-      const geoProviders = await db.provider.findMany({
-        where: { isActive: true, audience: 'GUEST_EXPERIENCE' },
-        include: { user: { select: { fullName: true } } },
-      });
-      for (const p of geoProviders) {
-        if (p.latitude == null || p.longitude == null) continue;
-        const d = haversineKm(property.latitude, property.longitude, p.latitude, p.longitude);
-        if (d > p.serviceRadiusKm) continue;
-        const cat = providerCategoryMeta(p.category);
-        services.push({
-          id: p.id,
-          name: p.businessName,
-          emoji: cat.emoji,
-          categoryLabel: cat.label,
-          description: p.description ?? 'Service proposé par un partenaire local vérifié.',
-          priceLabel: p.hourlyRate != null ? `dès ${formatEur(p.hourlyRate)}` : 'Sur devis',
-        });
-      }
-      services.sort((a, b) => a.name.localeCompare(b.name));
-    }
-
-    return NextResponse.json({
-      active: true,
-      property: {
-        id: property.id,
-        name: property.name,
-        propertyType: property.propertyType,
-        propertyTypeLabel: propertyTypeMeta(property.propertyType).label,
-        propertyTypeEmoji: propertyTypeMeta(property.propertyType).emoji,
-        address: property.address,
-        hasPin: !!property.pinHash,
-      },
-      ownerName: plaque.claimedBy?.fullName || property.owner?.fullName || null,
-      guest: {
-        wifi,
-        guidebookSlug: guidebookQr?.publicSlug ?? null,
-        services,
-        contact: {
-          name: property.owner?.fullName || 'Votre hôte',
-          phone: property.owner?.profile?.phone ?? null,
-          email: property.owner?.email ?? null,
-        },
-      },
-    });
+    return NextResponse.json(payload);
   } catch (error) {
     console.error('Hub GET error:', error);
     return NextResponse.json(
@@ -224,6 +175,108 @@ export async function GET(
       { status: 500 }
     );
   }
+}
+
+/**
+ * Construit le payload invité d'un bien (Wi-Fi, guidebook,
+ * services géolocalisés, contact). ÉTAPE 12 : partagé entre le
+ * flux PLAQUE (V1) et le flux HUB DU BIEN (Property.qrHubSlug).
+ */
+async function buildPropertyPayload(
+  propertyId: string,
+  claimedByName: string | null,
+) {
+  // ── Le bien + son propriétaire ──
+  const property = await db.property.findUnique({
+    where: { id: propertyId },
+    select: {
+      id: true,
+      name: true,
+      propertyType: true,
+      address: true,
+      latitude: true,
+      longitude: true,
+      isActive: true,
+      pinHash: true,
+      owner: {
+        select: {
+          fullName: true,
+          email: true,
+          profile: { select: { phone: true } },
+        },
+      },
+    },
+  });
+
+  if (!property || !property.isActive) return null;
+
+  // ── QRs actifs publics → Wi-Fi + Guidebook ──
+  const activeQrs = await db.qrCode.findMany({
+    where: { propertyId: property.id, isActive: true, isPrivate: false },
+    orderBy: { createdAt: 'asc' },
+    include: { content: { select: { contentJson: true } } },
+  });
+
+  const wifiQr = activeQrs.find((qr) => qr.type === 'wifi');
+  const guidebookQr = activeQrs.find((qr) => qr.type === 'home_manual' && qr.publicSlug);
+  const wifiContent = wifiQr ? parseContent(wifiQr.content?.contentJson) : {};
+
+  const wifi =
+    wifiQr && (wifiContent.network_name || wifiContent.password)
+      ? {
+          networkName: (wifiContent.network_name as string) || 'Wi-Fi du logement',
+          password: (wifiContent.password as string) || '',
+          securityType: (wifiContent.security_type as string) || 'WPA2',
+        }
+      : null;
+
+  // ── Services invité = prestataires GUEST_EXPERIENCE dans le rayon ──
+  const services: GuestService[] = [];
+  if (property.latitude != null && property.longitude != null) {
+    const geoProviders = await db.provider.findMany({
+      where: { isActive: true, audience: 'GUEST_EXPERIENCE' },
+      include: { user: { select: { fullName: true } } },
+    });
+    for (const p of geoProviders) {
+      if (p.latitude == null || p.longitude == null) continue;
+      const d = haversineKm(property.latitude, property.longitude, p.latitude, p.longitude);
+      if (d > p.serviceRadiusKm) continue;
+      const cat = providerCategoryMeta(p.category);
+      services.push({
+        id: p.id,
+        name: p.businessName,
+        emoji: cat.emoji,
+        categoryLabel: cat.label,
+        description: p.description ?? 'Service proposé par un partenaire local vérifié.',
+        priceLabel: p.hourlyRate != null ? `dès ${formatEur(p.hourlyRate)}` : 'Sur devis',
+      });
+    }
+    services.sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  return {
+    active: true,
+    property: {
+      id: property.id,
+      name: property.name,
+      propertyType: property.propertyType,
+      propertyTypeLabel: propertyTypeMeta(property.propertyType).label,
+      propertyTypeEmoji: propertyTypeMeta(property.propertyType).emoji,
+      address: property.address,
+      hasPin: !!property.pinHash,
+    },
+    ownerName: claimedByName || property.owner?.fullName || null,
+    guest: {
+      wifi,
+      guidebookSlug: guidebookQr?.publicSlug ?? null,
+      services,
+      contact: {
+        name: property.owner?.fullName || 'Votre hôte',
+        phone: property.owner?.profile?.phone ?? null,
+        email: property.owner?.email ?? null,
+      },
+    },
+  };
 }
 
 // POST: Verify PIN for host mode
@@ -250,21 +303,27 @@ export async function POST(
       where: { hubSlug: slug },
     });
 
-    if (!plaque || !plaque.isClaimed || !plaque.propertyId) {
+    if (plaque && (!plaque.isClaimed || !plaque.propertyId)) {
       return NextResponse.json({ error: 'Hub non trouvé' }, { status: 404 });
     }
 
-    if (plaque.status !== 'active') {
+    if (plaque && plaque.status !== 'active') {
       return NextResponse.json(
         { error: 'Cette plaque QR est désactivée.' },
         { status: 410 }
       );
     }
 
-    const home = await db.property.findUnique({
-      where: { id: plaque.propertyId },
-      select: { id: true, pinHash: true },
-    });
+    // ÉTAPE 12 : résolution du bien via la plaque OU le slug du bien
+    const home = plaque?.propertyId
+      ? await db.property.findUnique({
+          where: { id: plaque.propertyId },
+          select: { id: true, pinHash: true },
+        })
+      : await db.property.findUnique({
+          where: { qrHubSlug: slug },
+          select: { id: true, pinHash: true },
+        });
 
     if (!home || !home.pinHash) {
       return NextResponse.json({ error: 'Aucun PIN configuré' }, { status: 400 });

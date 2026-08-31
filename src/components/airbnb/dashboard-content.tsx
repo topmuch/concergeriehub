@@ -9,6 +9,7 @@ import { EmojiIcon } from '@/components/ui/emoji-icon';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { TeamPanel } from '@/components/airbnb/team-panel';
 import {
   Select,
   SelectContent,
@@ -33,6 +34,7 @@ interface PropertyLite {
   address: string | null;
   latitude: number | null;
   longitude: number | null;
+  qrHubSlug?: string | null;
   hasGeoloc?: boolean;
 }
 
@@ -64,12 +66,21 @@ interface DashboardData {
   modules: DashboardModule[];
 }
 
-export function DashboardContent() {
+interface DashboardContentProps {
+  /** ÉTAPE 12 : bien verrouillé depuis la vue Portfolio (pas de sélecteur) */
+  lockedPropertyId?: string;
+  /** Retour vers la vue Portfolio */
+  onBack?: () => void;
+}
+
+export function DashboardContent({ lockedPropertyId, onBack }: DashboardContentProps = {}) {
   const router = useRouter();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [propertyId, setPropertyId] = useState<string | undefined>(undefined);
+  const [propertyId, setPropertyId] = useState<string | undefined>(lockedPropertyId);
+
+  const effectiveId = lockedPropertyId ?? propertyId;
 
   const load = useCallback(async (pid?: string) => {
     setLoading(true);
@@ -91,8 +102,8 @@ export function DashboardContent() {
   }, [router]);
 
   useEffect(() => {
-    load(propertyId);
-  }, [propertyId, load]);
+    load(effectiveId);
+  }, [effectiveId, load]);
 
   // ----- Loading -----
   if (loading && !data) {
@@ -122,7 +133,7 @@ export function DashboardContent() {
           <p className="mt-2 font-semibold text-slate-900">Oups, une erreur est survenue</p>
           <p className="text-sm text-slate-600 mt-1">{error}</p>
           <Button
-            onClick={() => load(propertyId)}
+            onClick={() => load(effectiveId)}
             className="mt-4 bg-slate-900 hover:bg-slate-800 text-white"
           >
             <RefreshCw className="h-4 w-4" /> Réessayer
@@ -168,8 +179,16 @@ export function DashboardContent() {
             </p>
           </div>
 
-          {/* Sélecteur de propriété */}
-          {properties.length > 1 ? (
+          {/* Sélecteur de propriété / retour portfolio (ÉTAPE 12) */}
+          {lockedPropertyId ? (
+            <Button
+              variant="outline"
+              onClick={onBack}
+              className="bg-white border-slate-300 text-slate-700 hover:bg-slate-50 self-start"
+            >
+              ← Retour au portfolio
+            </Button>
+          ) : properties.length > 1 ? (
             <Select value={property.id} onValueChange={(v) => setPropertyId(v)}>
               <SelectTrigger
                 aria-label="Choisir un bien"
@@ -367,6 +386,49 @@ export function DashboardContent() {
             );
           })}
         </div>
+      </section>
+
+      {/* ================= Équipe & Hub QR (ÉTAPE 12) ================= */}
+      <section aria-labelledby="team-title" className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+        <div>
+          <h2 id="team-title" className="sr-only">Équipe et hub du bien</h2>
+          <TeamPanel propertyId={property.id} propertyName={property.name} />
+        </div>
+
+        <B2BCard className="p-5">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl" aria-hidden="true">🔗</span>
+            <div className="min-w-0">
+              <h3 className="text-sm font-bold text-slate-900">Hub QR du bien</h3>
+              <p className="text-xs text-slate-500">
+                Adresse publique de l&apos;expérience voyageur (Wi-Fi, guidebook, services).
+              </p>
+            </div>
+          </div>
+          <div className="mt-4 flex items-center gap-2 flex-wrap">
+            <code className="text-xs bg-slate-100 border border-slate-200 rounded-md px-2.5 py-1.5 text-slate-700 truncate max-w-full">
+              /hub/{property.qrHubSlug ?? 'à-configurer'}
+            </code>
+            {property.qrHubSlug ? (
+              <Button
+                size="sm"
+                variant="outline"
+                className="bg-white border-slate-300"
+                onClick={() => window.open(`/hub/${property.qrHubSlug}`, '_blank', 'noopener')}
+              >
+                <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" /> Ouvrir
+              </Button>
+            ) : (
+              <Badge className="bg-slate-100 border-slate-200 text-slate-500 hover:bg-slate-100 font-semibold">
+                Non configuré
+              </Badge>
+            )}
+          </div>
+          <p className="mt-3 text-xs text-slate-400 leading-relaxed">
+            Ce slug est celui généré par l&apos;assistant de création. Les plaques QR du bien
+            restent indépendantes et pointent chacune vers leur propre hub.
+          </p>
+        </B2BCard>
       </section>
     </div>
   );

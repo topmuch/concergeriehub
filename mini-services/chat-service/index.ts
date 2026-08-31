@@ -118,6 +118,16 @@ async function ensureNextDevServer() {
 // Petit délai pour ne pas gêner le démarrage du service websocket.
 setTimeout(ensureNextDevServer, 1500);
 
+// [DEV-KEEPER v2] Boucle de surveillance : le sandbox peut tuer le
+// process `next dev` à tout moment (reaper). On sonde :3000 toutes
+// les 20 s et on relance si besoin. Idempotent grâce à la sonde.
+const KEEPER_INTERVAL_MS = 20_000;
+const keeperTimer = setInterval(() => {
+  void ensureNextDevServer();
+}, KEEPER_INTERVAL_MS);
+// Empêche le timer de bloquer l'arrêt du process.
+keeperTimer.unref?.();
+
 // Graceful shutdown
 process.on('SIGTERM', () => {
   console.log('[ChatService] Received SIGTERM signal, shutting down server...');

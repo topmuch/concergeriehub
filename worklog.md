@@ -275,3 +275,28 @@ Stage Summary:
 - État DB : Nadia revenue à free après test E2E ; 3 abonnements actifs démo inchangés (Sofia 9,90/mo, Thomas 199/an, Marie 99/an → MRR 34,73 €).
 - Choix : "Famille" non reprise (hors pivot B2B) ; le landing (#pricing) garde Découverte/Solo/Agence — harmonisation marketing éventuelle à faire plus tard.
 - Prochaine étape (attendre "NEXT") : ÉTAPE 11 — Coolify (.env.example, Dockerfile standalone, prisma migrate deploy, start.sh).
+
+---
+Task ID: 12
+Agent: Z.ai Code (orchestrator)
+Task: ÉTAPE 12 (V2) — Gestion multi-propriétés & équipe : refonte dashboard "Portfolio", modèles Prisma (Property.qrHubSlug, PropertyMember V2, Booking), wizard d'ajout, gestion d'équipe par rôles, vues restreintes CLEANER/MAINTENANCE.
+
+Work Log:
+- Schéma Prisma : `Property.qrHubSlug` (unique, nullable) + relation `bookings` ; `PropertyMember` enrichi (`permissions` JSON string, `invitedAt`, `acceptedAt`, rôles canoniques V2 'OWNER'|'MANAGER'|'CLEANER'|'MAINTENANCE' avec mapping legacy) ; nouveau modèle `Booking` (planning : checkIn/checkOut/guests/source/status/cleaningStatus/externalRef) → `db:push` OK sans perte.
+- `src/lib/team.ts` (nouveau) : MEMBER_ROLES + MEMBER_ROLE_META (label/emoji/description/vues autorisées), `normalizeMemberRole` (mapping legacy V1 → V2), `canManageTeam`.
+- `src/lib/b2b-server.ts` : `resolveUserMemberships` (adhésions acceptées + en attente), `canAccessProperty` exige `acceptedAt != null` pour les membres, `getUserRoleForProperty`, `getHostPlanLimits` (Solo=1 bien, Pro=10, Découverte=1), `generateUniquePropertySlug`/`slugifyPropertyName`.
+- APIs nouvelles : `/api/airbnb/properties` (GET portfolio : stats par bien — occupation 30 j calculée par nuits chevauchantes, scans 30 j, upsell 30 j, prochain séjour, QRs, équipe, invitations + POST wizard avec limite de plan + PIN hub bcrypt + membre OWNER auto) ; `/api/airbnb/properties/[id]` (GET/PATCH/DELETE, gardes OWNER/MANAGER) ; `/properties/[id]/members` (GET + POST invitation, compte existant requis) ; `/members/[memberId]` (PATCH accept/decline/rôle, DELETE retrait/retrait volontaire) ; `/properties/[id]/bookings` + `/[bookingId]` (CLEANER limité à cleaningStatus, MAINTENANCE 403) ; `/api/airbnb/my-assignments` (vues rôle).
+- Hub public `/api/public/hub/[slug]` : fallback sur `Property.qrHubSlug` (payload factorisé `buildPropertyPayload`, PIN Mode Hôte fonctionne aussi via slug du bien).
+- UI : `portfolio-content.tsx` (nouveau) — vue Portfolio (grille de cartes stats, totaux, chips sélecteur), wizard 3 étapes (Adresse → Type → Configuration QR avec slug éditable + PIN), bannière d'invitations accepter/refuser, redirection auto "Mes interventions" pour les rôles limités ; `dashboard-content.tsx` (props lockedPropertyId/onBack + panneau Équipe + carte Hub QR) ; `team-panel.tsx` (nouveau : liste membres, invitations en attente, invitation par email + rôle, changement de rôle, retrait) ; `page.tsx` dashboard → PortfolioContent.
+- Seed `scripts/seed-v2-team.ts` (idempotent) : backfill qrHubSlug (4 biens), membre OWNER par bien, comptes démo équipe (sophie/alex/nina @qrdomotik.roomscan.pro, pwd Demo2024!), adhésions (CLEANER + MANAGER acceptées, MAINTENANCE en attente), 12 réservations démo (passé/en cours/futur). mdp thomas@exemple.fr réinitialisé à Demo2024! pour l'E2E.
+- DEBUG serveur : le sandbox reaper tuait next dev — keeper v1 ne sondait qu'une fois ; ajout boucle de polling 20 s [DEV-KEEPER v2] dans mini-services/chat-service/index.ts ; découverte clé : le reaper tue les enfants du shell de l'agent → technique **double-fork orphelin** `( ( setsid nohup cmd & ) & )` re-parente vers PID 1 et SURVIT (vérifié PPID=1).
+- Bugs corrigés pendant l'E2E : doublons portfolio (bien possédé + membre OWNER → dédup par id), coordonnées optionnelles du wizard rejetées à tort (parseCoord : absent = null OK, invalide = 400).
+- Validation : ESLint 0 erreur, tsc 0 erreur (src), E2E curl 10/10 (portfolio 3 comptes, création 201, limite Solo 403 + message upgrade Pro, équipe 4 rôles, invitation→acceptation, CLEANER PATCH ménage OK, MAINTENANCE bookings 403, hub public par slug, nettoyage), agent-browser (Marie : portfolio/totaux/chips/carte/stats équipe+hub/wizard toast limite Pro ; Sophie : vue Mes interventions planning ménage + boutons Démarrer/Terminer fonctionnels ; Nina : bannière invitation → acceptation → vue réclamations techniques uniquement ; console 0 erreur ; mobile 390 px + footer sticky OK).
+
+Stage Summary:
+- ÉTAPE 12 livrée : Conciergerie Hub devient multi-propriétés (V2). Le dashboard hôte est une vue Portfolio (justification Pro 199 €/an : Solo limité à 1 bien, message d'upgrade natif).
+- Équipe opérationnelle avec 4 rôles à accès restreint (CLEANER → planning ménage avec MAJ de statut, MAINTENANCE → réclamations techniques, MANAGER → gestion complète hors suppression du bien, OWNER → tout).
+- Hub QR du bien disponible via /hub/[qrHubSlug] (fallback du flux plaques), PIN Mode Hôte configuré au wizard.
+- Monde démo enrichi : 4 comptes équipe (sophie/alex/nina/thomas), 12 réservations, occupation 30 % affichée.
+- Infra : serveur dev persistant via double-fork orphelin + keeper v2 (polling 20 s) — plus de mort subite de :3000.
+- Fichiers clés : src/lib/team.ts, src/lib/b2b-server.ts, src/app/api/airbnb/properties/**, src/app/api/airbnb/my-assignments, src/components/airbnb/{portfolio-content,team-panel,dashboard-content}.tsx, scripts/seed-v2-team.ts, mini-services/chat-service/index.ts.
