@@ -483,3 +483,24 @@ Stage Summary:
 - Le seed idempotent sert aussi d'outil de réparation (restauration d'offre supprimée en 1 commande).
 - Fichiers clés : prisma/schema.prisma (ServiceOffer), src/lib/orders.ts (parseOrderLines), src/app/api/public/service-orders/route.ts (re-pricing serveur), src/app/api/public/guest-app/route.ts (offers[]), src/app/api/airbnb/service-offers/route.ts (CRUD), src/components/guest-app/{types,tab-services}.tsx, src/components/airbnb/providers-content.tsx (CatalogDialog), scripts/seed-v3-service-offers.ts.
 - Reste en réserve pour 17.6+ : paiement Stripe in-app (encaissement à la commande), commission configurable par bien/prestataire, notification prestataire "nouvelle commande", édition sortOrder/drag du catalogue.
+
+---
+Task ID: SYNC-17.5
+Agent: Z.ai Code (session sync)
+Task: Synchroniser la version locale avec la version GitHub (demande utilisateur) — le repo local était en retard sur origin/main qui contenait déjà l'ÉTAPE 17.5 poussée depuis une autre session.
+
+Work Log:
+- Constat : local bba3837 en retard de 15 commits sur origin/main (84800a4 = ÉTAPE 17.5 complète) ; working tree propre → fast-forward sans risque.
+- git fetch (PAT en paramètre d'URL, credential helper éphémère) + git merge --ff-only → local = origin/main = 84800a4. 70 fichiers, +12 299 lignes (V2 complet + V3 16→17.5).
+- bun install : 0 changement de dépendance.
+- bun run db:push : schéma synchronisé (ServiceOffer inclus), Prisma Client 6.19.2 régénéré.
+- Base SQLite locale VIDE (0 user/bien/prestataire — sandbox restaurée fraîche) → chaîne de seeds rejouée dans l'ordre documenté : seed-demo-users, seed-b2b-demo, seed-admin-demo, seed-v2-team, seed-v2-automations, seed-v3-provider-accounts, puis (après fix slug) seed-v3-guest-app, seed-v3-service-orders, seed-v3-service-offers.
+- INCIDENT RÉSOLU — suffixe de plaque aléatoire : le reseed a généré qrHubSlug "loft-canal-saint-martin-3rf3" alors que les seeds V3 résolvent le bien via "…-11wz" codé en dur → UPDATE ponctuel du champ Property.qrHubSlug vers "loft-canal-saint-martin-11wz" (aligne app invitée + seeds ; aucune URL hub plaques cassée, elles utilisent publicSlug).
+- INCIDENT RÉSOLU — dev server : le processus d'origine (lancé par /start.sh) avait été arrêté ; les relances nohup/setsid en arrière-plan mouraient entre deux appels shell → méthode du double-fork `( bun run dev > /dev/null 2>&1 & )` reprise du pattern start.sh : serveur stable PID 3058. Le "Unknown argument qrHubSlug" (500 API guest-app) était le vieux Prisma Client en cache du processus d'avant-pull — résolu par le redémarrage.
+- VALIDATION E2E browser : app invitée /app/hub/loft-canal-saint-martin-11wz/guest?b=<Camille> → onglet Services "dès X €" ×5 + "Mes commandes (4)" ; dialog Morning Box → radiogroup M(12€)/L(18€) → bascule L → POST /api/public/service-orders 200 → "Mes commandes (5)" ; DB : nouvelle ServiceOrder PENDING totalAmount 18 = re-prixé serveur depuis l'offre (client n'a envoyé que {offerId, name, qty}), commission 2.70 (15 %). tsc/lint non rejoués (code identique au commit poussé déjà validé).
+
+Stage Summary:
+- Local = origin/main = 84800a4 (ÉTAPE 17.5) : aucune divergence git restante, working tree propre avant commit worklog.
+- Procédure de restauration complète documentée (base vide → 9 seeds dans l'ordre + fix qrHubSlug "…-11wz") — reproductible si la base est re-wipée.
+- Chaîne 17.5 revalidée de bout en bout sur l'environnement resynchronisé : catalogue → formule → commande → re-pricing serveur → split 15 %.
+- Prochaine étape projet : 17.6 (paiement Stripe in-app) — en attente du NEXT de l'utilisateur.
