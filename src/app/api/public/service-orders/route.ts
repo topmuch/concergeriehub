@@ -32,6 +32,8 @@ import {
 // ÉTAPE 17.5 : le prix n'est JAMAIS cru côté client — chaque ligne
 // est re-prixée serveur : offre catalogue (offerId, restreinte à
 // propertyId+providerId+active) sinon offre standard (hourlyRate).
+// ÉTAPE 17.6 : POST /[id]/pay encaisse la commande (Checkout Session
+// Stripe ou mode démo dev) — GET expose paymentStatus à l'invité.
 // =============================================================
 
 interface ResolvedProperty {
@@ -271,6 +273,7 @@ export async function GET(req: Request) {
     }
 
     // ⚠️ Jamais de commission/hostEarning côté invité — totalAmount uniquement.
+    // ÉTAPE 17.6 : paymentStatus exposé (badge 💳 + « Payer maintenant »).
     const orders = await db.serviceOrder.findMany({
       where: { bookingId: stay.id },
       orderBy: { createdAt: 'desc' },
@@ -278,6 +281,7 @@ export async function GET(req: Request) {
       select: {
         id: true,
         status: true,
+        paymentStatus: true,
         totalAmount: true,
         items: true,
         deliveryDate: true,

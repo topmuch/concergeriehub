@@ -1,9 +1,12 @@
 // =============================================================
 // /api/stripe/webhook — ÉTAPE 10 : webhook Stripe (abonnements HÔTE)
+// ÉTAPE 17.6 : commandes service — checkout.session.completed portant
+// metadata.serviceOrderId → commande PAYÉE (markServiceOrderPaid,
+// idempotent) au lieu d'une activation d'abonnement.
 //
 // Événements traités :
-//  - checkout.session.completed   → activation (Subscription active
-//    + Transaction + User.selectedPlan mis à jour automatiquement)
+//  - checkout.session.completed   → abonnement (metadata userId/plan)
+//    OU commande service (metadata serviceOrderId) → PAID + Transaction
 //  - customer.subscription.updated → synchronisation statut/période
 //    (active, past_due, cancelled…)
 //  - customer.subscription.deleted → résiliation + User → 'free'
@@ -16,6 +19,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type Stripe from 'stripe';
 import { db } from '@/lib/db';
+import { markServiceOrderPaid } from '@/lib/payments-server';
 
 const isSimulation = !process.env.STRIPE_SECRET_KEY;
 
@@ -87,7 +91,26 @@ export async function POST(request: NextRequest) {
 // ------------------------------------------------------------
 
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
-  const { userId, plan, billingCycle } = session.metadata ?? {};
+  const { userId, plan, billingCycle, serviceOrderId } = session.metadata ?? {};
+
+  // ── ÉTAPE 17.6 : commande service payée (mode 'payment') ──
+  if (serviceOrderId) {
+    const result = await markServiceOrderPaid(serviceOrderId, {
+      stripePaymentId:
+        typeof session.payment_intent === 'string' ? session.payment_intent : null,
+      stripeSessionId: session.id,
+      paidAmount: session.amount_total ? session.amount_total / 100 : null,
+    });
+    if (result.marked) {
+      console.log(`[stripe webhook] Commande service ${serviceOrderId} PAYÉE`);
+    } else if (result.alreadyPaid) {
+      console.log(`[stripe webhook] Commande service ${serviceOrderId} déjà payée (idempotent)`);
+    } else {
+      console.warn(`[stripe webhook] Commande service ${serviceOrderId} introuvable`);
+    }
+    return;
+  }
+
   if (!userId || !plan) {
     console.warn('[stripe webhook] checkout.session.completed sans metadata hôte');
     return;

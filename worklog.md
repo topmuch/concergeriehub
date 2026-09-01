@@ -547,3 +547,20 @@ Stage Summary:
 - Plan de remédiation sécurité (5 points) : EXÉCUTÉ, VÉRIFIÉ sur disque, REVALIDÉ (lint/tsc/curl/browser) et POUSSÉ — commit 03c01e9 sur origin/main. Task SEC-AUDIT → CLOSED.
 - Note mémoire pour tests futurs : POST /api/public/hub/[slug]/host = auth par hubSlug de PLAQUE (ex. loft-canal-hub) ; guest-app = ?slug= (Property.qrHubSlug) + &b= (booking) ; PhysicalQrCode filtre par status (pas isActive).
 - Prochaine étape projet : ÉTAPE 17.6 — Paiement Stripe in-app (encaissement à la commande) — en attente du NEXT de l'utilisateur.
+
+---
+Task ID: 17.6-a
+Agent: Z.ai Code
+Task: ÉTAPE 17.6 — Paiement Stripe in-app (encaissement à la commande) — sous-étape a : backend.
+
+Work Log:
+- prisma/schema.prisma : ServiceOrder + 4 champs (paymentStatus 'UNPAID'|'PAID'|'REFUNDED'|'FAILED', stripeSessionId, stripePaymentId, paidAt) + index paymentStatus ; bun run db:push OK (Client 6.19.2 régénéré).
+- src/lib/payments-server.ts (nouveau) : markServiceOrderPaid() idempotent (updateMany where != PAID → count 0 = no-op, jamais de double Transaction), warn anti-fraude si montant Stripe < totalAmount, Transaction type 'service_order' (payerId/receiverId null : invité non-compte, encaissement plateforme — reversement = étape future) ; orderStripeDescription().
+- POST /api/public/service-orders/[id]/pay (nouveau) : publique sans confiance client — bien résolu par slug, commande DOIT appartenir au bien (404), bookingId exige b exact (403) + séjour non annulé ; rate limit 6/min/commande ; CANCELLED → 400 ; déjà PAID → alreadyPaid ; montant = order.totalAmount serveur JAMAIS lu du client ; STRIPE_SECRET_KEY → Checkout Session mode 'payment' (metadata serviceOrderId/propertyId/bookingId, success/cancel → app invitée ?paid=/paycancel=) ; sinon DÉMO dev-only (503 en prod) via markServiceOrderPaid.
+- src/app/api/stripe/webhook/route.ts : handleCheckoutCompleted branche serviceOrderId EN PREMIER → markServiceOrderPaid (payment_intent, session.id, amount_total vérifié) puis return ; flux abonnements hôte inchangé.
+- GET /api/public/service-orders : select + paymentStatus (commission/hostEarning toujours jamais exposés).
+
+Stage Summary:
+- Backend paiement complet validé curl : création 85 € re-prixé serveur → POST /pay {mode:'demo',PAID} → DB PAID + paidAt + cs_demo_ + UNE Transaction 85 € completed → re-pay {alreadyPaid:true} → GET expose paymentStatus:PAID ; anti-IDOR 403 (mauvais b) / 404 (autre bien) ; CANCELLED → 400 ; lint 0, tsc 0.
+- INCIDENT RÉSOLU : 500 « Unknown field paymentStatus » = serveur zombie démarré 16:43 (AVANT db:push 18:20) — pkill next + double-fork relancé (PID 10447) ; le kill lsof -t -i:3000 seul avait laissé des workers next.
+- En attente : 17.6-b (UI invitée : bouton payer, badge 💳, retour ?paid=) puis 17.6-c (visibilité hôte/prestataire + E2E + commit).

@@ -1086,6 +1086,13 @@ model ServiceOrder {
   deliveryDate DateTime? @map("delivery_date")
   createdAt    DateTime  @default(now()) @map("created_at")
 
+  // ÉTAPE 17.6 — Paiement in-app (orthogonal au cycle de vie : une
+  // commande peut être PENDING & payée d'avance, ou payée à la livraison)
+  paymentStatus   String    @default("UNPAID")  // PaymentStatus : 'UNPAID' | 'PAID' | 'REFUNDED' | 'FAILED'
+  stripeSessionId String?   @map("stripe_session_id") // Checkout Session (mode 'payment')
+  stripePaymentId String?   @map("stripe_payment_id") // PaymentIntent confirmé (webhook)
+  paidAt          DateTime? @map("paid_at")
+
   provider Provider @relation(fields: [providerId], references: [id])
 
   @@index([propertyId])
@@ -1093,6 +1100,7 @@ model ServiceOrder {
   @@index([bookingId])
   @@index([status])
   @@index([createdAt])
+  @@index([paymentStatus])
   @@map("service_orders")
 }
 
