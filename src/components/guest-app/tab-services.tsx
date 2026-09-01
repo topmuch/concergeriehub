@@ -4,10 +4,12 @@ import { useCallback, useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   GUEST_ORDER_STATUS_META,
+  GUEST_PAYMENT_STATUS_META,
   formatEurGuest,
   type GuestBookingInfo,
   type GuestOrder,
   type GuestOrderStatus,
+  type GuestPaymentStatus,
   type GuestPayload,
   type GuestService,
 } from './types';
@@ -24,9 +26,13 @@ import {
 // ÉTAPE 17.5 (V3) — CATALOGUE FIN : si le prestataire a des offres
 //   pour ce bien (offers[]), l'invité choisit SA formule (offerId)
 //   — le prix est re-résolu serveur, jamais envoyé par le client.
+// ÉTAPE 17.6 (V3) — PAIEMENT IN-APP : la commande est encaissée
+//   immédiatement (Checkout Session Stripe → redirection, ou mode
+//   démo en dev). Commandes impayées → bouton « Payer » dans
+//   « Mes commandes ». Bandeau retour ?paid= / ?paycancel=.
 // =============================================================
 
-export function TabServices({ slug, services, contact, propertyName, booking, bookingId, online }: {
+export function TabServices({ slug, services, contact, propertyName, booking, bookingId, online, payFlash }: {
   slug: string;
   services: GuestService[];
   contact: GuestPayload['guest']['contact'];
@@ -34,9 +40,19 @@ export function TabServices({ slug, services, contact, propertyName, booking, bo
   booking: GuestBookingInfo | null;
   bookingId: string | null;
   online: boolean;
+  /** ÉTAPE 17.6 — retour Stripe Checkout consommé par GuestApp. */
+  payFlash?: { type: 'paid' | 'cancelled'; orderId?: string };
 }) {
   const [selected, setSelected] = useState<GuestService | null>(null);
   const [orders, setOrders] = useState<GuestOrder[] | null>(null);
+  // ÉTAPE 17.6 — bandeau retour de paiement (auto-dismiss 8 s)
+  const [payBanner, setPayBanner] = useState<'paid' | 'cancelled' | null>(payFlash?.type ?? null);
+
+  useEffect(() => {
+    if (!payBanner) return;
+    const t = setTimeout(() => setPayBanner(null), 8000);
+    return () => clearTimeout(t);
+  }, [payBanner]);
 
   // "Mes commandes" : rechargées à l'ouverture de l'onglet (et après commande)
   const refreshOrders = useCallback(() => {
@@ -85,6 +101,22 @@ export function TabServices({ slug, services, contact, propertyName, booking, bo
         </p>
       </div>
 
+      {/* ÉTAPE 17.6 — bandeau retour Stripe Checkout */}
+      {payBanner && (
+        <div
+          role="status"
+          className={`rounded-2xl border p-3.5 text-xs font-semibold leading-relaxed ${
+            payBanner === 'paid'
+              ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+              : 'border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300'
+          }`}
+        >
+          {payBanner === 'paid'
+            ? '💳 Paiement confirmé — merci ! Votre commande est transmise au partenaire.'
+            : '💳 Paiement non finalisé — réglez votre commande depuis « Mes commandes » ci-dessous.'}
+        </div>
+      )}
+
       {/* ── Mes commandes (suivi du séjour courant) ── */}
       {orders && orders.length > 0 && (
         <section className="bg-card border border-border rounded-2xl shadow-sm p-4" aria-label="Mes commandes">
@@ -94,7 +126,14 @@ export function TabServices({ slug, services, contact, propertyName, booking, bo
           </h2>
           <ul className="mt-3 space-y-2 max-h-56 overflow-y-auto pr-1">
             {orders.map((o) => (
-              <OrderChip key={o.id} order={o} />
+              <OrderChip
+                key={o.id}
+                order={o}
+                slug={slug}
+                bookingId={bookingId}
+                online={online}
+                onChanged={refreshOrders}
+              />
             ))}
           </ul>
         </section>
@@ -159,25 +198,95 @@ export function TabServices({ slug, services, contact, propertyName, booking, bo
   );
 }
 
-/** Ligne compacte de suivi de commande. */
-function OrderChip({ order }: { order: GuestOrder }) {
+/** Ligne compacte de suivi de commande — avec paiement in-app (17.6). */
+function OrderChip({ order, slug, bookingId, online, onChanged }: {
+  order: GuestOrder;
+  slug: string;
+  bookingId: string | null;
+  online: boolean;
+  onChanged: () => void;
+}) {
   const meta = GUEST_ORDER_STATUS_META[order.status as GuestOrderStatus] ?? GUEST_ORDER_STATUS_META.PENDING;
+  const payMeta = GUEST_PAYMENT_STATUS_META[(order.paymentStatus as GuestPaymentStatus) ?? 'UNPAID'] ?? GUEST_PAYMENT_STATUS_META.UNPAID;
   const items = Array.isArray(order.items) ? (order.items as { name: string; qty: number }[]) : [];
   const summary = items.map((it) => `${it.qty}× ${it.name}`).join(', ') || 'Commande';
+
+  // Paiement à finaliser : UNPAID/FAILED sur une commande non annulée
+  const payPending =
+    (order.paymentStatus === 'UNPAID' || order.paymentStatus === 'FAILED') &&
+    order.status !== 'CANCELLED';
+
+  const [paying, setPaying] = useState(false);
+  const [payError, setPayError] = useState('');
+
+  const pay = () => {
+    if (paying || !online) {
+      if (!online) setPayError('Hors-ligne : reconnectez-vous au Wi-Fi pour payer.');
+      return;
+    }
+    setPaying(true);
+    setPayError('');
+    // ÉTAPE 17.6 — le montant n'est JAMAIS envoyé : le serveur facture
+    // order.totalAmount. Stripe réel → redirection Checkout ; démo → PAID.
+    fetch(`/api/public/service-orders/${encodeURIComponent(order.id)}/pay?slug=${encodeURIComponent(slug)}${bookingId ? `&b=${encodeURIComponent(bookingId)}` : ''}`, {
+      method: 'POST',
+    })
+      .then(async (res) => {
+        const j = await res.json().catch(() => null);
+        if (j?.ok && j.mode === 'stripe' && j.url) {
+          window.location.assign(j.url); // retour ?paid= confirmé par webhook
+          return;
+        }
+        if (!j?.ok) {
+          setPayError(j?.message || 'Le paiement a échoué. Réessayez dans un instant.');
+          setPaying(false);
+          return;
+        }
+        setPaying(false);
+        onChanged();
+      })
+      .catch(() => {
+        setPayError('Connexion impossible. Vérifiez votre réseau.');
+        setPaying(false);
+      });
+  };
+
   return (
-    <li className="flex items-center justify-between gap-3 rounded-xl border border-border bg-secondary/40 px-3 py-2.5">
-      <div className="min-w-0">
-        <p className="text-xs font-bold text-card-foreground truncate">
-          {order.provider.businessName}
+    <li className="rounded-xl border border-border bg-secondary/40 px-3 py-2.5">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-xs font-bold text-card-foreground truncate">
+            {order.provider.businessName}
+          </p>
+          <p className="text-[11px] text-muted-foreground truncate">{summary}</p>
+        </div>
+        <div className="shrink-0 text-right">
+          <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full border ${meta.className}`}>
+            {meta.emoji} {meta.label}
+          </span>
+          {payPending ? (
+            <button
+              type="button"
+              onClick={pay}
+              disabled={paying}
+              aria-label={`Payer ${formatEurGuest(order.totalAmount)} pour ${order.provider.businessName}`}
+              className="mt-1 inline-flex items-center gap-1 h-7 px-2.5 rounded-lg bg-accent text-accent-foreground text-[11px] font-bold hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-60 cursor-pointer"
+            >
+              {paying ? 'Paiement…' : `💳 Payer · ${formatEurGuest(order.totalAmount)}`}
+            </button>
+          ) : (
+            <p className="text-[11px] font-bold text-card-foreground mt-0.5">
+              {order.paymentStatus === 'PAID' && <span className={payMeta.className + ' font-bold'}>💳 Payée · </span>}
+              {formatEurGuest(order.totalAmount)}
+            </p>
+          )}
+        </div>
+      </div>
+      {payError && (
+        <p className="mt-1.5 text-[11px] font-semibold text-rose-600 dark:text-rose-300" role="alert">
+          {payError}
         </p>
-        <p className="text-[11px] text-muted-foreground truncate">{summary}</p>
-      </div>
-      <div className="shrink-0 text-right">
-        <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full border ${meta.className}`}>
-          {meta.emoji} {meta.label}
-        </span>
-        <p className="text-[11px] font-bold text-card-foreground mt-0.5">{formatEurGuest(order.totalAmount)}</p>
-      </div>
+      )}
     </li>
   );
 }
@@ -196,7 +305,8 @@ function ServiceSheet({ slug, service, contact, propertyName, booking, bookingId
   const hasOffers = service.offers.length > 0;
   const [qty, setQty] = useState(1);
   const [offerId, setOfferId] = useState<string>(service.offers[0]?.id ?? '');
-  const [state, setState] = useState<'idle' | 'sending' | 'done'>('idle');
+  const [state, setState] = useState<'idle' | 'sending' | 'paying' | 'done'>('idle');
+  const [paidOk, setPaidOk] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
   const selectedOffer = service.offers.find((o) => o.id === offerId) ?? service.offers[0] ?? null;
@@ -236,8 +346,39 @@ function ServiceSheet({ slug, service, contact, propertyName, booking, bookingId
           setState('idle');
           return;
         }
-        setState('done');
-        onOrdered();
+        // ÉTAPE 17.6 — ENCAISSEMENT IMMÉDIAT : la commande existe, on
+        // paie. Le montant n'est pas envoyé (totalAmount serveur).
+        // Stripe réel → redirection Checkout (retour ?paid= via
+        // webhook) ; démo dev → PAID direct via le même code path.
+        const orderId = typeof j.order?.id === 'string' ? j.order.id : '';
+        if (!orderId || !bookingId) {
+          // Commande sans séjour rattaché : pas de paiement in-app
+          setPaidOk(false);
+          setState('done');
+          onOrdered();
+          return;
+        }
+        setState('paying');
+        return fetch(
+          `/api/public/service-orders/${encodeURIComponent(orderId)}/pay?slug=${encodeURIComponent(slug)}&b=${encodeURIComponent(bookingId)}`,
+          { method: 'POST' },
+        )
+          .then(async (payRes) => {
+            const pj = await payRes.json().catch(() => null);
+            if (pj?.ok && pj.mode === 'stripe' && pj.url) {
+              window.location.assign(pj.url); // l'invité reviendra avec ?paid=<id>
+              return;
+            }
+            setPaidOk(Boolean(pj?.ok && (pj.paymentStatus === 'PAID' || pj.alreadyPaid)));
+            setState('done');
+            onOrdered();
+          })
+          .catch(() => {
+            // Paiement raté : la commande EXISTE — payable depuis Mes commandes
+            setPaidOk(false);
+            setState('done');
+            onOrdered();
+          });
       })
       .catch(() => {
         setErrorMsg('Connexion impossible. Vérifiez votre réseau.');
@@ -395,25 +536,40 @@ function ServiceSheet({ slug, service, contact, propertyName, booking, bookingId
                 className="mt-4 rounded-xl border border-emerald-500/40 bg-emerald-500/10 p-4 text-center"
                 role="status"
               >
-                <p className="text-sm font-bold text-emerald-700 dark:text-emerald-300">
-                  ✅ Commande envoyée au partenaire&nbsp;!
-                </p>
-                <p className="mt-1 text-[11px] text-muted-foreground leading-relaxed">
-                  Suivez son statut dans «&nbsp;Mes commandes&nbsp;». Votre hôte la confirme sous peu.
-                </p>
+                {paidOk ? (
+                  <>
+                    <p className="text-sm font-bold text-emerald-700 dark:text-emerald-300">
+                      ✅ Commande envoyée et payée&nbsp;!
+                    </p>
+                    <p className="mt-1 text-[11px] text-muted-foreground leading-relaxed">
+                      Le partenaire est notifié — suivez son statut dans «&nbsp;Mes commandes&nbsp;».
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm font-bold text-emerald-700 dark:text-emerald-300">
+                      ✅ Commande envoyée au partenaire&nbsp;!
+                    </p>
+                    <p className="mt-1 text-[11px] text-muted-foreground leading-relaxed">
+                      Finalisez le paiement depuis «&nbsp;Mes commandes&nbsp;» quand vous le souhaitez.
+                    </p>
+                  </>
+                )}
               </div>
             ) : (
               <button
                 type="button"
                 onClick={order}
-                disabled={state === 'sending'}
+                disabled={state !== 'idle'}
                 className="mt-4 w-full h-12 rounded-xl bg-accent text-accent-foreground font-bold text-sm hover:opacity-90 active:scale-[0.99] transition-all disabled:opacity-60 cursor-pointer"
               >
                 {state === 'sending'
                   ? 'Envoi en cours…'
-                  : online
-                    ? `Commander — ${formatEurGuest(total)}`
-                    : '📴 Indisponible hors-ligne'}
+                  : state === 'paying'
+                    ? '💳 Paiement en cours…'
+                    : online
+                      ? `Commander — ${formatEurGuest(total)}`
+                      : '📴 Indisponible hors-ligne'}
               </button>
             )}
           </>

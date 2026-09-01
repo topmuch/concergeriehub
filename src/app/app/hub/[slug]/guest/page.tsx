@@ -81,10 +81,20 @@ export default async function GuestAppPage({ params, searchParams }: PageProps) 
   const sp = await searchParams;
   const bookingParam = typeof sp.b === 'string' ? sp.b : undefined;
 
+  // ÉTAPE 17.6 — retour Stripe Checkout : ?paid=<orderId> (succès,
+  // confirmé par webhook) ou ?paycancel=<orderId> (abandon).
+  const paidParam = typeof sp.paid === 'string' ? sp.paid : undefined;
+  const payCancelParam = typeof sp.paycancel === 'string' ? sp.paycancel : undefined;
+  const payFlash = paidParam
+    ? ({ type: 'paid' as const, orderId: paidParam })
+    : payCancelParam
+      ? ({ type: 'cancelled' as const, orderId: payCancelParam })
+      : undefined;
+
   return (
     <GuestScope>
       <ServiceWorkerRegistrar />
-      <GuestApp slug={slug} initialBookingId={bookingParam} />
+      <GuestApp slug={slug} initialBookingId={bookingParam} payFlash={payFlash} />
     </GuestScope>
   );
 }

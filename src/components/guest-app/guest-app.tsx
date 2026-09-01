@@ -15,11 +15,18 @@ import { GUEST_TABS, type GuestPayload, type GuestTab } from './types';
 // • Dark mode automatique (via GuestScope + prefers-color-scheme)
 // • Bannière hors-ligne + données en cache (Service Worker)
 // • Personnalisation via ?b=<bookingId> (mémorisée localement)
+// ÉTAPE 17.6 — payFlash (retour Stripe ?paid= / ?paycancel=)
 // =============================================================
 
 const TAB_ORDER: GuestTab[] = ['home', 'guide', 'services', 'help'];
 
-export function GuestApp({ slug, initialBookingId }: { slug: string; initialBookingId?: string }) {
+/** Retour de paiement Stripe Checkout (ÉTAPE 17.6). */
+export interface PayFlash {
+  type: 'paid' | 'cancelled';
+  orderId?: string;
+}
+
+export function GuestApp({ slug, initialBookingId, payFlash }: { slug: string; initialBookingId?: string; payFlash?: PayFlash }) {
   const [payload, setPayload] = useState<GuestPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
@@ -31,6 +38,23 @@ export function GuestApp({ slug, initialBookingId }: { slug: string; initialBook
   const bookingIdRef = useRef<string | undefined>(initialBookingId);
 
   const storageKey = `ch-guest-booking-${slug}`;
+
+  // ÉTAPE 17.6 — retour Stripe : nettoie ?paid= / ?paycancel= de l'URL
+  // (le bandeau reste affiché 8 s via TabServices, mais un refresh
+  // complet ne rejoue PAS le flash — le webhook a déjà confirmé).
+  useEffect(() => {
+    if (!payFlash) return;
+    if (typeof window !== 'undefined' && window.history?.replaceState) {
+      try {
+        const u = new URL(window.location.href);
+        u.searchParams.delete('paid');
+        u.searchParams.delete('paycancel');
+        window.history.replaceState(null, '', u.toString());
+      } catch {
+        /* URL non nettoyable — flash sans conséquence */
+      }
+    }
+  }, [payFlash]);
 
   // ── Chargement du payload (avec booking mémorisé) ──
   useEffect(() => {
@@ -182,6 +206,7 @@ export function GuestApp({ slug, initialBookingId }: { slug: string; initialBook
                   booking={payload.guest.booking}
                   bookingId={payload.guest.booking ? bookingId ?? null : null}
                   online={online}
+                  payFlash={payFlash}
                 />
               )}
               {tab === 'help' && (

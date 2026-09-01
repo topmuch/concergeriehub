@@ -564,3 +564,19 @@ Stage Summary:
 - Backend paiement complet validé curl : création 85 € re-prixé serveur → POST /pay {mode:'demo',PAID} → DB PAID + paidAt + cs_demo_ + UNE Transaction 85 € completed → re-pay {alreadyPaid:true} → GET expose paymentStatus:PAID ; anti-IDOR 403 (mauvais b) / 404 (autre bien) ; CANCELLED → 400 ; lint 0, tsc 0.
 - INCIDENT RÉSOLU : 500 « Unknown field paymentStatus » = serveur zombie démarré 16:43 (AVANT db:push 18:20) — pkill next + double-fork relancé (PID 10447) ; le kill lsof -t -i:3000 seul avait laissé des workers next.
 - En attente : 17.6-b (UI invitée : bouton payer, badge 💳, retour ?paid=) puis 17.6-c (visibilité hôte/prestataire + E2E + commit).
+
+---
+Task ID: 17.6-b
+Agent: Z.ai Code
+Task: ÉTAPE 17.6 — Paiement Stripe in-app — sous-étape b : UI invitée.
+
+Work Log:
+- types.ts : GuestPaymentStatus + GuestOrder.paymentStatus + GUEST_PAYMENT_STATUS_META (PAID émeraude / UNPAID orange / REFUNDED muted / FAILED rose).
+- page.tsx (guest) : lecture serveur ?paid= / ?paycancel= → prop payFlash vers GuestApp.
+- guest-app.tsx : type PayFlash exporté, prop payFlash, useEffect history.replaceState (nettoie paid/paycancel — un refresh complet ne rejoue PAS le flash).
+- tab-services.tsx : (1) bandeau retour de paiement auto-dismiss 8 s (émeraude « Paiement confirmé » / ambre « non finalisé ») ; (2) ServiceSheet — après création commande → ENCAISSEMENT IMMÉDIAT : mode stripe → window.location.assign(url Checkout), mode démo → PAID direct, échec pay → commande existante payable depuis Mes commandes (jamais de double commande) ; confirmation 2 variantes (« envoyée et payée » / « envoyée — finalisez le paiement ») ; bouton « 💳 Paiement en cours… » ; (3) OrderChip — badge « 💳 Payée » sur PAID, bouton « 💳 Payer · X € » sur UNPAID/FAILED non annulées, POST /pay sans aucun montant (totalAmount serveur), erreurs affichées, refresh auto après paiement.
+- lint 0, tsc 0.
+
+Stage Summary:
+- E2E browser validé : bouton Payer 18 € (Morning Box) → ligne passée « 💳 Payée · 18,00 € » ; sheet Paris Transfer → formule CDG 79 € → Commander → auto-encaissement → « ✅ Commande envoyée et payée ! » ; Mes commandes (7) cohérentes ; DB : 3 commandes PAID (18/79/85 €) = 3 Transactions 'service_order' ; bandeau ?paid= affiché + URL nettoyée (paid= supprimé après chargement).
+- Reste : 17.6-c (visibilité paiement côté hôte/prestataire + E2E final + commit).

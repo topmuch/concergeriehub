@@ -5,6 +5,7 @@
 // (miroir du GET /api/public/service-orders)
 // ÉTAPE 17.5 — GuestServiceOffer : catalogue fin par bien (offre
 // précise = offerId, prix re-résolu serveur au POST).
+// ÉTAPE 17.6 — paymentStatus (paiement in-app, miroir du GET).
 // =============================================================
 
 /** Offre du catalogue fin d'un prestataire pour CE bien (17.5). */
@@ -31,9 +32,13 @@ export interface GuestService {
 
 export type GuestOrderStatus = 'PENDING' | 'CONFIRMED' | 'PREPARING' | 'DELIVERED' | 'CANCELLED';
 
+/** ÉTAPE 17.6 — statut de paiement (orthogonal au cycle de vie). */
+export type GuestPaymentStatus = 'UNPAID' | 'PAID' | 'REFUNDED' | 'FAILED';
+
 export interface GuestOrder {
   id: string;
   status: GuestOrderStatus;
+  paymentStatus: GuestPaymentStatus;
   totalAmount: number;
   items: { name: string; qty: number; unitPrice: number }[] | unknown;
   deliveryDate: string | null;
@@ -104,6 +109,14 @@ export const GUEST_ORDER_STATUS_META: Record<GuestOrderStatus, { label: string; 
   PREPARING: { label: 'En préparation', emoji: '🟠', className: 'bg-orange-500/15 text-orange-700 dark:text-orange-300 border-orange-500/40' },
   DELIVERED: { label: 'Livrée', emoji: '🟢', className: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/40' },
   CANCELLED: { label: 'Annulée', emoji: '⚪', className: 'bg-rose-500/10 text-rose-600 dark:text-rose-300 border-rose-400/30' },
+};
+
+/** ÉTAPE 17.6 — métadonnées badge paiement (chips invité). */
+export const GUEST_PAYMENT_STATUS_META: Record<GuestPaymentStatus, { label: string; emoji: string; className: string }> = {
+  PAID: { label: 'Payée', emoji: '💳', className: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/40' },
+  UNPAID: { label: 'À payer', emoji: '💳', className: 'bg-orange-500/15 text-orange-700 dark:text-orange-300 border-orange-500/40' },
+  REFUNDED: { label: 'Remboursée', emoji: '↩️', className: 'bg-muted text-muted-foreground border-border' },
+  FAILED: { label: 'Paiement échoué', emoji: '⚠️', className: 'bg-rose-500/10 text-rose-600 dark:text-rose-300 border-rose-400/30' },
 };
 
 /** Format FR : "36,00 €" */
