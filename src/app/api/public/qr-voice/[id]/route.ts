@@ -1,11 +1,16 @@
 import { NextResponse } from 'next/server';
 import { writeFile, mkdir } from 'fs/promises';
-import { join } from 'path';
+import { join, basename } from 'path';
 import { db } from '@/lib/db';
 import crypto from 'crypto';
+import { rateLimit } from '@/lib/orders';
 
 const UPLOAD_DIR = join(process.cwd(), 'public', 'uploads', 'voice');
 const MAX_DURATION_SEC = 30;
+const MAX_FILE_SIZE_KB = 500;
+
+// SÉCURITÉ : allowlist stricte des extensions — empêche tout path traversal.
+const ALLOWED_AUDIO_EXT = new Set(['webm', 'ogg', 'mp3', 'm4a', 'wav']);
 
 // POST: Upload a voice message linked to a QR code's home
 export async function POST(
@@ -14,6 +19,10 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
+    // Anti-spam : max 10 messages/minute/QR.
+    if (!rateLimit(`qrvoice:${id}`, 10)) {
+      return NextResponse.json({ error: 'Trop de tentatives. Réessayez dans un instant.' }, { status: 429 });
+    }
     const formData = await req.formData();
     const audio = formData.get('audio') as File | null;
     const senderName = (formData.get('senderName') as string) || 'Invit\u00e9';
@@ -28,6 +37,10 @@ export async function POST(
     if (durationSec > MAX_DURATION_SEC) {
       return NextResponse.json({ error: `Max ${MAX_DURATION_SEC} secondes` }, { status: 400 });
     }
+    const fileSizeKb = Math.round(audio.size / 1024);
+    if (fileSizeKb > MAX_FILE_SIZE_KB) {
+      return NextResponse.json({ error: 'Fichier trop volumineux' }, { status: 400 });
+    }
 
     // Find the QR code and its home
     const qrCode = await db.qrCode.findUnique({
@@ -41,16 +54,15 @@ export async function POST(
     // Ensure upload dir exists
     await mkdir(UPLOAD_DIR, { recursive: true });
 
-    // Generate unique filename
-    const ext = audio.name?.split('.').pop() || 'webm';
+    // Generate unique filename — extension issue d'une allowlist, jamais du client
+    const clientExt = (audio.name?.split('.').pop() || '').toLowerCase();
+    const ext = ALLOWED_AUDIO_EXT.has(clientExt) ? clientExt : 'webm';
     const filename = `${qrCode.propertyId}-${crypto.randomBytes(8).toString('hex')}.${ext}`;
-    const filePath = join(UPLOAD_DIR, filename);
+    const filePath = join(UPLOAD_DIR, basename(filename));
 
     // Save file
     const bytes = new Uint8Array(await audio.arrayBuffer());
     await writeFile(filePath, bytes);
-
-    const fileSizeKb = Math.round(audio.size / 1024);
 
     // Create DB record
     const voiceMsg = await db.voiceMessage.create({
@@ -85,7 +97,8 @@ export async function GET(
   try {
     const { id } = await params;
     const url = new URL(req.url);
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '20'), 50);
+    const parsedLimit = parseInt(url.searchParams.get('limit') || '20', 10);
+    const limit = Math.min(Number.isFinite(parsedLimit) ? parsedLimit : 20, 50) || 20;
 
     // Find the QR code and its home
     const qrCode = await db.qrCode.findUnique({

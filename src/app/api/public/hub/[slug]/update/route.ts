@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { compare, hash } from 'bcryptjs';
 import { db } from '@/lib/db';
+import { rateLimit } from '@/lib/orders';
 
 const DEMO_SLUG = 'demo-hub';
 const isDemo = (slug: string) => slug === DEMO_SLUG;
@@ -69,15 +70,23 @@ export async function PUT(
       return NextResponse.json({ error: 'Logement non trouvé' }, { status: 404 });
     }
 
-    // ── PIN verification (if home has a PIN configured) ──
-    if (home.pinHash) {
-      if (!pin || !/^\d{4}$/.test(pin)) {
-        return NextResponse.json({ error: 'PIN requis (4 chiffres)' }, { status: 400 });
-      }
-      const isValid = await compare(pin, home.pinHash);
-      if (!isValid) {
-        return NextResponse.json({ error: 'PIN incorrect' }, { status: 401 });
-      }
+    // ── PIN verification (FAIL-CLOSED : sans PIN configuré, toute mutation est refusée) ──
+    if (!home.pinHash) {
+      return NextResponse.json(
+        { error: "Aucun PIN n'est configuré pour ce logement. Définissez-le d'abord dans l'espace hôte." },
+        { status: 403 },
+      );
+    }
+    if (!pin || !/^\d{4}$/.test(pin)) {
+      return NextResponse.json({ error: 'PIN requis (4 chiffres)' }, { status: 400 });
+    }
+    // Anti brute-force : 10 tentatives/minute/slug.
+    if (!rateLimit(`hubupdatepin:${slug}`, 10)) {
+      return NextResponse.json({ error: 'Trop de tentatives. Réessayez dans un instant.' }, { status: 429 });
+    }
+    const isValid = await compare(pin, home.pinHash);
+    if (!isValid) {
+      return NextResponse.json({ error: 'PIN incorrect' }, { status: 401 });
     }
 
     let updatedCount = 0;

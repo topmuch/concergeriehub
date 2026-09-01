@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { hash } from 'bcryptjs';
 import { db } from '@/lib/db';
 import crypto from 'crypto';
+import { rateLimit } from '@/lib/orders';
 
 // ── Demo mock data ──
 const DEMO_TOKEN = 'demo-setup';
@@ -264,6 +265,12 @@ export async function POST(
 ) {
   try {
     const { token } = await params;
+
+    // Anti brute-force des setupToken : max 10 soumissions/minute/token.
+    if (!rateLimit(`setup:${token}`, 10)) {
+      return NextResponse.json({ error: 'Trop de tentatives. Réessayez dans un instant.' }, { status: 429 });
+    }
+
     const body = await req.json();
     const {
       email,
@@ -555,8 +562,10 @@ export async function POST(
       modulesCreated: createdQrIds.length + Math.max(0, batchQrcodes.length - moduleIndex + 1),
     });
   } catch (error) {
+    // SÉCURITÉ : le détail de l'erreur reste dans les logs serveur,
+    // jamais renvoyé au client (fuite d'implémentation).
     const message = error instanceof Error ? error.message : String(error);
     console.error('[setup] POST error:', message, error);
-    return NextResponse.json({ error: `Erreur serveur: ${message}` }, { status: 500 });
+    return NextResponse.json({ error: 'Erreur serveur. Réessayez dans un instant.' }, { status: 500 });
   }
 }

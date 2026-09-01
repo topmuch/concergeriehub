@@ -1,8 +1,11 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { requireSuperadmin, adminUnauthorized } from '@/lib/admin';
 
 // GET /api/admin/stats — Dashboard statistics
 export async function GET() {
+  const admin = await requireSuperadmin();
+  if (!admin) return adminUnauthorized();
   try {
     // Run independent queries in parallel for speed
     const [

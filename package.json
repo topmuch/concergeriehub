@@ -47,7 +47,6 @@
     "@radix-ui/react-toggle-group": "^1.1.10",
     "@radix-ui/react-tooltip": "^1.2.7",
     "@reactuses/core": "^6.0.5",
-    "@tanstack/react-query": "^5.82.0",
     "@tanstack/react-table": "^8.21.3",
     "@types/bcryptjs": "^3.0.0",
     "bcryptjs": "^3.0.3",
@@ -89,8 +88,7 @@
     "vaul": "^1.1.2",
     "web-push": "^3.6.7",
     "z-ai-web-dev-sdk": "^0.0.18",
-    "zod": "^4.0.2",
-    "zustand": "^5.0.6"
+    "zod": "^4.0.2"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

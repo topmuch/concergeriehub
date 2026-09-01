@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { requireSuperadmin, adminUnauthorized } from '@/lib/admin';
 
 // ------------------------------------------------------------------
 // Valid status transitions
@@ -15,6 +16,8 @@ const ALLOWED_STATUSES = new Set(['lost', 'cancelled', 'inactive']);
 
 // GET /api/admin/physical-qr — List physical QR codes with filters
 export async function GET(request: NextRequest) {
+  const admin = await requireSuperadmin();
+  if (!admin) return adminUnauthorized();
   try {
     const { searchParams } = request.nextUrl;
     const status = searchParams.get('status');
@@ -89,6 +92,8 @@ export async function GET(request: NextRequest) {
 
 // PATCH /api/admin/physical-qr — Update a physical QR code status
 export async function PATCH(request: NextRequest) {
+  const admin = await requireSuperadmin();
+  if (!admin) return adminUnauthorized();
   try {
     const body = await request.json();
     const { id, status: newStatus } = body;

@@ -1,12 +1,17 @@
 import { NextResponse } from 'next/server';
 import { writeFile, mkdir } from 'fs/promises';
-import { join } from 'path';
+import { join, basename } from 'path';
 import { db } from '@/lib/db';
 import crypto from 'crypto';
+import { rateLimit } from '@/lib/orders';
 
 const UPLOAD_DIR = join(process.cwd(), 'public', 'uploads', 'voice');
 const MAX_DURATION_SEC = 30;
 const MAX_FILE_SIZE_KB = 500; // ~500KB for 30s webm
+
+// SÉCURITÉ : allowlist stricte des extensions — empêche tout path traversal
+// (l'extension client n'est JAMAIS concaténée telle quelle).
+const ALLOWED_AUDIO_EXT = new Set(['webm', 'ogg', 'mp3', 'm4a', 'wav']);
 
 // POST: Upload a voice message for a hub
 export async function POST(
@@ -15,6 +20,10 @@ export async function POST(
 ) {
   try {
     const { slug } = await params;
+    // Anti-spam : max 10 messages/minute/slug.
+    if (!rateLimit(`voice:${slug}`, 10)) {
+      return NextResponse.json({ error: 'Trop de tentatives. Réessayez dans un instant.' }, { status: 429 });
+    }
     const formData = await req.formData();
     const audio = formData.get('audio') as File | null;
     const senderName = (formData.get('senderName') as string) || 'Invité';
@@ -58,10 +67,11 @@ export async function POST(
     // Ensure upload dir exists
     await mkdir(UPLOAD_DIR, { recursive: true });
 
-    // Generate unique filename
-    const ext = audio.name?.split('.').pop() || 'webm';
+    // Generate unique filename — extension issue d'une allowlist, jamais du client
+    const clientExt = (audio.name?.split('.').pop() || '').toLowerCase();
+    const ext = ALLOWED_AUDIO_EXT.has(clientExt) ? clientExt : 'webm';
     const filename = `${propertyId}-${crypto.randomBytes(8).toString('hex')}.${ext}`;
-    const filePath = join(UPLOAD_DIR, filename);
+    const filePath = join(UPLOAD_DIR, basename(filename));
 
     // Save file
     const bytes = new Uint8Array(await audio.arrayBuffer());
@@ -100,7 +110,8 @@ export async function GET(
   try {
     const { slug } = await params;
     const url = new URL(req.url);
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '20'), 50);
+    const parsedLimit = parseInt(url.searchParams.get('limit') || '20', 10);
+    const limit = Math.min(Number.isFinite(parsedLimit) ? parsedLimit : 20, 50) || 20;
 
     const plaque = await db.physicalQrCode.findUnique({
       where: { hubSlug: slug },

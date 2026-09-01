@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { rateLimit } from '@/lib/orders';
 
 const DEMO_SLUG = 'demo-hub';
 const isDemo = (slug: string) => slug === DEMO_SLUG;
@@ -21,6 +22,11 @@ export async function POST(
 
     if (!slug || slug.length < 2) {
       return NextResponse.json({ error: 'Slug invalide' }, { status: 400 });
+    }
+
+    // Anti-spam : max 5 avis/minute/slug.
+    if (!rateLimit(`guestbook:${slug}`, 5)) {
+      return NextResponse.json({ error: 'Trop de tentatives. Réessayez dans un instant.' }, { status: 429 });
     }
 
     const body = await req.json();

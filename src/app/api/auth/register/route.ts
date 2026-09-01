@@ -1,24 +1,45 @@
 import { NextResponse } from 'next/server';
 import { hash } from 'bcryptjs';
 import { db } from '@/lib/db';
+import { rateLimit } from '@/lib/orders';
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 export async function POST(req: Request) {
   try {
-    const { email, password, fullName, role } = await req.json();
+    // Anti-abus : max 10 inscriptions/minute/IP.
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'local';
+    if (!rateLimit(`register:${ip}`, 10)) {
+      return NextResponse.json({ error: 'Trop de tentatives. Réessayez dans un instant.' }, { status: 429 });
+    }
+
+    const { email, password, fullName } = await req.json();
 
     if (!email || !password || !fullName) {
       return NextResponse.json({ error: 'Email, mot de passe et nom requis' }, { status: 400 });
     }
 
-    if (role && role !== 'user' && role !== 'superadmin') {
-      return NextResponse.json({ error: 'Rôle invalide' }, { status: 400 });
+    // Normalisation : un compte créé avec majuscules doit rester joignable
+    // au login (le authorize cherche trim().toLowerCase()).
+    const normalizedEmail = String(email).trim().toLowerCase();
+    if (!EMAIL_RE.test(normalizedEmail)) {
+      return NextResponse.json({ error: 'Adresse email invalide' }, { status: 400 });
     }
 
-    if (password.length < 6) {
+    // SÉCURITÉ : le rôle ne se choisit JAMAIS côté client.
+    // Toute inscription publique crée un compte 'user' ; la promotion
+    // superadmin se fait uniquement en base par un superadmin existant.
+    const role = 'user';
+
+    if (typeof fullName !== 'string' || fullName.trim().length < 2 || fullName.trim().length > 80) {
+      return NextResponse.json({ error: 'Le nom doit contenir entre 2 et 80 caracteres' }, { status: 400 });
+    }
+
+    if (typeof password !== 'string' || password.length < 6) {
       return NextResponse.json({ error: 'Le mot de passe doit contenir au moins 6 caracteres' }, { status: 400 });
     }
 
-    const existing = await db.user.findUnique({ where: { email } });
+    const existing = await db.user.findUnique({ where: { email: normalizedEmail } });
     if (existing) {
       return NextResponse.json({ error: 'Cet email est deja utilise' }, { status: 409 });
     }
@@ -27,10 +48,10 @@ export async function POST(req: Request) {
 
     const user = await db.user.create({
       data: {
-        email,
-        fullName,
+        email: normalizedEmail,
+        fullName: fullName.trim(),
         passwordHash,
-        role: role || (email === 'admin@qrdomotik.roomscan.pro' ? 'superadmin' : 'user'),
+        role,
       },
     });
 

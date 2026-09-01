@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import crypto from 'crypto';
+import { requireSuperadmin, adminUnauthorized } from '@/lib/admin';
 
 // GET /api/admin/batches — List all batches with aggregated QR code counts
 export async function GET() {
+  const admin = await requireSuperadmin();
+  if (!admin) return adminUnauthorized();
   try {
     const batches = await db.qrBatch.findMany({
       orderBy: { createdAt: 'desc' },
@@ -62,6 +65,8 @@ export async function GET() {
 
 // POST /api/admin/batches — Create a new batch with physical QR codes
 export async function POST(request: NextRequest) {
+  const admin = await requireSuperadmin();
+  if (!admin) return adminUnauthorized();
   try {
     const body = await request.json();
     const { quantity, designConfig, batchName, activationCodes } = body;

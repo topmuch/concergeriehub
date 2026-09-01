@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { requireSuperadmin, adminUnauthorized } from '@/lib/admin';
 
 // GET /api/admin/batches/[id] — Fetch single batch with all QR codes
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const admin = await requireSuperadmin();
+  if (!admin) return adminUnauthorized();
   try {
     const { id } = await params;
     const batch = await db.qrBatch.findUnique({
@@ -36,6 +39,8 @@ export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const admin = await requireSuperadmin();
+  if (!admin) return adminUnauthorized();
   try {
     const { id } = await params;
 

@@ -504,3 +504,30 @@ Stage Summary:
 - Procédure de restauration complète documentée (base vide → 9 seeds dans l'ordre + fix qrHubSlug "…-11wz") — reproductible si la base est re-wipée.
 - Chaîne 17.5 revalidée de bout en bout sur l'environnement resynchronisé : catalogue → formule → commande → re-pricing serveur → split 15 %.
 - Prochaine étape projet : 17.6 (paiement Stripe in-app) — en attente du NEXT de l'utilisateur.
+
+---
+Task ID: SEC-AUDIT
+Agent: Z.ai Code (session audit + remédiation)
+Task: (1) Audit complet du code (qualité + sécurité + architecture) demandé par l'utilisateur ; (2) exécution du plan de remédiation sécurité validé.
+
+Work Log:
+- AUDIT : lint 0 erreur, tsc 0 erreur projet (3 hors périmètre), 0 erreur runtime dev.log ; inventaire 287 fichiers TS/TSX / 57 782 l. src/, 99 routes API, 18 pages, 40 tables Prisma ; 2 agents Explore en parallèle → rapport sécurité (note 4,5/10 : 5 critiques, 5 importants, mineurs) + cartographie UI complète (double espace hôte, ~3 700 l. code mort, chat-service orphelin, zustand/react-query jamais importés).
+- 🔴 B1 register : rôle forcé 'user' (superadmin retiré de l'allowlist, auto-promotion admin@ supprimée), email trim+lowercase+regex, fullName borné, rate limit 10/min/IP.
+- 🔴 B2 : requireSuperadmin()+adminUnauthorized() posé sur les 8 handlers de admin/{users,batches,batches/[id],stats,physical-qr} (avant : 0 auth).
+- 🔴 B3 : suppression de src/app/api/debug/db (fuite annuaire users + reconnaissance).
+- 🔴 B4 : fail-closed PIN sur hub/[slug]/host et hub/[slug]/update — pinHash null → 403 (Wi-Fi/vocaux/mutations ne sortent plus), newPin non posable sans PIN ; + rate limit 10/min/slug sur les 3 routes PIN (hub POST, host, update).
+- 🔴 B5 : src/middleware.ts créé — getToken(next-auth/jwt) exigé pour TOUT /api/client/** (52 routes legacy), 401 JSON sinon ; vérifié qu'aucune page publique (view/activate/setup) ne consomme /api/client.
+- 🟠 B6/B12 : uploads voice + qr-voice — allowlist extensions (webm/ogg/mp3/m4a/wav), basename, taille serveur 500 KB (qr-voice en était dépourvu), limit NaN-proof ; B9 : rate limits publics (guestbook 5/min, voice 10/min, qr-voice 10/min, setup 10/min/token).
+- 🟠 B7 : stripe/checkout — mode démo (activation gratuite sans clé) bloqué en production (503 explicite) ; webhook déjà propre (signature raw body).
+- 🟠 B8 : public/qr/[slug] — filtre isPrivate:false (un QR privé ne fuit plus), findFirst, try/catch never-throw 404.
+- 🟡 B11 : team.ts + isKnownMemberRoleInput — POST/PATCH membres rejettent un rôle inconnu (400) au lieu de le normaliser MANAGER ; B15 : setup n'expose plus le message Prisma ; B16 : logs auth sans PII (emails supprimés des console.log).
+- 🧹 Purge code mort : physical-qr-codes (1751), activation-page, qr-code-display, module-content-fields, landing/qr-demo, hooks/use-push-notifications, components/magic/ (14 fichiers), middleware.ts.bak + instrumentation.ts.bak ; zustand + @tanstack/react-query retirés du package.json (0 usage) ; manifest.json rebrandé Conciergerie Hub (thème émeraude #059669 cohérent app invitée) ; SPA / : DedicatedRedirect — un utilisateur connecté atterrit sur /airbnb/dashboard (hôte) ou /admin/dashboard (superadmin) au lieu de l'espace client QRdoo legacy (basculé uniquement via sessionOverride).
+- INCIDENT TEST RÉSOLU : mon cleanup deleteMany(qrBatch designConfig '{}') a cascade-supprimé les 2 plaques du Loft (seed les crée sans designConfig) → restaurées à l'identique (PLQ-LOFT-0001 active / 0002 cancelled) ; hub GET 200 + host PIN 200 revalidés.
+- .env régénéré : NEXTAUTH_SECRET (32 B aléatoire) + NEXTAUTH_URL réajoutés (la sandbox avait réinitialisé .env à DATABASE_URL seul — sessions au secret éphémère).
+- VALIDATION : lint 0, tsc 0, curl — register role superadmin → rôle 'user' en base (201), admin/* sans session 403×4, debug/db 404, client/homes sans session 401, hub host pin 1234→200 / 9999→401, plaque sans PIN host→403 + update→403, guest-app 200 (5 services + offres), mes commandes 200, manifest 200, /view 200 ; browser — landing OK 0 erreur console, hub Mode Hôte PIN 1234 → Wi-Fi éditable, app invitée PWA rend (manifest+icônes 200).
+
+Stage Summary:
+- 5 failles critiques fermées, 5 importantes traitées, 4 mineures corrigées, ~3 700 lignes mortes purgées (+4031/−233 au diff global, net −3 800 l.) ; note sécurité estimée du périmètre API : 4,5 → ~7,5/10 (résiduel : IDOR internes des routes legacy /api/client désormais derrière auth, rate limit en mémoire mono-instance, PIN 4 chiffres par design).
+- Comportements visibles inchangés pour les vrais utilisateurs : parcours invité/hôte/prestataire/admin revalidés E2E après remédiation.
+- Reste pour plus tard : per-record ownership des 52 routes legacy (migration vers /api/airbnb ou suppression), rate limit distribué (Redis) au déploiement multi-instance, purge éventuelle de la SPA legacy.
+- Fichiers clés : src/middleware.ts (nouveau), api/auth/register, api/admin/* ×5, api/debug/db (supprimée), api/public/hub/[slug]/{route,host,update,voice,guestbook}, api/public/qr-voice/[id], api/public/qr/[slug], api/setup/[token], api/stripe/checkout, lib/team.ts, lib/auth.ts, app/page.tsx (DedicatedRedirect), public/manifest.json, package.json (deps élaguées).

@@ -139,6 +139,25 @@ function ScanAnalyticsWrapper() {
 
 type AppView = 'landing' | 'auth' | 'select' | 'superadmin' | 'client' | 'setup-demo' | 'hub-demo';
 
+/** Écran de redirection vers les espaces dédiés (routes réelles V2/V3).
+ *  Depuis le pivot B2B, la SPA "/" ne gère plus les espaces hôte/admin :
+ *  un utilisateur connecté est envoyé vers /airbnb/dashboard ou /admin. */
+function DedicatedRedirect({ role }: { role: 'superadmin' | 'host' }) {
+  useEffect(() => {
+    // Le flux d'activation QR passe avant (géré par l'effet parent).
+    if (sessionStorage.getItem('pendingActivationCode')) return;
+    window.location.href = role === 'superadmin' ? '/admin/dashboard' : '/airbnb/dashboard';
+  }, [role]);
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-background">
+      <div className="h-8 w-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+      <p className="text-sm text-muted-foreground">
+        Redirection vers {role === 'superadmin' ? 'la console admin' : 'votre Espace Hôte'}…
+      </p>
+    </div>
+  );
+}
+
 function AppContent() {
   const { data: session, status } = useSession();
   const searchParams = useSearchParams();
@@ -239,6 +258,15 @@ function AppContent() {
       );
     }
     return <AuthForm onSuccess={handleAuthSuccess} initialRegister={initialRegister} />;
+  }
+
+  // === REDIRECTION VERS LES ESPACES DÉDIÉS ===
+  // La SPA legacy (client QRdoo / superadmin historique) reste atteignable
+  // uniquement via les bascules internes (sessionOverride) — par défaut un
+  // utilisateur connecté atterrit toujours dans son espace réel.
+  if (!sessionOverride) {
+    const role = (session.user as { role?: string }).role;
+    return <DedicatedRedirect role={role === 'superadmin' ? 'superadmin' : 'host'} />;
   }
 
   // === ROLE SELECTOR ===

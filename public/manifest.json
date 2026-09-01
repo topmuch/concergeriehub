@@ -1,11 +1,11 @@
 {
-  "name": "ORDOMOTIK - Smart Home Solutions",
-  "short_name": "ORDOMOTIK",
-  "description": "QR codes intelligents pour votre maison",
+  "name": "Conciergerie Hub",
+  "short_name": "Conciergerie Hub",
+  "description": "La conciergerie Airbnb augmentée : hubs QR, app invitée et services premium",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0a0f1e",
-  "theme_color": "#7c3aed",
+  "background_color": "#F8FAFC",
+  "theme_color": "#059669",
   "orientation": "portrait-primary",
   "icons": [
     {
@@ -27,7 +27,7 @@
       "purpose": "apple-touch-icon"
     }
   ],
-  "categories": ["lifestyle", "utilities"],
+  "categories": ["travel", "business", "utilities"],
   "lang": "fr",
   "dir": "ltr"
 }

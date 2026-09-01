@@ -54,6 +54,19 @@ export function memberRoleMeta(role: string): MemberRoleMeta {
  * 'owner'→OWNER, 'cohost'→MANAGER, 'member'→MANAGER,
  * 'staff'→MAINTENANCE, 'cleaner'→CLEANER.
  */
+/** Valeurs d'entrée acceptées de l'API (canoniques V2 + legacy V1). */
+const KNOWN_INPUT_ROLES = new Set([
+  'OWNER', 'MANAGER', 'CLEANER', 'MAINTENANCE',
+  'COHOST', 'MEMBER', 'STAFF',
+]);
+
+/** SÉCURITÉ : rejette toute valeur de rôle inconnue (fail-closed).
+ *  À utiliser pour valider l'ENTRÉE API avant normalizeMemberRole
+ *  (qui, lui, sert à lire des données legacy déjà en base). */
+export function isKnownMemberRoleInput(role: unknown): boolean {
+  return typeof role === 'string' && KNOWN_INPUT_ROLES.has(role.trim().toUpperCase());
+}
+
 export function normalizeMemberRole(role: string | null | undefined): MemberRole {
   const raw = (role ?? '').trim();
   switch (raw.toUpperCase()) {

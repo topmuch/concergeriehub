@@ -23,7 +23,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { getUserRoleForProperty } from '@/lib/b2b-server';
-import { canManageTeam, normalizeMemberRole, MEMBER_ROLES, type MemberRole } from '@/lib/team';
+import { canManageTeam, isKnownMemberRoleInput, normalizeMemberRole, MEMBER_ROLES, type MemberRole } from '@/lib/team';
 import { runAutomationTrigger } from '@/lib/automations-server';
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -103,6 +103,13 @@ export async function POST(req: NextRequest, ctx: Ctx) {
 
     const body = (await req.json()) as { email?: string; role?: string };
     const email = (body.email ?? '').trim().toLowerCase();
+    // SÉCURITÉ fail-closed : un rôle inconnu est rejeté (jamais normalisé en MANAGER)
+    if (!isKnownMemberRoleInput(body.role)) {
+      return NextResponse.json(
+        { error: 'Rôle invalide. Rôles acceptés : MANAGER, CLEANER, MAINTENANCE.' },
+        { status: 400 },
+      );
+    }
     const role = normalizeMemberRole(body.role ?? '');
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -282,6 +289,12 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
 
     const data: { role?: string; permissions?: string | null } = {};
     if (body.role !== undefined) {
+      if (!isKnownMemberRoleInput(body.role)) {
+        return NextResponse.json(
+          { error: 'Rôle invalide. Rôles acceptés : MANAGER, CLEANER, MAINTENANCE.' },
+          { status: 400 },
+        );
+      }
       const nextRole = normalizeMemberRole(body.role);
       if (!ASSIGNABLE_ROLES.includes(nextRole)) {
         return NextResponse.json(

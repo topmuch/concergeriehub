@@ -34,27 +34,27 @@ export const authOptions: NextAuthOptions = {
           });
 
           if (!user) {
-            console.log('[auth] User not found:', credentials.email);
+            console.log('[auth] Login refusé : utilisateur inconnu');
             return null;
           }
 
           if (user.isActive === false) {
-            console.log('[auth] Account disabled (superadmin):', credentials.email);
+            console.log('[auth] Login refusé : compte désactivé');
             return null;
           }
 
           if (!user.passwordHash) {
-            console.error('[auth] User has no password hash:', credentials.email);
+            console.error('[auth] Login refusé : compte sans mot de passe');
             return null;
           }
 
           const isValid = await compare(credentials.password, user.passwordHash);
           if (!isValid) {
-            console.log('[auth] Invalid password for:', credentials.email);
+            console.log('[auth] Login refusé : mot de passe invalide');
             return null;
           }
 
-          console.log('[auth] Login OK:', user.email, 'role:', user.role);
+          console.log('[auth] Login OK (rôle:', user.role + ')');
           return {
             id: user.id,
             email: user.email,

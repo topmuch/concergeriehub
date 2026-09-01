@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { requireSuperadmin, adminUnauthorized } from '@/lib/admin';
 
 // GET /api/admin/users — List all users with membership counts
 export async function GET(request: NextRequest) {
+  const admin = await requireSuperadmin();
+  if (!admin) return adminUnauthorized();
   try {
     const { searchParams } = request.nextUrl;
     const search = searchParams.get('search');

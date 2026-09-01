@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { compare } from 'bcryptjs';
 import { db } from '@/lib/db';
 import { haversineKm, providerCategoryMeta, formatEur, propertyTypeMeta } from '@/lib/b2b';
+import { rateLimit } from '@/lib/orders';
 
 // =============================================================
 // Hub public Conciergerie Hub — /hub/[slug]
@@ -291,6 +292,11 @@ export async function POST(
 
     if (!pin || !/^\d{4}$/.test(pin)) {
       return NextResponse.json({ error: 'PIN invalide' }, { status: 400 });
+    }
+
+    // Anti brute-force : 10 essais/minute/slug (PIN 4 chiffres).
+    if (!rateLimit(`hubpin:${slug}`, 10)) {
+      return NextResponse.json({ error: 'Trop de tentatives. Réessayez dans un instant.' }, { status: 429 });
     }
 
     // ── DEMO MODE: any 4-digit PIN works ──

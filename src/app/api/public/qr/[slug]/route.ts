@@ -5,12 +5,15 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
-  const { slug } = await params;
+  try {
+    const { slug } = await params;
 
-  const qrCode = await db.qrCode.findUnique({
-    where: { publicSlug: slug, isActive: true },
-    include: { content: true, property: true },
-  });
+    // SÉCURITÉ : seuls les QR publics ET actifs sont servis — un module
+    // privé ne doit jamais exposer son contenu (codes de porte, etc.).
+    const qrCode = await db.qrCode.findFirst({
+      where: { publicSlug: slug, isActive: true, isPrivate: false },
+      include: { content: true, property: true },
+    });
 
   if (!qrCode || !qrCode.isActive) {
     return NextResponse.json(
@@ -79,4 +82,11 @@ export async function GET(
     content: parsedContent,
     scanCount,
   });
+  } catch (error) {
+    console.error('[GET /api/public/qr/[slug]] Error:', error);
+    return NextResponse.json(
+      { error: 'QR code introuvable' },
+      { status: 404 }
+    );
+  }
 }

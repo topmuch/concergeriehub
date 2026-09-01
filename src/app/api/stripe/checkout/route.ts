@@ -103,6 +103,15 @@ export async function POST(req: NextRequest) {
     }
 
     // ---------------- MODE DÉMO (sans clés) ----------------
+    // SÉCURITÉ : l'activation gratuite sans paiement ne doit JAMAIS être
+    // possible en production — clé Stripe manquante = erreur explicite.
+    if (process.env.NODE_ENV === 'production') {
+      return NextResponse.json(
+        { error: 'Paiement indisponible : configuration Stripe manquante. Contactez le support.' },
+        { status: 503 },
+      );
+    }
+
     const now = new Date();
     const periodEnd = new Date(now);
     if (cycle === 'annual') periodEnd.setFullYear(periodEnd.getFullYear() + 1);

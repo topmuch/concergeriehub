@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { compare } from 'bcryptjs';
 import { db } from '@/lib/db';
 import { haversineKm, providerCategoryMeta, formatEur } from '@/lib/b2b';
+import { rateLimit } from '@/lib/orders';
 
 // =============================================================
 // POST /api/public/hub/[slug]/host   body: { pin }
@@ -94,12 +95,20 @@ export async function POST(
       return NextResponse.json({ error: 'Logement non trouvé' }, { status: 404 });
     }
 
-    // ── Vérification PIN (si configuré) ──
-    if (property.pinHash) {
-      const isValid = await compare(pin, property.pinHash);
-      if (!isValid) {
-        return NextResponse.json({ error: 'PIN incorrect' }, { status: 401 });
-      }
+    // ── Vérification PIN (FAIL-CLOSED : sans PIN configuré, accès refusé) ──
+    if (!property.pinHash) {
+      return NextResponse.json(
+        { error: "Aucun PIN n'est configuré pour ce logement. Le mode hôte est verrouillé jusqu'à sa définition dans l'espace hôte." },
+        { status: 403 },
+      );
+    }
+    // Anti brute-force : 10 tentatives/minute/slug (PIN 4 chiffres).
+    if (!rateLimit(`hubhostpin:${slug}`, 10)) {
+      return NextResponse.json({ error: 'Trop de tentatives. Réessayez dans un instant.' }, { status: 429 });
+    }
+    const isValid = await compare(pin, property.pinHash);
+    if (!isValid) {
+      return NextResponse.json({ error: 'PIN incorrect' }, { status: 401 });
     }
 
     // ── Wi-Fi actuel (module wifi actif, public ou privé) ──
