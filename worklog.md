@@ -531,3 +531,19 @@ Stage Summary:
 - Comportements visibles inchangés pour les vrais utilisateurs : parcours invité/hôte/prestataire/admin revalidés E2E après remédiation.
 - Reste pour plus tard : per-record ownership des 52 routes legacy (migration vers /api/airbnb ou suppression), rate limit distribué (Redis) au déploiement multi-instance, purge éventuelle de la SPA legacy.
 - Fichiers clés : src/middleware.ts (nouveau), api/auth/register, api/admin/* ×5, api/debug/db (supprimée), api/public/hub/[slug]/{route,host,update,voice,guestbook}, api/public/qr-voice/[id], api/public/qr/[slug], api/setup/[token], api/stripe/checkout, lib/team.ts, lib/auth.ts, app/page.tsx (DedicatedRedirect), public/manifest.json, package.json (deps élaguées).
+
+---
+Task ID: SEC-VALID
+Agent: Z.ai Code (reprise post-compaction)
+Task: Reprise après perte de contexte — vérifier l'état réel de la remédiation sécurité (SEC-AUDIT), revalider, confirmer le push et clore.
+
+Work Log:
+- Découverte : la portion de session perdue avait DÉJÀ exécuté l'intégralité du plan validé → commit 03c01e9 en local, working tree propre, et DÉJÀ poussé sur GitHub (origin/main..HEAD vide après fetch — push antérieur confirmé).
+- Vérification disque des 5 points du plan : (1) register role forcé 'user' + 5 routes admin (users, batches, batches/[id], stats, physical-qr) avec requireSuperadmin() + api/debug/db supprimée ; (2) fail-closed PIN — host/route.ts:99 et update/route.ts:74 → 403 si pinHash null, ancien PIN comparé à l'update ; (3) src/middleware.ts — matcher /api/client/:path* → 401 sans JWT ; (4) durcissements uploads/checkout/qr + rate limits ; (5) purge code mort confirmée (physical-qr-codes.tsx, components/magic/, landing/qr-demo absents), manifest.json "Conciergerie Hub" émeraude #059669.
+- VALIDATION EXÉCUTÉE REJOUÉE : lint 0 erreur ; tsc 0 erreur projet ; curl — POST register avec role:"superadmin" → 201 mais ROLE EN BASE = "user" (vérifié en DB, puis user test supprimé), admin/{users,stats,batches,physical-qr} sans session → 403×4, api/debug/db → 404, api/client/homes sans session → 401, hub public → 200, POST host pin 9999 → 401 / pin 1234 → 200 (plaque loft-canal-hub — la route host cherche PhysicalQrCode.hubSlug, PAS Property.qrHubSlug), guest-app slug+b → 200.
+- Browser E2E : landing / rendue (branding Conciergerie Hub) ; app invitée ?b=Camille rendue (séjour, Wi-Fi, 4 onglets) ; onglet Services : 5 commandes (Morning Box L 18 € En attente incluse) + catalogue "dès 85,00 €" — 0 erreur console.
+
+Stage Summary:
+- Plan de remédiation sécurité (5 points) : EXÉCUTÉ, VÉRIFIÉ sur disque, REVALIDÉ (lint/tsc/curl/browser) et POUSSÉ — commit 03c01e9 sur origin/main. Task SEC-AUDIT → CLOSED.
+- Note mémoire pour tests futurs : POST /api/public/hub/[slug]/host = auth par hubSlug de PLAQUE (ex. loft-canal-hub) ; guest-app = ?slug= (Property.qrHubSlug) + &b= (booking) ; PhysicalQrCode filtre par status (pas isActive).
+- Prochaine étape projet : ÉTAPE 17.6 — Paiement Stripe in-app (encaissement à la commande) — en attente du NEXT de l'utilisateur.
