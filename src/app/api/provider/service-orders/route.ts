@@ -16,6 +16,8 @@ import { canTransition, isOrderStatus, type OrderStatus } from '@/lib/orders';
 //
 // ⚠️ La part hôte (hostEarning) n'est JAMAIS retournée au
 // prestataire — contrat entre Conciergerie Hub et l'hôte.
+// ÉTAPE 17.6 — paymentStatus/paidAt exposés au prestataire
+//   + stat « encaissé » (somme des commandes PAID hors annulées).
 // Never-throw : try/catch global → { error } 500.
 // =============================================================
 
@@ -74,6 +76,9 @@ export async function GET() {
         totalAmount: true,
         commission: true,
         status: true,
+        // ÉTAPE 17.6 — visibilité paiement côté prestataire
+        paymentStatus: true,
+        paidAt: true,
         deliveryDate: true,
         createdAt: true,
         propertyId: true,
@@ -99,10 +104,15 @@ export async function GET() {
     let pendingCount = 0;
     let preparingCount = 0;
     let deliveredCount = 0;
+    // ÉTAPE 17.6 — encaissé = commandes réellement payées (hors annulées)
+    let paidRevenue = 0;
     for (const o of orders) {
       if (o.status === 'CANCELLED') continue;
       revenue += o.totalAmount;
       commissionTotal += o.commission;
+      if (o.paymentStatus === 'PAID') {
+        paidRevenue += o.totalAmount;
+      }
       if (o.status === 'DELIVERED') {
         deliveredCount += 1;
       } else {
@@ -128,6 +138,9 @@ export async function GET() {
         totalAmount: o.totalAmount,
         commission: o.commission,
         status: o.status,
+        // ÉTAPE 17.6
+        paymentStatus: o.paymentStatus,
+        paidAt: o.paidAt,
         deliveryDate: o.deliveryDate,
         createdAt: o.createdAt,
         property: { name: propertyNameById.get(o.propertyId) ?? 'Logement' },
@@ -139,6 +152,8 @@ export async function GET() {
         deliveredCount,
         revenue: Math.round(revenue * 100) / 100,
         commissionTotal: Math.round(commissionTotal * 100) / 100,
+        // ÉTAPE 17.6
+        paidRevenue: Math.round(paidRevenue * 100) / 100,
       },
     });
   } catch (error) {

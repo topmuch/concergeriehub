@@ -22,6 +22,8 @@ import { ORDER_STATUS_META, ORDER_TRANSITIONS, formatEur2, type OrderStatus } fr
 // • Liste des commandes du bien avec cycle de vie pilotable :
 //   PENDING → CONFIRMED → PREPARING → DELIVERED (+ CANCELLED)
 // • Switch multi-propriétés (héritage V2)
+// ÉTAPE 17.6 (V3) — PAIEMENT IN-APP : badge 💳 Payée/À payer par
+// commande + stat « dont encaissé » (montants réellement payés).
 // Optimiste : rollback + toast en cas d'échec.
 // =============================================================
 
@@ -35,6 +37,8 @@ interface OrderDTO {
   commission: number;
   hostEarning: number;
   status: string;
+  paymentStatus: string;
+  paidAt: string | null;
   deliveryDate: string | null;
   createdAt: string;
   provider: { businessName: string; category: string };
@@ -47,6 +51,8 @@ interface StatsDTO {
   activeCount: number;
   pendingCount: number;
   deliveredCount: number;
+  paidRevenue: number;
+  paidCount: number;
 }
 
 interface PropertyLite {
@@ -69,6 +75,24 @@ const NEXT_ACTION_LABEL: Partial<Record<OrderStatus, string>> = {
   PREPARING: 'Préparer',
   DELIVERED: 'Marquer livrée',
 };
+
+/** ÉTAPE 17.6 — chip paiement par commande (hôte). */
+function PaymentChip({ paymentStatus, orderStatus }: { paymentStatus: string; orderStatus: string }) {
+  if (orderStatus === 'CANCELLED' && paymentStatus !== 'PAID') return null;
+  const meta =
+    paymentStatus === 'PAID'
+      ? { label: 'Payée', cls: 'bg-emerald-100 text-emerald-800 border-emerald-300' }
+      : paymentStatus === 'REFUNDED'
+        ? { label: 'Remboursée', cls: 'bg-slate-100 text-slate-600 border-slate-300' }
+        : paymentStatus === 'FAILED'
+          ? { label: 'Paiement échoué', cls: 'bg-rose-100 text-rose-700 border-rose-300' }
+          : { label: 'À payer', cls: 'bg-orange-100 text-orange-800 border-orange-300' };
+  return (
+    <Badge className={`${meta.cls} border text-[10px] px-2`} title={paymentStatus === 'PAID' ? 'Encaissé via Conciergerie Hub' : 'Paiement non finalisé'}>
+      💳 {meta.label}
+    </Badge>
+  );
+}
 
 export function OrdersContent() {
   const [data, setData] = useState<ApiResponse | null>(null);
@@ -190,7 +214,7 @@ export function OrdersContent() {
               emoji="💰"
               label="CA invités"
               value={formatEur2(data.stats.revenue)}
-              hint="hors commandes annulées"
+              hint={`dont ${formatEur2(data.stats.paidRevenue)} encaissés (${data.stats.paidCount})`}
               tone="slate"
             />
             <StatCard
@@ -298,6 +322,7 @@ function OrderRow({ order, busy, onTransition }: {
           <Badge className={`${status.badge} text-white border-0 text-[10px] px-2`}>
             {status.emoji} {status.label}
           </Badge>
+          <PaymentChip paymentStatus={order.paymentStatus} orderStatus={order.status} />
         </div>
         <p className="text-xs text-slate-500 mt-1">
           Invité&nbsp;: <span className="font-semibold text-slate-700">{order.guestName}</span>

@@ -28,6 +28,8 @@ interface ProviderOrderDTO {
   totalAmount: number;
   commission: number;
   status: string;
+  paymentStatus: string;
+  paidAt: string | null;
   deliveryDate: string | null;
   createdAt: string;
   property: { name: string } | null;
@@ -40,6 +42,7 @@ interface ProviderStatsDTO {
   deliveredCount: number;
   revenue: number;
   commissionTotal: number;
+  paidRevenue: number;
 }
 
 interface ProviderMe {
@@ -63,6 +66,24 @@ const NEXT_ACTION_LABEL: Partial<Record<OrderStatus, string>> = {
   PREPARING: 'Démarrer la préparation',
   DELIVERED: 'Marquer livrée',
 };
+
+/** ÉTAPE 17.6 — chip paiement par commande (prestataire). */
+function PaymentChip({ paymentStatus, orderStatus }: { paymentStatus: string; orderStatus: string }) {
+  if (orderStatus === 'CANCELLED' && paymentStatus !== 'PAID') return null;
+  const meta =
+    paymentStatus === 'PAID'
+      ? { label: 'Payée', cls: 'bg-emerald-100 text-emerald-800 border-emerald-300' }
+      : paymentStatus === 'REFUNDED'
+        ? { label: 'Remboursée', cls: 'bg-slate-100 text-slate-600 border-slate-300' }
+        : paymentStatus === 'FAILED'
+          ? { label: 'Paiement échoué', cls: 'bg-rose-100 text-rose-700 border-rose-300' }
+          : { label: 'À payer', cls: 'bg-orange-100 text-orange-800 border-orange-300' };
+  return (
+    <Badge className={`${meta.cls} border text-[10px] px-2`} title={paymentStatus === 'PAID' ? 'Encaissé via Conciergerie Hub' : 'Paiement non finalisé'}>
+      💳 {meta.label}
+    </Badge>
+  );
+}
 
 export function ProviderDashboard() {
   const [data, setData] = useState<ApiResponse | null>(null);
@@ -203,7 +224,7 @@ export function ProviderDashboard() {
                   emoji="💰"
                   label="CA généré"
                   value={formatEur2(data.stats.revenue)}
-                  hint="hors commandes annulées"
+                  hint={`dont ${formatEur2(data.stats.paidRevenue)} encaissés`}
                   tone="slate"
                 />
                 <StatCard
@@ -311,6 +332,7 @@ function OrderRow({ order, busy, onTransition }: {
           <Badge className={`${status.badge} text-white border-0 text-[10px] px-2`}>
             {status.emoji} {status.label}
           </Badge>
+          <PaymentChip paymentStatus={order.paymentStatus} orderStatus={order.status} />
         </div>
         <p className="text-xs text-slate-500 mt-1">
           Invité&nbsp;: <span className="font-semibold text-slate-700">{order.guestName}</span>

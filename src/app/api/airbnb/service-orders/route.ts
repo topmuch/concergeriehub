@@ -18,6 +18,9 @@ import { canTransition, isOrderStatus, round2 } from '@/lib/orders';
 //           (DELIVERED / CANCELLED : terminaux)
 //         → passage à DELIVERED horodate deliveryDate.
 //
+// ÉTAPE 17.6 — paymentStatus/paidAt exposés à l'hôte + stat
+//   « encaissé » (somme des commandes PAID hors annulées).
+//
 // Auth : session NextAuth + accès bien (owner ou membre accepté).
 // IDs en QUERY PARAM (règle sandbox). Moteur never-throw.
 // =============================================================
@@ -63,6 +66,9 @@ export async function GET(req: NextRequest) {
         commission: true,
         hostEarning: true,
         status: true,
+        // ÉTAPE 17.6 — visibilité paiement côté hôte
+        paymentStatus: true,
+        paidAt: true,
         deliveryDate: true,
         createdAt: true,
         provider: { select: { businessName: true, category: true } },
@@ -76,11 +82,18 @@ export async function GET(req: NextRequest) {
     let activeCount = 0;
     let pendingCount = 0;
     let deliveredCount = 0;
+    // ÉTAPE 17.6 — encaissé = commandes réellement payées (hors annulées)
+    let paidRevenue = 0;
+    let paidCount = 0;
     for (const o of orders) {
       if (o.status === 'CANCELLED') continue;
       revenue += o.totalAmount;
       commissionTotal += o.commission;
       hostTotal += o.hostEarning;
+      if (o.paymentStatus === 'PAID') {
+        paidRevenue += o.totalAmount;
+        paidCount++;
+      }
       if (o.status === 'DELIVERED') deliveredCount++;
       else {
         activeCount++;
@@ -99,6 +112,9 @@ export async function GET(req: NextRequest) {
         activeCount,
         pendingCount,
         deliveredCount,
+        // ÉTAPE 17.6
+        paidRevenue: round2(paidRevenue),
+        paidCount,
       },
     });
   } catch (error) {
@@ -162,5 +178,5 @@ export async function PATCH(req: NextRequest) {
 }
 
 function emptyStats() {
-  return { revenue: 0, commissionTotal: 0, hostTotal: 0, activeCount: 0, pendingCount: 0, deliveredCount: 0 };
+  return { revenue: 0, commissionTotal: 0, hostTotal: 0, activeCount: 0, pendingCount: 0, deliveredCount: 0, paidRevenue: 0, paidCount: 0 };
 }

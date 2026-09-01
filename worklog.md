@@ -580,3 +580,24 @@ Work Log:
 Stage Summary:
 - E2E browser validé : bouton Payer 18 € (Morning Box) → ligne passée « 💳 Payée · 18,00 € » ; sheet Paris Transfer → formule CDG 79 € → Commander → auto-encaissement → « ✅ Commande envoyée et payée ! » ; Mes commandes (7) cohérentes ; DB : 3 commandes PAID (18/79/85 €) = 3 Transactions 'service_order' ; bandeau ?paid= affiché + URL nettoyée (paid= supprimé après chargement).
 - Reste : 17.6-c (visibilité paiement côté hôte/prestataire + E2E final + commit).
+
+---
+Task ID: 17.6-c
+Agent: Z.ai Code
+Task: ÉTAPE 17.6 — Paiement Stripe in-app — sous-étape c : visibilité paiement hôte/prestataire + E2E final + commit/push.
+
+Work Log:
+- Découverte en reprise : 17.6-b était DÉJÀ terminée et commitée (2566d91) par la portion de session perdue (worklog 17.6-b présent, E2E invité déjà validé) — NEXT de l'utilisateur interprété comme approbation de 17.6-c.
+- API hôte /api/airbnb/service-orders GET : select + paymentStatus/paidAt ; stats + paidRevenue/paidCount (somme des PAID hors annulées) ; emptyStats enrichi.
+- API prestataire /api/provider/service-orders GET : select + paymentStatus/paidAt (hostEarning TOUJOURS non sélectionné — invariant conservé) ; mapping + stats.paidRevenue.
+- UI hôte orders-content.tsx : PaymentChip (💳 Payée émeraude / À payer orange / Remboursée muted / Paiement échoué rose, masquée si annulée non payée) ; stat « CA invités » hint « dont X € encaissés (n) ».
+- UI prestataire provider-dashboard.tsx : PaymentChip identique ; stat « CA généré » hint « dont X € encaissés ».
+- VALIDATION curl : hôte → stats.paidRevenue 182 €/3 puis 245 €/5 après E2E ; prestataire Morning Box → paidRevenue 18 €, assert hostEarning absent de la réponse (OK).
+- E2E BROWSER COMPLET : app invitée Camille → onglet Services (7 commandes, 4 boutons Payer) → nouvelle commande Morning Box L 18 € → auto-encaissement démo → badge « 💳 Payée · 18,00€ » en tête (8 commandes) → bouton Payer 45 € (Paris Transfer DELIVERED) → « 🟢 Livrée · 💳 Payée · 45,00€ » (orthogonalité cycle/paiement visible) ; hôte /airbnb/dashboard (demo@ / Demo2024!) → Commandes → « CA invités 581,00 € dont 245,00 € encaissés (5) », chips 5 Payée / 3 À payer ; portail /provider (morningbox@ / Presta2024!) → « CA généré 72,00 € dont 36,00 € encaissés », chips 2 Payée / 1 À payer ; 0 erreur console, screenshots host-orders-176.png + provider-orders-176.png.
+- DB : 5 Transactions 'service_order' completed (18+18+45+79+85 = 245 €) = 5 commandes PAID — 1 paiement = 1 Transaction, zéro doublon.
+- lint 0, tsc 0 (périmètre projet). Note UX mineure : le bouton Payer sous la nav fixe de la PWA peut être couvert en haut de scroll (click testé OK via scroll/position) — aucun bug réel constaté.
+
+Stage Summary:
+- ÉTAPE 17.6 COMPLÈTE (a+b+c) : encaissement à la commande Stripe/démo, montant 100 % serveur, idempotent, anti-IDOR, et maintenant VISIBLE des 3 acteurs (invité 💳 badge+bouton, hôte chip+stat encaissé, prestataire chip+stat encaissé sans part hôte).
+- Commits : 6b7b1aa (17.6-a) + 2566d91 (17.6-b) + commit 17.6-c — push rattrapé sur origin/main (59990ff worklog inclus).
+- Prochaine étape projet : PILIER 3 V3 — White-Label (domaine/branding par hôte) ; reversement hôte/prestataire (Transaction.receiverId) identifié comme étape future.
