@@ -601,3 +601,28 @@ Stage Summary:
 - ÉTAPE 17.6 COMPLÈTE (a+b+c) : encaissement à la commande Stripe/démo, montant 100 % serveur, idempotent, anti-IDOR, et maintenant VISIBLE des 3 acteurs (invité 💳 badge+bouton, hôte chip+stat encaissé, prestataire chip+stat encaissé sans part hôte).
 - Commits : 6b7b1aa (17.6-a) + 2566d91 (17.6-b) + commit 17.6-c — push rattrapé sur origin/main (59990ff worklog inclus).
 - Prochaine étape projet : PILIER 3 V3 — White-Label (domaine/branding par hôte) ; reversement hôte/prestataire (Transaction.receiverId) identifié comme étape future.
+
+---
+Task ID: 19-A
+Agent: Z.ai Code
+Task: ÉTAPE 19 (V3 - Pilier 3) — WHITE-LABEL, sous-étape A : schéma + API branding + UI hôte + middleware domaine custom.
+
+Work Log:
+- prisma/schema.prisma : Property + branding (Json : logoUrl/primaryColor/companyName/welcomeMessage), customDomain (String? @unique), customDomainVerified (Boolean, default false) ; bun run db:push + redémarrage propre (procédure anti-zombie).
+- src/lib/branding.ts (nouveau) : type PropertyBranding, parseBranding() null-safe, isValidHexColor (#RRGGBB strict), normalizeCustomDomain(), isValidCustomDomain() (anti-localhost/IP/underscore).
+- GET/PATCH /api/airbnb/branding : biens accessibles + branding + customDomain + dnsTarget (NEXT_PUBLIC_APP_URL||NEXTAUTH_URL||host) ; PATCH validation stricte (hex, 280/60 chars, format domaine, refus du domaine plateforme, P2002 → 409), changement de domaine → customDomainVerified=false.
+- POST/DELETE /api/airbnb/branding/logo : upload multipart → sharp (ré-encodage PNG, 512px inside, 2 Mo max, allowlist mime) → public/uploads/branding/<id>.png + cache-busting ?v= ; DELETE retire DB+fichier.
+- POST /api/airbnb/branding/domain-verify : resolveCname(domain) comparé à la cible plateforme → customDomainVerified=true ; 422 honnête si CNAME absent/différent.
+- GET /api/public/domain-lookup : host → { slug } UNIQUEMENT si bien actif + vérifié + qrHubSlug ; cache 5 min ; 404 sinon.
+- src/middleware.ts : matcher élargi (pages + /api/client) ; garde legacy inchangée ; NOUVEAU : host ≠ host plateforme (avec point) → lookup (fetch interne, timeout 2.5 s, cache mémoire 5 min) → NextResponse.rewrite('/app/hub/<slug>/guest') avec conservation de la query — l'URL du visiteur reste son domaine ; /api/** et assets jamais réécrits.
+- guest-app API : payload + branding (parseBranding) ; types.ts : GuestBranding.
+- guest-app.tsx : variables CSS --primary/--accent = primaryColor → TOUT le thème thémé bascule (bg-primary, text-accent, indicateur d'onglet) ; header : logo (img) sinon 🗝️, companyName sinon « Conciergerie Hub » ; tab-home : welcomeMessage white-label prioritaire.
+- UI : page /airbnb/dashboard/branding + BrandingContent (selector bien, upload/retrait logo, color picker + hex + 6 presets, nom commercial, message 280, domaine + instructions CNAME + vérifier + badge statut, aperçu live mini-téléphone, bouton Enregistrer dirty-aware) ; dashboard-shell + onglet 🎨 Branding.
+- INCIDENT : .env de nouveau réinitialisé par la sandbox (NEXTAUTH_SECRET absent → JWEDecryptionFailed 401 aléatoires) — régénéré NEXTAUTH_SECRET + NEXTAUTH_URL + NEXT_PUBLIC_APP_URL=http://localhost:3000, redémarrage.
+- VALIDATION : lint 0, tsc 0 ; curl — GET/PATCH branding (couleur/nom/message/domaine), couleur invalide 400, upload logo (PNG 1129 o créé), verify DNS → 422 honnête (faux domaine), guest payload branding complet, guard legacy sans session 401 (régression OK) ; middleware — curl -H "Host: guests.lesclesdumarais.com" / → 200 réécrit vers l'app invitée (contenu « Loft Canal » + « Guide digital »), host inconnu → 200 (landing), API non réécrite ; browser — page Branding rendue (logo actuel, presets, badge ✓ CNAME vérifié), changement couleur #dc2626 + enregistré, app invitée : marque « Les Clés du Marais » en rgb(220,38,38), logo visible, message d'accueil white-label, 0 erreur console, screenshots branding-page-19.png + guest-app-branding-19.png.
+- Note E2E : customDomainVerified=true posé en DB pour simuler la propagation CNAME (en production, l'endpoint domain-verify le fait via resolveCname réel).
+
+Stage Summary:
+- WHITE-LABEL opérationnel de bout en bout : un hôte configure logo/couleur/nom/message/domaine → l'app invitée (et l'installation PWA par logement) s'affiche à SA marque, et son domaine custom sert l'app via rewrite middleware sans exposer le slug dans l'URL.
+- Fichiers clés : lib/branding.ts, api/airbnb/branding{,/logo,/domain-verify}, api/public/domain-lookup, middleware.ts, guest-app{.tsx,/types.ts,tab-home.tsx}, airbnb/dashboard/branding/page.tsx, branding-content.tsx, dashboard-shell.tsx.
+- En attente : ÉTAPE 20 (Stripe Connect + payouts) puis ÉTAPE 21 (remboursements + nettoyage legacy + Redis rate limit) — NEXT de l'utilisateur.

@@ -22,6 +22,7 @@ const NAV_ITEMS = [
   { href: '/airbnb/dashboard/automations', label: 'Automatisations', emoji: '⚡' },
   { href: '/airbnb/dashboard/plaques', label: 'Plaques', emoji: '🏷️' },
   { href: '/airbnb/dashboard/providers', label: 'Prestataires', emoji: '🧹' },
+  { href: '/airbnb/dashboard/branding', label: 'Branding', emoji: '🎨' },
   { href: '/airbnb/billing', label: 'Abonnement', emoji: '💳' },
 ];
 

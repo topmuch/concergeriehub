@@ -6,7 +6,13 @@
 // ÉTAPE 17.5 — GuestServiceOffer : catalogue fin par bien (offre
 // précise = offerId, prix re-résolu serveur au POST).
 // ÉTAPE 17.6 — paymentStatus (paiement in-app, miroir du GET).
+// ÉTAPE 19 — branding white-label (miroir du GET).
 // =============================================================
+
+import type { PropertyBranding } from '@/lib/branding';
+
+/** ÉTAPE 19 — marque de la conciergerie (white-label). */
+export type GuestBranding = PropertyBranding;
 
 /** Offre du catalogue fin d'un prestataire pour CE bien (17.5). */
 export interface GuestServiceOffer {
@@ -55,6 +61,8 @@ export interface GuestBookingInfo {
 
 export interface GuestPayload {
   active: boolean;
+  /** ÉTAPE 19 — white-label (toujours présent, défauts plateforme). */
+  branding: GuestBranding;
   property: {
     id: string;
     name: string;

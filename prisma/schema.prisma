@@ -90,6 +90,10 @@ model Property {
   isActive  Boolean  @default(true) @map("is_active")
   pinHash   String?  @map("pin_hash")                 // bcrypt du PIN 4 chiffres — "Mode Hôte" (protège l'accès tablette/QR)
   qrHubSlug String?  @unique @map("qr_hub_slug")     // ÉTAPE 12 : slug du Hub QR du bien → /hub/[qrHubSlug] (fallback des plaques)
+  // ÉTAPE 19 (V3) — WHITE-LABEL : identité de marque de la conciergerie
+  branding     Json?    // { logoUrl, primaryColor, companyName, welcomeMessage } (validé par src/lib/branding.ts)
+  customDomain String?  @unique @map("custom_domain") // ex: "guests.ma-conciergerie.com" — CNAME vers le domaine de l'app
+  customDomainVerified Boolean @default(false) @map("custom_domain_verified") // CNAME vérifié (resolveCname) — le middleware ne réécrit QUE les domaines vérifiés
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 

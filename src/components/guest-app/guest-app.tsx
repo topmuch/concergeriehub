@@ -16,6 +16,10 @@ import { GUEST_TABS, type GuestPayload, type GuestTab } from './types';
 // • Bannière hors-ligne + données en cache (Service Worker)
 // • Personnalisation via ?b=<bookingId> (mémorisée localement)
 // ÉTAPE 17.6 — payFlash (retour Stripe ?paid= / ?paycancel=)
+// ÉTAPE 19 — WHITE-LABEL : branding{} du payload (logo, couleur,
+//   nom commercial) appliqué via variables CSS --primary/--accent
+//   → TOUS les composants thémés basculent sur la marque sans
+//   réécrire les classes (bg-primary, text-accent, indicateurs…).
 // =============================================================
 
 const TAB_ORDER: GuestTab[] = ['home', 'guide', 'services', 'help'];
@@ -135,18 +139,38 @@ export function GuestApp({ slug, initialBookingId, payFlash }: { slug: string; i
     setRetryTick((t) => t + 1);
   };
 
+  // ÉTAPE 19 — marque de la conciergerie (white-label)
+  const branding = payload?.branding;
+  const brandVars = branding
+    ? ({ '--primary': branding.primaryColor, '--accent': branding.primaryColor } as React.CSSProperties)
+    : undefined;
+
   return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground">
+    <div
+      className="min-h-screen flex flex-col bg-background text-foreground"
+      style={brandVars}
+    >
       {/* ── En-tête compact ── */}
       <header
         className="sticky top-0 z-40 bg-background/85 backdrop-blur border-b border-border pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 px-4"
         role="banner"
       >
         <div className="max-w-lg mx-auto flex items-center gap-3">
-          <span className="text-xl select-none" aria-hidden="true">🗝️</span>
+          {branding?.logoUrl ? (
+            <img
+              src={branding.logoUrl}
+              alt="Logo de la conciergerie"
+              className="h-9 w-9 rounded-lg object-contain bg-card border border-border shrink-0"
+            />
+          ) : (
+            <span className="text-xl select-none" aria-hidden="true">🗝️</span>
+          )}
           <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground leading-none">
-              Conciergerie Hub
+            <p
+              className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground leading-none"
+              style={branding ? { color: branding.primaryColor } : undefined}
+            >
+              {branding?.companyName ?? 'Conciergerie Hub'}
             </p>
             <p className="text-sm font-bold text-card-foreground truncate mt-0.5">
               {payload?.property.name ?? 'Votre séjour'}

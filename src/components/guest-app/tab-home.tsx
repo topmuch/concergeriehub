@@ -56,7 +56,10 @@ export function TabHome({
           {firstName ? `Bonjour ${firstName} 👋` : 'Bienvenue 👋'}
         </h2>
         <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
-          {booking ? (
+          {/* ÉTAPE 19 — message d'accueil white-label de la conciergerie */}
+          {payload.branding?.welcomeMessage ? (
+            payload.branding.welcomeMessage
+          ) : booking ? (
             <>
               Votre séjour est en cours — profitez bien&nbsp;!{' '}
               {ownerName && <>En cas de besoin, {ownerName} est à votre écoute.</>}

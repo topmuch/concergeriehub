@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { haversineKm, providerCategoryMeta, formatEur, propertyTypeMeta } from '@/lib/b2b';
+import { parseBranding } from '@/lib/branding';
 
 // =============================================================
 // ÉTAPE 16 (V3) — App Invitée PWA : GET /api/public/guest-app?slug=…
@@ -11,6 +12,8 @@ import { haversineKm, providerCategoryMeta, formatEur, propertyTypeMeta } from '
 // par bien (ServiceOffer actifs de CE bien pour CE prestataire).
 // L'invité commande une offre précise (offerId) dont le prix est
 // re-résolu serveur au POST — jamais cru côté client.
+// ÉTAPE 19 (V3) — WHITE-LABEL : payload gagne branding{} (logo,
+// couleur, nom commercial, message d'accueil) pour l'app invitée.
 // (slug en QUERY PARAM — règle sandbox : pas de segments dynamiques
 // pour les nouvelles routes API)
 //
@@ -120,6 +123,7 @@ export async function GET(req: Request) {
         latitude: true,
         longitude: true,
         isActive: true,
+        branding: true,
         owner: {
           select: { fullName: true, email: true, profile: { select: { phone: true } } },
         },
@@ -277,6 +281,8 @@ export async function GET(req: Request) {
 
     return NextResponse.json({
       active: true,
+      // ÉTAPE 19 — white-label (null-safe → défauts plateforme)
+      branding: parseBranding(property.branding),
       property: {
         id: property.id,
         name: property.name,
@@ -311,6 +317,7 @@ export async function GET(req: Request) {
 function buildDemoPayload() {
   return {
     active: true,
+    branding: parseBranding(null), // démo = marque plateforme par défaut
     property: {
       id: 'demo-home-001',
       name: 'Le Petit Nid',
