@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { hash } from 'bcryptjs';
 import { db } from '@/lib/db';
-import { rateLimit } from '@/lib/orders';
+import { rateLimit } from '@/lib/rate-limit';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
@@ -9,7 +9,7 @@ export async function POST(req: Request) {
   try {
     // Anti-abus : max 10 inscriptions/minute/IP.
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'local';
-    if (!rateLimit(`register:${ip}`, 10)) {
+    if (!(await rateLimit(`register:${ip}`, 10))) {
       return NextResponse.json({ error: 'Trop de tentatives. Réessayez dans un instant.' }, { status: 429 });
     }
 

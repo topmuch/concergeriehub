@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { compare, hash } from 'bcryptjs';
 import { db } from '@/lib/db';
-import { rateLimit } from '@/lib/orders';
+import { rateLimit } from '@/lib/rate-limit';
 
 const DEMO_SLUG = 'demo-hub';
 const isDemo = (slug: string) => slug === DEMO_SLUG;
@@ -81,7 +81,7 @@ export async function PUT(
       return NextResponse.json({ error: 'PIN requis (4 chiffres)' }, { status: 400 });
     }
     // Anti brute-force : 10 tentatives/minute/slug.
-    if (!rateLimit(`hubupdatepin:${slug}`, 10)) {
+    if (!(await rateLimit(`hubupdatepin:${slug}`, 10))) {
       return NextResponse.json({ error: 'Trop de tentatives. Réessayez dans un instant.' }, { status: 429 });
     }
     const isValid = await compare(pin, home.pinHash);

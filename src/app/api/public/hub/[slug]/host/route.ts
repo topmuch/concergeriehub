@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { compare } from 'bcryptjs';
 import { db } from '@/lib/db';
 import { haversineKm, providerCategoryMeta, formatEur } from '@/lib/b2b';
-import { rateLimit } from '@/lib/orders';
+import { rateLimit } from '@/lib/rate-limit';
 
 // =============================================================
 // POST /api/public/hub/[slug]/host   body: { pin }
@@ -103,7 +103,7 @@ export async function POST(
       );
     }
     // Anti brute-force : 10 tentatives/minute/slug (PIN 4 chiffres).
-    if (!rateLimit(`hubhostpin:${slug}`, 10)) {
+    if (!(await rateLimit(`hubhostpin:${slug}`, 10))) {
       return NextResponse.json({ error: 'Trop de tentatives. Réessayez dans un instant.' }, { status: 429 });
     }
     const isValid = await compare(pin, property.pinHash);

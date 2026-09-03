@@ -670,3 +670,25 @@ Stage Summary:
 - Invariants maintenus : montant jamais du client, taux recalculé serveur, idempotence, 1 paiement = 1 Transaction
 - Prod-ready : dès STRIPE_SECRET_KEY définie, aucun code à changer — onboarding réel + destination charges automatiques
 - lint 0 / tsc 0 (hors exemples tolérés) / 0 erreur console E2E
+
+---
+Task ID: E21
+Agent: Z.ai Code (principal)
+Task: ÉTAPE 21 (V3) — Remboursements Stripe + rate limiting multi-instance + audit routes legacy
+
+Work Log:
+- payments-server.ts : refundServiceOrder() — idempotent (garde PAID→REFUNDED via updateMany), Stripe réel = refunds.create({payment_intent, idempotencyKey refund_<orderId>}) (destination charge → fee+transfer inversés auto par Stripe), démo dev sans appel ; Transaction d'origine → status 'refunded' (1 paiement = 1 transaction, audit conservé)
+- API POST /api/airbnb/service-orders/[id]/refund : garde FINANCIÈRE OWNER/MANAGER (getUserRoleForProperty — CLEANER/MAINTENANCE refusés), anti-IDOR par propertyId, refus si non-PAID, alreadyRefunded idempotent
+- GET /api/airbnb/service-orders : stats + refundedRevenue/refundedCount
+- orders-content.tsx (hôte) : bouton ↩️ Rembourser sur commandes PAID (y compris annulées payées), AlertDialog de confirmation, maj optimiste + rollback, hint stats « X € remboursés (n) »
+- src/lib/rate-limit.ts : rateLimit(key, max) async — REDIS_URL → ioredis (import dynamique lazy, fail-open) sinon mémoire ; fenêtre fixe 60 s ; purge hygiène >5000 clés
+- 10 routes API passées à `await rateLimit(...)` importé de '@/lib/rate-limit'
+- INCIDENT BUILD : re-export rateLimit via orders.ts → ioredis tiré dans le bundle CLIENT (orders.ts importé par composants hôte) → Module not found 'tls' + 500 sur /airbnb/dashboard/orders. Fix : PAS de re-export (comment d'avertissement dans orders.ts), imports directs '@/lib/rate-limit' côté API uniquement. Leçon : ne jamais ré-exporter un module serveur-only depuis une lib partagée client/server
+- Audit 52 routes /api/client : app V1 legacy ENCORE MONTÉE dans src/app/page.tsx (switcher client-*) → routes vivantes. Analyse croisée statique : ~23 familles préfixées appelées (+ sous-routes dynamiques) ; 0 référence = activate, activate-batch, check-code, doorbell, invite, module-content, push, homes/[id]/members, members/[id] (~10 routes) ; subscriptions/transactions/webhooks référencées (4/3/7). URLs dynamiques (${id}) → analyse statique imparfaite, purge seulement après détection d'usage réel
+- E2E browser : connexion hôte → commande 36 € PAID → ↩️ Rembourser → dialog « Rembourser 36,00€ à Camille Laurent ? » → confirmation → chip 💳 Remboursée + stats « dont 0,00 € encaissés (0) · 36,00 € remboursés (1) » ; DB : Order REFUNDED/status PENDING (ortho préservée), Transaction unique status refunded (amount 36, receiverId acct_demo, platformFee 5.4)
+
+Stage Summary:
+- Remboursement complet opérationnel (démo vérifié, prod = mêmes états + appel Stripe réel, idempotence par idempotencyKey)
+- Rate limiting multi-instance : activer REDIS_URL dans Coolify suffit (aucun code à changer) ; fallback mémoire sans Redis
+- Plan legacy documenté : Phase 1 = geler (flag NEXT_PUBLIC_LEGACY_CLIENT), Phase 2 = migrer vues V1 → V3, Phase 3 = purge (décision utilisateur requise, à planifier V4)
+- lint 0 / tsc 0 / 0 erreur console E2E ; commit E21

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { rateLimit } from '@/lib/orders';
+import { rateLimit } from '@/lib/rate-limit';
 
 const DEMO_SLUG = 'demo-hub';
 const isDemo = (slug: string) => slug === DEMO_SLUG;
@@ -25,7 +25,7 @@ export async function POST(
     }
 
     // Anti-spam : max 5 avis/minute/slug.
-    if (!rateLimit(`guestbook:${slug}`, 5)) {
+    if (!(await rateLimit(`guestbook:${slug}`, 5))) {
       return NextResponse.json({ error: 'Trop de tentatives. Réessayez dans un instant.' }, { status: 429 });
     }
 

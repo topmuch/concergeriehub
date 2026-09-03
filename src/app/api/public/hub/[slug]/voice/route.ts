@@ -3,7 +3,7 @@ import { writeFile, mkdir } from 'fs/promises';
 import { join, basename } from 'path';
 import { db } from '@/lib/db';
 import crypto from 'crypto';
-import { rateLimit } from '@/lib/orders';
+import { rateLimit } from '@/lib/rate-limit';
 
 const UPLOAD_DIR = join(process.cwd(), 'public', 'uploads', 'voice');
 const MAX_DURATION_SEC = 30;
@@ -21,7 +21,7 @@ export async function POST(
   try {
     const { slug } = await params;
     // Anti-spam : max 10 messages/minute/slug.
-    if (!rateLimit(`voice:${slug}`, 10)) {
+    if (!(await rateLimit(`voice:${slug}`, 10))) {
       return NextResponse.json({ error: 'Trop de tentatives. Réessayez dans un instant.' }, { status: 429 });
     }
     const formData = await req.formData();

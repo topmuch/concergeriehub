@@ -124,20 +124,8 @@ export function formatEur2(n: number): string {
 }
 
 /**
- * Anti-spam en mémoire (par clé — ex: propertyId) : fenêtre glissante.
- * SQLite dev / mono-instance : suffisant ; Redis en prod le jour venu.
+ * Anti-spam — ÉTAPE 21 : migré dans src/lib/rate-limit.ts
+ * (Redis si REDIS_URL, sinon mémoire). ⚠️ NE PAS re-exporter ici :
+ * orders.ts est importé par des composants client — ioredis casserait
+ * le bundle navigateur. Les routes API importent '@/lib/rate-limit'.
  */
-const rateBuckets = new Map<string, number[]>();
-
-export function rateLimit(key: string, maxPerMinute = 10): boolean {
-  const now = Date.now();
-  const windowStart = now - 60_000;
-  const arr = (rateBuckets.get(key) || []).filter((t) => t > windowStart);
-  if (arr.length >= maxPerMinute) {
-    rateBuckets.set(key, arr);
-    return false;
-  }
-  arr.push(now);
-  rateBuckets.set(key, arr);
-  return true;
-}

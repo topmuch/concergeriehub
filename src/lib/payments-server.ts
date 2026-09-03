@@ -118,3 +118,78 @@ export function orderStripeDescription(items: unknown): string {
   const summary = list.map((i) => `${i.qty}× ${i.name}`).join(', ') || 'Commande service';
   return summary.slice(0, 220);
 }
+
+// =============================================================
+// ÉTAPE 21 (V3) — REMBOURSEMENT d'une commande service
+//
+//  - seul le payer-side réel est remboursé : Stripe refund sur le
+//    payment_intent d'origine (destination charge → l'application
+//    fee et le transfer sont inversés automatiquement par Stripe) ;
+//  - mode DÉMO (dev sans clés) : même chemin d'états sans appel Stripe ;
+//  - idempotent : une commande déjà REFUNDED n'est jamais re-traitée ;
+//  - le paiement d'origine reste 1 Transaction : son status passe à
+//    'refunded' (audit conservé, pas de transaction négative).
+// =============================================================
+
+export interface RefundResult {
+  notFound: boolean;
+  alreadyRefunded: boolean;
+  notPaid: boolean;
+  refunded: boolean;
+  totalAmount: number | null;
+  stripeRefundId: string | null;
+}
+
+export async function refundServiceOrder(serviceOrderId: string): Promise<RefundResult> {
+  const order = await db.serviceOrder.findUnique({
+    where: { id: serviceOrderId },
+    select: { id: true, paymentStatus: true, totalAmount: true, stripePaymentId: true },
+  });
+  if (!order) {
+    return { notFound: true, alreadyRefunded: false, notPaid: false, refunded: false, totalAmount: null, stripeRefundId: null };
+  }
+  if (order.paymentStatus === 'REFUNDED') {
+    return { notFound: false, alreadyRefunded: true, notPaid: false, refunded: false, totalAmount: order.totalAmount, stripeRefundId: null };
+  }
+  if (order.paymentStatus !== 'PAID') {
+    return { notFound: false, alreadyRefunded: false, notPaid: true, refunded: false, totalAmount: order.totalAmount, stripeRefundId: null };
+  }
+
+  // ── STRIPE RÉEL : refund sur le payment_intent d'origine ──
+  let stripeRefundId: string | null = null;
+  if (process.env.STRIPE_SECRET_KEY) {
+    if (!order.stripePaymentId) {
+      console.error(
+        `[payments] Commande ${serviceOrderId} : refund impossible, payment_intent manquant (paiement antérieur ?)`,
+      );
+      return { notFound: false, alreadyRefunded: false, notPaid: true, refunded: false, totalAmount: order.totalAmount, stripeRefundId: null };
+    }
+    const Stripe = (await import('stripe')).default;
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+    const refund = await stripe.refunds.create(
+      { payment_intent: order.stripePaymentId },
+      // Destination charge : Stripe inverse application fee + transfer
+      // par défaut → l'invité est remboursé intégralement.
+      { idempotencyKey: `refund_${serviceOrderId}` },
+    );
+    stripeRefundId = refund.id;
+  }
+
+  // ── Bascule d'état idempotente (garde PAID → REFUNDED) ──
+  const updated = await db.serviceOrder.updateMany({
+    where: { id: serviceOrderId, paymentStatus: 'PAID' },
+    data: { paymentStatus: 'REFUNDED' },
+  });
+  if (updated.count === 0) {
+    // Une requête concurrente a déjà remboursé — idempotence stricte
+    return { notFound: false, alreadyRefunded: true, notPaid: false, refunded: false, totalAmount: order.totalAmount, stripeRefundId: null };
+  }
+
+  // ── Audit : la Transaction d'origine passe à 'refunded' ──
+  await db.transaction.updateMany({
+    where: { type: 'service_order', referenceId: serviceOrderId, status: 'completed' },
+    data: { status: 'refunded' },
+  });
+
+  return { notFound: false, alreadyRefunded: false, notPaid: false, refunded: true, totalAmount: order.totalAmount, stripeRefundId };
+}

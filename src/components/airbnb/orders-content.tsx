@@ -12,6 +12,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { providerCategoryMeta } from '@/lib/b2b';
 import { ORDER_STATUS_META, ORDER_TRANSITIONS, formatEur2, type OrderStatus } from '@/lib/orders';
 
@@ -24,7 +35,9 @@ import { ORDER_STATUS_META, ORDER_TRANSITIONS, formatEur2, type OrderStatus } fr
 // • Switch multi-propriétés (héritage V2)
 // ÉTAPE 17.6 (V3) — PAIEMENT IN-APP : badge 💳 Payée/À payer par
 // commande + stat « dont encaissé » (montants réellement payés).
-// Optimiste : rollback + toast en cas d'échec.
+// ÉTAPE 21 (V3) — REMBOURSEMENT : bouton ↩️ Rembourser sur les
+// commandes payées (confirmation, garde OWNER/MANAGER côté serveur),
+// stat « remboursé ». Optimiste : rollback + toast en cas d'échec.
 // =============================================================
 
 interface OrderDTO {
@@ -53,6 +66,9 @@ interface StatsDTO {
   deliveredCount: number;
   paidRevenue: number;
   paidCount: number;
+  // ÉTAPE 21 — remboursements
+  refundedRevenue: number;
+  refundedCount: number;
 }
 
 interface PropertyLite {
@@ -168,6 +184,47 @@ export function OrdersContent() {
     }
   };
 
+  /**
+   * ÉTAPE 21 — remboursement d'une commande payée.
+   * La garde financière (OWNER/MANAGER + statut PAID) est réappliquée
+   * côté serveur ; ici : confirmé par AlertDialog + maj optimiste.
+   */
+  const refundOrder = async (order: OrderDTO) => {
+    const prevOrders = data?.orders ?? [];
+    setBusyId(order.id);
+    // Optimiste
+    setData((d) =>
+      d
+        ? { ...d, orders: d.orders.map((o) => (o.id === order.id ? { ...o, paymentStatus: 'REFUNDED' } : o)) }
+        : d,
+    );
+    try {
+      const res = await fetch(`/api/airbnb/service-orders/${encodeURIComponent(order.id)}/refund`, {
+        method: 'POST',
+      });
+      const json = (await res.json().catch(() => null)) as
+        | { ok?: boolean; error?: string; alreadyRefunded?: boolean }
+        | null;
+      if (!res.ok || !json?.ok) {
+        setData((d) => (d ? { ...d, orders: prevOrders } : d));
+        toast.error(json?.error || 'Le remboursement a échoué.');
+        return;
+      }
+      toast.success(
+        json.alreadyRefunded
+          ? '↩️ Commande déjà remboursée.'
+          : `↩️ ${formatEur2(order.totalAmount)} remboursés — ${order.guestName} est recrédité(e).`,
+      );
+      // Recharge silencieux pour rafraîchir les stats financières
+      load(propertyId || undefined);
+    } catch {
+      setData((d) => (d ? { ...d, orders: prevOrders } : d));
+      toast.error('Connexion impossible. Réessayez.');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   return (
     <div className="max-w-6xl mx-auto w-full px-4 py-8 space-y-6">
       {/* ----- En-tête + switch propriété ----- */}
@@ -214,7 +271,7 @@ export function OrdersContent() {
               emoji="💰"
               label="CA invités"
               value={formatEur2(data.stats.revenue)}
-              hint={`dont ${formatEur2(data.stats.paidRevenue)} encaissés (${data.stats.paidCount})`}
+              hint={`dont ${formatEur2(data.stats.paidRevenue)} encaissés (${data.stats.paidCount})${data.stats.refundedCount > 0 ? ` · ${formatEur2(data.stats.refundedRevenue)} remboursés (${data.stats.refundedCount})` : ''}`}
               tone="slate"
             />
             <StatCard
@@ -267,6 +324,7 @@ export function OrdersContent() {
                     order={o}
                     busy={busyId === o.id}
                     onTransition={transition}
+                    onRefund={refundOrder}
                   />
                 ))}
               </ul>
@@ -298,10 +356,11 @@ function StatCard({ emoji, label, value, hint, tone }: {
   );
 }
 
-function OrderRow({ order, busy, onTransition }: {
+function OrderRow({ order, busy, onTransition, onRefund }: {
   order: OrderDTO;
   busy: boolean;
   onTransition: (order: OrderDTO, next: OrderStatus) => Promise<void>;
+  onRefund: (order: OrderDTO) => Promise<void>;
 }) {
   const status = (ORDER_STATUS_META[order.status as OrderStatus] ?? ORDER_STATUS_META.PENDING) as {
     label: string;
@@ -346,9 +405,9 @@ function OrderRow({ order, busy, onTransition }: {
         </p>
       </div>
 
-      {/* Actions */}
-      {nextSteps.length > 0 && (
-        <div className="flex gap-2 shrink-0">
+      {/* Actions (cycle de vie + remboursement É21) */}
+      {(nextSteps.length > 0 || order.paymentStatus === 'PAID') && (
+        <div className="flex gap-2 shrink-0 flex-wrap">
           {nextSteps.filter((s) => s !== 'CANCELLED').map((s) => (
             <Button
               key={s}
@@ -360,15 +419,51 @@ function OrderRow({ order, busy, onTransition }: {
               {busy ? '…' : NEXT_ACTION_LABEL[s] ?? s}
             </Button>
           ))}
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={busy}
-            onClick={() => onTransition(order, 'CANCELLED')}
-            className="text-rose-600 border-rose-200 hover:bg-rose-50"
-          >
-            Annuler
-          </Button>
+          {nextSteps.includes('CANCELLED') && (
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={busy}
+              onClick={() => onTransition(order, 'CANCELLED')}
+              className="text-rose-600 border-rose-200 hover:bg-rose-50"
+            >
+              Annuler
+            </Button>
+          )}
+          {order.paymentStatus === 'PAID' && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={busy}
+                  className="text-rose-600 border-rose-200 hover:bg-rose-50"
+                >
+                  {busy ? '…' : '↩️ Rembourser'}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>
+                    Rembourser {formatEur2(order.totalAmount)} à {order.guestName}&nbsp;?
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    L&apos;invité sera recrédité(e) intégralement (la commission Hub est également
+                    annulée). Cette action est définitive et sera visible du prestataire.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Annuler</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => onRefund(order)}
+                    className="bg-rose-600 text-white hover:bg-rose-700"
+                  >
+                    Confirmer le remboursement
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
         </div>
       )}
     </li>

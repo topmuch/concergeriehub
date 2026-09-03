@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { compare } from 'bcryptjs';
 import { db } from '@/lib/db';
 import { haversineKm, providerCategoryMeta, formatEur, propertyTypeMeta } from '@/lib/b2b';
-import { rateLimit } from '@/lib/orders';
+import { rateLimit } from '@/lib/rate-limit';
 
 // =============================================================
 // Hub public Conciergerie Hub — /hub/[slug]
@@ -295,7 +295,7 @@ export async function POST(
     }
 
     // Anti brute-force : 10 essais/minute/slug (PIN 4 chiffres).
-    if (!rateLimit(`hubpin:${slug}`, 10)) {
+    if (!(await rateLimit(`hubpin:${slug}`, 10))) {
       return NextResponse.json({ error: 'Trop de tentatives. Réessayez dans un instant.' }, { status: 429 });
     }
 

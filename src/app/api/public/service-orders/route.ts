@@ -5,9 +5,9 @@ import {
   parseOrderLines,
   itemsTotal,
   computeSplit,
-  rateLimit,
   type OrderItem,
 } from '@/lib/orders';
+import { rateLimit } from '@/lib/rate-limit';
 import {
   ensureDefaultRules,
   runAutomationTrigger,
@@ -86,7 +86,7 @@ export async function POST(req: Request) {
     }
 
     // Anti-spam léger par bien (fenêtre glissante en mémoire)
-    if (!rateLimit(`order:${property.id}`, 10)) {
+    if (!(await rateLimit(`order:${property.id}`, 10))) {
       return NextResponse.json(
         { ok: false, message: 'Trop de commandes rapprochées. Réessayez dans un instant.' },
         { status: 429 },

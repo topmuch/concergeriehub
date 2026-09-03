@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { hash } from 'bcryptjs';
 import { db } from '@/lib/db';
 import crypto from 'crypto';
-import { rateLimit } from '@/lib/orders';
+import { rateLimit } from '@/lib/rate-limit';
 
 // ── Demo mock data ──
 const DEMO_TOKEN = 'demo-setup';
@@ -267,7 +267,7 @@ export async function POST(
     const { token } = await params;
 
     // Anti brute-force des setupToken : max 10 soumissions/minute/token.
-    if (!rateLimit(`setup:${token}`, 10)) {
+    if (!(await rateLimit(`setup:${token}`, 10))) {
       return NextResponse.json({ error: 'Trop de tentatives. Réessayez dans un instant.' }, { status: 429 });
     }
 

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { rateLimit } from '@/lib/orders';
+import { rateLimit } from '@/lib/rate-limit';
 import { computeApplicationFeeCents } from '@/lib/stripe-connect';
 import { markServiceOrderPaid, orderStripeDescription } from '@/lib/payments-server';
 
@@ -104,7 +104,7 @@ export async function POST(
     }
 
     // Anti-abus par commande (fenêtre glissante en mémoire)
-    if (!rateLimit(`orderpay:${order.id}`, 6)) {
+    if (!(await rateLimit(`orderpay:${order.id}`, 6))) {
       return NextResponse.json(
         { ok: false, message: 'Trop de tentatives de paiement. Réessayez dans un instant.' },
         { status: 429 },

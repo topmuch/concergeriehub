@@ -85,6 +85,9 @@ export async function GET(req: NextRequest) {
     // ÉTAPE 17.6 — encaissé = commandes réellement payées (hors annulées)
     let paidRevenue = 0;
     let paidCount = 0;
+    // ÉTAPE 21 — remboursé (visible en stats hôte)
+    let refundedRevenue = 0;
+    let refundedCount = 0;
     for (const o of orders) {
       if (o.status === 'CANCELLED') continue;
       revenue += o.totalAmount;
@@ -93,6 +96,10 @@ export async function GET(req: NextRequest) {
       if (o.paymentStatus === 'PAID') {
         paidRevenue += o.totalAmount;
         paidCount++;
+      }
+      if (o.paymentStatus === 'REFUNDED') {
+        refundedRevenue += o.totalAmount;
+        refundedCount++;
       }
       if (o.status === 'DELIVERED') deliveredCount++;
       else {
@@ -115,6 +122,9 @@ export async function GET(req: NextRequest) {
         // ÉTAPE 17.6
         paidRevenue: round2(paidRevenue),
         paidCount,
+        // ÉTAPE 21
+        refundedRevenue: round2(refundedRevenue),
+        refundedCount,
       },
     });
   } catch (error) {
@@ -178,5 +188,5 @@ export async function PATCH(req: NextRequest) {
 }
 
 function emptyStats() {
-  return { revenue: 0, commissionTotal: 0, hostTotal: 0, activeCount: 0, pendingCount: 0, deliveredCount: 0, paidRevenue: 0, paidCount: 0 };
+  return { revenue: 0, commissionTotal: 0, hostTotal: 0, activeCount: 0, pendingCount: 0, deliveredCount: 0, paidRevenue: 0, paidCount: 0, refundedRevenue: 0, refundedCount: 0 };
 }
