@@ -57,6 +57,13 @@ interface ApiResponse {
   provider: ProviderMe;
   orders: ProviderOrderDTO[];
   stats: ProviderStatsDTO;
+  // ÉTAPE 20 — Stripe Connect
+  connect?: {
+    available: boolean;
+    onboarded: boolean;
+    chargesEnabled: boolean;
+    maskedAccountId: string | null;
+  };
   error?: string;
 }
 
@@ -85,11 +92,95 @@ function PaymentChip({ paymentStatus, orderStatus }: { paymentStatus: string; or
   );
 }
 
+/** ÉTAPE 20 — bandeau Stripe Connect du prestataire (onboarding + statut payouts). */
+function ConnectBanner({
+  connect,
+  onStart,
+  busy,
+}: {
+  connect: NonNullable<ApiResponse['connect']>;
+  onStart: () => void;
+  busy: boolean;
+}) {
+  if (!connect.onboarded) {
+    return (
+      <section
+        aria-label="Stripe Connect"
+        className="rounded-xl border border-amber-300 bg-amber-50 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-4"
+      >
+        <div className="flex-1">
+          <h2 className="text-sm font-bold text-amber-900 flex items-center gap-2">
+            <span aria-hidden="true">🏦</span> Recevez vos paiements automatiquement
+          </h2>
+          <p className="mt-1 text-xs leading-relaxed text-amber-800">
+            Connectez votre compte Stripe pour être payé directement à chaque commande —
+            la commission Conciergerie Hub (15&nbsp;%) est déduite automatiquement, sans facture à gérer.
+          </p>
+        </div>
+        <Button
+          onClick={onStart}
+          disabled={busy}
+          className="bg-amber-600 text-white hover:bg-amber-700 shrink-0 min-h-[44px]"
+        >
+          {busy ? 'Connexion…' : 'Connecter mon compte Stripe'}
+        </Button>
+      </section>
+    );
+  }
+  if (!connect.chargesEnabled) {
+    return (
+      <section
+        aria-label="Stripe Connect"
+        className="rounded-xl border border-amber-300 bg-amber-50 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-4"
+      >
+        <div className="flex-1">
+          <h2 className="text-sm font-bold text-amber-900 flex items-center gap-2">
+            <span aria-hidden="true">⏳</span> Onboarding Stripe incomplet
+          </h2>
+          <p className="mt-1 text-xs leading-relaxed text-amber-800">
+            Votre compte Stripe est créé ({connect.maskedAccountId}) mais ne peut pas encore
+            encaisser. Reprenez la configuration pour activer les virements.
+          </p>
+        </div>
+        <Button
+          onClick={onStart}
+          disabled={busy}
+          className="bg-amber-600 text-white hover:bg-amber-700 shrink-0 min-h-[44px]"
+        >
+          {busy ? 'Connexion…' : "Reprendre l'onboarding"}
+        </Button>
+      </section>
+    );
+  }
+  return (
+    <section
+      aria-label="Stripe Connect"
+      className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 flex flex-col sm:flex-row sm:items-center gap-3"
+    >
+      <div className="flex-1">
+        <h2 className="text-sm font-bold text-emerald-900 flex items-center gap-2">
+          <span aria-hidden="true">✅</span> Stripe Connect actif
+        </h2>
+        <p className="mt-1 text-xs leading-relaxed text-emerald-800">
+          Compte {connect.maskedAccountId} — les paiements de vos commandes vous sont
+          reversés automatiquement (commission plateforme déduite à la source).
+        </p>
+      </div>
+      {!connect.available && (
+        <span className="text-[10px] font-semibold uppercase tracking-wide text-emerald-700/70 shrink-0">
+          Mode démo
+        </span>
+      )}
+    </section>
+  );
+}
+
 export function ProviderDashboard() {
   const [data, setData] = useState<ApiResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [connectBusy, setConnectBusy] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -117,6 +208,45 @@ export function ProviderDashboard() {
     }, 0);
     return () => clearTimeout(t);
   }, [load]);
+
+  // ÉTAPE 20 — retour d'onboarding Stripe (?connect=success|refresh) :
+  // statut rafraîchi + notification, puis nettoyage de l'URL.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const flag = params.get('connect');
+    if (!flag) return;
+    if (flag === 'success') toast.success('🏦 Onboarding Stripe complété — vérification du compte…');
+    if (flag === 'refresh') toast.info('Onboarding Stripe interrompu — vous pouvez le reprendre.');
+    params.delete('connect');
+    const qs = params.toString();
+    window.history.replaceState(null, '', `${window.location.pathname}${qs ? `?${qs}` : ''}`);
+    load();
+  }, [load]);
+
+  /** ÉTAPE 20 — lance l'onboarding Connect (URL Stripe ou mode démo). */
+  const startConnect = async () => {
+    setConnectBusy(true);
+    try {
+      const res = await fetch('/api/stripe/onboarding', { method: 'POST' });
+      const json = (await res.json().catch(() => null)) as
+        | { ok?: boolean; mode?: string; url?: string; error?: string }
+        | null;
+      if (!res.ok || !json?.ok) {
+        toast.error(json?.error || 'Impossible de démarrer la connexion Stripe.');
+        return;
+      }
+      if (json.mode === 'stripe' && json.url) {
+        window.location.href = json.url;
+        return;
+      }
+      toast.success('🏦 Compte Stripe Connect activé (mode démo).');
+      load();
+    } catch {
+      toast.error('Connexion impossible. Réessayez.');
+    } finally {
+      setConnectBusy(false);
+    }
+  };
 
   /** Transition de statut — mise à jour optimiste avec rollback. */
   const transition = async (order: ProviderOrderDTO, next: OrderStatus) => {
@@ -242,6 +372,11 @@ export function ProviderDashboard() {
                   tone="slate"
                 />
               </div>
+
+              {/* ----- Stripe Connect (ÉTAPE 20) ----- */}
+              {data.connect && (
+                <ConnectBanner connect={data.connect} onStart={startConnect} busy={connectBusy} />
+              )}
 
               {/* ----- Liste des commandes ----- */}
               {data.orders.length === 0 ? (

@@ -646,3 +646,27 @@ Stage Summary:
 - ENV restaurée — NOUVEAUX IDs démo (à utiliser en E2E) : bien Property = `cmtlsql000001mvaci5pq1hqz`, séjour Camille = `cmtlsr1fn0004mvc8uo1yp6nz`, qrHubSlug canonique = `loft-canal-saint-martin-11wz` (inchangé), plaque loft-canal-hub / PIN 1234
 - Leçon : PRAGMA table_info sur nom de MODÈLE (Property) = faux négatif — la table réelle est `properties` ; toujours vérifier @@map/nommage implicite avant de conclure
 - Prêt pour la suite du plan (attente NEXT utilisateur) : É20 Stripe Connect & Payouts, puis É21 remboursements/production-ready
+
+---
+Task ID: E20
+Agent: Z.ai Code (principal)
+Task: ÉTAPE 20 (V3) — Stripe Connect & Payouts : reversement automatique aux prestataires
+
+Work Log:
+- Prisma : Provider.stripeAccountId/stripeChargesEnabled/stripeOnboardedAt, User.stripeAccountId (futur hôte), Transaction.platformFee + db:push + restart anti-zombie
+- src/lib/stripe-connect.ts : getStripe (import dynamique), computePlatformFee/computeApplicationFeeCents (taux serveur DEFAULT_COMMISSION_RATE 15 %), getProviderConnectState, refreshProviderConnectState (accounts.retrieve → charges_enabled persisté), ensureExpressAccount (idempotent)
+- API /api/stripe/onboarding : GET statut (masque acct_…), POST compte Express + AccountLink (return /provider?connect=success, refresh ?connect=refresh) ; sans clé → 503 prod / mode démo dev (acct_demo_… + chargesEnabled true)
+- /pay (Checkout) : si prestataire chargesEnabled → payment_intent_data.application_fee_amount + transfer_data.destination + metadata.connectDestination ; sinon modèle 17.6 inchangé
+- markServiceOrderPaid : résout le provider côté serveur (JAMAIS une metadata) → Transaction.receiverId = compte Express + platformFee = commission ; sinon receiverId null/plateforme
+- GET /api/provider/service-orders : expose connect {available,onboarded,chargesEnabled,maskedAccountId}
+- provider-dashboard : ConnectBanner 3 états (amber onboarding / amber incomplet / émeraude actif + badge Mode démo), startConnect (redirect URL Stripe ou toast démo), retour ?connect=success|refresh (toast + nettoyage URL + refetch)
+
+Work Log (incidents):
+- E2E bloqué par JWT_SESSION_ERROR (JWEDecryptionFailed) : le .env restauré (50 o) avait PERDU NEXTAUTH_SECRET/NEXTAUTH_URL → secret undefined, sessions non décryptables. Fix : .env régénéré (secret openssl rand -base64 32 + NEXTAUTH_URL + NEXT_PUBLIC_APP_URL + STRIPE_* vides) + restart + cookies clear. Ajouter à la checklist post-restauration : VÉRIFIER LE .ENV
+- E2E : /provider possède sa propre porte LoginGate (Server Component) → après signIn, reload requis
+
+Stage Summary:
+- Connect E2E vérifié (mode démo) : prestataire Morning Box onboardé (acct_dem••••4003) → paiement invité 36 € → Transaction {receiverId: acct_demo_cmtlsql14003, platformFee: 5.40 (=15 %), payerId null} + Order {paymentStatus PAID, status PENDING (ortho préservée)} ; dashboard prestataire « dont 36,00 € encaissés » + chip Payée
+- Invariants maintenus : montant jamais du client, taux recalculé serveur, idempotence, 1 paiement = 1 Transaction
+- Prod-ready : dès STRIPE_SECRET_KEY définie, aucun code à changer — onboarding réel + destination charges automatiques
+- lint 0 / tsc 0 (hors exemples tolérés) / 0 erreur console E2E

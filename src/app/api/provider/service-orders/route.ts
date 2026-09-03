@@ -28,6 +28,9 @@ interface ProviderIdentity {
   audience: string;
   ratingAvg: number;
   totalReviews: number;
+  // ÉTAPE 20 — Stripe Connect
+  stripeAccountId: string | null;
+  stripeChargesEnabled: boolean;
 }
 
 /** Résout le profil prestataire depuis la session (ou null). */
@@ -42,10 +45,19 @@ async function resolveProvider(userId: string): Promise<ProviderIdentity | null>
       ratingAvg: true,
       totalReviews: true,
       isActive: true,
+      // ÉTAPE 20 — statut Stripe Connect
+      stripeAccountId: true,
+      stripeChargesEnabled: true,
     },
   });
   if (!provider || !provider.isActive) return null;
   return provider;
+}
+
+/** Masque un ID de compte Stripe (acct_1AbC…wXyZ → acct_1AbC…wXyZ court). */
+function maskAccountId(id: string): string {
+  if (id.length <= 10) return 'acct_••••';
+  return `${id.slice(0, 8)}••••${id.slice(-4)}`;
 }
 
 export async function GET() {
@@ -129,6 +141,14 @@ export async function GET() {
         audience: provider.audience,
         ratingAvg: provider.ratingAvg,
         totalReviews: provider.totalReviews,
+      },
+      // ÉTAPE 20 — Stripe Connect (état LOCAL ; le statut Stripe réel
+      // est rafraîchi par GET /api/stripe/onboarding)
+      connect: {
+        available: Boolean(process.env.STRIPE_SECRET_KEY),
+        onboarded: Boolean(provider.stripeAccountId),
+        chargesEnabled: provider.stripeChargesEnabled,
+        maskedAccountId: provider.stripeAccountId ? maskAccountId(provider.stripeAccountId) : null,
       },
       orders: orders.map((o) => ({
         id: o.id,

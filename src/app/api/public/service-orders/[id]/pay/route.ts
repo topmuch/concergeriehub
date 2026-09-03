@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { rateLimit } from '@/lib/orders';
+import { computeApplicationFeeCents } from '@/lib/stripe-connect';
 import { markServiceOrderPaid, orderStripeDescription } from '@/lib/payments-server';
 
 // =============================================================
@@ -74,7 +75,14 @@ export async function POST(
         paymentStatus: true,
         items: true,
         guestEmail: true,
-        provider: { select: { businessName: true } },
+        // ÉTAPE 20 — Stripe Connect : reversement automatique si onboardé
+        provider: {
+          select: {
+            businessName: true,
+            stripeAccountId: true,
+            stripeChargesEnabled: true,
+          },
+        },
       },
     });
     if (!order || order.propertyId !== property.id) {
@@ -123,6 +131,16 @@ export async function POST(
       const Stripe = (await import('stripe')).default;
       const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
+      // ÉTAPE 20 — Connect « destination charge » : si le prestataire est
+      // onboardé et capable d'encaisser, la commission plateforme est
+      // retenue (application_fee_amount) et le solde est viré
+      // automatiquement à son compte Express (transfer_data.destination).
+      // Sinon : modèle 17.6 (encaissement intégral plateforme).
+      const connectDestination =
+        order.provider.stripeChargesEnabled && order.provider.stripeAccountId
+          ? order.provider.stripeAccountId
+          : null;
+
       const session = await stripe.checkout.sessions.create({
         mode: 'payment',
         payment_method_types: ['card'],
@@ -141,11 +159,20 @@ export async function POST(
             },
           },
         ],
+        ...(connectDestination
+          ? {
+              payment_intent_data: {
+                application_fee_amount: computeApplicationFeeCents(order.totalAmount),
+              },
+              transfer_data: { destination: connectDestination },
+            }
+          : {}),
         success_url: successUrl,
         cancel_url: cancelUrl,
         metadata: {
           serviceOrderId: order.id,
           propertyId: property.id,
+          ...(connectDestination ? { connectDestination } : {}),
           ...(order.bookingId ? { bookingId: order.bookingId } : {}),
         },
       });

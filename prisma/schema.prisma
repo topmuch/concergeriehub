@@ -32,6 +32,9 @@ model User {
   isActive     Boolean  @default(true) @map("is_active") // false = compte désactivé par le Superadmin (login bloqué)
   selectedPlan      String?   @map("selected_plan")      // 'airbnb_solo' | 'airbnb_pro' | 'agency' | 'free' — choisi avant paiement
   onboardingCompleted Boolean @default(false) @map("onboarding_completed")
+  // ÉTAPE 20 (V3) — Stripe Connect : compte destinataire de reversements
+  // (hôte aujourd'hui null ; utile si l'invité paie le séjour directement)
+  stripeAccountId   String?   @map("stripe_account_id")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -577,6 +580,11 @@ model Provider {
   subscriptionStatus       String    @default("free") @map("subscription_status")
   subscriptionExpiresAt    DateTime? @map("subscription_expires_at")
   stripeCustomerId         String?   @map("stripe_customer_id")
+  // ÉTAPE 20 (V3) — Stripe Connect Express : compte destinataire des
+  // paiements de commandes (destination charge + application_fee_amount).
+  stripeAccountId          String?   @map("stripe_account_id")
+  stripeChargesEnabled     Boolean   @default(false) @map("stripe_charges_enabled") // capacité d'encaissement confirmée par Stripe
+  stripeOnboardedAt        DateTime? @map("stripe_onboarded_at")
   ratingAvg                Float     @default(0) @map("rating_avg")
   totalReviews             Int       @default(0) @map("total_reviews")
   responseTimeMinutes      Int?      @map("response_time_minutes")
@@ -748,6 +756,9 @@ model Transaction {
   receiverId      String?  @map("receiver_id")
   amount          Float
   currency        String   @default("EUR")
+  // ÉTAPE 20 (V3) — Connect : commission plateforme retenue sur ce
+  // paiement (null = encaissement intégral plateforme, modèle 17.6)
+  platformFee     Float?   @map("platform_fee")
   stripePaymentId String?  @map("stripe_payment_id")
   status          String   @default("pending")
   referenceId     String?  @map("reference_id")

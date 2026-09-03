@@ -1,8 +1,8 @@
 import { db } from '@/lib/db';
-import { round2 } from '@/lib/orders';
+import { computeSplit, round2, DEFAULT_COMMISSION_RATE } from '@/lib/orders';
 
 // =============================================================
-// ÉTAPE 17.6 (V3) — Paiement des commandes service (serveur UNIQUEMENT)
+// ÉTAPE 17.6 + 20 (V3) — Paiement des commandes service (serveur UNIQUEMENT)
 //
 // Partagé par :
 //  - le webhook Stripe (checkout.session.completed avec metadata
@@ -16,6 +16,8 @@ import { round2 } from '@/lib/orders';
 //  - le montant enregistré reste totalAmount (autorité serveur fixée
 //    à la création) — le montant Stripe n'est qu'une vérification
 //  - la Transaction distingue type 'service_order' des abonnements
+//  - ÉTAPE 20 : prestataire onboardé → receiverId = compte Express
+//    + platformFee (taux recalculé serveur) ; sinon encaissement plateforme
 // =============================================================
 
 export const SERVICE_ORDER_PAYMENT_STATUSES = ['UNPAID', 'PAID', 'REFUNDED', 'FAILED'] as const;
@@ -38,7 +40,15 @@ export async function markServiceOrderPaid(
 ): Promise<MarkPaidResult> {
   const order = await db.serviceOrder.findUnique({
     where: { id: serviceOrderId },
-    select: { id: true, paymentStatus: true, totalAmount: true, status: true },
+    select: {
+      id: true,
+      paymentStatus: true,
+      totalAmount: true,
+      status: true,
+      // ÉTAPE 20 — Connect : destinataire réel du reversement (autorité
+      // serveur, JAMAIS une metadata Stripe)
+      provider: { select: { id: true, stripeAccountId: true, stripeChargesEnabled: true } },
+    },
   });
   if (!order) return { marked: false, alreadyPaid: false, totalAmount: null };
   if (order.paymentStatus === 'PAID') {
@@ -69,13 +79,30 @@ export async function markServiceOrderPaid(
     return { marked: false, alreadyPaid: true, totalAmount: order.totalAmount };
   }
 
+  // ÉTAPE 20 — Connect : si le prestataire est onboardé (charges_enabled),
+  // la Transaction trace le reversement : receiverId = compte Express
+  // Stripe destinataire, platformFee = commission plateforme (taux
+  // SERVEUR recalculé ici, jamais lu d'une metadata).
+  // Sinon (modèle 17.6) : encaissement intégral plateforme
+  // (receiverId null, platformFee null — reversement manuel futur).
+  const connectDestination =
+    order.provider?.stripeChargesEnabled && order.provider?.stripeAccountId
+      ? order.provider.stripeAccountId
+      : null;
+  const platformFee = connectDestination
+    ? computeSplit(order.totalAmount, DEFAULT_COMMISSION_RATE).commission
+    : null;
+
   await db.transaction.create({
     data: {
       type: 'service_order',
       payerId: null, // invité (non-compte)
-      receiverId: null, // encaissé par la plateforme — reversement hôte/prestataire : étape future
+      // Connect : ID du compte Stripe destinataire (acct_xxx) ;
+      // sinon null = encaissé par la plateforme
+      receiverId: connectDestination,
       amount: order.totalAmount,
       currency: 'EUR',
+      platformFee,
       stripePaymentId: opts.stripePaymentId ?? null,
       status: 'completed',
       referenceId: serviceOrderId,
