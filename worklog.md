@@ -626,3 +626,23 @@ Stage Summary:
 - WHITE-LABEL opérationnel de bout en bout : un hôte configure logo/couleur/nom/message/domaine → l'app invitée (et l'installation PWA par logement) s'affiche à SA marque, et son domaine custom sert l'app via rewrite middleware sans exposer le slug dans l'URL.
 - Fichiers clés : lib/branding.ts, api/airbnb/branding{,/logo,/domain-verify}, api/public/domain-lookup, middleware.ts, guest-app{.tsx,/types.ts,tab-home.tsx}, airbnb/dashboard/branding/page.tsx, branding-content.tsx, dashboard-shell.tsx.
 - En attente : ÉTAPE 20 (Stripe Connect + payouts) puis ÉTAPE 21 (remboursements + nettoyage legacy + Redis rate limit) — NEXT de l'utilisateur.
+
+---
+Task ID: SYNC-ENV-19
+Agent: Z.ai Code (principal)
+Task: Synchroniser GitHub avec la version locale + réparer l'environnement après restauration sandbox
+
+Work Log:
+- Diagnostic git : HEAD local `11d2190` (ÉTAPE 19 White-Label, commité par la session perdue) = GitHub main `11d2190` (déjà poussé) — le « ahead by 1 » n'était qu'une ref origin/main périmée
+- 64 fichiers « modifiés » = changements de permissions uniquement (644→755, artefact sandbox, 0 insertion) → `git config core.fileMode false`
+- `git fetch` + `git update-ref refs/remotes/origin/main 11d2190` → working tree clean, local = origin/main = GitHub
+- Incident DB détecté (même pattern que SEC-VALID) : `db/custom.db` restauré ancien (mtime Sep 3) → schéma OK (colonnes É19 branding/custom_domain/custom_domain_verified présentes via bun:sqlite sur table `properties`) mais 0 users/properties/bookings/service_orders
+- Chaîne de seeds réexécutée dans l'ordre : seed-demo-users → seed-b2b-demo → seed-v2-team → seed-v2-automations → réapplication slug canonique `loft-canal-saint-martin-11wz` → seed-v3-guest-app → seed-v3-provider-accounts → seed-v3-service-offers → seed-v3-service-orders (4 commandes : CONFIRMED/DELIVERED/PENDING/PREPARING)
+- Redémarrage anti-zombie serveur (pkill next dev + next-server, sleep 2, relance background)
+- E2E agent-browser : landing 200, hub invité 200 (« Bonjour Camille 👋 »), onglet Services = 4 commandes + chips 💳 Payer visibles, 0 erreur console
+
+Stage Summary:
+- Git : local = origin/main = GitHub = `11d2190` (É19 White-Label), tree propre, core.fileMode=false pour ignorer le bruit de permissions sandbox
+- ENV restaurée — NOUVEAUX IDs démo (à utiliser en E2E) : bien Property = `cmtlsql000001mvaci5pq1hqz`, séjour Camille = `cmtlsr1fn0004mvc8uo1yp6nz`, qrHubSlug canonique = `loft-canal-saint-martin-11wz` (inchangé), plaque loft-canal-hub / PIN 1234
+- Leçon : PRAGMA table_info sur nom de MODÈLE (Property) = faux négatif — la table réelle est `properties` ; toujours vérifier @@map/nommage implicite avant de conclure
+- Prêt pour la suite du plan (attente NEXT utilisateur) : É20 Stripe Connect & Payouts, puis É21 remboursements/production-ready
