@@ -692,3 +692,24 @@ Stage Summary:
 - Rate limiting multi-instance : activer REDIS_URL dans Coolify suffit (aucun code à changer) ; fallback mémoire sans Redis
 - Plan legacy documenté : Phase 1 = geler (flag NEXT_PUBLIC_LEGACY_CLIENT), Phase 2 = migrer vues V1 → V3, Phase 3 = purge (décision utilisateur requise, à planifier V4)
 - lint 0 / tsc 0 / 0 erreur console E2E ; commit E21
+
+---
+Task ID: DASH-V2
+Agent: Z.ai Code (session principale)
+Task: Refonte du dashboard Superadmin — layout avec sidebar + KPIs (demande utilisateur « refaire le dashboard superadmin avec un dashboard avec sidebar et kpi »)
+
+Work Log:
+- Exploration complète (sous-agent Explore) : routes /admin/*, garde serveur requireSuperadmin(), modèles Prisma (ServiceOrder/Transaction/Subscription), composants shadcn dispo (sidebar, chart/recharts, table), patterns data-fetch, état de la base démo.
+- Nouvelle API GET /api/admin/kpis (src/app/api/admin/kpis/route.ts) : stats complètes (hôtes/biens/prestataires/séjours/MRR/GMV payée/commission plateforme/part hôte/statuts de paiement/panier moyen/remboursements/scans), série 30 j pré-remplie agrégée en JS (limite SQLite), distribution statuts paiement, GMV par catégorie (join provider.category via providerCategoryMeta), top 5 prestataires, recentOrders/recentHosts/recentActivity. Sécurisée requireSuperadmin() + adminUnauthorized().
+- Nouvelle sidebar shadcn (src/components/admin/admin-app-sidebar.tsx) : nav Pilotage (Vue d'ensemble/Hôtes/Prestataires) + Plateforme (Site public), collapsible icon, tooltips, bloc compte + signOut. Identité « contrôle » : header sombre + badge Console Superadmin.
+- Nouveau shell (src/components/admin/admin-app-shell.tsx) : SidebarProvider + SidebarInset, header sticky (SidebarTrigger + titre de section dérivé du pathname + badge SUPERADMIN), footer collé mt-auto, Toaster sonner.
+- src/app/admin/layout.tsx : swap AdminShell → AdminAppShell (garde serveur inchangée : getServerSession + requireSuperadmin → AdminLoginGate).
+- Réécriture complète de src/components/admin/admin-dashboard-content.tsx : 8 cartes KPI (4 principales + 4 opérationnelles), ComposedChart 30 j (Bar GMV slate + Line commission émeraude), donut statuts de paiement (centre = total), BarChart horizontal GMV par catégorie, top prestataires avec barres de progression, table des 8 dernières commandes (shadcn Table, scroll max-h-96), activités récentes, derniers hôtes, règle d'or. Bouton Actualiser + toast.
+- Seed scripts/seed-admin-kpis.ts (idempotent via guestEmail @kpis.local, déterministe) : 29 commandes sur 30 j (24 PAID / 2 REFUNDED / 3 UNPAID) réparties sur biens + prestataires GUEST_EXPERIENCE, commission 15 %, 1 Transaction par commande payée (completed/refunded, platformFee). seed-admin-demo.ts relancé (3 hôtes + 3 abonnements actifs + 6 activity logs).
+- Correctifs UI : XAxis/YAxis manquants (lint), bg-white forcé sur les 11 Cards (thème global dark sinon cartes sombres), text-slate-900 sur main, valeur KPI responsive text-2xl sm:text-3xl.
+- Ancien AdminShell (admin-shell.tsx) conservé mais plus référencé par le layout (aucune autre page ne l'importe).
+
+Stage Summary:
+- Dashboard Superadmin V2 livré : sidebar shadcn + 8 KPIs + 3 graphiques + table commandes + listes temps réel, E2E vérifié au navigateur (login superadmin → KPIs réels : GMV 1 710 € / commission 256,50 € / MRR 34,73 € / 24 payées / 33 commandes ; navigation Hôtes et Prestataires OK dans le nouveau shell ; toast Actualiser OK ; mobile 390 px OK ; 0 erreur console).
+- Invariants préservés : /api/admin/stats et /api/admin/users intactes (SPA legacy), URLs /admin/dashboard|providers|hosts inchangées, définitions métier identiques (Hôte sans providerProfile, MRR annual/12, commission 15 % recalculée).
+- É21 (remboursements + routes legacy + rate limiting) toujours en attente de validation NEXT.
