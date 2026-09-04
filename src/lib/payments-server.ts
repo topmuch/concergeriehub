@@ -1,5 +1,7 @@
 import { db } from '@/lib/db';
 import { computeSplit, round2, DEFAULT_COMMISSION_RATE } from '@/lib/orders';
+import { queueEmail } from '@/lib/email';
+import { guestReceiptEmail, guestRefundEmail } from '@/lib/email-templates';
 
 // =============================================================
 // ÉTAPE 17.6 + 20 (V3) — Paiement des commandes service (serveur UNIQUEMENT)
@@ -45,9 +47,16 @@ export async function markServiceOrderPaid(
       paymentStatus: true,
       totalAmount: true,
       status: true,
+      // ÉTAPE 22 — reçu invité
+      guestName: true,
+      guestEmail: true,
+      items: true,
+      propertyId: true, // ÉTAPE 22 — lookup nominal du bien pour le reçu
       // ÉTAPE 20 — Connect : destinataire réel du reversement (autorité
       // serveur, JAMAIS une metadata Stripe)
-      provider: { select: { id: true, stripeAccountId: true, stripeChargesEnabled: true } },
+      provider: {
+        select: { id: true, businessName: true, stripeAccountId: true, stripeChargesEnabled: true },
+      },
     },
   });
   if (!order) return { marked: false, alreadyPaid: false, totalAmount: null };
@@ -109,6 +118,38 @@ export async function markServiceOrderPaid(
     },
   });
 
+  // ÉTAPE 22 — reçu invité (fire-and-forget : jamais d'échec email
+  // dans le flux de paiement). Uniquement au marquage réel (idempotent).
+  // NB : ServiceOrder n'a pas de relation property → lookup nominal.
+  if (order.guestEmail) {
+    try {
+      const property = order.propertyId
+        ? await db.property.findUnique({ where: { id: order.propertyId }, select: { name: true } })
+        : null;
+      const tpl = guestReceiptEmail({
+        guestName: order.guestName || 'invité',
+        orderRef: order.id,
+        itemsSummary: orderStripeDescription(order.items),
+        amount: order.totalAmount,
+        providerName: order.provider?.businessName ?? 'prestataire',
+        propertyName: property?.name ?? 'votre logement',
+      });
+      await queueEmail({
+        to: order.guestEmail,
+        subject: tpl.subject,
+        html: tpl.html,
+        text: tpl.text,
+        template: 'guest_receipt',
+        propertyId: order.propertyId ?? null,
+        referenceType: 'service_order',
+        referenceId: order.id,
+        meta: { amount: order.totalAmount },
+      });
+    } catch (error) {
+      console.error('[payments] guest receipt email failed:', error);
+    }
+  }
+
   return { marked: true, alreadyPaid: false, totalAmount: order.totalAmount };
 }
 
@@ -143,7 +184,15 @@ export interface RefundResult {
 export async function refundServiceOrder(serviceOrderId: string): Promise<RefundResult> {
   const order = await db.serviceOrder.findUnique({
     where: { id: serviceOrderId },
-    select: { id: true, paymentStatus: true, totalAmount: true, stripePaymentId: true },
+    select: {
+      id: true,
+      paymentStatus: true,
+      totalAmount: true,
+      stripePaymentId: true,
+      // ÉTAPE 22 — email de remboursement
+      guestName: true,
+      guestEmail: true,
+    },
   });
   if (!order) {
     return { notFound: true, alreadyRefunded: false, notPaid: false, refunded: false, totalAmount: null, stripeRefundId: null };
@@ -190,6 +239,37 @@ export async function refundServiceOrder(serviceOrderId: string): Promise<Refund
     where: { type: 'service_order', referenceId: serviceOrderId, status: 'completed' },
     data: { status: 'refunded' },
   });
+
+  // ── ÉTAPE 22 — email de confirmation au client (fire-and-forget) ──
+  if (order.guestEmail) {
+    try {
+      const orderRow = await db.serviceOrder.findUnique({
+        where: { id: serviceOrderId },
+        select: { propertyId: true },
+      });
+      const property = orderRow?.propertyId
+        ? await db.property.findUnique({ where: { id: orderRow.propertyId }, select: { name: true } })
+        : null;
+      const tpl = guestRefundEmail({
+        guestName: order.guestName || 'invité',
+        orderRef: order.id,
+        amount: order.totalAmount,
+        propertyName: property?.name ?? 'votre logement',
+      });
+      await queueEmail({
+        to: order.guestEmail,
+        subject: tpl.subject,
+        html: tpl.html,
+        text: tpl.text,
+        template: 'guest_refund',
+        referenceType: 'service_order',
+        referenceId: order.id,
+        meta: { amount: order.totalAmount },
+      });
+    } catch (error) {
+      console.error('[payments] guest refund email failed:', error);
+    }
+  }
 
   return { notFound: false, alreadyRefunded: false, notPaid: false, refunded: true, totalAmount: order.totalAmount, stripeRefundId };
 }

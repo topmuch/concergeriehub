@@ -67,6 +67,7 @@
     "next-auth": "^4.24.11",
     "next-intl": "^4.3.4",
     "next-themes": "^0.4.6",
+    "nodemailer": "^10.0.0",
     "prisma": "^6.11.1",
     "qr-code-styling": "^1.9.2",
     "qrcode": "^1.5.4",
@@ -94,6 +95,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/leaflet": "^1.9.22",
+    "@types/nodemailer": "^8.0.1",
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",

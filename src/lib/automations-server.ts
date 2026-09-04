@@ -21,6 +21,8 @@ import {
   type AutomationAction,
   type AutomationTrigger,
 } from '@/lib/automations';
+import { queueEmail } from '@/lib/email';
+import { hostNotificationEmail } from '@/lib/email-templates';
 
 // -------------------------------------------------------------
 // Contextes de déclenchement
@@ -141,7 +143,56 @@ async function resolveAudience(propertyId: string, action: AutomationAction): Pr
   }
 }
 
-/** Crée les notifications (dédupliqué). Ne lève jamais. */
+/**
+ * ÉTAPE 22 — Miroir email des notifications : chaque destinataire
+ * d'une notification d'équipe reçoit aussi un email (même contenu,
+ * template générique). Fire-and-forget : ne lève jamais, n'échoue
+ * jamais le flux appelant.
+ */
+async function emailMirror(
+  userIds: string[],
+  payload: NotificationPayload,
+  dataJson: string,
+): Promise<void> {
+  try {
+    if (userIds.length === 0) return;
+    let parsed: { propertyName?: string; url?: string; propertyId?: string; trigger?: string } = {};
+    try {
+      parsed = JSON.parse(dataJson);
+    } catch {
+      return;
+    }
+    const users = await db.user.findMany({
+      where: { id: { in: userIds } },
+      select: { id: true, email: true },
+    });
+    const propertyName = parsed.propertyName ?? 'Votre bien';
+    for (const user of users) {
+      if (!user.email) continue;
+      const tpl = hostNotificationEmail({
+        title: payload.title,
+        body: payload.body,
+        propertyName,
+        url: parsed.url,
+      });
+      await queueEmail({
+        to: user.email,
+        subject: tpl.subject,
+        html: tpl.html,
+        text: tpl.text,
+        template: 'host_notification',
+        userId: user.id,
+        propertyId: parsed.propertyId ?? null,
+        referenceType: 'automation',
+        meta: { trigger: parsed.trigger, notificationType: payload.type },
+      });
+    }
+  } catch (error) {
+    console.error('[automations] emailMirror failed:', error);
+  }
+}
+
+/** Crée les notifications (dédupliqué) + miroir email. Ne lève jamais. */
 async function pushNotifications(
   userIds: string[],
   payload: NotificationPayload,
@@ -159,6 +210,8 @@ async function pushNotifications(
         dataJson,
       })),
     });
+    // ÉTAPE 22 — miroir email (best-effort, jamais bloquant)
+    await emailMirror(unique, payload, dataJson);
     return result.count;
   } catch (error) {
     console.error('[automations] pushNotifications failed:', error);

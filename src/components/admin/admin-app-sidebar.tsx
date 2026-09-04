@@ -6,6 +6,7 @@ import { signOut } from 'next-auth/react';
 import {
   LayoutDashboard,
   LogOut,
+  Mail,
   ShieldCheck,
   Sparkles,
   Users,
@@ -138,6 +139,26 @@ export function AdminAppSidebar({ adminName, adminEmail }: AdminAppSidebarProps)
           <SidebarGroupLabel>Plateforme</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname.startsWith('/admin/emails')}
+                  tooltip="Emails transactionnels — outbox et retries"
+                >
+                  <Link
+                    href="/admin/emails"
+                    aria-current={pathname.startsWith('/admin/emails') ? 'page' : undefined}
+                    className={cn(
+                      pathname.startsWith('/admin/emails')
+                        ? 'bg-slate-900 text-white hover:bg-slate-800 hover:text-white'
+                        : 'text-slate-600',
+                    )}
+                  >
+                    <Mail className="h-4 w-4" aria-hidden="true" />
+                    <span className="font-medium">Emails</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton tooltip="Site public — Conciergerie Hub" asChild>
                   <Link href="/" target="_blank" rel="noreferrer">

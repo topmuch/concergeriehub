@@ -1149,3 +1149,43 @@ model ServiceOffer {
   @@index([isActive])
   @@map("service_offers")
 }
+
+// ==============================================================
+// TABLE 34: email_outbox (ÉTAPE 22 — emails transactionnels)
+// Queue d'emails sortants. Toute notification métier (réservation,
+// commande, remboursement, automatisation hôte…) y est journalisée :
+//  - status 'QUEUED' → tenté, 'SENT' → remis au provider (ou mode
+//    démo dev), 'FAILED' → échec retentable via la Console Superadmin
+//  - provider : 'resend' | 'smtp' | 'demo' (dev sans clés — aucun
+//    envoi réel, l'email reste consultable dans la console)
+//  - jamais de clé étrangère dure : un email survit à la suppression
+//    de l'entité liée (audit compta/support).
+// ==============================================================
+model EmailOutbox {
+  id        String   @id @default(cuid())
+  to        String
+  subject   String
+  htmlBody  String   @map("html_body")
+  textBody  String?  @map("text_body")
+  template  String   // clé de template : 'host_notification' | 'guest_receipt' | 'guest_refund' | 'custom'
+  status    String   @default("QUEUED") // 'QUEUED' | 'SENT' | 'FAILED'
+  provider  String?  // 'resend' | 'smtp' | 'demo'
+  attempts  Int      @default(0)
+  lastError String?  @map("last_error")
+  sentAt    DateTime? @map("sent_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Traçabilité métier (optionnelle, sans relation)
+  userId      String? @map("user_id")
+  propertyId  String? @map("property_id")
+  referenceType String? @map("reference_type") // 'booking' | 'service_order' | 'automation' | …
+  referenceId   String? @map("reference_id")
+  metaJson      String  @default("{}") @map("meta_json")
+
+  @@index([status])
+  @@index([template])
+  @@index([createdAt])
+  @@index([propertyId])
+  @@index([referenceType, referenceId])
+  @@map("email_outbox")
+}

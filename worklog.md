@@ -746,3 +746,26 @@ Stage Summary:
 - local = origin/main = GitHub = a38da5b. Base démo reconstruite à l'identique (21 users, 4 biens, 5 bookings, 33 commandes, 26 transactions, 3 abonnements, 13 prestataires, 6 activity logs).
 - Rappel : après chaque restauration sandbox → checklist (git reset sur GitHub, .env à régénérer, db:push, 11 seeds, slug canonique, cookies clear, restart).
 - Mode démo Stripe Connect à re-activer depuis le bandeau du portail prestataire si besoin (Morning Box non onboardée dans cette base fraîche — purement optionnel pour le dashboard admin).
+
+---
+Task ID: E22
+Agent: Z.ai Code (session principale)
+Task: ÉTAPE 22 (V3) — Emails transactionnels : outbox + branches métier + console superadmin
+
+Work Log:
+- Prisma : modèle EmailOutbox (to/subject/htmlBody/textBody, template, status QUEUED|SENT|FAILED, provider resend|smtp|demo, attempts, lastError, sentAt, traçabilité userId/propertyId/referenceType/referenceId/metaJson sans FK dure) → db:push OK
+- src/lib/email.ts (SERVER ONLY) : queueEmail() (insert QUEUED → deliverEmail inline, ne lève JAMAIS, no-op si destinataire invalide) ; deliverEmail() idempotent (SENT jamais renvoyé, attempts++) ; providers lazy : RESEND_API_KEY → API fetch, SMTP_HOST/PORT → import dynamique nodemailer (jamais dans un bundle client — leçon ioredis É21) ; sans clés : SENT+provider 'demo' en dev, FAILED « provider non configuré » en prod (retentable) ; retryEmail() ; emailProviderConfigured()
+- src/lib/email-templates.ts (pur, client-safe) : shell HTML FR inline-styles 560 px charte émeraude #059669 (pas de violet) + 3 templates : hostNotificationEmail (miroir automatisations, CTA dashboard), guestReceiptEmail (reçu invité : réf, lignes, montant, prestataire), guestRefundEmail (remboursement 5-10 j ouvrés)
+- Branche automations (É13) : emailMirror() dans pushNotifications → chaque notification d'équipe génère le même email au template host_notification (title/body/propertyName/url extraits du dataJson), fire-and-forget, s'applique aux triggers immédiats ET rappels quotidiens
+- Branche paiements (17.6/20/21) : markServiceOrderPaid → reçu invité si guestEmail (lookup nominal property car ServiceOrder sans relation property) ; refundServiceOrder → email remboursement ; tous deux uniquement au marquage réel (idempotence préservée, 1 paiement = 1 Transaction vérifiée)
+- API : GET /api/admin/emails (?status/&template/&limit → liste+stats total/sent/failed/queued + 24 h + taux ; ?id= → ligne complète pour aperçu) et POST /api/admin/emails/retry?id=… (query param convention sandbox) — requireSuperadmin sur les deux
+- Console : /admin/emails (admin-emails-content.tsx) — 4 KPIs (Envoyés 24 h/Échecs 24 h/En file/Taux 24 h), Select statut, recherche destinataire/sujet, Table shadcn scroll max-h-96 (chips statut émeraude/rouge/ambre, provider FR, erreur tronquée), Dialog Aperçu (iframe srcDoc sandboxée), bouton Réessayer sur FAILED/QUEUED avec spinner + toasts ; sidebar : lien Emails (Mail) dans groupe Plateforme
+- Seed scripts/seed-emails-demo.ts (idempotent via marqueur metaJson "seed":"emails-demo") : 3 SENT démo + 1 QUEUED + 1 FAILED (démo retry) ; nodemailer + @types/nodemailer installés
+- Fix tsc : Provider.businessName (pas name), ServiceOrder sans relation property → lookup nominal, RetryEmailResult status + 'SKIPPED'
+- E2E complet : console (login superadmin → 5 emails seed, KPIs exacts, aperçu HTML impeccable (capture), retry FAILED → SENT démo + bouton retiré, filtre « En file » → 1 ligne, footer sticky vérifié en JS (bottom 800=viewport), mobile 390 px OK) ; métier via API (login demo@ → POST booking 201 → 3 emails miroir OWNER/MANAGER/CLEANER « Nouvelle réservation » + « Ménage à planifier », 3 notifs in-app ; POST pay?slug&b demo → PAID + Transaction unique + reçu camille.laurent@example.com « Reçu 36,00 € » ; POST refund → REFUNDED + email guest_refund) ; console rafraîchie : 6 envoyés 24 h / 0 échec / taux 100 % / 10 journalisés — 0 erreur console, dev.log propre
+
+Stage Summary:
+- Infrastructure email prod-ready : définir RESEND_API_KEY (ou SMTP_HOST/PORT/USER/PASS + EMAIL_FROM) suffit, zéro code à changer ; en dev sans clés, mode démo journalise tout dans la console (visible, retentable, jamais d'envoi réel) ; en prod sans clés → FAILED explicite et retentable, aucun email perdu
+- Invariants : email fire-and-forget (jamais d'échec métier), 1 email = 1 ligne d'audit, SENT jamais renvoyé, reçus/remboursements uniquement au marquage réel (idempotence paiement intacte)
+- Les 3 canaux branchés : notifications d'équipe (7 règles + rappels quotidiens), reçus invité, confirmations remboursement
+- lint 0 / tsc src 0 / 0 erreur console E2E ; commandes : bun run scripts/seed-emails-demo.ts
