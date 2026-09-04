@@ -727,3 +727,22 @@ Work Log:
 
 Stage Summary:
 - Déconnexion accessible en 1 clic depuis le header de toute page /admin/* (desktop : icône+texte, mobile : icône), cycle complet vérifié (connexion → déconnexion → gate). Le clic JS synthétique via eval ne déclenchait pas signOut (pattern connu) — clic natif Playwright requis pour le test.
+
+---
+Task ID: SYNC-ENV-DASH2
+Agent: Z.ai Code (session principale)
+Task: Synchroniser la version GitHub avec la version locale (demande utilisateur)
+
+Work Log:
+- Diagnostic : sandbox restauré à un état antérieur — local HEAD = 9e80011 (É19), ref origin/main périmée (4670b1c), core.fileMode repassé à true, .env dégradé (50 octets, uniquement DATABASE_URL), base de données vide (0 users/properties).
+- GitHub main intact = a38da5b (aucune perte : É20, É21, DASH-V2 sidebar+KPIs, bouton Déconnexion tous poussés).
+- Synchronisation : git config core.fileMode false → git fetch (URL PAT) → git reset --hard FETCH_HEAD → git update-ref refs/remotes/origin/main a38da5b. HEAD = origin/main = GitHub. Tree propre.
+- .env régénéré : DATABASE_URL + NEXTAUTH_SECRET frais (openssl) + NEXTAUTH_URL + NEXT_PUBLIC_APP_URL + STRIPE_SECRET_KEY vide (mode démo Connect) + STRIPE_WEBHOOK_SECRET vide.
+- bun run db:push OK (schéma É20/É21 : colonnes Stripe Connect, platform_fee, paymentStatus).
+- Chaîne complète des 11 seeds rejouée (idempotents) : demo-users, b2b-demo, v2-team, v2-automations, slug canonique loft-canal-saint-martin-11wz réappliqué (nouveau bien cmtnias860001olbp7xc3996g), v3-guest-app, v3-provider-accounts, v3-service-offers, v3-service-orders, admin-demo, admin-kpis.
+- Restart anti-zombie du serveur dev + E2E navigateur : landing 200, hub invité 200, reconnexion superadmin (cookies purgés à cause du nouveau NEXTAUTH_SECRET), dashboard KPIs « Vue d'ensemble » avec GMV 1 710,00 €, bouton Déconnexion présent, 0 erreur console.
+
+Stage Summary:
+- local = origin/main = GitHub = a38da5b. Base démo reconstruite à l'identique (21 users, 4 biens, 5 bookings, 33 commandes, 26 transactions, 3 abonnements, 13 prestataires, 6 activity logs).
+- Rappel : après chaque restauration sandbox → checklist (git reset sur GitHub, .env à régénérer, db:push, 11 seeds, slug canonique, cookies clear, restart).
+- Mode démo Stripe Connect à re-activer depuis le bandeau du portail prestataire si besoin (Morning Box non onboardée dans cette base fraîche — purement optionnel pour le dashboard admin).
