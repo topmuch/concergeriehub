@@ -782,3 +782,21 @@ Work Log:
 
 Stage Summary:
 - ÉTAPE 22 (emails transactionnels) est sur GitHub. NB checklist post-restauration : le PAT n'est jamais stocké côté sandbox — redemander le token à l'utilisateur après chaque restauration d'environnement.
+
+---
+Task ID: L1
+Agent: Z.ai Code (session principale)
+Task: LANDING V4 — ÉTAPE 1/3 : composant InteractiveDemo (démo cyclique) + page d'aperçu (demande utilisateur « Agis en tant qu'Expert UI/UX… ÉTAPE 1 : Le Composant Démo »)
+
+Work Log:
+- État des lieux : toutes les deps déjà présentes (framer-motion 13, lucide-react, qrcode.react 4, clsx, tailwind-merge) — aucune installation requise.
+- Ancien interactive-demo.tsx (V1) importé uniquement par hero-section.tsx (landing V1) → réécrit in-place en gardant l'export `InteractiveDemo` (hero-section V1 compile toujours, tsc vérifié).
+- src/components/landing/interactive-demo.tsx (nouveau, ~590 l.) : plaque QR physique (QRCodeSVG level H + logo 🏠 central + statut synchronisé par état : « Scannez-moi » pulsant / « ✓ Hub ouvert » / « ✓ Commande transmise à l'hôte ») + ligne de scan émeraude animée (état 1) ; mockup téléphone CSS pur (châssis slate-900, encoche, boutons latéraux, status bar 9:41 Signal/Wifi/Battery, home indicator) ; 3 écrans AnimatePresence slide+fade (x ±56) : 1) accueil Hub « Bienvenue Camille » avec cartes 👤 Mode Invité / 🔐 Mode Hôte + chip Wi-Fi, 2) onglet Services (catégories, carte 🥐 Morning Box 8,50 €, tap auto à 1,1 s → bouton ✓ Commandé + toast spring « ✅ Commande envoyée ! » + badge panier 1, bottom nav Accueil/Services/Profil), 3) dashboard hôte (KPIs 1 240 €/4,9★/3 notifs, cartes 🏠 Loft Paris En séjour / 🏠 Villa Nice Ménage 14:00 / 🏡 Studio Lyon Libre en stagger) ; boucle 4 s (chaîne de setTimeout par état → timer reset au clic dot), dots cliquables (role=tab), bouton Pause/Lecture (aria-pressed), légende animée par état (role=status aria-live).
+- src/app/page.tsx : remplacé par page d'APEÇU Étape 1/3 (hero H1 + sous-titre spec, fond slate-50 + gradient blue-50/emerald-50, police Plus_Jakarta_Sans via next/font scopée page) ; ancienne page V1 (SPA switcher) sauvegardée dans src/app/page.tsx.bak (convention repo) — la landing complète (7 sections) arrive à l'É2.
+- Fix pendant dev : conteneur d'écrans (conflit relative/absolute → absolute inset-x-0 bottom-0 top-8), toast remonté bottom-20 (ne mord plus la bottom nav).
+- E2E navigateur : état 1 (ligne de scan visible sur QR, cartes Invité/Hôte), transition capturée en cross-slide, état 2 avec toast + ✓ Commandé + badge panier, état 3 dashboard (chips En séjour/Ménage/Libre), dots → saut direct d'état, Pause → légende figée 6 s (test JS poll 1 s), reprise Lecture OK, mobile 390 px (plaque empilée au-dessus du téléphone), 0 erreur console ; tsc 0 / lint 0.
+
+Stage Summary:
+- Démo cyclique auto-entretenue livrée et vérifiée : c'est le « pitch commercial animé » central de la landing (scan → upselling → pilotage hôte).
+- page.tsx.bak = rollback instantané de la V1 si besoin ; le composant est prêt à être intégré au hero de l'É2.
+- En attente de validation utilisateur (« NEXT ») pour ÉTAPE 2 : sections 1-7 de la landing (hero + logos, Avant/Après, 3 étapes, bento grid, tarifs Solo/Pro, footer).
