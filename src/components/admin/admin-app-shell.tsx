@@ -2,7 +2,8 @@
 
 import { type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
-import { ShieldCheck } from 'lucide-react';
+import { signOut } from 'next-auth/react';
+import { LogOut, ShieldCheck } from 'lucide-react';
 import { AdminAppSidebar } from '@/components/admin/admin-app-sidebar';
 import { Separator } from '@/components/ui/separator';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
@@ -11,9 +12,9 @@ import { Toaster } from '@/components/ui/sonner';
 // =============================================================
 // AdminAppShell — coquille V2 de la Console Superadmin (/admin/*).
 // Sidebar shadcn (collapsible, Sheet mobile) + header sticky avec
-// trigger + titre de section + badge Superadmin. Footer collé en
-// bas (mt-auto) et repoussé naturellement quand le contenu déborde.
-// Fond clair cohérent avec l'identité QRTags (slate-50 / blanc).
+// trigger + titre de section + badge Superadmin + déconnexion.
+// Footer collé en bas (mt-auto) et repoussé naturellement quand le
+// contenu déborde. Fond clair cohérent avec l'identité QRTags.
 // =============================================================
 
 const SECTION_TITLES: { match: (p: string) => boolean; title: string }[] = [
@@ -53,6 +54,16 @@ export function AdminAppShell({ children, adminName, adminEmail }: AdminAppShell
             <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
             Superadmin
           </span>
+          <button
+            type="button"
+            onClick={() => signOut({ callbackUrl: '/' })}
+            title="Se déconnecter"
+            aria-label="Se déconnecter"
+            className="ml-auto md:ml-3 inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-100 hover:text-slate-900"
+          >
+            <LogOut className="h-4 w-4" aria-hidden="true" />
+            <span className="hidden sm:inline">Déconnexion</span>
+          </button>
         </header>
 
         {/* ----- Contenu ----- */}

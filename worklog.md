@@ -713,3 +713,17 @@ Stage Summary:
 - Dashboard Superadmin V2 livré : sidebar shadcn + 8 KPIs + 3 graphiques + table commandes + listes temps réel, E2E vérifié au navigateur (login superadmin → KPIs réels : GMV 1 710 € / commission 256,50 € / MRR 34,73 € / 24 payées / 33 commandes ; navigation Hôtes et Prestataires OK dans le nouveau shell ; toast Actualiser OK ; mobile 390 px OK ; 0 erreur console).
 - Invariants préservés : /api/admin/stats et /api/admin/users intactes (SPA legacy), URLs /admin/dashboard|providers|hosts inchangées, définitions métier identiques (Hôte sans providerProfile, MRR annual/12, commission 15 % recalculée).
 - É21 (remboursements + routes legacy + rate limiting) toujours en attente de validation NEXT.
+
+---
+Task ID: DASH-V2-LOGOUT
+Agent: Z.ai Code (session principale)
+Task: Ajouter un bouton de déconnexion visible (demande utilisateur « met un bouton de deconnexion »)
+
+Work Log:
+- Ajout d'un bouton « Déconnexion » dans le header sticky de AdminAppShell (src/components/admin/admin-app-shell.tsx) : icône LogOut + texte (texte masqué < sm), signOut({ callbackUrl: '/' }), aria-label « Se déconnecter ».
+- Placement responsive : ml-auto sur mobile (le badge Superadmin est caché), ml-3 après le badge sur desktop.
+- Le bouton existant dans le pied de sidebar (admin-app-sidebar.tsx) est conservé (redondance volontaire : header toujours visible, sidebar repliable).
+- Lint 0 erreur. E2E navigateur : clic natif Playwright → redirection vers / (landing), session API purgée (sessionUser null), /admin/dashboard réaffiche le gate de connexion. Captures desktop + mobile validées.
+
+Stage Summary:
+- Déconnexion accessible en 1 clic depuis le header de toute page /admin/* (desktop : icône+texte, mobile : icône), cycle complet vérifié (connexion → déconnexion → gate). Le clic JS synthétique via eval ne déclenchait pas signOut (pattern connu) — clic natif Playwright requis pour le test.
