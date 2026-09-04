@@ -769,3 +769,16 @@ Stage Summary:
 - Invariants : email fire-and-forget (jamais d'échec métier), 1 email = 1 ligne d'audit, SENT jamais renvoyé, reçus/remboursements uniquement au marquage réel (idempotence paiement intacte)
 - Les 3 canaux branchés : notifications d'équipe (7 règles + rappels quotidiens), reçus invité, confirmations remboursement
 - lint 0 / tsc src 0 / 0 erreur console E2E ; commandes : bun run scripts/seed-emails-demo.ts
+
+---
+Task ID: E22-PUSH
+Agent: Z.ai Code (session principale)
+Task: Pousser ÉTAPE 22 vers GitHub (PAT fourni par l'utilisateur après perte lors de la restauration sandbox)
+
+Work Log:
+- Push ad-hoc avec le PAT fourni (URL à la volée — JAMAIS persisté dans .git/config ni fichier) : 749cf11..42a801b main → main
+- Ref origin/main réalignée (git update-ref), status propre : local = origin/main = GitHub = 42a801b
+- Vérification ls-remote : refs/heads/main = 42a801b ✓
+
+Stage Summary:
+- ÉTAPE 22 (emails transactionnels) est sur GitHub. NB checklist post-restauration : le PAT n'est jamais stocké côté sandbox — redemander le token à l'utilisateur après chaque restauration d'environnement.
