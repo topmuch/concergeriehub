@@ -857,3 +857,25 @@ Work Log:
 Stage Summary:
 - Tunnel complet : landing « Commencer l'essai » → inscription → email de bienvenue → assistant 3 min → logement nommé + Wi-Fi scannable + plaque QR imprimable → dashboard. La promesse landing « Opérationnel en 3 minutes » est tenue.
 - NEXTAUTH_SECRET/URL maintenant dans .env : les JWEDecryptionFailed historiques du dev.log sont résolus à la racine.
+
+---
+Task ID: SEO-1
+Agent: Z.ai Code (session principale)
+Task: Chantier B — SEO complet (metadataBase, OG/Twitter, carte OG dynamique, sitemap, robots, JSON-LD) + bonus D : rate limiting login anti brute-force
+
+Work Log:
+- Constat préalable : ONBOARD-1 (chantier A+C) déjà terminé/validé/commité (211c31d) ET poussé sur origin/main dans la portion de session perdue — vérifié intact (wizard, register, email)
+- src/lib/site.ts (nouveau) : siteUrl (NEXT_PUBLIC_APP_URL || NEXTAUTH_URL || localhost, convention middleware) + siteName — source unique SEO
+- layout.tsx : metadataBase + title template « %s | Conciergerie Hub » + applicationName
+- page.tsx : metadata landing complète — canonical /, openGraph (website, fr_FR, site_name), twitter card summary_large_image ; JSON-LD @graph Organization + WebSite + SoftwareApplication (offers Solo 9.90 EUR/mois, Pro 199.00 EUR/an, featureList ; PAS d'aggregateRating fictif)
+- src/app/opengraph-image.tsx (nouveau) : carte 1200×630 via ImageResponse (next/og) — pill marque, titre « Transformez chaque séjour… », badges Essai gratuit / Opérationnel en 3 min, plaque QR décorative déterministe 9×9, halos opacité (pas de blur en Satori)
+- DEUX bugs Satori corrigés : (1) width:'fit-content' non supporté → crash silencieux « empty reply » (réponse vide, aucune trace log) → remplacé par alignSelf:'flex-start' ; (2) Satori ne synthétise pas le gras (bundle = Noto regular) → téléchargé PlusJakartaSans-Regular/ExtraBold.ttf (Google Fonts, OFL) dans src/assets/fonts/, chargés via fs (loadFonts) → titre réellement ExtraBold, police identique à la landing
+- sitemap.ts (nouveau) : / uniquement, weekly, priority 1 ; Hubs invités /hub/[slug] volontairement exclus (pas de SEO sur SSID/guidebook) ; public/robots.txt statique SUPPRIMÉ (aurait masqué la route) au profit de robots.ts (nouveau) : Allow / + Disallow /admin /airbnb /api /setup /activate /provider /app /view + Sitemap absolu
+- BONUS D — auth.ts : rate limiting login 10 tent/min/IP (rateLimit fail-open, clé login:{ip}) dans authorize ; BUG CORRIGÉ AU PASSAGE : NextAuth v4 App Router passe à authorize un headers RECORD PLAT (pas Headers) → « req?.headers?.get is not a function » rendait tout login 401 silencieux ; clientIpFromReq() gère les deux formes (Headers.get OU record) en try/catch fail-open 'local'
+- E2E : curl csrf+credentials 200 (sans fix : 401 + raison visible dans l'URL d'erreur NextAuth) ; brute-force : 12 mauvais mots de passe X-Forwarded-For:9.9.9.9 → « mot de passe invalide » ×10 puis « Rate limit atteint » ×2 ; navigateur : landing → Se connecter → Client Demo → /airbnb/dashboard (« Bonjour, Marie 👋 ») ; landing : 11 meta og:, 8 meta twitter:, 1 JSON-LD parsé valide, canonical OK ; /robots.txt et /sitemap.xml servis ; /opengraph-image HTTP 200 image/png 97 Ko (visuellement vérifié) ; mobile 390 px scrollW 390, footer sticky OK ; 0 erreur console ; lint 0 ; tsc src/ 0
+
+Stage Summary:
+- SEO production-ready : métadonnées sociales complètes + carte OG dynamique de marque + sitemap/robots + données structurées tarifées — le partage LinkedIn/X/Facebook affiche une carte professionnelle
+- Rate limiting login opérationnel (anti brute-force) et le refactor a corrigé au passage un bug latent : authorize crashait sur le format headers de NextAuth v4 app router (aucun login n'aurait fonctionné après cette évolution si non détecté par l'E2E immédiat)
+- Environnement SEO env-driven : dès que le domaine prod est posé (NEXT_PUBLIC_APP_URL), toute la chaîne (canonical, OG, sitemap, robots) bascule automatiquement
+- Fonts TTF ajoutées à src/assets/fonts (OFL) — licence compatible
