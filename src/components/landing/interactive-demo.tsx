@@ -23,8 +23,10 @@ import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { QRCodeSVG } from 'qrcode.react';
 import {
+  Activity,
   Battery,
   Bell,
+  ChevronLeft,
   ChevronRight,
   ConciergeBell,
   Home,
@@ -39,10 +41,22 @@ import { cn } from '@/lib/utils';
 
 const CYCLE_MS = 4000;
 
-const STEP_CAPTIONS = [
-  '1️⃣ L’invité scanne la plaque — hub ouvert en 1 seconde',
-  '2️⃣ Il commande son petit-déjeuner depuis son téléphone',
-  '3️⃣ L’hôte pilote tout depuis son dashboard temps réel',
+const DEMO_STEPS = [
+  {
+    id: 'scan',
+    title: 'L’invité scanne',
+    description: 'L’invité scanne la plaque et accède instantanément au Hub digital.',
+  },
+  {
+    id: 'guest',
+    title: 'L’expérience Guest',
+    description: 'L’invité commande un service en 1 clic — l’hôte est notifié en temps réel.',
+  },
+  {
+    id: 'host',
+    title: 'Le Dashboard Hôte',
+    description: 'Vous pilotez tout depuis votre dashboard : séjours, services et équipes.',
+  },
 ] as const;
 
 /** Statut affiché sous la plaque QR, synchronisé avec l'état. */
@@ -63,15 +77,19 @@ export function InteractiveDemo({ className }: InteractiveDemoProps) {
   const [playing, setPlaying] = useState(true);
 
   // Boucle infinie : chaque état reste 4 s, le timer repart à zéro
-  // après un clic manuel sur un dot (chaîne de setTimeout par état).
+  // après une action manuelle (dot ou flèche ‹ ›).
   useEffect(() => {
     if (!playing) return;
     const t = setTimeout(
-      () => setStep((s) => (s + 1) % STEP_CAPTIONS.length),
+      () => setStep((s) => (s + 1) % DEMO_STEPS.length),
       CYCLE_MS,
     );
     return () => clearTimeout(t);
   }, [step, playing]);
+
+  const goToPrev = () =>
+    setStep((s) => (s - 1 + DEMO_STEPS.length) % DEMO_STEPS.length);
+  const goToNext = () => setStep((s) => (s + 1) % DEMO_STEPS.length);
 
   return (
     <div className={cn('relative mx-auto w-full max-w-4xl', className)}>
@@ -92,24 +110,35 @@ export function InteractiveDemo({ className }: InteractiveDemoProps) {
 
       {/* ----- Contrôles : légende, dots, pause ----- */}
       <div className="relative mt-10 flex flex-col items-center gap-4">
-        <div className="h-6" role="status" aria-live="polite">
+        {/* Texte explicatif synchronisé (titre + description) */}
+        <div className="min-h-16" role="status" aria-live="polite">
           <AnimatePresence mode="wait">
-            <motion.p
+            <motion.div
               key={step}
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.35, ease: EASE }}
-              className="text-center text-sm font-medium text-slate-600"
+              className="text-center"
             >
-              {STEP_CAPTIONS[step]}
-            </motion.p>
+              <h4 className="text-base font-bold text-slate-900">{DEMO_STEPS[step].title}</h4>
+              <p className="mt-0.5 text-sm text-slate-600">{DEMO_STEPS[step].description}</p>
+            </motion.div>
           </AnimatePresence>
         </div>
 
         <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={goToPrev}
+            aria-label="Étape précédente"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition-all hover:border-slate-300 hover:text-slate-900 hover:shadow-md"
+          >
+            <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+          </button>
+
           <div className="flex items-center gap-2" role="tablist" aria-label="Étapes de la démo">
-            {STEP_CAPTIONS.map((_, i) => (
+            {DEMO_STEPS.map((_, i) => (
               <button
                 key={i}
                 type="button"
@@ -124,6 +153,15 @@ export function InteractiveDemo({ className }: InteractiveDemoProps) {
               />
             ))}
           </div>
+
+          <button
+            type="button"
+            onClick={goToNext}
+            aria-label="Étape suivante"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition-all hover:border-slate-300 hover:text-slate-900 hover:shadow-md"
+          >
+            <ChevronRight className="h-4 w-4" aria-hidden="true" />
+          </button>
 
           <span aria-hidden="true" className="h-4 w-px bg-slate-200" />
 
@@ -635,7 +673,30 @@ function HostDashboardScreen() {
         ))}
       </div>
 
-      <p className="mt-auto text-center text-[9.5px] font-medium text-slate-400">
+      {/* Activité temps réel (spec : scans + commande en cours) */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.65, duration: 0.4, ease: EASE }}
+        className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-3"
+      >
+        <div className="flex items-center gap-1.5">
+          <Activity className="h-3 w-3 text-emerald-600" aria-hidden="true" />
+          <p className="text-[9.5px] font-bold uppercase tracking-wider text-emerald-700">
+            Activité en direct
+          </p>
+        </div>
+        <div className="mt-1.5 flex items-center justify-between">
+          <p className="text-[10.5px] font-semibold text-slate-700">
+            🔍 3 scans aujourd’hui
+          </p>
+          <p className="text-[10.5px] font-semibold text-slate-700">
+            🛎️ 1 commande en cours
+          </p>
+        </div>
+      </motion.div>
+
+      <p className="mt-auto pt-3 text-center text-[9.5px] font-medium text-slate-400">
         Pilotage temps réel · équipe synchronisée ✓
       </p>
     </div>

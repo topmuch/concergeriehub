@@ -964,3 +964,19 @@ Stage Summary:
 - Les deux dashboards adoptent l'identité « Travl » (sidebar coral, header blanc, cartes tuiles, verts foncés) sans perdre AUCUNE fonctionnalité : le portfolio déménage sur /portfolio, l'onboarding reste automatique, billing/ordres/automations/plaques/prestataires/branding inchangés sous la nouvelle coquille
 - Découverte persistée : defaultTheme="dark" → toujours doubler les vars CSS critiques dans .dark
 - Commit + push (PAT à la volée, jamais persisté)
+
+---
+Task ID: L8
+Agent: Z.ai Code (session principale)
+Task: InteractiveDemo — finalisation selon la spec du fondateur (démo cyclique plaque QR + téléphone, 3 états, contrôles complets)
+
+Work Log:
+- Constat : le composant src/components/landing/interactive-demo.tsx existait déjà (plaque QR qrcode.react + ligne de scan émeraude, PhoneMockup CSS avec encoche/status bar/home indicator, 3 écrans animés AnimatePresence, auto-play 4 s, dots + Pause) et était intégré dans DemoSection (landing-page.tsx) — écarts résiduels avec la spec corrigés
+- Ajout boutons navigation ‹ › (ChevronLeft/ChevronRight, cercles bord slate, aria-label « Étape précédente/suivante ») autour des dots ; timer 4 s re-basé sur [step, playing] donc toute action manuelle relance le cycle proprement
+- Texte explicatif remplacé : caption simple → DEMO_STEPS {id, title, description} animés (fade+slide, min-h-16 anti-jump, role=status aria-live=polite) — « L'invité scanne » / « L'expérience Guest » / « Le Dashboard Hôte » avec les descriptions exactes de la spec
+- Écran 3 (HostDashboardScreen) : ajout carte « ACTIVITÉ EN DIRECT » (icône Activity, fond émeraude-50) avec « 3 scans aujourd'hui » + « 1 commande en cours » (spec), apparition décalée 0,65 s, footer conservé
+- E2E navigateur : desktop 1280 — les 3 états vérifiés (scan avec ligne verte, Services + toast « Commande envoyée ! » + bouton Commander 8,50 €, Hôte + carte activité) ; navigation ‹ › testée au clavier de refs (retour état 1, saut état 3), dots synchronisés, statut plaque synchronisé (« Scannez-moi » → « ✓ Hub ouvert » → « ✓ Commande transmise à l'hôte ») ; Pause → « Lecture » OK ; mobile 390 — empilement colonne, scrollW=390 (0 débordement) ; 0 erreur console ; lint 0
+
+Stage Summary:
+- La démo répond 100 % à la spec : plaque QR animée à gauche, mockup téléphone à droite, 3 états de 4 s en boucle fluide, contrôles pause/play + ‹ › + dots, texte explicatif titre+description par état
+- Resterait (étapes suivantes annoncées par le fondateur) : optimisations perfs + micro-interactions (sons, vibrations, particules)
