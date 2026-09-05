@@ -879,3 +879,21 @@ Stage Summary:
 - Rate limiting login opérationnel (anti brute-force) et le refactor a corrigé au passage un bug latent : authorize crashait sur le format headers de NextAuth v4 app router (aucun login n'aurait fonctionné après cette évolution si non détecté par l'E2E immédiat)
 - Environnement SEO env-driven : dès que le domaine prod est posé (NEXT_PUBLIC_APP_URL), toute la chaîne (canonical, OG, sitemap, robots) bascule automatiquement
 - Fonts TTF ajoutées à src/assets/fonts (OFL) — licence compatible
+
+---
+Task ID: L4
+Agent: Z.ai Code (session principale)
+Task: LANDING V5 — intégration du design « immersif » fourni par le fondateur (navbar + hero sombre + features + timeline + tarifs premium + footer complet)
+
+Work Log:
+- Code source fourni par l'utilisateur (structure Navbar/Hero/Features/HowItWorks/Pricing/Footer) intégré dans src/components/landing/landing-page.tsx ; interface publique inchangée (props onGoToAuth + export AuthViewMode) → LandingShell, AuthForm et app/page.tsx (metadata/JSON-LD SEO-1) INTACTS
+- Dépendances déjà présentes (framer-motion 13, lucide-react) : rien à installer
+- Démo interactive É1 PRÉSERVÉE : nouvelle section #demo (scroll-mt-24) juste après le hero — carte blanche shadow-2xl + titre « 📱 La magie en 1 scan » hérités de la V4 ; le CTA hero « Voir la démo » y défile en douceur
+- Wiring complet : navbar « Connexion » → auth login (desktop + mobile), « Essai gratuit » → register (desktop + mobile), hero « Commencer l'essai gratuit » → register, tarifs « Commencer l'essai »/« Passer à Pro » → register, liens navbar → smoothScrollTo (#features/#how-it-works/#pricing/#contact), « contactez-nous » → footer #contact
+- Fixes techniques sur le code fourni : (1) particules DÉTERMINISTES — Math.random() en rendu causait un mismatch d'hydratation SSR/client, remplacé par une trame arithmétique fixe (PARTICLES) ; (2) emojis vides comblés ('' → 👥 Gestion d'Équipe, 📊 Analytics, 📦 Recevez la plaque) ; (3) imports lucide inutilisés retirés (Star, Shield, BarChart3, Globe) ; (4) menu mobile : carte blanche rounded-2xl shadow-xl (les liens slate-700 étaient illisibles sur le hero sombre) ; (5) a11y : aria-label + aria-expanded sur le burger, aria-label réseaux sociaux, scroll-mt-24 sur toutes les ancres (offset navbar fixe) ; (6) carte Pro : scale-105 Tailwind écrasé par le transform inline de framer-motion → style={{scale:1.03}} ; (7) footer : id=contact, pt-16 + pb safe-area (footer sticky garanti par min-h-screen flex-col + main flex-1) ; (8) overflow-x-clip racine conservé (fix mobile V4) ; (9) © 2024 → © 2025
+- E2E navigateur : desktop 1280 — hero conforme (navbar transparente sur hero, badge, titre gradient, stats 500+/98%/2min), navbar passe en fond blanc au scroll, démo É1 fonctionnelle, tarifs (badge LE PLUS POPULAIRE, carte Pro agrandie), footer 4 colonnes ; Connexion → vue Connexion, Essai gratuit → « Créer un compte », Passer à Pro → « Créer un compte », Retour au site → landing, Voir la démo → scroll OK, nav Contact → footer OK ; quick-login Client Demo → /airbnb/dashboard ; mobile 390 : scrollW 390 (0 débordement), menu burger ouvert (carte blanche, 4 liens + 2 boutons), footer empilé lisible ; 0 erreur console ; lint 0
+
+Stage Summary:
+- Landing V5 en place : design sombre immersif du fondateur + tous les acquis préservés (auth SPA, démo É1, SEO V4, footer sticky, responsive)
+- Aucun acquis V4 perdu : InteractiveDemo toujours en section dédiée, LandingShell/AuthForm/onboarding/emails intacts
+- Deux commits en attente de push (bc80dc3 SEO + celui-ci) — PAT requis (non persisté)
