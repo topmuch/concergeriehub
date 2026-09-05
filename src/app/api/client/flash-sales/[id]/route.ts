@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { requireSuperadmin, adminUnauthorized } from '@/lib/admin';
 
 // GET: Flash sale detail with merchant and coupon count
 export async function GET(
@@ -46,6 +47,9 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // Sécurité (Module 7) : mutation réservée au Superadmin.
+  const __admin = await requireSuperadmin();
+  if (!__admin) return adminUnauthorized();
   try {
     const { id } = await params;
     const body = await request.json();
@@ -121,6 +125,9 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // Sécurité (Module 7) : mutation réservée au Superadmin.
+  const __admin = await requireSuperadmin();
+  if (!__admin) return adminUnauthorized();
   try {
     const { id } = await params;
 

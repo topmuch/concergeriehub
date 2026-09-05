@@ -3,6 +3,7 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import { compare } from 'bcryptjs';
 import { db } from '@/lib/db';
 import { rateLimit } from '@/lib/rate-limit';
+import { isIpBlacklisted, ipFromAuthReq } from '@/lib/security';
 
 // =============================================================
 // Auth via Prisma — même base que le reste de l'app (db/custom.db).
@@ -42,6 +43,12 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials, req) {
         if (!credentials?.email || !credentials?.password) return null;
+
+        // Blacklist IP (Module 7 Sécurité) : IP bannie → refus générique.
+        if (await isIpBlacklisted(ipFromAuthReq(req) ?? clientIpFromReq(req))) {
+          console.warn('[auth] IP blacklistée', clientIpFromReq(req));
+          return null;
+        }
 
         // Anti brute-force : max 10 tentatives/minute/IP (fail-open,
         // cf. lib/rate-limit.ts — même garde-fou que /api/auth/register).

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { requireSuperadmin, adminUnauthorized } from '@/lib/admin';
+import { logAudit, clientIp } from '@/lib/audit';
 
 // GET /api/admin/batches/[id] — Fetch single batch with all QR codes
 export async function GET(
@@ -57,6 +58,15 @@ export async function DELETE(
     await db.$transaction(async (tx) => {
       await tx.physicalQrCode.deleteMany({ where: { batchId: id } });
       await tx.qrBatch.delete({ where: { id } });
+    });
+
+    await logAudit({
+      actor: admin,
+      action: 'batch.delete',
+      entityType: 'qr_batch',
+      entityId: id,
+      details: { quantity: batch.quantity },
+      ip: clientIp(_request.headers),
     });
 
     return NextResponse.json({

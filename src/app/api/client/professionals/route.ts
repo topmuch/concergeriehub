@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { CATEGORIES } from '@/types/database';
+import { requireSuperadmin, adminUnauthorized } from '@/lib/admin';
 
 // GET: List professionals with optional filters
 export async function GET(request: NextRequest) {
@@ -62,6 +63,9 @@ export async function GET(request: NextRequest) {
 
 // POST: Create a provider profile
 export async function POST(request: NextRequest) {
+  // Sécurité (Module 7) : mutation réservée au Superadmin.
+  const __admin = await requireSuperadmin();
+  if (!__admin) return adminUnauthorized();
   try {
     const body = await request.json();
     const {

@@ -181,8 +181,11 @@ function Sidebar({
   }
 
   if (isMobile) {
+    // Le style (ex: surcharge de --sidebar pour la Console Superadmin)
+    // doit être porté par le SheetContent (portail) — pas par <Sheet>.
+    const { style: sidebarStyle, ...restProps } = props;
     return (
-      <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
+      <Sheet open={openMobile} onOpenChange={setOpenMobile} {...restProps}>
         <SheetContent
           data-sidebar="sidebar"
           data-slot="sidebar"
@@ -191,6 +194,7 @@ function Sidebar({
           style={
             {
               "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
+              ...((sidebarStyle ?? {}) as Record<string, string>),
             } as React.CSSProperties
           }
           side={side}

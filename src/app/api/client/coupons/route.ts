@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { requireSuperadmin, adminUnauthorized } from '@/lib/admin';
 
 function generateCouponCode(length = 8): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -42,6 +43,9 @@ export async function GET(request: NextRequest) {
 
 // POST: Claim/create a coupon
 export async function POST(request: NextRequest) {
+  // Sécurité (Module 7) : mutation réservée au Superadmin.
+  const __admin = await requireSuperadmin();
+  if (!__admin) return adminUnauthorized();
   try {
     const body = await request.json();
     const {

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { requireSuperadmin, adminUnauthorized } from '@/lib/admin';
 import {
   TRANSACTION_TYPES,
   TRANSACTION_STATUSES,
@@ -60,6 +61,9 @@ export async function GET(request: NextRequest) {
 
 // POST: Create a transaction record
 export async function POST(request: NextRequest) {
+  // Sécurité (Module 7) : mutation réservée au Superadmin.
+  const __admin = await requireSuperadmin();
+  if (!__admin) return adminUnauthorized();
   try {
     const body = await request.json();
     const {

@@ -216,3 +216,42 @@ export function welcomeEmail(params: {
     ),
   };
 }
+
+/** Module 2 — Mot de passe réinitialisé par le Superadmin. */
+export function adminPasswordResetEmail(
+  to: string,
+  tempPassword: string,
+  adminName: string,
+): EmailTemplate {
+  const heading = 'Votre mot de passe a été réinitialisé';
+  const intro = `
+    <p style="margin:0 0 12px;">Bonjour,</p>
+    <p style="margin:0 0 12px;">Un administrateur de ${BRAND} (${esc(adminName)}) a réinitialisé le mot de passe de votre compte <strong>${esc(to)}</strong>.</p>
+    <p style="margin:0 0 12px;">Voici votre mot de passe temporaire :</p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;">
+      <tr><td style="padding:14px 16px;text-align:center;">
+        <strong style="font-size:20px;letter-spacing:1px;color:#0F172A;font-family:monospace;">${esc(tempPassword)}</strong>
+      </td></tr>
+    </table>
+    <p style="margin:12px 0 0;color:#64748B;">Connectez-vous avec ce mot de passe, puis modifiez-le depuis votre compte. Pensez à le conserver en lieu sûr.</p>`;
+  return {
+    subject: 'Votre mot de passe Conciergerie Hub a été réinitialisé',
+    html: shell({
+      heading,
+      intro,
+      ctaLabel: 'Se connecter',
+      ctaUrl: '/login',
+      footerNote: 'Vous n\u2019êtes pas à l\u2019origine de cette demande ? Contactez immédiatement le support.',
+    }),
+    text: toText(
+      heading,
+      [
+        `Un administrateur (${adminName}) a réinitialisé le mot de passe de votre compte ${to}.`,
+        `Mot de passe temporaire : ${tempPassword}`,
+        'Connectez-vous puis changez-le depuis votre compte.',
+      ],
+      'Se connecter',
+      '/login',
+    ),
+  };
+}

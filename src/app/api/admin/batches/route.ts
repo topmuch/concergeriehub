@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import crypto from 'crypto';
 import { requireSuperadmin, adminUnauthorized } from '@/lib/admin';
+import { logAudit, clientIp } from '@/lib/audit';
 
 // GET /api/admin/batches — List all batches with aggregated QR code counts
 export async function GET() {
@@ -156,6 +157,15 @@ export async function POST(request: NextRequest) {
     const physicalQrCodes = await db.physicalQrCode.findMany({
       where: { batchId: batch.batch.id },
       orderBy: { id: 'asc' },
+    });
+
+    await logAudit({
+      actor: admin,
+      action: 'batch.create',
+      entityType: 'qr_batch',
+      entityId: batch.batch.id,
+      details: { quantity, createdCount: batch.createdCount },
+      ip: clientIp(request.headers),
     });
 
     return NextResponse.json(

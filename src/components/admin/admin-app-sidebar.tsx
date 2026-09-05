@@ -5,13 +5,18 @@ import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import {
   ChevronRight,
+  CreditCard,
   Globe,
   LayoutDashboard,
   LogOut,
   Mail,
+  QrCode,
+  ScrollText,
+  Settings,
   ShieldCheck,
-  Sparkles,
+  ShoppingCart,
   Users,
+  Wrench,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -26,30 +31,102 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
 // =============================================================
-// AdminAppSidebar — barre latérale de la Console Superadmin V2.
-// Navigation principale (Vue d'ensemble / Hôtes / Prestataires),
-// identité Superadmin, déconnexion. Collapsible en icônes,
-// Sheet automatique sur mobile (shadcn Sidebar).
+// AdminAppSidebar — Console Superadmin V3 (8 modules, prompt SaaS)
+// Style QRTags imposé : fond slate-900, texte blanc, emojis,
+// icônes lucide-react. Les 8 modules :
+//  1 Dashboard · 2 Clients · 3 Générateur QR · 4 Abonnements
+//  5 Prestataires · 6 Transactions · 7 Paramètres · 8 Logs
+// + Emails (Plateforme) et lien vers le site public.
 // =============================================================
 
-const NAV_ITEMS = [
+interface NavItem {
+  href: string;
+  label: string;
+  emoji: string;
+  description: string;
+  icon: React.ElementType;
+  exact?: boolean;
+}
+
+const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
   {
-    href: '/admin/dashboard',
-    label: 'Vue d\u2019ensemble',
-    description: 'KPIs, revenus et activité',
-    icon: LayoutDashboard,
+    label: 'Pilotage',
+    items: [
+      {
+        href: '/admin/dashboard',
+        label: 'Tableau de bord',
+        emoji: '📊',
+        description: 'KPIs temps réel, revenus et activité',
+        icon: LayoutDashboard,
+        exact: true,
+      },
+      {
+        href: '/admin/users',
+        label: 'Clients & Hôtes',
+        emoji: '👥',
+        description: 'Comptes, plans et actions',
+        icon: Users,
+      },
+      {
+        href: '/admin/subscriptions',
+        label: 'Abonnements',
+        emoji: '💳',
+        description: 'MRR, plans, factures, coupons',
+        icon: CreditCard,
+      },
+    ],
   },
   {
-    href: '/admin/hosts',
-    label: 'Hôtes',
-    description: 'Comptes et abonnements',
-    icon: Users,
+    label: 'Opérations',
+    items: [
+      {
+        href: '/admin/qr',
+        label: 'Générateur QR',
+        emoji: '⬛',
+        description: 'Lots, plaques physiques, setup tokens',
+        icon: QrCode,
+      },
+      {
+        href: '/admin/providers',
+        label: 'Prestataires',
+        emoji: '🧰',
+        description: 'Annuaire, carte, vérifications',
+        icon: Wrench,
+      },
+      {
+        href: '/admin/transactions',
+        label: 'Transactions',
+        emoji: '🛒',
+        description: 'Commandes, marketplace, reversements',
+        icon: ShoppingCart,
+      },
+    ],
   },
   {
-    href: '/admin/providers',
-    label: 'Prestataires',
-    description: 'Annuaire et géolocalisation',
-    icon: Sparkles,
+    label: 'Plateforme',
+    items: [
+      {
+        href: '/admin/emails',
+        label: 'Emails',
+        emoji: '📧',
+        description: 'Outbox transactionnelle et retries',
+        icon: Mail,
+      },
+      {
+        href: '/admin/logs',
+        label: 'Logs & Tickets',
+        emoji: '📜',
+        description: 'Audit, scans, support',
+        icon: ScrollText,
+      },
+      {
+        href: '/admin/settings',
+        label: 'Paramètres',
+        emoji: '⚙️',
+        description: 'Plateforme, white-label, sécurité',
+        icon: Settings,
+      },
+    ],
   },
 ];
 
@@ -70,7 +147,10 @@ export function AdminAppSidebar({ adminName, adminEmail }: AdminAppSidebarProps)
       .join('') || 'SA';
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar
+      collapsible="icon"
+      style={{ ['--sidebar' as string]: '#0f172a' }} // Module 1 — fond slate-900 imposé
+    >
       {/* ----- En-tête : marque + badge contrôle ----- */}
       <SidebarHeader className="pt-5 pb-2">
         <SidebarMenu>
@@ -79,7 +159,7 @@ export function AdminAppSidebar({ adminName, adminEmail }: AdminAppSidebarProps)
               <Link href="/" aria-label="Retour au site Conciergerie Hub">
                 <span
                   aria-hidden="true"
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-[#E23F2B] shadow-sm"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-slate-900 shadow-sm"
                 >
                   <ShieldCheck className="h-5 w-5" />
                 </span>
@@ -87,7 +167,7 @@ export function AdminAppSidebar({ adminName, adminEmail }: AdminAppSidebarProps)
                   <span className="truncate text-base font-extrabold text-white">
                     Conciergerie Hub
                   </span>
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-white/70">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-white/60">
                     Console Superadmin
                   </span>
                 </span>
@@ -97,81 +177,65 @@ export function AdminAppSidebar({ adminName, adminEmail }: AdminAppSidebarProps)
         </SidebarMenu>
       </SidebarHeader>
 
-      {/* ----- Navigation principale ----- */}
+      {/* ----- Navigation 8 modules ----- */}
       <SidebarContent className="px-2 pt-2">
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-white/60">Pilotage</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu className="gap-1.5">
-              {NAV_ITEMS.map((item) => {
-                const active =
-                  item.href === '/admin/dashboard'
-                    ? pathname === '/admin/dashboard' || pathname === '/admin'
+        {NAV_GROUPS.map((group) => (
+          <SidebarGroup key={group.label}>
+            <SidebarGroupLabel className="text-white/50">{group.label}</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu className="gap-1">
+                {group.items.map((item) => {
+                  const active = item.exact
+                    ? pathname === item.href || pathname === '/admin'
                     : pathname.startsWith(item.href);
-                const Icon = item.icon;
-                return (
-                  <SidebarMenuItem key={item.href}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={active}
-                      tooltip={`${item.label} — ${item.description}`}
-                    >
-                      <Link
-                        href={item.href}
-                        aria-current={active ? 'page' : undefined}
-                        className="h-11 rounded-xl text-[15px] font-medium text-white/85 hover:bg-white/10 hover:text-white data-[active=true]:bg-white data-[active=true]:font-bold data-[active=true]:text-[#E23F2B] data-[active=true]:hover:bg-white data-[active=true]:hover:text-[#E23F2B]"
+                  const Icon = item.icon;
+                  return (
+                    <SidebarMenuItem key={item.href}>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={active}
+                        tooltip={`${item.emoji} ${item.label} — ${item.description}`}
                       >
-                        <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
-                        <span>{item.label}</span>
-                        <ChevronRight
-                          className="ml-auto h-4 w-4 opacity-60 group-data-[collapsible=icon]:hidden"
-                          aria-hidden="true"
-                        />
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+                        <Link
+                          href={item.href}
+                          aria-current={active ? 'page' : undefined}
+                          className="h-11 rounded-xl text-[14px] font-medium text-white/85 hover:bg-white/10 hover:text-white data-[active=true]:bg-white data-[active=true]:font-bold data-[active=true]:text-slate-900 data-[active=true]:hover:bg-white data-[active=true]:hover:text-slate-900"
+                        >
+                          <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
+                          <span className="truncate">
+                            <span aria-hidden="true" className="mr-1.5">{item.emoji}</span>
+                            {item.label}
+                          </span>
+                          <ChevronRight
+                            className="ml-auto h-4 w-4 opacity-50 group-data-[collapsible=icon]:hidden"
+                            aria-hidden="true"
+                          />
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
 
+        {/* Lien externe : site public */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-white/60">Plateforme</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu className="gap-1.5">
+            <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={pathname.startsWith('/admin/emails')}
-                  tooltip="Emails transactionnels — outbox et retries"
-                >
-                  <Link
-                    href="/admin/emails"
-                    aria-current={pathname.startsWith('/admin/emails') ? 'page' : undefined}
-                    className="h-11 rounded-xl text-[15px] font-medium text-white/85 hover:bg-white/10 hover:text-white data-[active=true]:bg-white data-[active=true]:font-bold data-[active=true]:text-[#E23F2B] data-[active=true]:hover:bg-white data-[active=true]:hover:text-[#E23F2B]"
-                  >
-                    <Mail className="h-5 w-5 shrink-0" aria-hidden="true" />
-                    <span>Emails</span>
-                    <ChevronRight
-                      className="ml-auto h-4 w-4 opacity-60 group-data-[collapsible=icon]:hidden"
-                      aria-hidden="true"
-                    />
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton tooltip="Site public — Conciergerie Hub" asChild>
+                <SidebarMenuButton tooltip="Ouvrir le site public Conciergerie Hub" asChild>
                   <Link
                     href="/"
                     target="_blank"
                     rel="noreferrer"
-                    className="h-11 rounded-xl text-[15px] font-medium text-white/85 hover:bg-white/10 hover:text-white"
+                    className="h-11 rounded-xl text-[14px] font-medium text-white/85 hover:bg-white/10 hover:text-white"
                   >
                     <Globe className="h-5 w-5 shrink-0" aria-hidden="true" />
-                    <span>Site public</span>
+                    <span>🌐 Site public</span>
                     <ChevronRight
-                      className="ml-auto h-4 w-4 opacity-60 group-data-[collapsible=icon]:hidden"
+                      className="ml-auto h-4 w-4 opacity-50 group-data-[collapsible=icon]:hidden"
                       aria-hidden="true"
                     />
                   </Link>
@@ -189,13 +253,13 @@ export function AdminAppSidebar({ adminName, adminEmail }: AdminAppSidebarProps)
             <div className="flex items-center gap-2.5 rounded-xl bg-white/10 px-3 py-2.5 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-2">
               <span
                 aria-hidden="true"
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-xs font-extrabold text-[#E23F2B]"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-xs font-extrabold text-slate-900"
               >
                 {initials}
               </span>
               <div className="min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
                 <p className="truncate text-sm font-bold text-white">{adminName}</p>
-                <p className="truncate text-[11px] text-white/70">{adminEmail}</p>
+                <p className="truncate text-[11px] text-white/60">{adminEmail}</p>
               </div>
               <button
                 type="button"

@@ -46,6 +46,7 @@ model User {
   activatedPhysicalQrs          PhysicalQrCode[] @relation("UserActivatedQrs")
   claimedPlaqueQrs              PhysicalQrCode[] @relation("PlaqueClaimedByUser")
   activityLogEntries            ActivityLog[] @relation("ActivityLogUser")
+  auditLogs                     AuditLog[]    @relation("AuditLogActor")
   pushSubscriptions             PushSubscription[]
   merchantProfile               Merchant?
   providerProfile               Provider?
@@ -600,6 +601,7 @@ model Provider {
   subscriptions   Subscription[]   @relation("ProviderSubscriptions")
   serviceOrders   ServiceOrder[]
   serviceOffers   ServiceOffer[]
+  payouts         Payout[]
 
   @@index([category])
   @@index([audience])
@@ -818,7 +820,9 @@ model FlashSale {
 // ==============================================================
 model Coupon {
   id              String    @id @default(cuid())
-  merchantId      String    @map("merchant_id")
+  // Optionnel : un coupon créé par la plateforme (console superadmin)
+  // n'appartient pas forcément à un marchand.
+  merchantId      String?   @map("merchant_id")
   promoId         String?   @map("promo_id")
   flashSaleId     String?   @map("flash_sale_id")
   userId          String    @map("user_id")
@@ -1188,4 +1192,137 @@ model EmailOutbox {
   @@index([propertyId])
   @@index([referenceType, referenceId])
   @@map("email_outbox")
+}
+
+// ==============================================================
+// TABLE 40: audit_logs (Console Superadmin — Module 8 Logs)
+// Journal d'audit des actions d'administration : chaque mutation
+// faite depuis /admin/* est tracée (acteur, cible, détails, IP).
+// ==============================================================
+model AuditLog {
+  id          String   @id @default(cuid())
+  actorId     String?  @map("actor_id")       // user.id du Superadmin (null = système)
+  actorEmail  String   @map("actor_email")    // copie lisible (survit à la suppression du compte)
+  action      String                                  // 'user.deactivate' | 'user.plan_change' | 'batch.create' | …
+  entityType  String   @map("entity_type")            // 'user' | 'provider' | 'subscription' | 'setting' | …
+  entityId    String?  @map("entity_id")
+  detailsJson String   @default("{}") @map("details_json")
+  ip          String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  actor User? @relation("AuditLogActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([action])
+  @@index([entityType, entityId])
+  @@index([actorId])
+  @@map("audit_logs")
+}
+
+// ==============================================================
+// TABLE 41: platform_settings (Module 7 Paramètres)
+// Key-value store de configuration plateforme. La valeur est une
+// chaîne JSON validée côté lib/settings.ts (défauts typés).
+// ==============================================================
+model PlatformSetting {
+  key       String   @id
+  value     String                                 // JSON string
+  updatedBy String?  @map("updated_by")            // email du Superadmin
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("platform_settings")
+}
+
+// ==============================================================
+// TABLE 42: feature_flags (Module 7 Paramètres)
+// Interrupteurs fonctionnels réels, lus par les routes métier
+// (ex: 'signups_enabled' dans /api/auth/register).
+// ==============================================================
+model FeatureFlag {
+  key         String   @id
+  enabled     Boolean  @default(false)
+  description String?
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("feature_flags")
+}
+
+// ==============================================================
+// TABLE 43: api_keys (Module 7 Sécurité)
+// Clés d'API pour consommateurs externes (dashboard partenaires).
+// La clé en clair n'est JAMAIS stockée : hash SHA-256 + préfixe
+// d'identification (8 premiers caractères).
+// ==============================================================
+model ApiKey {
+  id         String    @id @default(cuid())
+  name       String
+  prefix     String                                  // 8 premiers caractères de la clé (identification)
+  hashedKey  String    @unique @map("hashed_key")    // sha256 hex
+  createdBy  String?   @map("created_by")            // email Superadmin
+  createdAt  DateTime  @default(now()) @map("created_at")
+  lastUsedAt DateTime? @map("last_used_at")
+  revokedAt  DateTime? @map("revoked_at")
+
+  @@index([prefix])
+  @@map("api_keys")
+}
+
+// ==============================================================
+// TABLE 44: ip_blacklist (Module 7 Sécurité)
+// IP bannies : vérifiées AVANT le rate limiting sur login,
+// inscription et paiement de commande (lib/security.ts).
+// ==============================================================
+model IpBlacklist {
+  ip        String   @id
+  reason    String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("ip_blacklist")
+}
+
+// ==============================================================
+// TABLE 45: support_tickets (Module 8 Logs — Tickets support)
+// Tickets gérés par le Superadmin ; créables manuellement ou
+// depuis un email transactionnel en échec (EmailOutbox FAILED).
+// ==============================================================
+model SupportTicket {
+  id        String   @id @default(cuid())
+  subject   String
+  email     String
+  priority  String   @default("NORMAL") // 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT'
+  status    String   @default("OPEN")   // 'OPEN' | 'PENDING' | 'RESOLVED' | 'CLOSED'
+  body      String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([status])
+  @@index([createdAt])
+  @@map("support_tickets")
+}
+
+// ==============================================================
+// TABLE 46: payouts (Module 6 Transactions — Reversements)
+// Reversement des gains prestataires (ServiceOrder payées non
+// encore reversées). Stripe Connect si compte Express actif,
+// sinon marquage manuel (virement externe).
+// ==============================================================
+model Payout {
+  id               String    @id @default(cuid())
+  providerId       String    @map("provider_id")
+  amount           Float
+  currency         String    @default("EUR")
+  status           String    @default("PENDING")     // 'PENDING' | 'PAID' | 'FAILED'
+  method           String    @default("STRIPE_CONNECT") // 'STRIPE_CONNECT' | 'MANUAL'
+  stripeTransferId String?   @map("stripe_transfer_id")
+  ordersCount      Int       @default(0) @map("orders_count")
+  note             String?
+  paidAt           DateTime? @map("paid_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+
+  provider Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  @@index([providerId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("payouts")
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { rateLimit } from '@/lib/rate-limit';
+import { isIpBlacklisted } from '@/lib/security';
 import { computeApplicationFeeCents } from '@/lib/stripe-connect';
 import { markServiceOrderPaid, orderStripeDescription } from '@/lib/payments-server';
 
@@ -54,6 +55,13 @@ export async function POST(
     const url = new URL(req.url);
     const slug = (url.searchParams.get('slug') || '').trim();
     const bookingParam = (url.searchParams.get('b') || '').trim();
+
+    // Blacklist IP (Module 7 Sécurité) : IP bannie → paiement refusé.
+    const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+      || req.headers.get('x-real-ip') || 'local';
+    if (await isIpBlacklisted(clientIp)) {
+      return NextResponse.json({ ok: false, message: 'Accès refusé.' }, { status: 403 });
+    }
 
     if (!id || !slug) {
       return NextResponse.json({ ok: false, message: 'Paramètres manquants.' }, { status: 400 });

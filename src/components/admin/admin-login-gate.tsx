@@ -17,8 +17,10 @@ import { Label } from '@/components/ui/label';
  */
 
 const ADMIN_CREDENTIALS = {
+  // Pré-rempli avec l'email admin (non secret). Le mot de passe n'est
+  // JAMAIS embarqué côté client (durcissement Module 7 Sécurité).
   email: 'admin@qrdomotik.roomscan.pro',
-  password: 'QrDomotik2024!',
+  password: '',
 };
 
 export function AdminLoginGate() {

@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import { hash } from 'bcryptjs';
 import { db } from '@/lib/db';
 import { rateLimit } from '@/lib/rate-limit';
+import { isIpBlacklisted } from '@/lib/security';
+import { isFlagEnabled } from '@/lib/feature-flags';
+import { getPlatformSettings } from '@/lib/settings';
 import { queueEmail } from '@/lib/email';
 import { welcomeEmail } from '@/lib/email-templates';
 
@@ -9,10 +12,22 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 export async function POST(req: Request) {
   try {
-    // Anti-abus : max 10 inscriptions/minute/IP.
+    // Anti-abus : IP bannie → refus, sinon quota config configurable.
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'local';
-    if (!(await rateLimit(`register:${ip}`, 10))) {
+    if (await isIpBlacklisted(ip)) {
+      return NextResponse.json({ error: 'Accès refusé.' }, { status: 403 });
+    }
+    const settings = await getPlatformSettings();
+    if (!(await rateLimit(`register:${ip}`, settings.signupHourlyLimit))) {
       return NextResponse.json({ error: 'Trop de tentatives. Réessayez dans un instant.' }, { status: 429 });
+    }
+
+    // Feature flag réel : inscriptions ouvertes ou fermées.
+    if (!(await isFlagEnabled('signups_enabled'))) {
+      return NextResponse.json(
+        { error: 'Les inscriptions sont temporairement fermées. Contactez le support.' },
+        { status: 503 },
+      );
     }
 
     const { email, password, fullName } = await req.json();

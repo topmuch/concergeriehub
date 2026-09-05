@@ -13,6 +13,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireSuperadmin, adminUnauthorized } from '@/lib/admin';
 import { db } from '@/lib/db';
 import { PROVIDER_AUDIENCES } from '@/lib/b2b';
+import { logAudit, clientIp } from '@/lib/audit';
 
 interface UpdateBody {
   businessName?: string;
@@ -103,6 +104,14 @@ export async function PATCH(
     }
 
     await db.provider.update({ where: { id }, data });
+    await logAudit({
+      actor: admin,
+      action: 'provider.update',
+      entityType: 'provider',
+      entityId: id,
+      details: data,
+      ip: clientIp(req.headers),
+    });
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error('[PATCH /api/admin/providers-admin/[id]] Error:', error);
@@ -130,6 +139,15 @@ export async function DELETE(
     await db.$transaction(async (tx) => {
       await tx.provider.delete({ where: { id: provider.id } });
       await tx.user.delete({ where: { id: provider.userId } });
+    });
+
+    await logAudit({
+      actor: admin,
+      action: 'provider.delete',
+      entityType: 'provider',
+      entityId: provider.id,
+      details: { businessName: provider.businessName },
+      ip: clientIp(_req.headers),
     });
 
     return NextResponse.json({ ok: true, deleted: provider.businessName });

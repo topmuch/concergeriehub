@@ -8,6 +8,7 @@ import {
   type OrderItem,
 } from '@/lib/orders';
 import { rateLimit } from '@/lib/rate-limit';
+import { isFlagEnabled } from '@/lib/feature-flags';
 import {
   ensureDefaultRules,
   runAutomationTrigger,
@@ -90,6 +91,14 @@ export async function POST(req: Request) {
       return NextResponse.json(
         { ok: false, message: 'Trop de commandes rapprochées. Réessayez dans un instant.' },
         { status: 429 },
+      );
+    }
+
+    // Feature flags réels (Module 7) : marketplace / maintenance.
+    if (!(await isFlagEnabled('marketplace_enabled')) || (await isFlagEnabled('maintenance_mode'))) {
+      return NextResponse.json(
+        { ok: false, message: 'Les commandes sont temporairement suspendues. Réessayez plus tard.' },
+        { status: 503 },
       );
     }
 
