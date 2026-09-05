@@ -14,8 +14,15 @@
 // =============================================================
 
 import { motion, type Variants } from 'framer-motion';
-import { ArrowRight, CheckCircle2, XCircle, Zap } from 'lucide-react';
+import { ArrowRight, CheckCircle2, LogIn, XCircle, Zap } from 'lucide-react';
 import { InteractiveDemo } from './interactive-demo';
+
+export type AuthViewMode = 'login' | 'register';
+
+export interface LandingPageProps {
+  /** Ouvre l'espace auth (connexion ou inscription). Si absent, les CTA ne font rien. */
+  onGoToAuth?: (mode: AuthViewMode) => void;
+}
 
 // --- Variants d'animation Framer Motion ---
 const containerVariants: Variants = {
@@ -41,7 +48,9 @@ function smoothScrollTo(selector: string) {
   document.querySelector(selector)?.scrollIntoView({ behavior: 'smooth' });
 }
 
-export function LandingPage() {
+export function LandingPage({ onGoToAuth }: LandingPageProps) {
+  const goToRegister = () => onGoToAuth?.('register');
+
   return (
     <div className="flex min-h-screen flex-col overflow-x-clip bg-slate-50 font-sans text-slate-900 selection:bg-emerald-100">
       <main className="flex-1">
@@ -49,6 +58,18 @@ export function LandingPage() {
             1. HERO SECTION
         ========================================== */}
         <section className="relative overflow-hidden px-4 pt-20 pb-32 sm:px-6">
+          {/* Accès espace hôte */}
+          {onGoToAuth && (
+            <button
+              type="button"
+              onClick={() => onGoToAuth('login')}
+              className="absolute right-4 top-5 z-20 inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white/80 px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm backdrop-blur transition-all hover:border-slate-300 hover:shadow-md sm:right-6"
+            >
+              <LogIn className="h-4 w-4" aria-hidden="true" />
+              Se connecter
+            </button>
+          )}
+
           {/* Fond dégradé subtil */}
           <div className="absolute inset-0 -z-10 bg-gradient-to-br from-blue-50/50 via-slate-50 to-emerald-50/50" />
           <div className="absolute -top-0 left-1/2 -z-10 h-[400px] w-[800px] -translate-x-1/2 rounded-full bg-blue-200/20 blur-[100px]" />
@@ -424,6 +445,7 @@ export function LandingPage() {
                 </ul>
                 <button
                   type="button"
+                  onClick={goToRegister}
                   className="w-full rounded-xl bg-slate-100 py-3 font-semibold text-slate-900 transition-colors hover:bg-slate-200"
                 >
                   Commencer l&apos;essai
@@ -470,6 +492,7 @@ export function LandingPage() {
                 </ul>
                 <button
                   type="button"
+                  onClick={goToRegister}
                   className="w-full rounded-xl bg-emerald-500 py-3 font-semibold text-white shadow-lg shadow-emerald-500/20 transition-colors hover:bg-emerald-600"
                 >
                   Passer à Pro

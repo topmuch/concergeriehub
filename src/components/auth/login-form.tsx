@@ -3,12 +3,14 @@
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Lock, User, ArrowRight, Eye, EyeOff, Shield, Users, Copy, Check, QrCode, Smartphone, Home, Zap } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight, ArrowLeft, Eye, EyeOff, Shield, Users, Copy, Check, QrCode, Smartphone, Home, Zap } from 'lucide-react';
 import { BrandLogo } from '@/components/ui/brand-logo';
 
 interface AuthFormProps {
   onSuccess: (role: string) => void;
   initialRegister?: boolean;
+  /** Si fourni, affiche un bouton « Retour au site » (landing). */
+  onBack?: () => void;
 }
 
 const DEPLOY_CREDENTIALS = [
@@ -28,7 +30,7 @@ const DEPLOY_CREDENTIALS = [
   },
 ];
 
-export function AuthForm({ onSuccess, initialRegister }: AuthFormProps) {
+export function AuthForm({ onSuccess, initialRegister, onBack }: AuthFormProps) {
   const [isLogin, setIsLogin] = useState(!initialRegister);
   const [email, setEmail] = useState('admin@qrdomotik.roomscan.pro');
   const [password, setPassword] = useState('QrDomotik2024!');
@@ -109,7 +111,19 @@ export function AuthForm({ onSuccess, initialRegister }: AuthFormProps) {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+    <div className="relative min-h-screen flex flex-col bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+      {/* Retour vers la landing (si prop fournie) */}
+      {onBack && (
+        <button
+          type="button"
+          onClick={onBack}
+          className="absolute left-4 top-4 z-20 flex items-center gap-1.5 rounded-xl border border-slate-700/50 bg-slate-900/60 px-3.5 py-2 text-sm font-medium text-slate-300 backdrop-blur transition-all hover:bg-slate-800/80 hover:text-white"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Retour au site
+        </button>
+      )}
+
       {/* Main split layout */}
       <div className="flex flex-1">
         {/* Left side — Branding (hidden on mobile) */}

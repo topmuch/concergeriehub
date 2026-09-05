@@ -818,3 +818,22 @@ Stage Summary:
 - La landing complète (« Effet Wahou » claire, style QRTags) est la page d'accueil / : 7 blocs + démo interactive centrale — prête pour validation utilisateur.
 - Déps É3 déjà toutes présentes (framer-motion 13.1.1, qrcode.react 4.2.0, lucide-react, clsx, tailwind-merge) : aucune installation requise.
 - Connu/bénin : les captures pleine page automatisées montrent les sections whileInView vides (animations non déclenchées sans scroll réel) — se déclenchent normalement au scroll utilisateur (vérifié).
+
+---
+Task ID: L3
+Agent: Z.ai Code (session principale)
+Task: LANDING V4 — ÉTAPE 3/3 : brancher la landing sur l'application (auth SPA + redirections par rôle) + push É2 avec PAT
+
+Work Log:
+- Push ÉTAPE 2 avec PAT fourni à la volée (jamais persisté) : f724d24..b8b206b main → main, origin réaligné, arbre propre
+- Constat : authOptions.pages.signIn='/' et l'ancienne page / contenait le login (V1 SPA) → la landing pure avait supprimé toute interface de connexion (impasse)
+- src/components/auth/login-form.tsx : nouvelle prop optionnelle onBack → bouton « ← Retour au site » (absolute top-left, visible seulement si fournie ; autres usages inchangés) ; import ArrowLeft
+- src/components/landing/landing-page.tsx : props onGoToAuth(mode 'login'|'register') + type AuthViewMode exporté ; bouton « Se connecter » discret (pill blanc, LogIn, absolute top-right du hero, rendu seulement si onGoToAuth) ; CTA tarifs « Commencer l'essai » et « Passer à Pro » → mode inscription
+- src/components/landing/landing-shell.tsx (nouveau, 'use client') : AnimatePresence wait entre landing et AuthForm (fade 0.25 s), scrollTo top à chaque bascule, onSuccess → router.push(/admin/dashboard si superadmin sinon /airbnb/dashboard), initialRegister selon mode demandé
+- src/app/page.tsx : rend LandingShell (metadata + police inchangées)
+- E2E navigateur : Se connecter → vue Connexion + bouton Retour ; Retour au site → landing (H1 OK) ; « Commencer l'essai » → « Créer un compte » + champ Nom complet ; quick-login Client Demo → /airbnb/dashboard (« Bonjour, Marie 👋 ») ; quick-login Super Admin → /admin/dashboard (titre « Vue d'ensemble — Superadmin ») ; mobile 390 px : bouton Se connecter visible (right 16 / top 20), 0 erreur console ; lint 0
+
+Stage Summary:
+- Parcours complet rétabli : landing marketing → auth (login/inscription) → bon dashboard selon rôle, le tout en SPA sur / (contrainte preview sandbox)
+- Landing V4 considérée complète (É1 démo + É2 7 blocs + É3 intégration app) — aucune dépendance à installer
+- PAT fourni cette session : utilisé uniquement à la volée pour les push ; à révoquer par l'utilisateur
