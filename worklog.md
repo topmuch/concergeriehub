@@ -800,3 +800,21 @@ Stage Summary:
 - Démo cyclique auto-entretenue livrée et vérifiée : c'est le « pitch commercial animé » central de la landing (scan → upselling → pilotage hôte).
 - page.tsx.bak = rollback instantané de la V1 si besoin ; le composant est prêt à être intégré au hero de l'É2.
 - En attente de validation utilisateur (« NEXT ») pour ÉTAPE 2 : sections 1-7 de la landing (hero + logos, Avant/Après, 3 étapes, bento grid, tarifs Solo/Pro, footer).
+
+---
+Task ID: L2
+Agent: Z.ai Code (session principale)
+Task: LANDING V4 — ÉTAPE 2/3 : page d'accueil complète 7 blocs (code de base fourni par l'utilisateur, intégré et corrigé)
+
+Work Log:
+- src/components/landing/landing-page.tsx (nouveau, 'use client') : reprise FIDÈLE du JSX fourni par l'utilisateur (badge Zap White-Label, H1 gradient blue-600→emerald-600 + « Sans application. » ajouté au H1 selon spec, double CTA, preuve sociale grayscale 5 marques, cartes Avant red-50 / Après emerald-50, 3 étapes, bento 2+1+1+2 avec carte White-Label dark, tarifs Solo 9,90 €/mois + Pro 199 €/an badge LE PLUS POPULAIRE + note 16,50 €/mois, footer 3 colonnes © 2025)
+- Placeholder « [Composant InteractiveDemo ici] » remplacé par le VRAI InteractiveDemo de l'É1 dans la carte blanche shadow-2xl (titre « 📱 La magie en 1 scan » + pastille verte « Démo en cours de lecture… », overflow-hidden pour clipper les blobs flous)
+- Corrections d'intégration : typage Variants (framer-motion 13), imports inutilisés retirés (Star/Shield/BarChart3/Globe), apostrophes JSX échappées (&apos;/' typographique) pour react/no-unescaped-entities, ancres #demo/#tarifs/#fonctionnalites + scrollIntoView smooth sur les CTA, sémantique <main> + footer mt-auto (sticky) + safe-area-inset-bottom, année 2025
+- src/app/page.tsx : page d'aperçu É1 remplacée — serveur qui pose Plus_Jakarta_Sans (variable --font-jakarta) et rend <LandingPage /> ; metadata conservée ; page.tsx.bak inchangé
+- Fix E2E : débordement horizontal 4 px en mobile (390) causé par les transforms initiaux x:±20 des cartes whileInView → overflow-x-clip sur le conteneur racine
+- E2E navigateur : hero (badge/H1 gradient/double CTA), démo cyclique dans la carte (états 1-2-3 capturés, plaque au-dessus du téléphone en mobile), dots+Pause (figé 5 s puis reprise → Étape 2), CTA « Voir les tarifs » → #tarifs OK, CTA « Essayer la démo » → #demo OK, footer bottom=docHeight (gap 0) desktop + mobile (844=844), mobile 390 px scrollW=390 (0 débordement après fix), 0 erreur console ; lint 0, dev.log propre (GET / 200)
+
+Stage Summary:
+- La landing complète (« Effet Wahou » claire, style QRTags) est la page d'accueil / : 7 blocs + démo interactive centrale — prête pour validation utilisateur.
+- Déps É3 déjà toutes présentes (framer-motion 13.1.1, qrcode.react 4.2.0, lucide-react, clsx, tailwind-merge) : aucune installation requise.
+- Connu/bénin : les captures pleine page automatisées montrent les sections whileInView vides (animations non déclenchées sans scroll réel) — se déclenchent normalement au scroll utilisateur (vérifié).
