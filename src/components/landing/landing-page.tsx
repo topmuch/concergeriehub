@@ -19,6 +19,7 @@
 // =============================================================
 
 import { useEffect, useState, type MouseEvent } from 'react';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Menu,
@@ -34,6 +35,7 @@ import {
   Instagram,
   ChevronRight,
   Play,
+  Star,
 } from 'lucide-react';
 import { InteractiveDemo } from './interactive-demo';
 
@@ -270,7 +272,7 @@ function HeroSection({ onGoToAuth }: LandingPageProps) {
             professionnel.
           </p>
 
-          <div className="mb-16 flex flex-col items-center justify-center gap-4 sm:flex-row">
+          <div className="mb-14 flex flex-col items-center justify-center gap-4 sm:flex-row">
             <button
               type="button"
               onClick={() => onGoToAuth?.('register')}
@@ -288,6 +290,45 @@ function HeroSection({ onGoToAuth }: LandingPageProps) {
               Voir la démo
             </button>
           </div>
+
+          {/* Vitrine : appartement luxueux (format 16:9) */}
+          <motion.figure
+            initial={{ opacity: 0, y: 40, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.7, delay: 0.2 }}
+            className="relative mx-auto mb-14 max-w-5xl"
+          >
+            {/* Halo lumineux derrière l'image */}
+            <div
+              className="absolute -inset-4 rounded-[2.5rem] bg-gradient-to-r from-blue-500/30 via-teal-500/20 to-emerald-500/30 blur-2xl"
+              aria-hidden="true"
+            />
+            <div className="relative aspect-video overflow-hidden rounded-3xl shadow-2xl ring-1 ring-white/20">
+              <Image
+                src="/hero-apartment.jpg"
+                alt="Séjour d&apos;un appartement haussmannien luxueux avec vue sur les toits de Paris au crépuscule"
+                fill
+                priority
+                sizes="(max-width: 1024px) 100vw, 1024px"
+                className="object-cover"
+              />
+              {/* Voile bas pour la lisibilité des pastilles */}
+              <div
+                className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-slate-900/70 to-transparent"
+                aria-hidden="true"
+              />
+              <figcaption className="absolute inset-x-0 bottom-0 flex flex-wrap items-center justify-center gap-3 p-4 sm:justify-between">
+                <span className="flex items-center gap-2 rounded-full border border-white/20 bg-slate-900/60 px-4 py-2 text-xs font-semibold text-white backdrop-blur-md sm:text-sm">
+                  <MapPin className="h-4 w-4 shrink-0 text-emerald-400" />
+                  Loft Canal Saint-Martin · Paris
+                </span>
+                <span className="flex items-center gap-1.5 rounded-full border border-white/20 bg-slate-900/60 px-4 py-2 text-xs font-semibold text-white backdrop-blur-md sm:text-sm">
+                  <Star className="h-4 w-4 shrink-0 fill-yellow-400 text-yellow-400" />
+                  4,9 · 312 avis
+                </span>
+              </figcaption>
+            </div>
+          </motion.figure>
 
           {/* Stats */}
           <div className="mx-auto grid max-w-2xl grid-cols-3 gap-8">

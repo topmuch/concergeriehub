@@ -897,3 +897,19 @@ Stage Summary:
 - Landing V5 en place : design sombre immersif du fondateur + tous les acquis préservés (auth SPA, démo É1, SEO V4, footer sticky, responsive)
 - Aucun acquis V4 perdu : InteractiveDemo toujours en section dédiée, LandingShell/AuthForm/onboarding/emails intacts
 - Deux commits en attente de push (bc80dc3 SEO + celui-ci) — PAT requis (non persisté)
+
+---
+Task ID: L5
+Agent: Z.ai Code (session principale)
+Task: HERO — ajout d'une vitrine « bel appartement luxueux » en 16:9 sous les CTA du hero
+
+Work Log:
+- Image générée par IA (skill image-generation, 1344x768 ≈ 16:9) : salon haussmannien luxueux, vue toits de Paris au crépuscule, lumière dorée — convertie en JPG qualité 82 (142 Ko) → public/hero-apartment.jpg (PNG source supprimé)
+- landing-page.tsx HeroSection : nouveau bloc motion.figure entre les CTA et les stats — conteneur aspect-video max-w-5xl rounded-3xl ring-1 ring-white/20 shadow-2xl, halo dégradé bleu→émeraude en blur derrière, next/image fill + priority (LCP) + sizes responsive
+- Overlays : voile dégradé bas pour lisibilité + figcaption glassmorphism 2 pastilles — « Loft Canal Saint-Martin · Paris » (MapPin émeraude, clin d'œil au logement démo) et « ★ 4,9 · 312 avis » (Star jaune remplie) ; flex-wrap justify-center sur mobile (empilement propre)
+- Animations : entrée opacity/y/scale delay 0.2 s cohérente avec le reste du hero ; imports ajoutés (next/image, Star lucide)
+- E2E navigateur : image servie via /_next/image (1024x585, complete=true), hero desktop conforme (badge/H1/CTA puis vitrine), stats sous l'image, mobile 390 px scrollW=390 (0 débordement), pastilles empilées centrées lisibles, 0 erreur console, dev.log propre ; lint 0
+
+Stage Summary:
+- Le hero V5 gagne une vitrine photo premium 16:9 qui incarne la promesse « expérience 5 étoiles » — l'image apparaît sous les CTA et invite au scroll vers la démo
+- Commit local en attente de push (bc80dc3 SEO + L4 V5 + L5 hero) — PAT requis
