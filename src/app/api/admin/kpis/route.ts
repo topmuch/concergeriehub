@@ -3,15 +3,21 @@
 //
 // GET : toutes les données du nouveau dashboard :
 //  - stats : hôtes, biens, prestataires, séjours, abonnements,
-//    finance (GMV payée, commission plateforme, part hôte,
-//    commandes par statut de paiement, panier moyen, remboursements)
+//    plaques physiques (activées / totaux), finance (GMV payée,
+//    commission plateforme, part hôte, commandes par statut de
+//    paiement, panier moyen, remboursements)
 //  - series : GMV + commission par jour sur 30 jours (pré-remplie,
 //    agrégation en JS car SQLite ne supporte pas le groupby date)
+//  - hostSignupTrend : inscriptions d'hôtes par jour sur 30 jours
+//    (pré-remplie, agrégation JS — même contrainte SQLite)
+//  - planDistribution : répartition des comptes hôtes par plan
+//    (airbnb_solo | airbnb_pro | agency | free | null)
 //  - paymentDistribution : répartition des commandes par statut de
 //    paiement (PAID | UNPAID | REFUNDED | FAILED)
 //  - categoryRevenue : GMV par catégorie de prestation (join provider)
 //  - providerRevenue : top 5 prestataires par GMV
-//  - recentOrders / recentHosts / recentActivity : listes temps réel
+//  - recentOrders / recentHosts / recentActivity / recentActivations :
+//    listes temps réel (activations de plaques via ActivationLog)
 //
 // Définitions métier (inchangées, cf. /api/admin/overview) :
 //  - Hôte = user (role 'user') sans profil prestataire
@@ -67,6 +73,13 @@ export async function GET() {
       scansTotal,
       recentHosts,
       recentActivity,
+      plaquesTotal,
+      plaquesActive,
+      plaquesInactive,
+      plaquesLost,
+      hostSignups30dRows,
+      planGroups,
+      recentActivationRows,
     ] = await Promise.all([
       // ----- Comptes -----
       db.user.count({ where: { role: 'user', providerProfile: null } }),
@@ -141,6 +154,44 @@ export async function GET() {
           createdAt: true,
           detailsJson: true,
           property: { select: { name: true } },
+          user: { select: { fullName: true, email: true } },
+        },
+      }),
+
+      // ----- Plaques physiques (inventaire + activations) -----
+      db.physicalQrCode.count(),
+      db.physicalQrCode.count({ where: { status: 'active' } }),
+      db.physicalQrCode.count({ where: { status: 'inactive' } }),
+      db.physicalQrCode.count({ where: { status: 'lost' } }),
+
+      // ----- Courbe d'inscriptions hôtes (30 j, groupée en JS) -----
+      db.user.findMany({
+        where: {
+          role: 'user',
+          providerProfile: null,
+          createdAt: { gte: since30d },
+        },
+        select: { createdAt: true },
+      }),
+
+      // ----- Répartition des plans (comptes hôtes) -----
+      db.user.groupBy({
+        by: ['selectedPlan'],
+        where: { role: 'user', providerProfile: null },
+        _count: { _all: true },
+      }),
+
+      // ----- Dernières activations de plaques (flux temps réel) -----
+      db.activationLog.findMany({
+        where: { action: 'activated' },
+        orderBy: { createdAt: 'desc' },
+        take: 6,
+        select: {
+          id: true,
+          createdAt: true,
+          physicalQrCode: {
+            select: { activationCode: true, hubSlug: true },
+          },
           user: { select: { fullName: true, email: true } },
         },
       }),
@@ -225,6 +276,35 @@ export async function GET() {
       gmv: v.gmv,
       commission: v.commission,
     }));
+
+    // ================= Courbe inscriptions hôtes (30 j) =================
+    const signupBuckets = new Map<string, number>();
+    for (let i = TREND_DAYS - 1; i >= 0; i -= 1) {
+      const d = new Date(now.getTime() - i * 24 * 3600 * 1000);
+      signupBuckets.set(dayKey(d), 0);
+    }
+    for (const row of hostSignups30dRows) {
+      const key = dayKey(row.createdAt);
+      signupBuckets.set(key, (signupBuckets.get(key) ?? 0) + 1);
+    }
+    const hostSignupTrend = Array.from(signupBuckets.entries()).map(([date, count]) => ({
+      date,
+      count,
+    }));
+
+    // ================= Répartition des plans =================
+    const PLAN_ORDER = ['airbnb_solo', 'airbnb_pro', 'agency', 'free'] as const;
+    const planCounts = new Map<string, number>();
+    for (const g of planGroups) {
+      planCounts.set(g.selectedPlan ?? 'free', g._count._all);
+    }
+    const planDistribution = [
+      ...PLAN_ORDER.map((plan) => ({ plan, count: planCounts.get(plan) ?? 0 })),
+      // Sécurité : plans inconnus / valeurs inattendues regroupées dans "free"
+      ...Array.from(planCounts.entries())
+        .filter(([plan]) => !PLAN_ORDER.includes(plan as (typeof PLAN_ORDER)[number]))
+        .map(([plan, count]) => ({ plan, count })),
+    ].filter((p) => p.count > 0);
 
     // ================= MRR =================
     let mrrEur = 0;
@@ -321,8 +401,14 @@ export async function GET() {
         gmv30dEur: round2(gmv30dEur),
         avgOrderEur: ordersPaid > 0 ? round2(gmvPaidEur / ordersPaid) : 0,
         scansTotal,
+        plaquesTotal,
+        plaquesActive,
+        plaquesInactive,
+        plaquesLost,
       },
       series,
+      hostSignupTrend,
+      planDistribution,
       paymentDistribution,
       categoryRevenue,
       providerRevenue,
@@ -337,6 +423,13 @@ export async function GET() {
         propertyCount: h._count.ownedProperties,
       })),
       recentActivity: activity,
+      recentActivations: recentActivationRows.map((a) => ({
+        id: a.id,
+        activationCode: a.physicalQrCode?.activationCode ?? '—',
+        hubSlug: a.physicalQrCode?.hubSlug ?? null,
+        userName: a.user?.fullName ?? a.user?.email ?? null,
+        createdAt: a.createdAt.toISOString(),
+      })),
     });
   } catch (error) {
     console.error('[GET /api/admin/kpis] Error:', error);

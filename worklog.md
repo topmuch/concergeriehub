@@ -980,3 +980,21 @@ Work Log:
 Stage Summary:
 - La démo répond 100 % à la spec : plaque QR animée à gauche, mockup téléphone à droite, 3 états de 4 s en boucle fluide, contrôles pause/play + ‹ › + dots, texte explicatif titre+description par état
 - Resterait (étapes suivantes annoncées par le fondateur) : optimisations perfs + micro-interactions (sons, vibrations, particules)
+
+---
+Task ID: SA-1
+Agent: Z.ai Code (session principale)
+Task: Superadmin MODULE 1 — Dashboard & Analytiques (ÉTAPE 1/5 du plan « Dashboard Superadmin complet ») — code réel, zéro mock
+
+Work Log:
+- Audit préalable (demande du fondateur après constat « fonctionnalités manquantes ») : les composants generate-batch / admin-users / admin-packs / stats-overview existent dans src/components/admin/ mais sont ORPHELINS depuis le redesign Travl (ancienne coquille super-admin-layout.tsx SPA à onglets jamais migrée en routes) — rebranchement prévu aux étapes 2-4 du plan
+- /api/admin/kpis étendu (100 % Prisma réel) : + plaques physiques (count total/active/inactive/lost sur PhysicalQrCode), + hostSignupTrend (inscriptions hôtes par jour 30 j, pré-remplie, agrégation JS SQLite), + planDistribution (groupBy selectedPlan des comptes hôtes, null→free), + recentActivations (ActivationLog action='activated', join PhysicalQrCode.activationCode/hubSlug + User) — requireSuperadmin conservé
+- admin-dashboard-content.tsx : KPI secondaires 4→5 cartes (xl:grid-cols-5) avec nouvelle carte « 🏷️ Plaques activées X/Y » + hint inactive/perdues ; nouvelle section « Croissance & abonnements » : AreaChart « Inscriptions des hôtes » (gradient vert #165949, chip +N sur 30 j, tooltip date FR) + donut « Répartition des abonnements » (Solo/Pro/Agence/Free, centre = total hôtes, chips légende) ; flux « Dernières activités » fusionné (buildFeed : ActivityLog + ActivationLog triés date desc, take 12, entrées « 🏷️ Plaque activée » avec code + hub slug)
+- PREUVES croisées base réelle (sqlite via script Prisma temporaire) : plaques DB = {active:1, cancelled:1} → carte affiche « 1 / 2, 0 inactive · 0 perdue » ✓ ; plans DB = {solo:2, pro:1, null:4} → donut « 7 hôtes : Solo 2 · Pro 1 · Free 4 » ✓ ; courbe chip « +7 sur 30 j » = 7 hôtes réels ✓ ; GMV 1 039 € / MRR 34,73 € / 3 abonnements actifs inchangés réels ✓
+- E2E Agent Browser (login superadmin gate) : dashboard rendu, 5 sections vérifiées en scroll (KPIs, croissance, GMV catégorie, top prestataires, commandes réelles Camille/Jade/Gabriel/Emma, flux réel Scan/Message vocal/Wi-Fi/Guidebook/QR créé, derniers hôtes réels Nina/Alex/Sophie/Marie) ; 0 erreur console ; mobile 390 scrollW=390 (0 débordement) ; lint 0 ; tsc 0 ; dev.log propre (requêtes Prisma normales)
+- Note honnête : 0 entrée « Plaque activée » dans le flux aujourd'hui = vérité terrain (ActivationLog vide — les plaques démo ont été seedées sans log) ; l'entrée apparaîtra dès la 1re activation réelle via /setup/[token]
+
+Stage Summary:
+- Module 1 complet : 5 KPIs temps réel (MRR, hôtes actifs, propriétés, plaques activées, volume transactions GMV), 2 nouveaux graphiques (inscriptions 30 j, Solo vs Pro), flux temps réel unifié — le tout branché Prisma, prouvé par croisement DB↔UI
+- Prochaines étapes du plan (attendre NEXT) : ÉTAPE 2 = Modules 2+4 (Data Table utilisateurs + fiche client + actions + plans/factures), puis générateur QR (É3), prestataires/transactions (É4), paramètres/logs (É5)
+- Découverte persistée : 8 modules orphelins à rebrancher (generate-batch, manage-batches, manage-physical-qr, admin-users, admin-packs, stats-overview, admin-artisans, admin-marketplace)

@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import {
+  Area,
+  AreaChart,
   Bar,
   BarChart,
   CartesianGrid,
@@ -75,8 +77,14 @@ interface KpisData {
     gmv30dEur: number;
     avgOrderEur: number;
     scansTotal: number;
+    plaquesTotal: number;
+    plaquesActive: number;
+    plaquesInactive: number;
+    plaquesLost: number;
   };
   series: { date: string; gmv: number; commission: number }[];
+  hostSignupTrend: { date: string; count: number }[];
+  planDistribution: { plan: string; count: number }[];
   paymentDistribution: { key: string; count: number }[];
   categoryRevenue: { category: string; label: string; gmv: number; orders: number }[];
   providerRevenue: { name: string; gmv: number; orders: number }[];
@@ -110,6 +118,13 @@ interface KpisData {
     userName: string | null;
     module: string | null;
   }[];
+  recentActivations: {
+    id: string;
+    activationCode: string;
+    hubSlug: string | null;
+    userName: string | null;
+    createdAt: string;
+  }[];
 }
 
 // ---------- Configs de charts (palette « Travl » : vert foncé + coral) ----------
@@ -127,6 +142,17 @@ const paymentConfig = {
 
 const categoryConfig = {
   gmv: { label: 'GMV', color: '#165949' },
+} satisfies ChartConfig;
+
+const signupConfig = {
+  count: { label: 'Inscriptions', color: '#165949' },
+} satisfies ChartConfig;
+
+const planConfig = {
+  airbnb_solo: { label: 'Solo', color: '#165949' },
+  airbnb_pro: { label: 'Pro', color: '#EE4B35' },
+  agency: { label: 'Agence', color: '#f59e0b' },
+  free: { label: 'Free', color: '#94a3b8' },
 } satisfies ChartConfig;
 
 // ---------- Libellés / formats ----------
@@ -173,6 +199,41 @@ const ACTION_META: Record<string, { emoji: string; label: string }> = {
 
 function actionMeta(type: string) {
   return ACTION_META[type] ?? { emoji: '•', label: type };
+}
+
+// ---------- Flux temps réel fusionné (activités + activations plaques) ----------
+interface FeedItem {
+  id: string;
+  emoji: string;
+  label: string;
+  who: string;
+  detail: string | null;
+  createdAt: string;
+}
+
+function buildFeed(data: KpisData): FeedItem[] {
+  const activities: FeedItem[] = data.recentActivity.map((a) => {
+    const meta = actionMeta(a.actionType);
+    return {
+      id: a.id,
+      emoji: meta.emoji,
+      label: meta.label,
+      who: a.userName ?? 'Système',
+      detail: a.propertyName,
+      createdAt: a.createdAt,
+    };
+  });
+  const activations: FeedItem[] = data.recentActivations.map((a) => ({
+    id: a.id,
+    emoji: '🏷️',
+    label: 'Plaque activée',
+    who: a.userName ?? 'Système',
+    detail: `${a.activationCode}${a.hubSlug ? ` · /${a.hubSlug}` : ''}`,
+    createdAt: a.createdAt,
+  }));
+  return [...activities, ...activations]
+    .sort((x, y) => (x.createdAt < y.createdAt ? 1 : -1))
+    .slice(0, 12);
 }
 
 const fmtDay = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short' });
@@ -330,6 +391,7 @@ export function AdminDashboardContent() {
       : 0;
   const maxProviderGmv = Math.max(...providerRevenue.map((p) => p.gmv), 1);
   const totalOrdersForDonut = paymentDistribution.reduce((acc, d) => acc + d.count, 0);
+  const feed = buildFeed(data);
 
   return (
     <div className="max-w-7xl mx-auto w-full px-4 py-8 space-y-6">
@@ -392,7 +454,7 @@ export function AdminDashboardContent() {
       </section>
 
       {/* ================= KPIs secondaires ================= */}
-      <section aria-label="KPIs opérationnels" className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+      <section aria-label="KPIs opérationnels" className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         <Card className="p-4 border-slate-200 bg-white shadow-sm">
           <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">🏠 Biens actifs</p>
           <p className="mt-1.5 text-2xl font-bold text-slate-900 tabular-nums">
@@ -400,6 +462,16 @@ export function AdminDashboardContent() {
             <span className="text-sm font-semibold text-slate-400"> / {stats.propertiesCount}</span>
           </p>
           <p className="mt-1 text-[11px] text-slate-500">Biens équipés d&apos;une plaque QR</p>
+        </Card>
+        <Card className="p-4 border-slate-200 bg-white shadow-sm">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">🏷️ Plaques activées</p>
+          <p className="mt-1.5 text-2xl font-bold text-slate-900 tabular-nums">
+            {stats.plaquesActive}
+            <span className="text-sm font-semibold text-slate-400"> / {stats.plaquesTotal}</span>
+          </p>
+          <p className="mt-1 text-[11px] text-slate-500">
+            {stats.plaquesInactive} inactive{stats.plaquesInactive > 1 ? 's' : ''} · {stats.plaquesLost} perdue{stats.plaquesLost > 1 ? 's' : ''}
+          </p>
         </Card>
         <Card className="p-4 border-slate-200 bg-white shadow-sm">
           <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">🧹 Prestataires actifs</p>
@@ -531,6 +603,118 @@ export function AdminDashboardContent() {
               );
             })}
           </div>
+        </Card>
+      </section>
+
+      {/* ================= Croissance & abonnements ================= */}
+      <section aria-label="Croissance et abonnements" className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* ----- Courbe d'inscriptions hôtes 30 j ----- */}
+        <Card className="p-6 border-slate-200 bg-white shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <p className="font-semibold text-slate-900">Inscriptions des hôtes</p>
+              <p className="text-xs text-slate-500 mt-0.5">Nouveaux comptes créés sur les 30 derniers jours</p>
+            </div>
+            <span className="inline-flex text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-emerald-50 border-emerald-200 text-emerald-700">
+              +{stats.newHosts30d} sur 30 j
+            </span>
+          </div>
+          <ChartContainer config={signupConfig} className="mt-4 h-64 w-full">
+            <AreaChart data={data.hostSignupTrend} margin={{ left: 4, right: 8, top: 8 }}>
+              <defs>
+                <linearGradient id="fillSignups" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="var(--color-count)" stopOpacity={0.35} />
+                  <stop offset="95%" stopColor="var(--color-count)" stopOpacity={0.03} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#e2e8f0" />
+              <XAxis
+                dataKey="date"
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                minTickGap={28}
+                tick={{ fontSize: 11, fill: '#64748b' }}
+                tickFormatter={(v: string) => fmtDay.format(new Date(`${v}T12:00:00`))}
+              />
+              <YAxis
+                tickLine={false}
+                axisLine={false}
+                width={32}
+                allowDecimals={false}
+                tick={{ fontSize: 11, fill: '#64748b' }}
+              />
+              <ChartTooltip
+                content={
+                  <ChartTooltipContent
+                    labelFormatter={(_p, payload) => {
+                      const raw = payload?.[0]?.payload as { date?: string } | undefined;
+                      return raw?.date ? fmtFullDate.format(new Date(`${raw.date}T12:00:00`)) : '';
+                    }}
+                  />
+                }
+              />
+              <Area
+                dataKey="count"
+                type="monotone"
+                stroke="var(--color-count)"
+                strokeWidth={2.5}
+                fill="url(#fillSignups)"
+                dot={false}
+              />
+            </AreaChart>
+          </ChartContainer>
+        </Card>
+
+        {/* ----- Répartition des abonnements (Solo vs Pro) ----- */}
+        <Card className="p-6 border-slate-200 bg-white shadow-sm">
+          <p className="font-semibold text-slate-900">Répartition des abonnements</p>
+          <p className="text-xs text-slate-500 mt-0.5">Comptes hôtes par plan sélectionné</p>
+          {data.planDistribution.length === 0 ? (
+            <p className="text-sm text-slate-500 text-center py-16">Aucun hôte inscrit pour le moment.</p>
+          ) : (
+            <>
+              <div className="relative mt-4">
+                <ChartContainer config={planConfig} className="h-56 w-full">
+                  <PieChart>
+                    <ChartTooltip content={<ChartTooltipContent nameKey="plan" />} />
+                    <Pie
+                      data={data.planDistribution}
+                      dataKey="count"
+                      nameKey="plan"
+                      innerRadius={58}
+                      outerRadius={88}
+                      strokeWidth={3}
+                      paddingAngle={2}
+                    >
+                      {data.planDistribution.map((entry) => (
+                        <Cell key={entry.plan} fill={`var(--color-${entry.plan})`} />
+                      ))}
+                    </Pie>
+                  </PieChart>
+                </ChartContainer>
+                <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-slate-900 tabular-nums">{stats.totalHosts}</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">hôtes</p>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {data.planDistribution.map((p) => {
+                  const meta = planLabel(p.plan === 'airbnb_solo' || p.plan === 'airbnb_pro' || p.plan === 'agency' ? p.plan : 'free');
+                  return (
+                    <span
+                      key={p.plan}
+                      className="inline-flex text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-slate-50 border-slate-200 text-slate-600"
+                    >
+                      {meta.label} : {p.count}
+                    </span>
+                  );
+                })}
+              </div>
+            </>
+          )}
         </Card>
       </section>
 
@@ -673,36 +857,33 @@ export function AdminDashboardContent() {
           )}
         </Card>
 
-        {/* ----- Dernières activités ----- */}
+        {/* ----- Flux temps réel fusionné ----- */}
         <Card className="p-6 border-slate-200 bg-white shadow-sm">
           <p className="font-semibold text-slate-900">Dernières activités</p>
-          <p className="text-xs text-slate-500 mt-0.5">Flux d&apos;événements de la plateforme</p>
-          {data.recentActivity.length === 0 ? (
+          <p className="text-xs text-slate-500 mt-0.5">Activations de plaques, scans &amp; actions hôtes — temps réel</p>
+          {feed.length === 0 ? (
             <p className="text-sm text-slate-500 text-center py-12">
               Aucune activité enregistrée pour le moment.
             </p>
           ) : (
             <ul className="mt-2 divide-y divide-slate-100 -mx-2 max-h-96 overflow-y-auto">
-              {data.recentActivity.map((a) => {
-                const meta = actionMeta(a.actionType);
-                return (
-                  <li key={a.id} className="flex items-start gap-3 px-2 py-3 hover:bg-slate-50/60 transition-colors rounded-lg">
-                    <span className="text-lg leading-none mt-0.5 select-none" aria-hidden="true">
-                      {meta.emoji}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-slate-900">{meta.label}</p>
-                      <p className="text-xs text-slate-500 truncate">
-                        {a.userName ?? 'Système'}
-                        {a.propertyName ? ` · ${a.propertyName}` : ''}
-                      </p>
-                    </div>
-                    <span className="text-[11px] text-slate-400 shrink-0">
-                      {fmtDateTime.format(new Date(a.createdAt))}
-                    </span>
-                  </li>
-                );
-              })}
+              {feed.map((a) => (
+                <li key={a.id} className="flex items-start gap-3 px-2 py-3 hover:bg-slate-50/60 transition-colors rounded-lg">
+                  <span className="text-lg leading-none mt-0.5 select-none" aria-hidden="true">
+                    {a.emoji}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-slate-900">{a.label}</p>
+                    <p className="text-xs text-slate-500 truncate">
+                      {a.who}
+                      {a.detail ? ` · ${a.detail}` : ''}
+                    </p>
+                  </div>
+                  <span className="text-[11px] text-slate-400 shrink-0">
+                    {fmtDateTime.format(new Date(a.createdAt))}
+                  </span>
+                </li>
+              ))}
             </ul>
           )}
         </Card>
