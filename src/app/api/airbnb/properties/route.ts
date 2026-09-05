@@ -37,6 +37,13 @@ export async function GET() {
     }
     const userId = (session.user as { id: string }).id;
 
+    // Chantier ONBOARD : l'assistant se déclenche tant que false (chargé
+    // depuis la base — le token JWT ne porte pas ce champ).
+    const sessionUser = await db.user.findUnique({
+      where: { id: userId },
+      select: { onboardingCompleted: true },
+    });
+
     const now = Date.now();
     const windowStart = new Date(now - DAYS * MS_PER_DAY);
 
@@ -121,7 +128,11 @@ export async function GET() {
     );
 
     return NextResponse.json({
-      user: { firstName: firstNameOf(session.user.name) },
+      user: {
+        firstName: firstNameOf(session.user.name),
+        // Chantier ONBOARD : l'assistant se déclenche tant que false.
+        onboardingCompleted: sessionUser?.onboardingCompleted ?? true,
+      },
       plan: {
         ...planLimits,
         ownedCount,

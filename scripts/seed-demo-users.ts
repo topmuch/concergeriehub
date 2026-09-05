@@ -27,7 +27,9 @@ async function main() {
         passwordHash,
         role: acc.role,
         selectedPlan: acc.role === 'superadmin' ? null : 'airbnb_solo',
-        onboardingCompleted: acc.role === 'superadmin',
+        // Comptes de DÉMO pré-configurés : l'assistant d'onboarding
+        // (chantier ONBOARD) ne doit jamais s'ouvrir pour eux.
+        onboardingCompleted: true,
       },
     });
     console.log(`✓ créé: ${acc.email} (${acc.role})`);

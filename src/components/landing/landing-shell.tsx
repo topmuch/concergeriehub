@@ -34,7 +34,13 @@ export function LandingShell() {
     setView('auth');
   };
 
-  const handleAuthSuccess = (role: string) => {
+  const handleAuthSuccess = (role: string, opts?: { registered?: boolean }) => {
+    // Chantier ONBOARD : une inscription fraîche ouvre l'assistant de
+    // démarrage (3 minutes) directement après la redirection.
+    if (opts?.registered && role !== 'superadmin') {
+      router.push('/airbnb/dashboard?onboarding=1');
+      return;
+    }
     router.push(role === 'superadmin' ? '/admin/dashboard' : '/airbnb/dashboard');
   };
 

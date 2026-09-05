@@ -837,3 +837,23 @@ Stage Summary:
 - Parcours complet rétabli : landing marketing → auth (login/inscription) → bon dashboard selon rôle, le tout en SPA sur / (contrainte preview sandbox)
 - Landing V4 considérée complète (É1 démo + É2 7 blocs + É3 intégration app) — aucune dépendance à installer
 - PAT fourni cette session : utilisé uniquement à la volée pour les push ; à révoquer par l'utilisateur
+
+---
+Task ID: ONBOARD-1
+Agent: Z.ai Code (session principale)
+Task: Chantier A+C — Onboarding guidé post-inscription (wizard 3 étapes) + email de bienvenue ; restauration env post-wipe DB
+
+Work Log:
+- DÉCOUVERTE CRITIQUE : la restauration sandbox avait VIDE la base (db/custom.db schéma seul, 0 ligne) ET supprimé NEXTAUTH_SECRET du .env → logins cassés (JWEDecryptionFailed : sans secret, next-auth v4 génère un secret aléatoire PAR CHUNK en dev, invalidé à chaque recompilation). Fix : NEXTAUTH_SECRET + NEXTAUTH_URL régénérés dans .env, serveur redémarré, seeds rejoués (users → b2b → v2-team → v2-automations → v3-* → admin-demo → admin-kpis → emails-demo) + réalignement qrHubSlug loft-canal-saint-martin-11wz. Checklist : rejouer les seeds après chaque restauration.
+- welcomeEmail() dans email-templates.ts (charte émeraude, shell 560px, CTA « Configurer mon logement » → /airbnb/dashboard?onboarding=1) ; register/route.ts : queueEmail fire-and-forget après création (template 'welcome', jamais bloquant)
+- POST /api/onboarding/complete (nouveau) : session + ownership requis, transaction = update bien (nom/adresse/slug normalisé + unicité) + upsert QR type 'wifi' (contentJson network_name/password/security_type — source du Hub invité) + user.onboardingCompleted=true
+- GET /api/airbnb/properties : expose user.onboardingCompleted (chargé DB, pas le JWT)
+- onboarding-wizard.tsx (nouveau) : overlay 3 étapes (🏠 nom/adresse/slug auto-dérivé temps réel → 📶 SSID/clé/sécurité → 📱 succès QRCodeSVG du Hub + « Imprimer la plaque » → /airbnb/dashboard/plaques/[id]/print + « Tester le Hub »), progression 1-2-3, AnimatePresence slide, « Plus tard » → sessionStorage 'ch-onboarding-dismissed'
+- portfolio-content.tsx : déclencheur (startOnboarding prop OU onboardingCompleted=false, owners uniquement, jamais ré-ouvert après fermeture — fix du bug de réouverture via onboardingClosed state) ; dashboard/page.tsx lit searchParams ?onboarding=1 (Promise Next 16)
+- login-form.tsx : variable locale `registered` (closure-safe) → onSuccess(role, {registered}) ; landing-shell.tsx : inscription fraîche → /airbnb/dashboard?onboarding=1
+- seed-demo-users.ts : onboardingCompleted: true pour les comptes démo (jamais d'assistant) + updateMany en base (demo@, nadia@)
+- E2E navigateur complet : inscription Léo → auto-login → wizard auto (étape 1-2-3), succès QR, toast, dashboard « Studio Test Léo », AUCUNE ré-ouverture ; DB vérifiée (onboardingCompleted/property/wifi QR contentJson/email SENT template 'welcome') ; API publique /api/public/hub/studio-test-leo → guest.wifi servi ; « Plus tard » persiste (sessionStorage), ré-ouvre après clear ; configuré + ?onboarding=1 → jamais ; démo Marie → jamais (fix seed) ; mobile 390 px sans débordement ; comptes test supprimés ; lint 0 / tsc src 0
+
+Stage Summary:
+- Tunnel complet : landing « Commencer l'essai » → inscription → email de bienvenue → assistant 3 min → logement nommé + Wi-Fi scannable + plaque QR imprimable → dashboard. La promesse landing « Opérationnel en 3 minutes » est tenue.
+- NEXTAUTH_SECRET/URL maintenant dans .env : les JWEDecryptionFailed historiques du dev.log sont résolus à la racine.

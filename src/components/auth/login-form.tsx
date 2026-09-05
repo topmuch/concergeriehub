@@ -7,7 +7,8 @@ import { Mail, Lock, User, ArrowRight, ArrowLeft, Eye, EyeOff, Shield, Users, Co
 import { BrandLogo } from '@/components/ui/brand-logo';
 
 interface AuthFormProps {
-  onSuccess: (role: string) => void;
+  /** role de l'utilisateur connecté ; opts.registered = inscription fraîche. */
+  onSuccess: (role: string, opts?: { registered?: boolean }) => void;
   initialRegister?: boolean;
   /** Si fourni, affiche un bouton « Retour au site » (landing). */
   onBack?: () => void;
@@ -59,6 +60,9 @@ export function AuthForm({ onSuccess, initialRegister, onBack }: AuthFormProps) 
     setLoading(true);
 
     try {
+      // Chantier ONBOARD : true si ce formulaire vient de créer le compte
+      // (variable locale — le state serait périmé dans la closure).
+      let registered = false;
       if (!isLogin) {
         const res = await fetch('/api/auth/register', {
           method: 'POST',
@@ -71,6 +75,7 @@ export function AuthForm({ onSuccess, initialRegister, onBack }: AuthFormProps) 
           setLoading(false);
           return;
         }
+        registered = true;
       }
 
       const result = await signIn('credentials', {
@@ -83,7 +88,9 @@ export function AuthForm({ onSuccess, initialRegister, onBack }: AuthFormProps) 
         setError('Email ou mot de passe incorrect');
       } else if (result?.ok) {
         const role = email === 'admin@qrdomotik.roomscan.pro' ? 'superadmin' : 'user';
-        onSuccess(role);
+        // Chantier ONBOARD : signaler une inscription fraîche pour
+        // déclencher l'assistant de démarrage après redirection.
+        onSuccess(role, { registered });
       }
     } catch {
       setError('Erreur de connexion au serveur');

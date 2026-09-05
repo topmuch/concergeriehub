@@ -174,3 +174,45 @@ export function guestRefundEmail(params: {
     ]),
   };
 }
+
+// -------------------------------------------------------------
+// 4) Email de bienvenue (inscription landing — chantier ONBOARD)
+// -------------------------------------------------------------
+
+export function welcomeEmail(params: {
+  firstName: string;
+  dashboardUrl?: string;
+}): EmailTemplate {
+  const heading = 'Bienvenue à bord 👋';
+  const dashboardUrl = params.dashboardUrl ?? '/airbnb/dashboard';
+  const intro = `
+    <p style="margin:0 0 12px;">Bonjour <strong>${esc(params.firstName)}</strong> et merci de rejoindre ${BRAND} !</p>
+    <p style="margin:0 0 10px;">Votre compte est prêt. Il ne reste que 3 petites étapes (≈ 3 minutes) pour rendre vos invités autonomes :</p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;">
+      <tr><td style="padding:14px 16px;font-size:14px;line-height:2;color:#334155;">
+        🏠 <strong style="color:#0F172A;">Nommez votre logement</strong> + adresse<br/>
+        📶 <strong style="color:#0F172A;">Renseignez le Wi-Fi</strong> (connexion en 1 scan)<br/>
+        📱 <strong style="color:#0F172A;">Récupérez votre plaque QR</strong> à imprimer
+      </td></tr>
+    </table>
+    <p style="margin:12px 0 0;color:#64748B;">L'assistant de démarrage vous attend sur votre tableau de bord.</p>`;
+  return {
+    subject: `Bienvenue ${params.firstName} — votre Hub est prêt à configurer`,
+    html: shell({
+      heading,
+      intro,
+      ctaLabel: 'Configurer mon logement',
+      ctaUrl: dashboardUrl,
+      footerNote: 'Un souci à une étape ? Répondez simplement à cet email, on vous aide.',
+    }),
+    text: toText(
+      heading,
+      [
+        `Bonjour ${params.firstName} et merci de rejoindre ${BRAND} !`,
+        'Configurez votre logement en 3 minutes : nom + adresse, Wi-Fi, puis votre plaque QR à imprimer.',
+      ],
+      'Configurer mon logement',
+      dashboardUrl,
+    ),
+  };
+}

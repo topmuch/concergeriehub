@@ -31,6 +31,7 @@ import { cn } from '@/lib/utils';
 import { formatEur, propertyTypeMeta, PROPERTY_TYPE_META } from '@/lib/b2b';
 import { memberRoleMeta, type MemberRole } from '@/lib/team';
 import { DashboardContent } from '@/components/airbnb/dashboard-content';
+import { OnboardingWizard } from '@/components/airbnb/onboarding-wizard';
 
 // =============================================================
 // PortfolioContent — ÉTAPE 12 V2 : Dashboard multi-propriétés.
@@ -80,7 +81,11 @@ interface PortfolioInvitation {
 }
 
 interface PortfolioData {
-  user: { firstName: string };
+  user: {
+    firstName: string;
+    /** Chantier ONBOARD : false = l'assistant doit s'ouvrir. */
+    onboardingCompleted: boolean;
+  };
   plan: {
     planId: string | null;
     planName: string;
@@ -102,13 +107,45 @@ interface PortfolioData {
 
 type ViewMode = { kind: 'portfolio' } | { kind: 'property'; id: string } | { kind: 'assignments' };
 
-export function PortfolioContent() {
+export function PortfolioContent({ startOnboarding = false }: { startOnboarding?: boolean }) {
   const router = useRouter();
   const [data, setData] = useState<PortfolioData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [view, setView] = useState<ViewMode>({ kind: 'portfolio' });
   const [wizardOpen, setWizardOpen] = useState(false);
+
+  // ----- Chantier ONBOARD : assistant de démarrage 3 minutes -----
+  const [onboardingTarget, setOnboardingTarget] = useState<
+    { propertyId: string; name: string; address: string } | null
+  >(null);
+  // Évite toute ré-ouverture après fermeture (terminé OU « Plus tard »)
+  // tant que la page est montée — même si `data` se recharge.
+  const [onboardingClosed, setOnboardingClosed] = useState(false);
+
+  useEffect(() => {
+    if (!data || onboardingClosed || onboardingTarget) return;
+    // Déjà configuré → jamais d'assistant (couvre aussi ?onboarding=1
+    // resté dans l'URL après le rafraîchissement post-complétion).
+    if (data.user.onboardingCompleted) return;
+    // « Plus tard » → reporté pour toute la session navigateur.
+    if (sessionStorage.getItem('ch-onboarding-dismissed') === '1') return;
+    // Uniquement pour les PROPRIÉTAIRES (jamais pour un membre d'équipe).
+    const owned = data.properties.find((p) => p.isOwner);
+    if (!owned) return;
+    setOnboardingTarget({ propertyId: owned.id, name: owned.name, address: owned.address ?? '' });
+  }, [data, startOnboarding, onboardingClosed, onboardingTarget]);
+
+  function handleOnboardingFinished(completed: boolean) {
+    setOnboardingTarget(null);
+    setOnboardingClosed(true);
+    if (completed) {
+      toast.success('Votre logement est configuré 🎉');
+      load(); // rafraîchit nom/adresse/slug + onboardingCompleted
+    } else {
+      sessionStorage.setItem('ch-onboarding-dismissed', '1');
+    }
+  }
 
   const load = useCallback(async () => {
     setError('');
@@ -276,6 +313,17 @@ export function PortfolioContent() {
   // ================= Vue Portfolio =================
   return (
     <div className="max-w-6xl mx-auto w-full px-4 py-8 space-y-6">
+      {/* ---------- Chantier ONBOARD : assistant de démarrage ---------- */}
+      {onboardingTarget && (
+        <OnboardingWizard
+          open
+          propertyId={onboardingTarget.propertyId}
+          initialName={onboardingTarget.name}
+          initialAddress={onboardingTarget.address}
+          onFinished={handleOnboardingFinished}
+        />
+      )}
+
       {/* ---------- En-tête ---------- */}
       <section aria-labelledby="portfolio-greeting">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

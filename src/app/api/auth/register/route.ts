@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { hash } from 'bcryptjs';
 import { db } from '@/lib/db';
 import { rateLimit } from '@/lib/rate-limit';
+import { queueEmail } from '@/lib/email';
+import { welcomeEmail } from '@/lib/email-templates';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
@@ -62,6 +64,22 @@ export async function POST(req: Request) {
         address: '',
       },
     });
+
+    // Chantier ONBOARD — email de bienvenue (fire-and-forget : ne peut
+    // jamais faire échouer l'inscription, cf. lib/email.ts).
+    const firstName = fullName.trim().split(/\s+/)[0] || 'hôte';
+    const tpl = welcomeEmail({ firstName, dashboardUrl: '/airbnb/dashboard?onboarding=1' });
+    void queueEmail({
+      to: normalizedEmail,
+      subject: tpl.subject,
+      html: tpl.html,
+      text: tpl.text,
+      template: 'welcome',
+      userId: user.id,
+      referenceType: 'welcome',
+      referenceId: user.id,
+      meta: { firstName },
+    }).catch(() => undefined);
 
     return NextResponse.json({ success: true, userId: user.id }, { status: 201 });
   } catch (error) {

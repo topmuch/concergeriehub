@@ -13,12 +13,22 @@ export const metadata: Metadata = {
 // ÉTAPE 12 (V2) — Vue "Portfolio" du Dashboard B2B multi-propriétés :
 // grille de tous les biens + stats rapides, wizard d'ajout,
 // équipe (rôles OWNER/MANAGER/CLEANER/MAINTENANCE) et invitations.
-export default async function DashboardPage() {
+//
+// Chantier ONBOARD : `?onboarding=1` (post-inscription landing) ouvre
+// directement l'assistant de démarrage 3 minutes.
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   const session = await getServerSession(authOptions);
 
   if (!session?.user) {
     return <LoginGate />;
   }
 
-  return <PortfolioContent />;
+  const sp = await searchParams;
+  const startOnboarding = sp.onboarding === '1';
+
+  return <PortfolioContent startOnboarding={startOnboarding} />;
 }
