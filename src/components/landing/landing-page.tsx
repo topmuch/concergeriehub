@@ -35,7 +35,6 @@ import {
   Instagram,
   ChevronRight,
   Play,
-  Star,
 } from 'lucide-react';
 import { InteractiveDemo } from './interactive-demo';
 
@@ -223,8 +222,29 @@ function Navbar({ onGoToAuth }: LandingPageProps) {
 // ==========================================
 function HeroSection({ onGoToAuth }: LandingPageProps) {
   return (
-    <section className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-slate-900 via-blue-900 to-emerald-900">
-      {/* Particules animées en arrière-plan */}
+    <section className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-900">
+      {/* Image de fond : appartement luxueux plein écran */}
+      <div className="absolute inset-0">
+        <Image
+          src="/hero-apartment.jpg"
+          alt="Séjour d&apos;un appartement haussmannien luxueux avec vue sur les toits de Paris au crépuscule"
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover"
+        />
+        {/* Voiles sombres pour la lisibilité du texte */}
+        <div
+          className="absolute inset-0 bg-gradient-to-b from-slate-900/85 via-slate-900/55 to-slate-900/90"
+          aria-hidden="true"
+        />
+        <div
+          className="absolute inset-0 bg-gradient-to-r from-blue-950/50 via-transparent to-emerald-950/50"
+          aria-hidden="true"
+        />
+      </div>
+
+      {/* Particules animées au-dessus de l'image */}
       <div className="absolute inset-0 overflow-hidden">
         {PARTICLES.map((p, i) => (
           <motion.div
@@ -248,7 +268,7 @@ function HeroSection({ onGoToAuth }: LandingPageProps) {
       <div className="absolute top-20 left-10 h-96 w-96 rounded-full bg-blue-500/30 blur-[120px]" />
       <div className="absolute bottom-20 right-10 h-96 w-96 rounded-full bg-emerald-500/30 blur-[120px]" />
 
-      <div className="relative z-10 mx-auto max-w-7xl px-6 py-32 text-center">
+      <div className="relative z-10 mx-auto max-w-7xl px-6 py-32 text-center [text-shadow:0_2px_24px_rgba(2,6,23,0.65)]">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -272,7 +292,7 @@ function HeroSection({ onGoToAuth }: LandingPageProps) {
             professionnel.
           </p>
 
-          <div className="mb-14 flex flex-col items-center justify-center gap-4 sm:flex-row">
+          <div className="mb-16 flex flex-col items-center justify-center gap-4 sm:flex-row">
             <button
               type="button"
               onClick={() => onGoToAuth?.('register')}
@@ -290,45 +310,6 @@ function HeroSection({ onGoToAuth }: LandingPageProps) {
               Voir la démo
             </button>
           </div>
-
-          {/* Vitrine : appartement luxueux (format 16:9) */}
-          <motion.figure
-            initial={{ opacity: 0, y: 40, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ duration: 0.7, delay: 0.2 }}
-            className="relative mx-auto mb-14 max-w-5xl"
-          >
-            {/* Halo lumineux derrière l'image */}
-            <div
-              className="absolute -inset-4 rounded-[2.5rem] bg-gradient-to-r from-blue-500/30 via-teal-500/20 to-emerald-500/30 blur-2xl"
-              aria-hidden="true"
-            />
-            <div className="relative aspect-video overflow-hidden rounded-3xl shadow-2xl ring-1 ring-white/20">
-              <Image
-                src="/hero-apartment.jpg"
-                alt="Séjour d&apos;un appartement haussmannien luxueux avec vue sur les toits de Paris au crépuscule"
-                fill
-                priority
-                sizes="(max-width: 1024px) 100vw, 1024px"
-                className="object-cover"
-              />
-              {/* Voile bas pour la lisibilité des pastilles */}
-              <div
-                className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-slate-900/70 to-transparent"
-                aria-hidden="true"
-              />
-              <figcaption className="absolute inset-x-0 bottom-0 flex flex-wrap items-center justify-center gap-3 p-4 sm:justify-between">
-                <span className="flex items-center gap-2 rounded-full border border-white/20 bg-slate-900/60 px-4 py-2 text-xs font-semibold text-white backdrop-blur-md sm:text-sm">
-                  <MapPin className="h-4 w-4 shrink-0 text-emerald-400" />
-                  Loft Canal Saint-Martin · Paris
-                </span>
-                <span className="flex items-center gap-1.5 rounded-full border border-white/20 bg-slate-900/60 px-4 py-2 text-xs font-semibold text-white backdrop-blur-md sm:text-sm">
-                  <Star className="h-4 w-4 shrink-0 fill-yellow-400 text-yellow-400" />
-                  4,9 · 312 avis
-                </span>
-              </figcaption>
-            </div>
-          </motion.figure>
 
           {/* Stats */}
           <div className="mx-auto grid max-w-2xl grid-cols-3 gap-8">

@@ -913,3 +913,19 @@ Work Log:
 Stage Summary:
 - Le hero V5 gagne une vitrine photo premium 16:9 qui incarne la promesse « expérience 5 étoiles » — l'image apparaît sous les CTA et invite au scroll vers la démo
 - Commit local en attente de push (bc80dc3 SEO + L4 V5 + L5 hero) — PAT requis
+
+---
+Task ID: L6
+Agent: Z.ai Code (session principale)
+Task: HERO — image appartement plein écran (full-bleed) avec texte en superposition (remplace la vitrine 16:9 de L5)
+
+Work Log:
+- HeroSection réécrite : la photo haussmannienne (hero-apartment.jpg, conservée) devient FOND PLEIN ÉCRAN — next/image fill priority sizes=100vw object-cover dans un conteneur absolute inset-0, fond bg-slate-900 en fallback de chargement
+- Lisibilité du texte superposé : double voile dégradé (vertical slate-900/85→55→90 + horizontal bleu nuit→émeraude nuit /50) + text-shadow 0 2px 24px sur le bloc contenu — H1 gradient, paragraphe, CTAs et stats lisibles sur la photo
+- Vitrine 16:9 de L5 SUPPRIMÉE (redondante) ; import Star retiré (again inutilisé), MapPin conservé (footer) ; CTA mb-16 restauré, ordre badge→H1→p→CTAs→stats inchangé
+- Particules + orbs dégradés conservés AU-DESSUS de l'image (profondeur + teinte de marque bleu→émeraude sur la photo)
+- E2E navigateur : desktop 1280x800 — l'appartement occupe tout le hero, texte parfaitement lisible, navbar transparente sur le hero ; mobile 390 px — scrollW=390 (0 débordement), crop central de l'image (fenêtres + vue Paris) esthétique, CTA empilés ; 0 erreur console ; lint 0 ; dev.log propre
+
+Stage Summary:
+- Le hero est désormais un fond photo immersif plein écran avec tout le contenu en superposition — demandé explicitement par le fondateur (évolution de L5)
+- Commit local en attente de push (bc80dc3 SEO + L4 V5 + L5 vitrine + L6 full-bleed) — PAT requis
