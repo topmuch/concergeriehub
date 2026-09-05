@@ -2,20 +2,19 @@ import type { Metadata } from 'next';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { LoginGate } from '@/components/airbnb/login-gate';
-import { PortfolioContent } from '@/components/airbnb/portfolio-content';
+import { HostOverviewContent } from '@/components/airbnb/host-overview';
 
 export const metadata: Metadata = {
   title: 'Dashboard Hôte — Conciergerie Hub',
   description:
-    'Portfolio multi-propriétés B2B : occupation, scans, revenus upsell, équipe et modules QR de vos biens.',
+    'Vue d\u2019ensemble de votre activité : occupation, scans de plaques, revenus upsell et planning des séjours.',
 };
 
-// ÉTAPE 12 (V2) — Vue "Portfolio" du Dashboard B2B multi-propriétés :
-// grille de tous les biens + stats rapides, wizard d'ajout,
-// équipe (rôles OWNER/MANAGER/CLEANER/MAINTENANCE) et invitations.
-//
-// Chantier ONBOARD : `?onboarding=1` (post-inscription landing) ouvre
-// directement l'assistant de démarrage 3 minutes.
+// Chantier DASH-1 (redesign « Travl ») — la nouvelle vue d'ensemble :
+// KPI à tuiles, planning calendrier + prochaines arrivées, stats par
+// bien à onglets, cartes vertes à progression, totaux, bannière.
+// L'assistant d'onboarding post-inscription est préservé ici.
+// (La grille complète des biens a déménagé sur /airbnb/dashboard/portfolio.)
 export default async function DashboardPage({
   searchParams,
 }: {
@@ -27,8 +26,7 @@ export default async function DashboardPage({
     return <LoginGate />;
   }
 
-  const sp = await searchParams;
-  const startOnboarding = sp.onboarding === '1';
+  await searchParams; // ?onboarding=1 : géré par la logique interne du wizard
 
-  return <PortfolioContent startOnboarding={startOnboarding} />;
+  return <HostOverviewContent />;
 }

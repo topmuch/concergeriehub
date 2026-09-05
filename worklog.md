@@ -943,3 +943,24 @@ Work Log:
 Stage Summary:
 - Équilibre final du hero : photo immersive bien visible + typographie superposée lisible
 - origin/main réaligné avec le local après push
+
+---
+Task ID: DASH-1
+Agent: Z.ai Code (session principale)
+Task: Redesign complet des deux dashboards (Espace Hôte + Console Superadmin) selon le modèle « Travl Hotel Admin Dashboard » fourni par le fondateur
+
+Work Log:
+- Modèle analysé : sidebar pleine hauteur colorée, header blanc (burger + titre + badges), fond gris clair, cartes blanches arrondies, tuiles d'icônes coral, cartes stats vert foncé à progression, totaux, bannière CTA
+- globals.css : variables --sidebar-* passées en coral #EE4B35 (texte blanc) dans :root ET .dark (découverte : ThemeProvider defaultTheme="dark" → le bloc .dark écrasait :root ; scope invité .guest-scope intact) + règle attributs non-layered [data-sidebar=menu-button][data-active=true] → pastille blanche/texte coral (spécificité > utilitaires Tailwind)
+- dashboard-shell.tsx RÉÉCRIT (Espace Hôte + billing) : shadcn Sidebar coral collapsible (Sheet mobile natif) — logo CH blanc, 8 liens icône+chevron (Dashboard/Portfolio/Commandes/Automatisations/Plaques/Prestataires/Branding/Abonnement), carte utilisateur footer ; header blanc : burger + titre de section + NotificationsBell + avatar ; footer copyright centré
+- host-overview.tsx (NOUVEAU) — vue d'ensemble hôte : 4 KPI tuiles (biens/scans 30j/revenus 30j/occupation), Planning des séjours (calendrier date-fns navigation mensuelle, aujourd'hui coral, points arrivée/départ des nextBooking réels, légende) + prochaines arrivées (tuile emoji type de bien, invité, badge nuits coral), Statistiques par bien à onglets Scans/Revenus (recharts, vert #165949 / coral), 2 cartes vertes à progression (biens actifs, plan utilisé), rangée totaux (biens/QR/membres/commandes 30j), bannière contextuelle (Pro → ajouter un bien ; Solo → upsell Pro ; rôle limité → interventions) ; wizard onboarding post-inscription PRÉSERVÉ (même logique trigger/sessionStorage que PortfolioContent)
+- Route : /airbnb/dashboard = HostOverviewContent (nouveau home) ; PortfolioContent (grille biens + wizard + équipe + invitations) déménagé INTACT sur /airbnb/dashboard/portfolio (nouvelle page + item sidebar)
+- admin-app-sidebar.tsx : logo blanc ShieldCheck, groupes blancs/60, liens icône+chevron data-active blanc/coral, carte admin white/10, Globe remplace emoji 🌐 ; admin-app-shell.tsx : header blanc titre 2xl + badge SUPERADMIN vert foncé + bouton Déconnexion coral, fond #F4F5F7, footer copyright centré ; import Separator retiré
+- admin-dashboard-content.tsx : KpiCard restylée « Travl » (tuile emoji coral-50 arrondie à gauche + valeur 3xl + libellé + chip ; hint en title tooltip), palette charts : GMV/biens #165949, commission/remboursements #EE4B35
+- FIX UI : l'item actif initial était illisible (texte blanc sur pill blanche) → règle CSS dédiée (voir globals)
+- E2E navigateur : client — login démo → nouveau home (KPI 1 bien/67 scans/84,70 €/40 %, calendrier 5 sept coral + événements 15/19, onglet Revenus bascule (84,70 €, barres coral), cartes vertes 1/1, totaux, bannière Pro) ; portfolio → intact (Ajouter, chips, carte Loft) ; billing → intact ; superadmin — login → sidebar coral + KPI tuiles (GMV 1 039 €, 155,85 €, MRR 34,73 €, 7 hôtes) + charts palette modèle + donut ; mobile 390 : scrollW 390 (0 débordement) les deux consoles, Sheet burger fonctionnel, menus lisibles ; 0 erreur console ; lint 0 ; tsc src/ 0
+
+Stage Summary:
+- Les deux dashboards adoptent l'identité « Travl » (sidebar coral, header blanc, cartes tuiles, verts foncés) sans perdre AUCUNE fonctionnalité : le portfolio déménage sur /portfolio, l'onboarding reste automatique, billing/ordres/automations/plaques/prestataires/branding inchangés sous la nouvelle coquille
+- Découverte persistée : defaultTheme="dark" → toujours doubler les vars CSS critiques dans .dark
+- Commit + push (PAT à la volée, jamais persisté)

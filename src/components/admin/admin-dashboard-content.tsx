@@ -112,21 +112,21 @@ interface KpisData {
   }[];
 }
 
-// ---------- Configs de charts (couleurs explicites, pas de bleu) ----------
+// ---------- Configs de charts (palette « Travl » : vert foncé + coral) ----------
 const revenueConfig = {
-  gmv: { label: 'GMV (achats invités)', color: '#0f172a' },
-  commission: { label: 'Commission plateforme', color: '#10b981' },
+  gmv: { label: 'GMV (achats invités)', color: '#165949' },
+  commission: { label: 'Commission plateforme', color: '#EE4B35' },
 } satisfies ChartConfig;
 
 const paymentConfig = {
-  PAID: { label: 'Payées', color: '#10b981' },
+  PAID: { label: 'Payées', color: '#165949' },
   UNPAID: { label: 'Impayées', color: '#f59e0b' },
-  REFUNDED: { label: 'Remboursées', color: '#f43f5e' },
+  REFUNDED: { label: 'Remboursées', color: '#EE4B35' },
   FAILED: { label: 'Échecs', color: '#94a3b8' },
 } satisfies ChartConfig;
 
 const categoryConfig = {
-  gmv: { label: 'GMV', color: '#10b981' },
+  gmv: { label: 'GMV', color: '#165949' },
 } satisfies ChartConfig;
 
 // ---------- Libellés / formats ----------
@@ -222,28 +222,34 @@ function KpiCard({
   chip?: { text: string; tone: ChipTone };
   hint?: string;
 }) {
+  // Style « Travl » : tuile icône coral à gauche, valeur + libellé à droite.
   return (
-    <Card className="p-6 border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-md">
-      <div className="flex items-start justify-between gap-3">
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p>
-        <span aria-hidden="true" className="text-xl leading-none select-none">
-          {emoji}
+    <Card
+      className="flex items-center gap-4 rounded-2xl border-slate-200/80 bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
+      title={hint}
+    >
+      <span
+        aria-hidden="true"
+        className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#FDECE8] text-2xl leading-none select-none"
+      >
+        {emoji}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-2xl font-extrabold tabular-nums text-slate-900 sm:text-3xl">
+          {value}
         </span>
-      </div>
-      <p className="mt-2 text-2xl font-bold text-slate-900 tabular-nums sm:text-3xl">{value}</p>
-      {chip && (
-        <div className="mt-3">
+        <span className="block truncate text-sm text-slate-500">{label}</span>
+        {chip && (
           <span
             className={cn(
-              'inline-flex text-[11px] font-semibold px-2 py-0.5 rounded-full border',
+              'mt-1.5 inline-flex text-[11px] font-semibold px-2 py-0.5 rounded-full border',
               CHIP_TONES[chip.tone],
             )}
           >
             {chip.text}
           </span>
-        </div>
-      )}
-      {hint && <p className="mt-2 text-xs text-slate-500">{hint}</p>}
+        )}
+      </span>
     </Card>
   );
 }

@@ -5,16 +5,15 @@ import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import { LogOut, ShieldCheck } from 'lucide-react';
 import { AdminAppSidebar } from '@/components/admin/admin-app-sidebar';
-import { Separator } from '@/components/ui/separator';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/sonner';
 
 // =============================================================
-// AdminAppShell — coquille V2 de la Console Superadmin (/admin/*).
-// Sidebar shadcn (collapsible, Sheet mobile) + header sticky avec
-// trigger + titre de section + badge Superadmin + déconnexion.
-// Footer collé en bas (mt-auto) et repoussé naturellement quand le
-// contenu déborde. Fond clair cohérent avec l'identité QRTags.
+// AdminAppShell — coquille « Travl » de la Console Superadmin
+// (/admin/*). Sidebar coral pleine hauteur (AdminAppSidebar) +
+// header blanc sticky (burger, titre de section, badge Superadmin,
+// déconnexion), contenu sur fond gris clair, footer copyright
+// centré. Footer collé en bas (mt-auto).
 // =============================================================
 
 const SECTION_TITLES: { match: (p: string) => boolean; title: string }[] = [
@@ -39,16 +38,18 @@ export function AdminAppShell({ children, adminName, adminEmail }: AdminAppShell
   return (
     <SidebarProvider>
       <AdminAppSidebar adminName={adminName} adminEmail={adminEmail} />
-      <SidebarInset className="min-h-screen flex flex-col bg-slate-50">
-        {/* ----- Header sticky ----- */}
-        <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-3 border-b border-slate-200 bg-white/95 px-4 backdrop-blur sm:px-6">
-          <SidebarTrigger aria-label="Afficher ou masquer le menu" className="-ml-1 text-slate-600 hover:bg-slate-100" />
-          <Separator orientation="vertical" className="h-5" />
-          <h1 className="text-base font-bold text-slate-900 tracking-tight">
+      <SidebarInset className="min-h-screen flex flex-col bg-[#F4F5F7]">
+        {/* ----- Header blanc sticky ----- */}
+        <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-3 border-b border-slate-200 bg-white px-4 sm:px-6">
+          <SidebarTrigger
+            aria-label="Afficher ou masquer le menu"
+            className="text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+          />
+          <h1 className="text-lg font-extrabold tracking-tight text-slate-900 sm:text-2xl">
             {section?.title ?? 'Console'}
           </h1>
           <span
-            className="ml-auto hidden md:inline-flex items-center gap-1.5 bg-slate-900 text-white text-[11px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full"
+            className="ml-auto hidden items-center gap-1.5 bg-[#165949] text-white text-[11px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full md:inline-flex"
             title="Session Superadmin"
           >
             <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
@@ -59,25 +60,22 @@ export function AdminAppShell({ children, adminName, adminEmail }: AdminAppShell
             onClick={() => signOut({ callbackUrl: '/' })}
             title="Se déconnecter"
             aria-label="Se déconnecter"
-            className="ml-auto md:ml-3 inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-100 hover:text-slate-900"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#EE4B35] text-xs font-extrabold text-white transition-colors hover:bg-[#D64330] md:h-9 md:w-auto md:rounded-lg md:px-3 md:text-sm md:font-semibold"
           >
             <LogOut className="h-4 w-4" aria-hidden="true" />
-            <span className="hidden sm:inline">Déconnexion</span>
+            <span className="hidden md:inline">Déconnexion</span>
           </button>
         </header>
 
         {/* ----- Contenu ----- */}
         <main className="flex-1 w-full text-slate-900">{children}</main>
 
-        {/* ----- Footer (collé en bas grâce à mt-auto) ----- */}
-        <footer className="mt-auto border-t border-slate-200 bg-white">
-          <div className="w-full px-4 py-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-2">
-            <p className="text-xs text-slate-500">
-              🛡️ <span className="font-semibold text-slate-700">Conciergerie Hub</span> — Console
-              Superadmin
-            </p>
-            <p className="text-xs text-slate-400">Centre de contrôle de la plateforme — accès restreint</p>
-          </div>
+        {/* ----- Footer copyright (collé en bas : mt-auto) ----- */}
+        <footer className="mt-auto border-t border-slate-200 bg-white py-4">
+          <p className="text-center text-xs text-slate-500">
+            Copyright © <span className="font-semibold text-slate-700">Conciergerie Hub</span> 2025
+            — Centre de contrôle de la plateforme, accès restreint
+          </p>
         </footer>
 
         <Toaster position="top-center" richColors />

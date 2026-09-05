@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import {
+  ChevronRight,
+  Globe,
   LayoutDashboard,
   LogOut,
   Mail,
@@ -11,7 +13,6 @@ import {
   Sparkles,
   Users,
 } from 'lucide-react';
-import { BrandLogo } from '@/components/ui/brand-logo';
 import {
   Sidebar,
   SidebarContent,
@@ -24,8 +25,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { cn } from '@/lib/utils';
-
 // =============================================================
 // AdminAppSidebar — barre latérale de la Console Superadmin V2.
 // Navigation principale (Vue d'ensemble / Hôtes / Prestataires),
@@ -71,22 +70,24 @@ export function AdminAppSidebar({ adminName, adminEmail }: AdminAppSidebarProps)
       .join('') || 'SA';
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-slate-200">
+    <Sidebar collapsible="icon">
       {/* ----- En-tête : marque + badge contrôle ----- */}
-      <SidebarHeader className="pb-2">
+      <SidebarHeader className="pt-5 pb-2">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild tooltip="Retour au site">
               <Link href="/" aria-label="Retour au site Conciergerie Hub">
                 <span
                   aria-hidden="true"
-                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-900 text-white"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-[#E23F2B] shadow-sm"
                 >
-                  <ShieldCheck className="h-4.5 w-4.5" />
+                  <ShieldCheck className="h-5 w-5" />
                 </span>
-                <span className="flex min-w-0 flex-col items-start gap-0.5 leading-none">
-                  <BrandLogo size="sm" />
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                <span className="flex min-w-0 flex-col items-start gap-0.5 leading-tight">
+                  <span className="truncate text-base font-extrabold text-white">
+                    Conciergerie Hub
+                  </span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-white/70">
                     Console Superadmin
                   </span>
                 </span>
@@ -97,11 +98,11 @@ export function AdminAppSidebar({ adminName, adminEmail }: AdminAppSidebarProps)
       </SidebarHeader>
 
       {/* ----- Navigation principale ----- */}
-      <SidebarContent>
+      <SidebarContent className="px-2 pt-2">
         <SidebarGroup>
-          <SidebarGroupLabel>Pilotage</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-white/60">Pilotage</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="gap-1.5">
               {NAV_ITEMS.map((item) => {
                 const active =
                   item.href === '/admin/dashboard'
@@ -118,14 +119,14 @@ export function AdminAppSidebar({ adminName, adminEmail }: AdminAppSidebarProps)
                       <Link
                         href={item.href}
                         aria-current={active ? 'page' : undefined}
-                        className={cn(
-                          active
-                            ? 'bg-slate-900 text-white hover:bg-slate-800 hover:text-white'
-                            : 'text-slate-600',
-                        )}
+                        className="h-11 rounded-xl text-[15px] font-medium text-white/85 hover:bg-white/10 hover:text-white data-[active=true]:bg-white data-[active=true]:font-bold data-[active=true]:text-[#E23F2B] data-[active=true]:hover:bg-white data-[active=true]:hover:text-[#E23F2B]"
                       >
-                        <Icon className="h-4 w-4" aria-hidden="true" />
-                        <span className="font-medium">{item.label}</span>
+                        <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
+                        <span>{item.label}</span>
+                        <ChevronRight
+                          className="ml-auto h-4 w-4 opacity-60 group-data-[collapsible=icon]:hidden"
+                          aria-hidden="true"
+                        />
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -136,9 +137,9 @@ export function AdminAppSidebar({ adminName, adminEmail }: AdminAppSidebarProps)
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>Plateforme</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-white/60">Plateforme</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="gap-1.5">
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
@@ -148,24 +149,31 @@ export function AdminAppSidebar({ adminName, adminEmail }: AdminAppSidebarProps)
                   <Link
                     href="/admin/emails"
                     aria-current={pathname.startsWith('/admin/emails') ? 'page' : undefined}
-                    className={cn(
-                      pathname.startsWith('/admin/emails')
-                        ? 'bg-slate-900 text-white hover:bg-slate-800 hover:text-white'
-                        : 'text-slate-600',
-                    )}
+                    className="h-11 rounded-xl text-[15px] font-medium text-white/85 hover:bg-white/10 hover:text-white data-[active=true]:bg-white data-[active=true]:font-bold data-[active=true]:text-[#E23F2B] data-[active=true]:hover:bg-white data-[active=true]:hover:text-[#E23F2B]"
                   >
-                    <Mail className="h-4 w-4" aria-hidden="true" />
-                    <span className="font-medium">Emails</span>
+                    <Mail className="h-5 w-5 shrink-0" aria-hidden="true" />
+                    <span>Emails</span>
+                    <ChevronRight
+                      className="ml-auto h-4 w-4 opacity-60 group-data-[collapsible=icon]:hidden"
+                      aria-hidden="true"
+                    />
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton tooltip="Site public — Conciergerie Hub" asChild>
-                  <Link href="/" target="_blank" rel="noreferrer">
-                    <span aria-hidden="true" className="text-base leading-none">
-                      🌐
-                    </span>
-                    <span className="font-medium">Site public</span>
+                  <Link
+                    href="/"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="h-11 rounded-xl text-[15px] font-medium text-white/85 hover:bg-white/10 hover:text-white"
+                  >
+                    <Globe className="h-5 w-5 shrink-0" aria-hidden="true" />
+                    <span>Site public</span>
+                    <ChevronRight
+                      className="ml-auto h-4 w-4 opacity-60 group-data-[collapsible=icon]:hidden"
+                      aria-hidden="true"
+                    />
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -175,26 +183,26 @@ export function AdminAppSidebar({ adminName, adminEmail }: AdminAppSidebarProps)
       </SidebarContent>
 
       {/* ----- Pied : compte admin ----- */}
-      <SidebarFooter className="pb-4">
+      <SidebarFooter className="pb-5">
         <SidebarMenu>
           <SidebarMenuItem>
-            <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-2.5 py-2">
+            <div className="flex items-center gap-2.5 rounded-xl bg-white/10 px-3 py-2.5 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-2">
               <span
                 aria-hidden="true"
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-900 text-[11px] font-bold text-white"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-xs font-extrabold text-[#E23F2B]"
               >
                 {initials}
               </span>
               <div className="min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
-                <p className="truncate text-xs font-semibold text-slate-900">{adminName}</p>
-                <p className="truncate text-[11px] text-slate-500">{adminEmail}</p>
+                <p className="truncate text-sm font-bold text-white">{adminName}</p>
+                <p className="truncate text-[11px] text-white/70">{adminEmail}</p>
               </div>
               <button
                 type="button"
                 onClick={() => signOut({ callbackUrl: '/' })}
                 title="Se déconnecter"
                 aria-label="Se déconnecter"
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-900 group-data-[collapsible=icon]:hidden"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white/70 transition-colors hover:bg-white/10 hover:text-white group-data-[collapsible=icon]:hidden"
               >
                 <LogOut className="h-4 w-4" />
               </button>
