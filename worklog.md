@@ -929,3 +929,17 @@ Work Log:
 Stage Summary:
 - Le hero est désormais un fond photo immersif plein écran avec tout le contenu en superposition — demandé explicitement par le fondateur (évolution de L5)
 - Commit local en attente de push (bc80dc3 SEO + L4 V5 + L5 vitrine + L6 full-bleed) — PAT requis
+
+---
+Task ID: L7
+Agent: Z.ai Code (session principale)
+Task: HERO — atténuation de l'overlay (image plus visible) + push des commits en attente
+
+Work Log:
+- Overlay allégé sur demande du fondateur (« l'image n'est pas trop visible ») : voile vertical slate-900 85/55/90 → 60/25/75, voile horizontal bleu/émeraude nuit /50 → /25 ; text-shadow conservé
+- E2E navigateur : desktop 1280 — appartement nettement visible (fenêtres, vue Paris, canapé, lampes), H1/paragraphe/stats toujours parfaitement lisibles ; mobile 390 — scrollW=390 (0 débordement), texte lisible ; 0 erreur ; lint 0
+- Push des 5 commits en attente (bc80dc3 SEO, 3f7e5af V5, b06eb5c vitrine, 5191fa1 full-bleed, celui-ci) avec le PAT fourni à la volée — jamais persisté (ni fichier, ni .git/config)
+
+Stage Summary:
+- Équilibre final du hero : photo immersive bien visible + typographie superposée lisible
+- origin/main réaligné avec le local après push

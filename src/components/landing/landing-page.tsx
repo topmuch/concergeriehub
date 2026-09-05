@@ -233,13 +233,13 @@ function HeroSection({ onGoToAuth }: LandingPageProps) {
           sizes="100vw"
           className="object-cover"
         />
-        {/* Voiles sombres pour la lisibilité du texte */}
+        {/* Voiles légers pour la lisibilité du texte (image bien visible) */}
         <div
-          className="absolute inset-0 bg-gradient-to-b from-slate-900/85 via-slate-900/55 to-slate-900/90"
+          className="absolute inset-0 bg-gradient-to-b from-slate-900/60 via-slate-900/25 to-slate-900/75"
           aria-hidden="true"
         />
         <div
-          className="absolute inset-0 bg-gradient-to-r from-blue-950/50 via-transparent to-emerald-950/50"
+          className="absolute inset-0 bg-gradient-to-r from-blue-950/25 via-transparent to-emerald-950/25"
           aria-hidden="true"
         />
       </div>
