@@ -1132,3 +1132,20 @@ Stage Summary:
 - Local = GitHub = aee7f47 : aucun commit perdu, arbre propre, capture Travl préservée (non suivie)
 - Environnement d'exécution reconstruit et validé de bout en bout (schéma, seeds ordonnés, secret NextAuth)
 - Dette notée : seeds V3 dépendent d'un slug à suffixe aléatoire hardcodé — à rendre paramétrable (env ou lookup par nom) lors d'une prochaine passe
+
+---
+Task ID: AUD-H6
+Agent: Z.ai Code (session principale)
+Task: Audit complet du prompt « Dashboard Client » (10 sections + composants/hooks/API/sécurité) contre l'implémentation existante H1→H6 — vérifier qu'aucun écart ne justifie une reconstruction
+
+Work Log:
+- Constat préalable : le prompt reçui correspond mot pour mot à la spec déjà implémentée par les commits H1→H6 (poussés sur GitHub, resynchronisés en SYNC-H6) — décision d'auditer au lieu de reconstruire pour ne pas écraser du code validé
+- Audit fichiers : 11 routes /airbnb (layout+dashboard+properties+plates+orders+providers+team+calendar+settings+billing+automations), 15 composants src/components/airbnb/host/ (kpi-card, status-badge, data-table, form-dialog, host-shell, host-context, restricted-access, 8 contenus de page), 5 hooks (use-properties/use-orders/use-providers/use-overview/use-plaques), 15 groupes API /api/airbnb/* (properties GET/POST+PATCH [id], properties/[id]/members, plaques, service-orders, providers géoloc, provider-requests, ical, profile, security, notifications, branding…)
+- Wizard 3 étapes confirmé dans le code : WIZARD_STEPS = ['Informations','Configuration','Plaque QR'] branché useCreateProperty + POST /api/airbnb/plaques
+- E2E navigateur en session démo (Marie) : 9 pages photographiées et conformes — Propriétés (carte photo/badge 👑/adresse/stats 66 scans·85 €·37 %·7 QR/boutons Voir·Modifier·Équipe + bannière limite plan), Plaques (3 stats, table CODE/BIEN/STATUT/dates/actions, filtre bien, commander), Commandes (545 € encaissé/130,35 € commissions/847,65 € prestataires/433 € en attente, filtres statut+paiement+propriété, Export CSV), Prestataires (onglets 6 Services Propriété / 5 Expériences Invité, ⭐, km, Contacter, Demander), Équipe (4 membres rôles 👑👔🧹🔧, invitation en attente, permissions par rôle), Calendrier (grille sept. 2026, légende séjour bleu/check-in vert/check-out orange/ménage violet, 3 séjours réels, Synchroniser iCal + Nouvelle réservation), Paramètres (6 onglets exacts Profil/Propriétés/White-Label/Notifications/Sécurité/Intégrations), Facturation (plan Airbnb Solo actif 99 € échéance 28/07/2027, Gérer la facturation, Résilier, Mensuel/Annuel, bandeau mode démo Stripe honnête)
+- Sécurité prouvée EN VRAI avec un compte Cleaner (sophie@…/Demo2024!) : sidebar réduite à 5 entrées (Facturation/Équipe/Paramètres/Commandes masquées + bouton Ajouter disparu du header) ; accès direct /airbnb/billing → écran « Accès restreint » (restricted-access) avec retour vue d'ensemble
+- Sortie : lint 0 erreur, 0 erreur console navigateur, 0 erreur dev.log — AUCUN écart spec↔implémentation, aucune modification de code
+
+Stage Summary:
+- Le Dashboard Client demandé est déjà 100 % implémenté (H1→H6), validé de nouveau page par page avec données réelles et preuve de rôles — prêt pour validation utilisateur, aucune action de code requise
+- Session démo Marie à privilégier pour la revue (quick-login « Client Demo ») ; session Cleaner disponible pour démonstration des restrictions
