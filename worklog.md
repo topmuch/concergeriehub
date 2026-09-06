@@ -1149,3 +1149,20 @@ Work Log:
 Stage Summary:
 - Le Dashboard Client demandé est déjà 100 % implémenté (H1→H6), validé de nouveau page par page avec données réelles et preuve de rôles — prêt pour validation utilisateur, aucune action de code requise
 - Session démo Marie à privilégier pour la revue (quick-login « Client Demo ») ; session Cleaner disponible pour démonstration des restrictions
+
+---
+Task ID: HUB-1
+Agent: Z.ai Code (session principale)
+Task: Hub QR (page publique de scan) — audit du prompt 10 sections vs existant, comblement des écarts (réclamations écrites + module Contact + fix mode Hôte)
+
+Work Log:
+- Audit préalable : le Hub QR existe déjà (hub-content.tsx 1300+ lignes, « ÉTAPE 5 » V1 + PWA invitée /guest?b=) — accueil 2 cartes Invité (libre) / Hôte (PIN 4 chiffres QRTNumericKeypad), modules Wi-Fi (copie+masquage+toast), Guidebook, Services (email pré-rempli — la commande réelle vit dans la PWA), contact+vocal ; sécurités déjà présentes (bcrypt, rate-limit 10/min/slug sur POST pin)
+- Écarts comblés : ① formulaire écrit de réclamation (spec module 4) — modèle Prisma GuestComplaint (category PLUMBING/ELECTRICAL/CLEANING/OTHER, description, photos JSON ≤3×500KB dataURL, isUrgent, guestName, status OPEN/RESOLVED) + db:push ; API /api/public/hub/[slug]/complaint POST (rate-limit 5/min/slug+IP, validation mime+taille décodée) et PATCH (garde PIN bcrypt, scope propriété) ; UI ComplaintFormDialog (select catégorie, textarea, upload photo type+500Ko+préviews+retrait, checkbox ⚠️ Urgent, nom optionnel, toast « ✅ Réclamation envoyée. L'hôte vous contactera bientôt. ») ; ② module 📞 Contacter l'hôte dédié (5ᵉ module invité, réutilise ContactDialog appel/email/vocal)
+- Côté hôte : route /host enrichie (complaints[] + openComplaints, tri urgent→récent, labels FR, safeParsePhotos) ; badge rouge combiné écrites+vocales sur la carte Réclamations ; dialog 2 sections (📝 Écrites avec catégorie, urgent, photos, « ✓ Marquer résolue » + 🎙️ Vocales) ; résolution → PATCH puis refresh hôte ; démo: 2 réclamations exemples (dont 1 urgente — exemple « 2 nouvelles réclamations » de la spec)
+- FIX bug préexistant révélé par E2E : la route /host ne résolvait le bien QUE par plaque V1 (physicalQrCode.hubSlug) → « Hub non trouvé » sur tout bien créé par wizard (property.qrHubSlug, É12) — résolution double appliquée (identique GET publique et complaint) ; mode Hôte désormais fonctionnel sur le Loft réel
+- E2E mobile 390×844 prouvé : accueil → Invité (5 modules) → formulaire rempli (Électricité, urgent) → toast → DB vérifiée (ELECTRICAL/urgent/OPEN) ; Hôte : PIN erroné 1111 → « PIN incorrect » (bcrypt) ; PIN 1234 → Espace Hôte (Wi-Fi réel Loft-Canal-Fiber, badge 3) → dialog (Écrites 1 avec ⚠️ Urgent + Vocales 2 Julie 14s/Marc 22s) → Marquer résolue → toast + DB status=RESOLVED + compteur 0 ; API : refus 400 « Photo trop volumineuse (max 500 Ko) » prouvé ; lint 0/0, 0 erreur console/dev.log
+
+Stage Summary:
+- Hub QR conforme à la spec : accueil 2 cartes, PIN bcrypt rate-limité, 5 modules invité (Wi-Fi/Guidebook/Services/Réclamation écrite/Contact), hôte avec badges et résolution — le tout réel et prouvé en base
+- Choix documentés : commandes services du Hub scan = email pré-rempli (sans contexte réservation), commande réelle+paiement dans la PWA invitée ; réclamations = formulaire écrit (nouveau) + vocal (existant) ; anti brute-force = rate-limit serveur 10/min/slug (robuste, équivalent au « 5 essais » spec)
+- Écart design assumé : cartes accueil blanches à pastilles colorées (système QRTags établi) au lieu de fonds pleins emerald/blue du mock — à ajuster sur demande
