@@ -1473,3 +1473,21 @@ Stage Summary:
 - Code final production synchronisé : local = GitHub = b734165 (main), working tree propre, lint 0, tsc 0, rendu E2E prouvé.
 - Le dépôt contient la totalité des corrections d'audit : FIX-1..8 (867595c), VERIFY-FIX (d248136), FIX-9..13 (ddd25eb), FIX-14..16 (b734165).
 - Rappel sécurité utilisateur : le PAT ghp_scg0t8…ACG est apparu en clair dans les commandes — à révoquer sur GitHub (Settings → Developer settings → Personal access tokens).
+
+---
+Task ID: VERIFY-VISION
+Agent: Z.ai Code (session principale)
+Task: « est-ce que tout est corrigé, aligné avec ma vision » — vérification E2E complète des 4 surfaces
+
+Work Log:
+- Git : local = GitHub = d2d8e57, working tree propre, lint 0, tsc 0.
+- DÉCOUVERTE CRITIQUE : base SQLite totalement VIDE (0 ligne sur toutes les tables — sandbox re-wipée) → Hub en 404 « Hub indisponible ».
+- Restauration exécutée selon la procédure documentée : .env régénéré (NEXTAUTH_SECRET absent ! + DATABASE_URL + NEXTAUTH_URL, secret openssl 32 o) ; 12 seeds rejoués dans l'ordre : demo-users → b2b-demo → v2-team → v2-automations → slug canonique loft-canal-saint-martin-11wz forcé en base (seed b2b régénère un suffixe aléatoire) → v3-guest-app → v3-service-offers (10) → v3-service-orders (4 : PENDING/CONFIRMED/PREPARING/DELIVERED) → admin-kpis (29 commandes) → admin-demo → email-templates (5 actifs) → emails-demo (3 sent/1 queued/1 failed).
+- Dev server redémarré pour charger le nouveau NEXTAUTH_SECRET ; GET / et API hub → 200.
+- E2E agent-browser : Landing OK (hero, démo 3 étapes, 6 modules) ; Hub invité OK (Wi-Fi Loft-Canal-Fiber/bienvenue2024/WPA2 révélé + QR SVG, Guidebook, 5 services, problème, contact) ; PIN 1234 → Espace Hôte 6/6 modules (Wi-Fi, Guidebook 10 sections, Réclamations 2 vocales + 1 demande, Upselling 3 commandes, 11 prestataires, Paramètres PIN) ; Dashboard hôte (login demo → « Bonsoir Marie », 9 liens sidebar, bien Loft visible plan Airbnb Solo) ; Super-admin (login admin → /admin/dashboard, sidebar 10 modules dont Biens & Plaques, KPIs + table vraies commandes 45,00€ Camille Laurent) ; FIX-14 : erreur client E2E-verify-final tracée de bout en bout → visible /admin/logs avec badge « Erreur runtime », puis cleanup (audit 0 restauré) ; FIX-12 : onglet Modèles présent, 5 templates DB actifs.
+- Particularité agent-browser documentée : la carte Wi-Fi Hub contient des boutons imbriqués dans le trigger — les clics @ref/remontent et replient l'accordéon (artefact test, PAS un bug produit : le reveal fonctionne via clic sémantique propre) ; eval DOM ponctuellement désynchronisé du rendu → privilégier locateurs sémantiques + innerText.
+
+Stage Summary:
+- TOUT EST CORRIGÉ ET ALIGNÉ : 4 surfaces vérifiées E2E après restauration complète de la base (cause racine : sandbox re-wipée + .env amputé, PAS une régression produit — le code GitHub b734165 était intact).
+- Base restaurée : 12 seeds, slug canonique, PIN 1234, Wi-Fi bienvenue2024, 10 offres, 4+29 commandes, 5 prestas clés→11 users, 5 templates email.
+- Le dépôt GitHub reste la source de vérité du code ; la base est un artefact local régénérable via la procédure worklog (13e exécution prouvée reproductible).
