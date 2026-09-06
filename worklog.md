@@ -1115,3 +1115,20 @@ Work Log:
 
 Stage Summary:
 - Dashboard Client complet et vérifié : 10 pages réelles (Vue d'ensemble KPIs+recharts+activité, Propriétés+wizard, Plaques+print, Commandes+CSV+transitions, Prestataires géoloc+demande ticket, Équipe invitations/rôles, Calendrier+iCal réel, Paramètres 6 onglets, Facturation Stripe, Automatisations), shell QRTags Pro (sidebar claire, header sélecteur/notifications/ajout, rôles réels), 0 mock, preuves E2E croisées en base à chaque étape, 7 commits (c9ec750 → 7433421).
+
+---
+Task ID: SYNC-H6
+Agent: Z.ai Code (session principale)
+Task: Synchroniser la version GitHub avec la version locale (résolution divergence main local ↔ origin/main)
+
+Work Log:
+- Diagnostic : GitHub EN AVANCE sur le local de 16 commits (redesign V5/L8 landing, superadmin SA-1/S1, Dashboard Client H1→H6 complet à aee7f47) ; local bloqué sur un amend de LANDING É3 (cdfa83b→1e51921) ajoutant seulement une capture de référence Travl
+- Décision : alignement local → GitHub (reset --hard aee7f47 + update-ref origin/main) — sens inverse aurait détruit 16 commits ; capture Travl sauvegardée puis restaurée dans upload/ (gitignored, arbre propre)
+- bun run db:push : schéma local aligné (PropertyIcalFeed + User.notificationPrefs de H5)
+- Login démo 401 puis écran vide diagnostiqués : (1) base locale incohérente → rebuild custom.db + 12 seeds rejoués DANS L'ORDRE (seed-demo-users → seed-demo → seed-b2b-demo → seed-v2-team → automations → provider-accounts → guest-app → service-offers → service-orders → admin-kpis → admin-demo → emails) ; 2 fixes de données : ligne PropertyMember obsolète rôle 'owner' minuscule supprimée (violait l'unicité du check 'OWNER'), slug Loft fixé en base à loft-canal-saint-martin-11wz (hardcodé par les seeds V3, suffixe Math.random non reproductible) ; (2) .env sans NEXTAUTH_SECRET → JWT_SESSION_ERROR/NO_SECRET → .env régénéré (secret fort openssl, DATABASE_URL, NEXTAUTH_URL) + redémarrage dev server
+- E2E prouvé : landing → Connexion → quick-login Client Demo → /airbnb/dashboard « Bonjour, Marie 👋 » — 4 KPIs réels (48 scans +129 %, 141,00 € revenus, 4,7/5, 1/1 actives), courbe 30 j, feed activité (commandes Camille Laurent 45 €/170 €), sidebar claire 9 entrées, profil Marie Dupont/Airbnb Solo ; 0 erreur console, 0 erreur dev.log
+
+Stage Summary:
+- Local = GitHub = aee7f47 : aucun commit perdu, arbre propre, capture Travl préservée (non suivie)
+- Environnement d'exécution reconstruit et validé de bout en bout (schéma, seeds ordonnés, secret NextAuth)
+- Dette notée : seeds V3 dépendent d'un slug à suffixe aléatoire hardcodé — à rendre paramétrable (env ou lookup par nom) lors d'une prochaine passe
