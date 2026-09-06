@@ -1078,3 +1078,24 @@ Stage Summary:
 - ÉTAPES 3 & 4 livrées au commit 36541de : 5 pages complètes, 1 API étendue ('all'), 1 API créée (provider-requests), PATCH plaques durci (ActivationLog) — aucune donnée mock, chaque action critique prouvée en base.
 - Décisions : invitations exigent un compte existant (pas de comptes fantômes) ; pas de scan-tracking plaques (remplacé Hub public) ; OWNER non assignable via UI (réservé au propriétaire du bien).
 - Reste H5 : Calendrier (bookings+iCal), Paramètres (6 onglets), redirects anciennes routes, puis H6 final (E2E complet, push).
+
+---
+Task ID: H5
+Agent: Z.ai Code (orchestrator)
+Task: Dashboard Client — ÉTAPE 5 : Calendrier (iCal réel), Paramètres (6 onglets), migration anciennes routes → redirects
+
+Work Log:
+- Schéma : +model PropertyIcalFeed (label/url webcal→https, lastSyncAt/lastStatus OK|ERROR/lastError/lastImported, cascade property) + User.notificationPrefs Json. db:push + prisma generate OK (table vérifiée).
+- Lib src/lib/ical.ts : parser RFC 5545 réel (dépliage lignes de continuation, VEVENT DTSTART/DTEND VALUE=DATE et DATE-TIME UTC/float, SUMMARY échappé, UID), normalizeIcalUrl (webcal→https), upsertIcalBookings idempotent (externalRef=UID, clé synthétique sinon).
+- API /api/airbnb/ical : GET feeds (garde canAccessProperty), POST création + 1re synchro réelle AVANT confirmation (fetch 15 s timeout, parse, upsert $transaction, horodatage OK/ERROR), POST {feedId} → re-sync, DELETE feed (bookings ICAL conservés — traçabilité), limites 5 feeds/bien + doublon 409.
+- API Paramètres : /api/airbnb/profile (GET + PATCH fullName/phone/address via Profile upsert, validation tel), /api/airbnb/security/password (POST bcrypt.compare actuel + règle 8+/lettre/chiffre + hash(10), 403 si actuel faux, 409 si compte sans mdp), /api/airbnb/notifications/prefs (GET effectives = défauts complétés, PUT sanitize clés inconnues rejetées) + lib notification-prefs.ts (catalogue 8 événements × email/push).
+- Page /airbnb/calendar + calendar-content (~700 l.) : grille mensuelle lun→dim (6 semaines), réservations réelles colorées (🟩 check-in / 🟧 check-out / 🟦 séjour / 🟪 ménage à faire si checkout passé et cleaningStatus≠DONE), "+N" si >2/jour, navigation mois + Aujourd'hui, légende, fiche séjour au clic (source/statut/ménage, PATCH ménage fait, annuler, DELETE selon canManage), modal création manuelle (POST bookings), modal iCal (liste feeds + états, connexion réelle, re-sync, retrait avec AlertDialog, garde canManage).
+- Page /airbnb/settings + settings-content : 6 onglets — Profil (GET/PATCH réels, email figé), Propriétés (liste + liens), White-Label (BrandingContent réutilisé si plan.isPro sinon upsell Pro), Notifications (16 switches persistés), Sécurité (changement mdp réel + état 2FA "Non configurée" affiché honnêtement — intégration login TOTP reportée, documentée), Intégrations (Stripe → billing, iCal → calendrier, webhooks réels /api/client/webhooks).
+- Migration : 6 anciennes pages supprimées (dashboard/{portfolio,plaques,orders,providers,branding}) + 8 composants orphelins (dashboard-shell, host-overview, dashboard-content, plaques/portfolio/orders/providers-content V1, team-panel) ; onboarding-wizard PRÉSERVÉ et rebranché sur la nouvelle Vue d'ensemble (onboardingCompleted ajouté au HostContext, cible dérivée useMemo — lint set-state-in-effect respecté) ; liens corrigés (onboarding-wizard print, plaque-print backHref, automations-server url notif) ; next.config.ts redirects 307 (6 routes).
+- Preuves E2E : calendrier desktop (4 séjours réels septembre, Camille Robert/Laurent, Thomas Petit, couleurs exactes) + import iCal RÉEL via UI sur calendrier Google public → toast "209 séjour(s) importé(s)", feed lastStatus=OK lastImported=209 en base, bookings avec UID Google en externalRef → cleanup (feed + 209 bookings test supprimés) ; sécurité → toast "Le mot de passe actuel est incorrect." (403 réel) ; notifications toggle push checkout_today → prefs en base {email:true,push:true} ; profil PATCH téléphone → +33 7 88 99 00 11 en base (puis restauré par le test) ; redirects 6/6 → 307 vers nouvelles routes ; calendar+settings mobile 390 scrollWidth=390 ; 10 routes /airbnb/* répondent en session ; lint 0.
+- Incident : le dev server s'est arrêté en cours de route (redémarré, sans impact).
+- Captures : /tmp/e2e/H5-calendar.png, H5-calendar-mobile.png, H5-settings.png, H5-dashboard-final.png.
+
+Stage Summary:
+- ÉTAPE 5 livrée au commit efd1c31 : Calendrier complet avec import iCal réellement fonctionnel (preuve 209 imports Google Calendar), Paramètres 6 onglets tous branchés, structure de routes finale unifiée (/airbnb/{dashboard,properties,plates,orders,providers,team,calendar,settings,billing,automations}) — ancien dashboard retiré proprement (redirects), zéro orphelin.
+- Reste H6 : vérification E2E finale toutes routes (desktop+mobile, console), worklog, commit + push.

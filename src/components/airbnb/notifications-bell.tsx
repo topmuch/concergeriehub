@@ -6,7 +6,7 @@
 // panneau déroulant (Popover), marquage lu individuel/global.
 // Polling 45 s + rafraîchissement à l'ouverture.
 // =============================================================
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Bell, CheckCheck, Zap } from 'lucide-react';
@@ -107,6 +107,23 @@ export function NotificationsBell() {
 
   // Visiteur non connecté : la cloche reste visible mais vide
   // (elle n'est rendue que pour les utilisateurs connectés via le shell).
+
+  // Monté uniquement après hydratation : évite le mismatch des IDs
+  // Radix auto-générés (aria-controls) entre SSR et client.
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
+
+  if (!mounted) {
+    return (
+      <span
+        aria-hidden="true"
+        className="h-9 w-9 inline-block rounded-lg border border-slate-200 bg-white"
+      />
+    );
+  }
 
   return (
     <Popover

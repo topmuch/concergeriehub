@@ -1,6 +1,6 @@
 'use client';
 
-import { type ReactNode, useState } from 'react';
+import { type ReactNode, useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { signOut } from 'next-auth/react';
@@ -113,6 +113,13 @@ function ShellRoot({
 }: Required<Omit<HostShellProps, 'children'>> & { children: ReactNode }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  // Vrai uniquement après hydratation — évite le mismatch des IDs Radix
+  // auto-générés (aria-controls) entre le rendu serveur et le client.
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
 
   const nav = NAV_ITEMS.filter((item) => accessLevel === 'full' || !item.managementOnly);
 
@@ -211,30 +218,35 @@ function ShellRoot({
       <div className="flex min-h-screen w-full flex-col md:ml-[250px] md:w-[calc(100%-250px)]">
         {/* ----- Header sticky ----- */}
         <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-2 border-b border-slate-200 bg-white/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-white/80 sm:gap-3 sm:px-6">
-          {/* Burger mobile → drawer Sheet */}
-          <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-            <SheetTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="md:hidden"
-                aria-label="Ouvrir le menu"
-              >
-                <Menu className="h-5 w-5 text-slate-700" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-[280px] bg-white p-0 text-slate-900">
-              <SheetHeader className="border-b border-slate-100 pb-2 pt-4">
-                <SheetTitle asChild>
-                  <div>{logo}</div>
-                </SheetTitle>
-              </SheetHeader>
-              <div className="flex h-[calc(100%-5rem)] flex-col justify-between pb-4 pt-4">
-                <div className="flex-1 overflow-y-auto">{navList}</div>
-                {profileBlock}
-              </div>
-            </SheetContent>
-          </Sheet>
+          {/* Burger mobile → drawer Sheet (monté après hydratation :
+              IDs Radix stables, zéro mismatch aria-controls) */}
+          {mounted ? (
+            <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+              <SheetTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="md:hidden"
+                  aria-label="Ouvrir le menu"
+                >
+                  <Menu className="h-5 w-5 text-slate-700" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-[280px] bg-white p-0 text-slate-900">
+                <SheetHeader className="border-b border-slate-100 pb-2 pt-4">
+                  <SheetTitle asChild>
+                    <div>{logo}</div>
+                  </SheetTitle>
+                </SheetHeader>
+                <div className="flex h-[calc(100%-5rem)] flex-col justify-between pb-4 pt-4">
+                  <div className="flex-1 overflow-y-auto">{navList}</div>
+                  {profileBlock}
+                </div>
+              </SheetContent>
+            </Sheet>
+          ) : (
+            <span aria-hidden="true" className="h-9 w-9 shrink-0 md:hidden" />
+          )}
 
           {/* Sélecteur de propriété (multi-propriétés) */}
           <PropertySelector />
