@@ -1455,3 +1455,21 @@ Work Log:
 Stage Summary:
 - E2E prouvé : ⚙️ visible et fonctionnel (ouvre le clavier 10 touches), QR SVG rendu dans la carte Wi-Fi, /view 200 après refactor, lint 0 / tsc 0, 0 erreur console
 - Audit MODULE 3 : les 2 derniers écarts spec actionnables sont clos (commande scan mailto et WhatsApp restent des choix documentés du worklog d'origine)
+
+---
+Task ID: SHIP-PROD
+Agent: Z.ai Code (session principale)
+Task: Livraison finale — « fini tous les corrections, envoi le code final production sur GitHub »
+
+Work Log:
+- Vérifié working tree git : propre (0 fichier modifié), branche main.
+- Constaté que le commit final b734165 (FIX-14 monitoring erreurs + FIX-15 durcissement sécurité + FIX-16 ⚙️/QR Wi-Fi), postérieur à ddd25eb, était déjà présent localement — vérifié son existence sur GitHub avant push.
+- Vérification production finale : bun run lint → 0 erreur ; bunx tsc --noEmit → exit 0 ; dev.log sain (GET / 200 en ~60 ms, ping Prisma OK).
+- Vérification navigateur agent-browser : page / rendue intégralement (titre, démo interactive 3 étapes, 6 modules, parcours 3 minutes), 0 erreur console, 0 erreur page.
+- git push (PAT fourni) → « Everything up-to-date » ; git update-ref origin/main actualisé.
+- Vérification finale : git ls-remote = b734165ac9ebe561f3a21aabb9dfba4af2ee6d50 = git rev-parse HEAD = working tree propre.
+
+Stage Summary:
+- Code final production synchronisé : local = GitHub = b734165 (main), working tree propre, lint 0, tsc 0, rendu E2E prouvé.
+- Le dépôt contient la totalité des corrections d'audit : FIX-1..8 (867595c), VERIFY-FIX (d248136), FIX-9..13 (ddd25eb), FIX-14..16 (b734165).
+- Rappel sécurité utilisateur : le PAT ghp_scg0t8…ACG est apparu en clair dans les commandes — à révoquer sur GitHub (Settings → Developer settings → Personal access tokens).
