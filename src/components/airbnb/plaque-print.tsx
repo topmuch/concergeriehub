@@ -34,7 +34,7 @@ interface PlaqueDetail {
 
 export function PlaquePrint({
   params,
-  backHref = '/airbnb/dashboard/plaques',
+  backHref = '/airbnb/plates',
 }: {
   params: Promise<{ id: string }>;
   /** Lien "Retour" (défaut : ancienne route dashboard/plaques). */

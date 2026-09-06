@@ -32,6 +32,10 @@ model User {
   isActive     Boolean  @default(true) @map("is_active") // false = compte désactivé par le Superadmin (login bloqué)
   selectedPlan      String?   @map("selected_plan")      // 'airbnb_solo' | 'airbnb_pro' | 'agency' | 'free' — choisi avant paiement
   onboardingCompleted Boolean @default(false) @map("onboarding_completed")
+  // HOST-5 — Préférences de notifications du Dashboard Client
+  // JSON : { [eventKey: string]: { email: boolean; push: boolean } }
+  // Clés du catalogue : src/lib/notification-prefs.ts
+  notificationPrefs Json?     @map("notification_prefs")
   // ÉTAPE 20 (V3) — Stripe Connect : compte destinataire de reversements
   // (hôte aujourd'hui null ; utile si l'invité paie le séjour directement)
   stripeAccountId   String?   @map("stripe_account_id")
@@ -119,6 +123,7 @@ model Property {
   serviceOffers     ServiceOffer[]
   bookings          Booking[]
   automationRules   AutomationRule[]
+  icalFeeds         PropertyIcalFeed[]
 
   @@index([ownerId])
   @@index([propertyType])
@@ -1067,6 +1072,32 @@ model Booking {
   @@index([checkOut])
   @@index([status])
   @@map("bookings")
+}
+
+// ==============================================================
+// TABLE 47: property_ical_feeds (HOST-5 — Calendrier, import iCal)
+// Flux iCal externes (Airbnb / Booking.com / Abritel…) d'un bien.
+// La synchronisation (POST /api/airbnb/ical/sync) télécharge le
+// calendrier, parse les VEVENT et upsert les Bookings source
+// 'ICAL' (externalRef = UID de l'événement, idempotent).
+// lastStatus : 'OK' | 'ERROR' | null (jamais synchronisé)
+// ==============================================================
+model PropertyIcalFeed {
+  id          String    @id @default(cuid())
+  propertyId  String    @map("property_id")
+  label       String                              // ex: "Airbnb — Loft"
+  url         String                              // webcal:// converti en https://
+  lastSyncAt  DateTime? @map("last_sync_at")
+  lastStatus  String?   @map("last_status")       // 'OK' | 'ERROR'
+  lastError   String?   @map("last_error")
+  lastImported Int      @default(0) @map("last_imported") // nb bookings upserts au dernier sync
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId])
+  @@map("property_ical_feeds")
 }
 
 // ==============================================================

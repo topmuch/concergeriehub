@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
@@ -25,6 +26,7 @@ import { toast } from 'sonner';
 import { KPICard } from '@/components/airbnb/host/kpi-card';
 import { useHostContext } from '@/components/airbnb/host/host-context';
 import { useOverview, type ActivityItem } from '@/hooks/use-overview';
+import { OnboardingWizard } from '@/components/airbnb/onboarding-wizard';
 import { relativeFrTime } from '@/lib/automations';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -72,10 +74,34 @@ function greeting(date: Date): string {
 }
 
 export function OverviewContent() {
-  const { userFirstName, invitations, properties, propertiesLoading } = useHostContext();
+  const { userFirstName, invitations, properties, propertiesLoading, onboardingCompleted, refreshProperties } = useHostContext();
   const { data, loading, error, refetch } = useOverview();
   const stats = data?.stats ?? null;
   const now = new Date();
+
+  // ----- Chantier ONBOARD : assistant post-inscription (bien possédé
+  //  non configuré) — reprend le mécanisme de l'ancien dashboard,
+  //  rejetable via sessionStorage ("Plus tard"). Cible dérivée au
+  //  rendu (pas d'effet). -----
+  const [onboardingClosed, setOnboardingClosed] = useState(false);
+  const onboardingTarget = useMemo(() => {
+    if (propertiesLoading || onboardingClosed || onboardingCompleted) return null;
+    if (typeof window !== 'undefined' && sessionStorage.getItem('ch-onboarding-dismissed') === '1') {
+      return null;
+    }
+    const owned = properties.find((p) => p.isOwner);
+    if (!owned) return null;
+    return { propertyId: owned.id, name: owned.name, address: owned.address ?? '' };
+  }, [properties, propertiesLoading, onboardingCompleted, onboardingClosed]);
+
+  function finishOnboarding(completed: boolean) {
+    setOnboardingClosed(true);
+    if (completed) {
+      toast.success('Votre logement est configuré 🎉');
+      void refreshProperties();
+      void refetch();
+    }
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -386,6 +412,17 @@ export function OverviewContent() {
             ))}
           </div>
         </section>
+      )}
+
+      {/* ---------- Wizard d'onboarding (post-inscription) ---------- */}
+      {onboardingTarget && (
+        <OnboardingWizard
+          open
+          propertyId={onboardingTarget.propertyId}
+          initialName={onboardingTarget.name}
+          initialAddress={onboardingTarget.address}
+          onFinished={finishOnboarding}
+        />
       )}
     </div>
   );

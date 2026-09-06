@@ -87,6 +87,9 @@ interface HostContextValue {
   /** Niveau d'accès calculé côté serveur par le layout. */
   accessLevel: 'full' | 'team';
   userFirstName: string;
+  /** Chantier ONBOARD — false tant que l'assistant post-inscription
+   *  n'a pas été terminé (renseigné par /api/airbnb/properties). */
+  onboardingCompleted: boolean;
 }
 
 const STORAGE_KEY = 'ch-host:selected-property';
@@ -106,6 +109,8 @@ export function HostProvider({ children, accessLevel, userFirstName }: HostProvi
   const [plan, setPlan] = useState<HostPlanInfo | null>(null);
   const [invitations, setInvitations] = useState<HostInvitation[]>([]);
   const [selectedId, setSelectedIdState] = useState<string>('all');
+  // Défaut true : ne déclenche PAS le wizard tant que la base n'a pas répondu.
+  const [onboardingCompleted, setOnboardingCompleted] = useState(true);
 
   // ----- Restauration de la sélection (effet post-hydration) -----
   useEffect(() => {
@@ -126,10 +131,12 @@ export function HostProvider({ children, accessLevel, userFirstName }: HostProvi
         properties: HostProperty[];
         plan: HostPlanInfo;
         invitations: HostInvitation[];
+        user?: { onboardingCompleted?: boolean };
       };
       setProperties(data.properties ?? []);
       setPlan(data.plan ?? null);
       setInvitations(data.invitations ?? []);
+      setOnboardingCompleted(data.user?.onboardingCompleted ?? true);
     } catch (error) {
       console.error('[HostProvider] properties fetch failed:', error);
       setPropertiesError('Impossible de charger vos propriétés. Rechargez la page.');
@@ -188,6 +195,7 @@ export function HostProvider({ children, accessLevel, userFirstName }: HostProvi
       refreshProperties: fetchProperties,
       accessLevel,
       userFirstName,
+      onboardingCompleted,
     }),
     [
       properties,
@@ -202,6 +210,7 @@ export function HostProvider({ children, accessLevel, userFirstName }: HostProvi
       fetchProperties,
       accessLevel,
       userFirstName,
+      onboardingCompleted,
     ],
   );
 

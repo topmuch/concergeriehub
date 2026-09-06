@@ -346,7 +346,7 @@ export async function runAutomationTrigger(
       requestId: ctx.kind === 'maintenance' ? ctx.request.id : undefined,
       orderId: ctx.kind === 'order' ? ctx.order.id : undefined, // ÉTAPE 17.3
       // Deep-link : une commande atterrit directement sur l'onglet Commandes.
-      url: ctx.kind === 'order' ? '/airbnb/dashboard/orders' : '/airbnb/dashboard',
+      url: ctx.kind === 'order' ? '/airbnb/orders' : '/airbnb/dashboard',
     });
 
     let created = 0;
