@@ -49,7 +49,7 @@ export async function getAllFlags(): Promise<FeatureFlagDef[]> {
         }),
       ),
     );
-    for (const d of missing) stored.set(d.key, { ...d } as { key: string; enabled: boolean; description: string });
+    for (const d of missing) stored.set(d.key, { ...d, updatedAt: new Date() });
   }
 
   return FEATURE_FLAG_DEFAULTS.map((d) => ({

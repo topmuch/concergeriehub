@@ -31,8 +31,8 @@ export async function PATCH(
 
   try {
     const { id } = await params;
-    const action = req.nextUrl.searchParams.get('action');
-    const mapping = action ? (ACTIONS as Record<string, { status: string }>)[action] : undefined;
+    const action = req.nextUrl.searchParams.get('action') ?? '';
+    const mapping = (ACTIONS as Record<string, { status: string }>)[action];
     if (!mapping) {
       return NextResponse.json(
         { error: 'Action inconnue (cancel | reactivate | mark-paid)' },

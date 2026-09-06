@@ -14,9 +14,13 @@ import {
   Loader2,
   Mail,
   Mic,
+  Package,
   PencilLine,
   Phone,
+  Plus,
+  Settings2,
   Square,
+  Trash2,
   TriangleAlert,
   Wrench,
   X,
@@ -106,6 +110,28 @@ interface HostWrittenComplaint {
   createdAt: string;
 }
 
+interface HostGuidebook {
+  qrCodeId: string | null;
+  title: string;
+  sections: string[];
+}
+
+/** Commande ServiceOrder sérialisée côté API /orders (montant TOTAL,
+ *  jamais le split commission/hôte). */
+interface HostOrder {
+  id: string;
+  status: string;
+  statusLabel: string;
+  statusBadge: string;
+  statusEmoji: string;
+  totalEur: string;
+  itemsSummary: string;
+  providerName: string;
+  providerEmoji: string;
+  guestName: string;
+  createdAt: string;
+}
+
 interface HostData {
   wifi: {
     qrCodeId: string;
@@ -123,6 +149,7 @@ interface HostData {
   complaints: HostWrittenComplaint[];
   openComplaints: number;
   pendingRequests: number;
+  guidebook: HostGuidebook;
   providers: HostProvider[];
 }
 
@@ -261,6 +288,7 @@ export function HubPageContent({
           pin={verifiedPin}
           onBack={() => setView('home')}
           onHostRefresh={(d) => setHostData(d)}
+          onPinChanged={(p) => setVerifiedPin(p)}
         />
       )}
 
@@ -778,6 +806,7 @@ function HostView({
   pin,
   onBack,
   onHostRefresh,
+  onPinChanged,
 }: {
   payload: HubPayload;
   hostData: HostData | null;
@@ -785,14 +814,65 @@ function HostView({
   pin: string;
   onBack: () => void;
   onHostRefresh: (d: HostData) => void;
+  onPinChanged: (pin: string) => void;
 }) {
   const [wifiEditOpen, setWifiEditOpen] = useState(false);
   const [complaintsOpen, setComplaintsOpen] = useState(false);
   const [providersOpen, setProvidersOpen] = useState(false);
+  const [guidebookOpen, setGuidebookOpen] = useState(false);
+  const [upsellingOpen, setUpsellingOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [resolvingId, setResolvingId] = useState<string | null>(null);
   const unread = hostData?.unreadMessages.length ?? 0;
   const written = hostData?.openComplaints ?? 0;
   const totalAlerts = unread + written;
+
+  // ── Commandes ServiceOrder (badge Upselling + dialog) ──
+  // Fetch au montage et à chaque refreshOrders() (après PATCH ou
+  // réouverture du dialog) — le badge compte les PENDING.
+  const [orders, setOrders] = useState<HostOrder[] | null>(null);
+  const [ordersTick, setOrdersTick] = useState(0);
+  const refreshOrders = useCallback(() => setOrdersTick((t) => t + 1), []);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function run() {
+      try {
+        const res = await fetch(`/api/public/hub/${encodeURIComponent(slug)}/orders`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pin }),
+        });
+        if (!res.ok || cancelled) return;
+        const json = (await res.json()) as { orders: HostOrder[] };
+        if (!cancelled) setOrders(json.orders);
+      } catch {
+        // Silencieux : le badge reste absent, une nouvelle tentative
+        // est déclenchée à la réouverture du dialog.
+      }
+    }
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [slug, pin, ordersTick]);
+
+  const pendingOrders = orders?.filter((o) => o.status === 'PENDING').length ?? 0;
+  const [patching, setPatching] = useState<string | null>(null);
+
+  /** Rafraîchit les données hôte (après édition guidebook / résolution). */
+  const refreshHost = useCallback(async () => {
+    try {
+      const hostRes = await fetch(`/api/public/hub/${encodeURIComponent(slug)}/host`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin }),
+      });
+      if (hostRes.ok) onHostRefresh((await hostRes.json()) as HostData);
+    } catch {
+      toast.error('Erreur réseau. Réessayez.');
+    }
+  }, [slug, pin, onHostRefresh]);
 
   /** Marque une réclamation écrite résolue (garde PIN) puis rafraîchit. */
   const resolveComplaint = async (id: string) => {
@@ -809,16 +889,34 @@ function HostView({
         return;
       }
       toast.success('Réclamation marquée résolue ✓');
-      const hostRes = await fetch(`/api/public/hub/${encodeURIComponent(slug)}/host`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pin }),
-      });
-      if (hostRes.ok) onHostRefresh((await hostRes.json()) as HostData);
+      await refreshHost();
     } catch {
       toast.error('Erreur réseau. Réessayez.');
     } finally {
       setResolvingId(null);
+    }
+  };
+
+  /** Confirme ou annule une commande PENDING (PATCH /orders, garde PIN). */
+  const patchOrder = async (orderId: string, action: 'CONFIRM' | 'CANCEL') => {
+    setPatching(orderId);
+    try {
+      const res = await fetch(`/api/public/hub/${encodeURIComponent(slug)}/orders`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin, orderId, action }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toast.error(json.error || 'Action impossible.');
+        return;
+      }
+      toast.success(action === 'CONFIRM' ? 'Commande confirmée ✓' : 'Commande annulée.');
+      refreshOrders();
+    } catch {
+      toast.error('Erreur réseau. Réessayez.');
+    } finally {
+      setPatching(null);
     }
   };
 
@@ -860,6 +958,17 @@ function HostView({
             }
             onClick={() => setWifiEditOpen(true)}
           />
+          {/* 📖 Guidebook — édition (AUD-FULL ⑥) */}
+          <HostActionCard
+            emoji="📖"
+            title="Guidebook"
+            subtitle={
+              hostData.guidebook.sections.length > 0
+                ? `${hostData.guidebook.sections.length} section(s) — éditer le guide de bienvenue`
+                : 'Aucune section — écrire le guide de bienvenue'
+            }
+            onClick={() => setGuidebookOpen(true)}
+          />
           {/* 🚨 Réclamations en attente (vocales + écrites) */}
           <HostActionCard
             emoji="🚨"
@@ -874,12 +983,36 @@ function HostView({
             badge={totalAlerts > 0 ? String(totalAlerts) : undefined}
             onClick={() => setComplaintsOpen(true)}
           />
+          {/* 💰 Upselling — commandes invitées (ServiceOrder) */}
+          <HostActionCard
+            emoji="💰"
+            title="Upselling — Commandes"
+            subtitle={
+              pendingOrders > 0
+                ? `${pendingOrders} commande(s) à confirmer`
+                : orders && orders.length > 0
+                  ? `${orders.length} commande(s) — rien à confirmer ✓`
+                  : 'Aucune commande pour le moment'
+            }
+            badge={pendingOrders > 0 ? String(pendingOrders) : undefined}
+            onClick={() => {
+              setUpsellingOpen(true);
+              refreshOrders();
+            }}
+          />
           {/* 🧹 Gérer les prestataires */}
           <HostActionCard
             emoji="🧹"
             title="Gérer les prestataires"
             subtitle={`${hostData.providers.length} intervenant(s) autour du bien`}
             onClick={() => setProvidersOpen(true)}
+          />
+          {/* ⚙️ Paramètres — changement de PIN */}
+          <HostActionCard
+            emoji="⚙️"
+            title="Paramètres"
+            subtitle="Gérer le code PIN d'accès au mode hôte"
+            onClick={() => setSettingsOpen(true)}
           />
         </div>
       )}
@@ -898,6 +1031,37 @@ function HostView({
           pin={pin}
           wifi={hostData.wifi}
           onSaved={(w) => onHostRefresh({ ...hostData, wifi: w })}
+        />
+      )}
+
+      {/* ----- Dialog : Édition du Guidebook ----- */}
+      {hostData && guidebookOpen && (
+        <GuidebookEditDialog
+          onClose={() => setGuidebookOpen(false)}
+          slug={slug}
+          pin={pin}
+          guidebook={hostData.guidebook}
+          onSaved={refreshHost}
+        />
+      )}
+
+      {/* ----- Dialog : Upselling (commandes invitées) ----- */}
+      {upsellingOpen && (
+        <UpsellingDialog
+          onClose={() => setUpsellingOpen(false)}
+          orders={orders}
+          patchingId={patching}
+          onPatch={patchOrder}
+        />
+      )}
+
+      {/* ----- Dialog : Paramètres (changement de PIN) ----- */}
+      {settingsOpen && (
+        <SettingsPinDialog
+          onClose={() => setSettingsOpen(false)}
+          slug={slug}
+          pin={pin}
+          onPinChanged={onPinChanged}
         />
       )}
 
@@ -1220,6 +1384,416 @@ function WifiEditDialog({
             {saving ? 'Enregistrement…' : 'Enregistrer'}
           </Button>
         </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// =============================================================
+// Dialog : édition du Guidebook (QrCode 'home_manual').
+// Même schéma de contenu que l'affichage invité /view :
+// { title, body } avec sections séparées par un double saut de ligne.
+// Monté uniquement quand ouvert → l'état initial repart du contenu courant.
+// =============================================================
+function GuidebookEditDialog({
+  onClose,
+  slug,
+  pin,
+  guidebook,
+  onSaved,
+}: {
+  onClose: () => void;
+  slug: string;
+  pin: string;
+  guidebook: HostGuidebook;
+  onSaved: () => void;
+}) {
+  const [title, setTitle] = useState(guidebook.title);
+  const [sections, setSections] = useState<string[]>(
+    guidebook.sections.length > 0 ? guidebook.sections : [''],
+  );
+  const [saving, setSaving] = useState(false);
+
+  const updateSection = (i: number, value: string) =>
+    setSections((prev) => prev.map((s, idx) => (idx === i ? value : s)));
+  const addSection = () => setSections((prev) => [...prev, '']);
+  const removeSection = (i: number) =>
+    setSections((prev) => prev.filter((_, idx) => idx !== i));
+
+  const save = async () => {
+    if (!guidebook.qrCodeId) {
+      toast.error('Aucun Guidebook actif pour ce bien. Créez-le depuis le dashboard hôte.');
+      return;
+    }
+    const cleanSections = sections.map((s) => s.trim()).filter((s) => s.length > 0);
+    if (!title.trim() || cleanSections.length === 0) {
+      toast.error('Renseignez un titre et au moins une section.');
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/public/hub/${encodeURIComponent(slug)}/update`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pin,
+          updates: [
+            {
+              qrCodeId: guidebook.qrCodeId,
+              // Même schéma que /view : le body est découpé en sections
+              // par double saut de ligne côté affichage invité.
+              content: { title: title.trim(), body: cleanSections.join('\n\n') },
+            },
+          ],
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        toast.error(json.error || 'Échec de la mise à jour.');
+        setSaving(false);
+        return;
+      }
+      toast.success('Guidebook mis à jour ✅', {
+        description: 'Vos voyageurs voient le nouveau guide immédiatement.',
+      });
+      setSaving(false);
+      onSaved();
+      onClose();
+    } catch {
+      toast.error('Erreur réseau.');
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Dialog
+      open
+      onOpenChange={(v) => {
+        if (!v && !saving) onClose();
+      }}
+    >
+      <DialogContent className="max-w-md bg-white border border-slate-200 rounded-xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
+            <BookOpen className="h-4 w-4 text-emerald-600" aria-hidden="true" /> Éditer le Guidebook
+          </DialogTitle>
+          <DialogDescription className="text-xs text-slate-500">
+            Le guide de bienvenue consulté par vos invités depuis le Hub.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="guidebook-title">Titre du guide</Label>
+            <Input
+              id="guidebook-title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Guide de bienvenue"
+              maxLength={120}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Sections ({sections.length})</Label>
+            {sections.map((section, i) => (
+              <div key={i} className="relative">
+                <Textarea
+                  value={section}
+                  onChange={(e) => updateSection(i, e.target.value)}
+                  placeholder={`Section ${i + 1} — ex : 🔑 Accès, code de la boîte à clés…`}
+                  className="min-h-[72px] pr-10 text-sm"
+                  maxLength={2000}
+                  aria-label={`Section ${i + 1} du guide`}
+                />
+                <button
+                  type="button"
+                  onClick={() => removeSection(i)}
+                  aria-label={`Supprimer la section ${i + 1}`}
+                  disabled={saving}
+                  className="absolute top-2 right-2 h-7 w-7 inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-400 hover:text-red-600 hover:border-red-200 transition-colors"
+                >
+                  <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                </button>
+              </div>
+            ))}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={saving || sections.length >= 12}
+              onClick={addSection}
+              className="w-full h-9 border-dashed border-slate-300 text-slate-600"
+            >
+              <Plus className="h-3.5 w-3.5" aria-hidden="true" /> Ajouter une section
+            </Button>
+          </div>
+
+          <Button
+            type="button"
+            disabled={saving}
+            onClick={save}
+            className="w-full h-11 bg-slate-900 hover:bg-slate-800 text-white font-semibold"
+          >
+            {saving ? (
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+            ) : (
+              <Check className="h-4 w-4" aria-hidden="true" />
+            )}
+            {saving ? 'Enregistrement…' : 'Enregistrer le guide'}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// =============================================================
+// Dialog : Upselling — commandes ServiceOrder des invités.
+// Liste + boutons Confirmer/Annuler sur les PENDING (le serveur
+// revalide chaque transition). État vide honnête si aucune commande.
+// =============================================================
+function UpsellingDialog({
+  onClose,
+  orders,
+  patchingId,
+  onPatch,
+}: {
+  onClose: () => void;
+  orders: HostOrder[] | null;
+  patchingId: string | null;
+  onPatch: (orderId: string, action: 'CONFIRM' | 'CANCEL') => void;
+}) {
+  return (
+    <Dialog
+      open
+      onOpenChange={(v) => {
+        if (!v) onClose();
+      }}
+    >
+      <DialogContent className="max-w-md bg-white border border-slate-200 rounded-xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
+            <Package className="h-4 w-4 text-emerald-600" aria-hidden="true" /> Commandes des invités
+          </DialogTitle>
+          <DialogDescription className="text-xs text-slate-500">
+            Prestations commandées via l&apos;app invitée. Confirmez ou annulez les demandes en attente.
+          </DialogDescription>
+        </DialogHeader>
+
+        {!orders ? (
+          <div className="space-y-2.5 py-2" aria-busy="true">
+            <Skeleton className="h-20 rounded-lg" />
+            <Skeleton className="h-20 rounded-lg" />
+          </div>
+        ) : orders.length === 0 ? (
+          <div className="py-8 text-center">
+            <span className="text-3xl" aria-hidden="true">
+              🧾
+            </span>
+            <p className="mt-2 text-sm font-semibold text-slate-700">Aucune commande pour l&apos;instant</p>
+            <p className="mt-1 text-xs text-slate-400">
+              Les commandes passées par vos invités depuis l&apos;app apparaîtront ici.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-2.5">
+            {orders.map((o) => (
+              <div key={o.id} className="bg-slate-50 border border-slate-200 rounded-lg p-3">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <Badge
+                    className={cn(
+                      'text-white border-transparent font-semibold shrink-0',
+                      o.statusBadge,
+                    )}
+                  >
+                    {o.statusEmoji} {o.statusLabel}
+                  </Badge>
+                  <span className="text-[11px] text-slate-400 shrink-0">
+                    {new Date(o.createdAt).toLocaleDateString('fr-FR', {
+                      day: 'numeric',
+                      month: 'short',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </span>
+                </div>
+                <p className="mt-2 text-sm font-bold text-slate-900 leading-snug">{o.itemsSummary}</p>
+                <p className="mt-0.5 text-[11px] text-slate-500">
+                  {o.providerEmoji} {o.providerName} · Invité : {o.guestName}
+                </p>
+                <div className="mt-2 flex items-center justify-between gap-2 flex-wrap">
+                  <span className="text-sm font-bold text-slate-900">{o.totalEur}</span>
+                  {o.status === 'PENDING' && (
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        disabled={patchingId === o.id}
+                        className="h-8 border-emerald-300 text-emerald-700 hover:bg-emerald-50 font-semibold"
+                        onClick={() => onPatch(o.id, 'CONFIRM')}
+                      >
+                        {patchingId === o.id ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+                        ) : (
+                          <Check className="h-3.5 w-3.5" aria-hidden="true" />
+                        )}
+                        Confirmer
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        disabled={patchingId === o.id}
+                        className="h-8 border-red-200 text-red-600 hover:bg-red-50 font-semibold"
+                        onClick={() => onPatch(o.id, 'CANCEL')}
+                      >
+                        <X className="h-3.5 w-3.5" aria-hidden="true" />
+                        Annuler
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// =============================================================
+// Dialog : Paramètres — changement du code PIN hôte.
+// Double saisie sur clavier numérique (nouveau PIN + confirmation,
+// les 2 saisies doivent matcher) → PUT /update { pin, newPin }.
+// Le PIN ne vit QUE le temps de la saisie en mémoire (jamais
+// persisté, jamais affiché) ; après succès, le PIN de session
+// (état parent, en mémoire) est mis à jour.
+// =============================================================
+function SettingsPinDialog({
+  onClose,
+  slug,
+  pin,
+  onPinChanged,
+}: {
+  onClose: () => void;
+  slug: string;
+  pin: string;
+  onPinChanged: (pin: string) => void;
+}) {
+  const [step, setStep] = useState<'new' | 'confirm'>('new');
+  const [hasFirst, setHasFirst] = useState(false); // affichage •••• uniquement
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [keypadKey, setKeypadKey] = useState(0);
+  const firstPinRef = useRef('');
+
+  /** Fermeture : purge immédiate de la première saisie en mémoire. */
+  const close = () => {
+    firstPinRef.current = '';
+    onClose();
+  };
+
+  const handleComplete = async (entered: string) => {
+    if (step === 'new') {
+      firstPinRef.current = entered;
+      setHasFirst(true);
+      setStep('confirm');
+      setError('');
+      setKeypadKey((k) => k + 1); // clavier neuf pour la confirmation
+      return;
+    }
+    if (entered !== firstPinRef.current) {
+      setError('Les deux codes ne correspondent pas. Recommencez.');
+      firstPinRef.current = '';
+      setHasFirst(false);
+      setStep('new');
+      setKeypadKey((k) => k + 1);
+      return;
+    }
+    // Confirmation OK → PUT /update { pin, newPin }
+    setSaving(true);
+    setError('');
+    try {
+      const res = await fetch(`/api/public/hub/${encodeURIComponent(slug)}/update`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin, newPin: entered }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toast.error(json.error || 'Échec du changement de PIN.');
+        setSaving(false);
+        setKeypadKey((k) => k + 1);
+        return;
+      }
+      firstPinRef.current = '';
+      setHasFirst(false);
+      toast.success('PIN modifié ✅', {
+        description: 'Votre nouveau code est actif immédiatement.',
+      });
+      onPinChanged(entered); // le PIN de session (mémoire) passe au nouveau code
+      setSaving(false);
+      onClose();
+    } catch {
+      toast.error('Erreur réseau. Réessayez.');
+      setSaving(false);
+      setKeypadKey((k) => k + 1);
+    }
+  };
+
+  return (
+    <Dialog
+      open
+      onOpenChange={(v) => {
+        if (!v && !saving) close();
+      }}
+    >
+      <DialogContent className="max-w-sm bg-white border border-slate-200 rounded-xl p-6 [&>button]:hidden">
+        <DialogHeader className="items-center text-center">
+          <span className="mx-auto" aria-hidden="true">
+            <EmojiIcon emoji="⚙️" size="lg" variant="dark" />
+          </span>
+          <DialogTitle className="text-lg font-bold text-slate-900 text-center">
+            Modifier le code PIN
+          </DialogTitle>
+          <DialogDescription className="text-sm text-slate-600 text-center">
+            {step === 'new'
+              ? 'Saisissez votre nouveau code à 4 chiffres.'
+              : 'Confirmez le nouveau code en le saisissant à nouveau.'}
+          </DialogDescription>
+        </DialogHeader>
+
+        {saving ? (
+          <div className="flex flex-col items-center gap-3 py-8" aria-busy="true">
+            <Loader2 className="h-8 w-8 animate-spin text-emerald-600" aria-hidden="true" />
+            <p className="text-sm text-slate-500">Enregistrement du nouveau code…</p>
+          </div>
+        ) : (
+          <div className="mt-2">
+            {hasFirst && (
+              <p className="mb-3 text-center text-xs font-semibold text-slate-500" aria-live="polite">
+                Code saisi : <span className="tracking-widest">••••</span>
+              </p>
+            )}
+            <QRTNumericKeypad key={keypadKey} onComplete={handleComplete} />
+            {error && (
+              <p role="alert" className="mt-4 text-center text-sm font-semibold text-red-600">
+                {error}
+              </p>
+            )}
+            <Button
+              type="button"
+              variant="outline"
+              className="mt-4 w-full h-11 border-slate-300 text-slate-600"
+              onClick={close}
+            >
+              Annuler
+            </Button>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

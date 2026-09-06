@@ -8,6 +8,8 @@
 // Les propriétés paramétrées (DTSTART;VALUE=DATE:…) sont gérées.
 // =============================================================
 
+import type { Prisma } from '@prisma/client';
+
 export interface IcalEvent {
   uid: string | null;
   summary: string | null;
@@ -127,13 +129,7 @@ export function normalizeIcalUrl(raw: string): string {
  * Retourne le nombre de réservations écrites.
  */
 export async function upsertIcalBookings(
-  tx: {
-    booking: {
-      findFirst: (q: Record<string, unknown>) => Promise<{ id: string } | null>;
-      create: (q: Record<string, unknown>) => Promise<unknown>;
-      update: (q: Record<string, unknown>) => Promise<unknown>;
-    };
-  },
+  tx: Prisma.TransactionClient,
   propertyId: string,
   events: IcalEvent[],
 ): Promise<number> {

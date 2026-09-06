@@ -524,7 +524,9 @@ export function CalendarContent() {
         open={newOpen}
         onOpenChange={setNewOpen}
         propertyId={property?.id ?? ''}
-        onCreated={() => void loadBookings()}
+        onCreated={() => {
+          void loadBookings();
+        }}
       />
 
       <IcalDialog
@@ -594,7 +596,7 @@ function NewBookingDialog({
   open: boolean;
   onOpenChange: (v: boolean) => void;
   propertyId: string;
-  onCreated: () => Promise<void>;
+  onCreated: () => void | Promise<void>;
 }) {
   const [guestName, setGuestName] = useState('');
   const [guestEmail, setGuestEmail] = useState('');

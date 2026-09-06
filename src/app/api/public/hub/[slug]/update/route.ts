@@ -52,17 +52,38 @@ export async function PUT(
       });
     }
 
-    // ── Find the plaque and home ──
+    // ── Résolution du bien : plaque V1 OU hub du bien (É12, property.qrHubSlug) ──
+    // (AUD-FULL/FIX-1 : même résolution double que GET /host et /complaint —
+    //  les biens créés par wizard n'ont pas de plaque et sont joignables via qrHubSlug)
+    let propertyId: string | null = null;
     const plaque = await db.physicalQrCode.findUnique({
       where: { hubSlug: slug },
+      select: { propertyId: true, isClaimed: true, status: true },
     });
-
-    if (!plaque || !plaque.isClaimed || !plaque.propertyId) {
-      return NextResponse.json({ error: 'Hub non trouvé' }, { status: 404 });
+    if (plaque) {
+      if (!plaque.isClaimed || !plaque.propertyId) {
+        return NextResponse.json({ error: 'Hub non trouvé' }, { status: 404 });
+      }
+      if (plaque.status !== 'active') {
+        return NextResponse.json({ error: 'Cette plaque QR est désactivée.' }, { status: 410 });
+      }
+      propertyId = plaque.propertyId;
+    } else {
+      const propertyBySlug = await db.property.findUnique({
+        where: { qrHubSlug: slug },
+        select: { id: true, isActive: true },
+      });
+      if (!propertyBySlug) {
+        return NextResponse.json({ error: 'Hub non trouvé' }, { status: 404 });
+      }
+      if (!propertyBySlug.isActive) {
+        return NextResponse.json({ error: 'Ce bien a été désactivé par son hôte.' }, { status: 410 });
+      }
+      propertyId = propertyBySlug.id;
     }
 
     const home = await db.property.findUnique({
-      where: { id: plaque.propertyId },
+      where: { id: propertyId },
       select: { id: true, pinHash: true },
     });
 

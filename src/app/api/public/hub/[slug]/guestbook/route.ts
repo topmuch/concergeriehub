@@ -69,13 +69,34 @@ export async function POST(
       return NextResponse.json({ success: true });
     }
 
-    // ── Find the plaque and home ──
+    // ── Résolution du bien : plaque V1 OU hub du bien (É12, property.qrHubSlug) ──
+    // (AUD-FULL/FIX-1 : les biens wizard n'ont pas de plaque, résolution double
+    //  identique à GET /host et /complaint)
+    let propertyId: string | null = null;
     const plaque = await db.physicalQrCode.findUnique({
       where: { hubSlug: slug },
+      select: { propertyId: true, isClaimed: true, status: true },
     });
-
-    if (!plaque || !plaque.isClaimed || !plaque.propertyId) {
-      return NextResponse.json({ error: 'Hub non trouvé' }, { status: 404 });
+    if (plaque) {
+      if (!plaque.isClaimed || !plaque.propertyId) {
+        return NextResponse.json({ error: 'Hub non trouvé' }, { status: 404 });
+      }
+      if (plaque.status !== 'active') {
+        return NextResponse.json({ error: 'Cette plaque QR est désactivée.' }, { status: 410 });
+      }
+      propertyId = plaque.propertyId;
+    } else {
+      const propertyBySlug = await db.property.findUnique({
+        where: { qrHubSlug: slug },
+        select: { id: true, isActive: true },
+      });
+      if (!propertyBySlug) {
+        return NextResponse.json({ error: 'Hub non trouvé' }, { status: 404 });
+      }
+      if (!propertyBySlug.isActive) {
+        return NextResponse.json({ error: 'Ce bien a été désactivé par son hôte.' }, { status: 410 });
+      }
+      propertyId = propertyBySlug.id;
     }
 
     // ── Verify the QR code exists and belongs to this home ──
@@ -84,7 +105,7 @@ export async function POST(
       select: { id: true, propertyId: true },
     });
 
-    if (!qrCode || qrCode.propertyId !== plaque.propertyId) {
+    if (!qrCode || qrCode.propertyId !== propertyId) {
       return NextResponse.json(
         { error: 'Code QR non trouvé pour ce logement' },
         { status: 404 }

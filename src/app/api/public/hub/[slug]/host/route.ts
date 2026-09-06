@@ -16,6 +16,9 @@ import { rateLimit } from '@/lib/rate-limit';
 //  - openComplaints : nb de réclamations écrites OPEN (badge)
 //  - pendingRequests : demandes de service en attente
 //  - providers : prestataires dans le rayon (2 audiences)
+//  - guidebook : contenu éditable du Guidebook (QrCode 'home_manual',
+//    même parse de contentJson que /view — title + body découpé
+//    en sections par double saut de ligne)
 // =============================================================
 
 const DEMO_SLUG = 'demo-hub';
@@ -100,6 +103,15 @@ export async function POST(
         ],
         openComplaints: 2,
         pendingRequests: 1,
+        guidebook: {
+          qrCodeId: 'fqr-guide-1',
+          title: 'Guide de bienvenue — Le Petit Nid',
+          sections: [
+            "👋 Bienvenue ! La clé se trouve dans la boîte à clés, l'appartement est au 2e étage porte de gauche.",
+            '🔑 Accès\n\nBoîte à clés : code fourni par SMS. Poussez fort la poignée en tournant à gauche.',
+            '🥐 Bonnes adresses\n\nBoulangerie à 50 m à gauche en sortant, marché le dimanche matin.',
+          ],
+        },
         providers: [
           { id: 'p1', name: 'CleanSuite Paris', emoji: '🧹', categoryLabel: 'Ménage', distanceKm: 2.1, audience: 'OWNER_SERVICE', priceLabel: 'dès 28,00 €' },
           { id: 'p2', name: 'Morning Box Paris', emoji: '🥐', categoryLabel: 'Petit-déjeuner', distanceKm: 0.7, audience: 'GUEST_EXPERIENCE', priceLabel: 'dès 12,00 €' },
@@ -184,6 +196,23 @@ export async function POST(
         }
       : null;
 
+    // ── Guidebook (QrCode 'home_manual' actif) — même parse que /view :
+    //    { title, body } avec sections séparées par un double saut de ligne.
+    //    (AUD-FULL ⑥ : module d'édition du mode Hôte.)
+    const guidebookQr = await db.qrCode.findFirst({
+      where: { propertyId: property.id, type: 'home_manual', isActive: true },
+      orderBy: { createdAt: 'asc' },
+      include: { content: { select: { contentJson: true } } },
+    });
+    const guidebookContent = guidebookQr ? parseContent(guidebookQr.content?.contentJson) : {};
+    const guidebookBody =
+      (guidebookContent.body as string) || (guidebookContent.text as string) || '';
+    const guidebook = {
+      qrCodeId: guidebookQr?.id ?? null,
+      title: (guidebookContent.title as string) || 'Guide de bienvenue',
+      sections: guidebookBody.split('\n\n').filter((s) => s.trim().length > 0),
+    };
+
     // ── Réclamations vocales : messages invités non lus ──
     const unreadMessages = await db.voiceMessage.findMany({
       where: { propertyId: property.id, senderType: 'guest', isRead: false },
@@ -265,6 +294,7 @@ export async function POST(
       })),
       openComplaints,
       pendingRequests,
+      guidebook,
       providers,
     });
   } catch (error) {

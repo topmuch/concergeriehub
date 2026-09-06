@@ -1,11 +1,12 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { BrandLogo } from '@/components/ui/brand-logo';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { providerCategoryMeta } from '@/lib/b2b';
 import { ORDER_STATUS_META, ORDER_TRANSITIONS, formatEur2, type OrderStatus } from '@/lib/orders';
 
@@ -66,6 +67,29 @@ interface ApiResponse {
   };
   error?: string;
 }
+
+// ---------- FIX-4 : documents de vérification (convention API) ----------
+type VerificationDocKind = 'KBIS' | 'ASSURANCE' | 'OTHER';
+type VerificationDocStatus = 'PENDING' | 'VERIFIED' | 'REJECTED';
+
+interface VerificationDocumentDTO {
+  id: string;
+  kind: VerificationDocKind;
+  name: string;
+  url: string;
+  uploadedAt: string;
+  status: VerificationDocStatus;
+}
+
+const DOC_KIND_META: Record<VerificationDocKind, { label: string; emoji: string }> = {
+  KBIS: { label: 'Kbis', emoji: '🏛️' },
+  ASSURANCE: { label: 'Assurance', emoji: '🛡️' },
+  OTHER: { label: 'Autre', emoji: '📎' },
+};
+
+/** Garde-fous côté client (le serveur re-valide tout) : MIME + 5 Mo. */
+const DOC_MAX_SIZE = 5 * 1024 * 1024;
+const DOC_ALLOWED_MIME = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
 
 /** Label court de la prochaine étape de cycle de vie. */
 const NEXT_ACTION_LABEL: Partial<Record<OrderStatus, string>> = {
@@ -175,12 +199,228 @@ function ConnectBanner({
   );
 }
 
+/** Badge statut d'un document de vérification. */
+function DocumentStatusBadge({ status }: { status: VerificationDocStatus }) {
+  if (status === 'VERIFIED') {
+    return (
+      <Badge className="bg-emerald-100 text-emerald-800 border border-emerald-300 text-[10px] px-2">
+        ✓ Validé
+      </Badge>
+    );
+  }
+  if (status === 'REJECTED') {
+    return (
+      <Badge className="bg-rose-100 text-rose-700 border border-rose-300 text-[10px] px-2">
+        ✕ Rejeté
+      </Badge>
+    );
+  }
+  return (
+    <Badge className="bg-amber-100 text-amber-800 border border-amber-300 text-[10px] px-2">
+      ⏳ En attente
+    </Badge>
+  );
+}
+
+/**
+ * FIX-4 — Carte « 📄 Documents de vérification » du portail prestataire :
+ * liste des documents avec badges statut + upload (type + fichier) avec
+ * validation client (MIME + 5 Mo — le serveur re-valide tout).
+ * Bandeau explicatif : la vérification est faite par l'équipe Conciergerie Hub.
+ */
+function VerificationDocumentsCard({
+  documents,
+  loading,
+  isVerified,
+  onUploaded,
+}: {
+  documents: VerificationDocumentDTO[] | null;
+  loading: boolean;
+  isVerified: boolean;
+  onUploaded: () => Promise<void> | void;
+}) {
+  const [docKind, setDocKind] = useState<VerificationDocKind>('KBIS');
+  const [docFile, setDocFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  /** Validation client — mêmes règles que le serveur (défense en profondeur). */
+  const validateFile = (file: File): boolean => {
+    if (!DOC_ALLOWED_MIME.includes(file.type)) {
+      toast.error('Format non supporté — PDF, JPG, PNG ou WebP uniquement.');
+      return false;
+    }
+    if (file.size > DOC_MAX_SIZE) {
+      toast.error('Fichier trop volumineux (max 5 Mo).');
+      return false;
+    }
+    return true;
+  };
+
+  const handleUpload = async () => {
+    if (!docFile) {
+      toast.error('Choisissez un fichier à envoyer.');
+      return;
+    }
+    if (!validateFile(docFile)) return;
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', docFile);
+      fd.append('kind', docKind);
+      const res = await fetch('/api/provider/documents', { method: 'POST', body: fd });
+      const json = (await res.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
+      if (!res.ok || !json?.ok) {
+        toast.error(json?.error || "L'envoi a échoué. Réessayez.");
+        return;
+      }
+      toast.success('📄 Document envoyé — en attente de vérification.');
+      setDocFile(null);
+      if (fileRef.current) fileRef.current.value = '';
+      await onUploaded();
+    } catch {
+      toast.error('Connexion impossible. Réessayez.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const maxReached = (documents?.length ?? 0) >= 5;
+
+  return (
+    <section
+      aria-label="Documents de vérification"
+      className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 space-y-4"
+    >
+      {/* En-tête + état du badge profil */}
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-sm font-bold text-slate-900">
+            📄 Documents de vérification
+          </h2>
+          <p className="mt-1 text-xs leading-relaxed text-slate-500">
+            Vos documents sont vérifiés par l&apos;équipe Conciergerie Hub. Une fois validés,
+            votre profil affiche le badge ✓ Vérifié.
+          </p>
+        </div>
+        {isVerified && (
+          <Badge className="bg-emerald-100 text-emerald-800 border border-emerald-300 text-[10px] px-2 shrink-0">
+            ✓ Vérifié
+          </Badge>
+        )}
+      </div>
+
+      {/* Liste des documents */}
+      {loading && !documents ? (
+        <div className="space-y-2" aria-busy="true">
+          <Skeleton className="h-14 rounded-lg" />
+          <Skeleton className="h-14 rounded-lg" />
+        </div>
+      ) : !documents || documents.length === 0 ? (
+        <p className="rounded-lg border border-dashed border-slate-300 bg-slate-50 px-3 py-5 text-center text-xs text-slate-500">
+          Aucun document fourni — ajoutez votre Kbis et votre attestation d&apos;assurance
+          pour accélérer la vérification.
+        </p>
+      ) : (
+        <ul className="divide-y divide-slate-100">
+          {documents.map((doc) => {
+            const kindMeta = DOC_KIND_META[doc.kind];
+            return (
+              <li key={doc.id} className="py-2.5 flex items-center gap-3">
+                <span className="text-lg shrink-0" aria-hidden="true">{kindMeta.emoji}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-slate-900">{kindMeta.label}</p>
+                  <p className="text-[11px] text-slate-500 truncate">
+                    {doc.name} · envoyé le {formatDocDate(doc.uploadedAt)}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <DocumentStatusBadge status={doc.status} />
+                  <a
+                    href={doc.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[11px] font-semibold text-slate-500 underline underline-offset-2 hover:text-slate-900"
+                    aria-label={`Ouvrir le document ${kindMeta.label}`}
+                  >
+                    Voir
+                  </a>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      {/* Upload — masqué au-delà de la limite de 5 documents */}
+      {maxReached ? (
+        <p className="rounded-lg bg-amber-50 border border-amber-300 px-3 py-2 text-xs text-amber-800">
+          Limite de 5 documents atteinte — contactez l&apos;équipe si vous devez remplacer
+          un document.
+        </p>
+      ) : (
+        <div className="border-t border-slate-100 pt-4 space-y-2">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+            Ajouter un document ({documents?.length ?? 0}/5)
+          </p>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+            <Select value={docKind} onValueChange={(v) => setDocKind(v as VerificationDocKind)}>
+              <SelectTrigger
+                aria-label="Type de document"
+                className="w-full sm:w-44 bg-white shrink-0"
+              >
+                <SelectValue placeholder="Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="KBIS">🏛️ Kbis</SelectItem>
+                <SelectItem value="ASSURANCE">🛡️ Assurance</SelectItem>
+                <SelectItem value="OTHER">📎 Autre</SelectItem>
+              </SelectContent>
+            </Select>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="application/pdf,image/jpeg,image/png,image/webp"
+              onChange={(e) => {
+                const f = e.target.files?.[0] ?? null;
+                if (f && !validateFile(f)) {
+                  e.target.value = '';
+                  setDocFile(null);
+                  return;
+                }
+                setDocFile(f);
+              }}
+              aria-label="Fichier du document (PDF, JPG, PNG ou WebP — 5 Mo max)"
+              className="block w-full min-w-0 flex-1 text-xs text-slate-600 file:mr-3 file:rounded-md file:border-0 file:bg-slate-100 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-slate-700 hover:file:bg-slate-200"
+            />
+            <Button
+              onClick={handleUpload}
+              disabled={uploading || !docFile}
+              className="bg-slate-900 hover:bg-slate-800 text-white font-semibold min-h-[44px] sm:min-h-0 shrink-0"
+            >
+              {uploading ? 'Envoi…' : 'Envoyer'}
+            </Button>
+          </div>
+          <p className="text-[11px] text-slate-400">
+            PDF, JPG, PNG ou WebP — 5 Mo max. Statut initial : « En attente ».
+          </p>
+        </div>
+      )}
+    </section>
+  );
+}
+
 export function ProviderDashboard() {
   const [data, setData] = useState<ApiResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [busyId, setBusyId] = useState<string | null>(null);
   const [connectBusy, setConnectBusy] = useState(false);
+
+  // ----- FIX-4 : documents de vérification -----
+  const [documents, setDocuments] = useState<VerificationDocumentDTO[] | null>(null);
+  const [docsLoading, setDocsLoading] = useState(true);
+  const [docVerified, setDocVerified] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -208,6 +448,35 @@ export function ProviderDashboard() {
     }, 0);
     return () => clearTimeout(t);
   }, [load]);
+
+  /** FIX-4 — charge les documents de vérification (GET dédié, identité
+   *  résolue serveur via la session). */
+  const loadDocuments = useCallback(async () => {
+    setDocsLoading(true);
+    try {
+      const res = await fetch('/api/provider/documents', { cache: 'no-store' });
+      const json = (await res.json().catch(() => null)) as
+        | { documents?: VerificationDocumentDTO[]; isVerified?: boolean; error?: string }
+        | null;
+      if (!res.ok || !json) {
+        setDocuments(null);
+        return;
+      }
+      setDocuments(Array.isArray(json.documents) ? json.documents : []);
+      setDocVerified(Boolean(json.isVerified));
+    } catch {
+      setDocuments(null);
+    } finally {
+      setDocsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      loadDocuments();
+    }, 0);
+    return () => clearTimeout(t);
+  }, [loadDocuments]);
 
   // ÉTAPE 20 — retour d'onboarding Stripe (?connect=success|refresh) :
   // statut rafraîchi + notification, puis nettoyage de l'URL.
@@ -378,6 +647,14 @@ export function ProviderDashboard() {
                 <ConnectBanner connect={data.connect} onStart={startConnect} busy={connectBusy} />
               )}
 
+              {/* ----- Documents de vérification (FIX-4) ----- */}
+              <VerificationDocumentsCard
+                documents={documents}
+                loading={docsLoading}
+                isVerified={docVerified}
+                onUploaded={loadDocuments}
+              />
+
               {/* ----- Liste des commandes ----- */}
               {data.orders.length === 0 ? (
                 <div className="bg-white border border-slate-200 rounded-xl p-10 text-center">
@@ -546,6 +823,15 @@ function LoadingSkeleton() {
 function formatFr(iso: string): string {
   try {
     return new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  } catch {
+    return iso;
+  }
+}
+
+/** FIX-4 — date courte FR pour l'affichage des documents. */
+function formatDocDate(iso: string): string {
+  try {
+    return new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
   } catch {
     return iso;
   }

@@ -1,8 +1,15 @@
 // =============================================================
 // /api/admin/providers-admin/[id] — ÉTAPE 9
 //
+// GET    : documents de vérification d'un prestataire + état du
+//          badge (FIX-4 — alimente la section « Documents de
+//          vérification » de la fiche Superadmin ; la liste
+//          GET /api/admin/providers-admin n'expose pas ce JSON).
 // PATCH  : modification d'un prestataire (géoloc, audience,
 //          statut actif/inactif, champs métier).
+//          + FIX-4 (AUD-FULL ⑤) : action 'review-document' —
+//          review d'un document de vérification (Kbis/assurance)
+//          avec pilotage automatique du badge isVerified.
 // DELETE : suppression — supprime le Provider ET le User porteur
 //          en transaction (les demandes de service liées partent
 //          en cascade).
@@ -15,7 +22,52 @@ import { db } from '@/lib/db';
 import { PROVIDER_AUDIENCES } from '@/lib/b2b';
 import { logAudit, clientIp } from '@/lib/audit';
 
+// ---------- FIX-4 : convention documents de vérification ----------
+// (identique à /api/provider/documents)
+type DocumentKind = 'KBIS' | 'ASSURANCE' | 'OTHER';
+type DocumentStatus = 'PENDING' | 'VERIFIED' | 'REJECTED';
+
+interface VerificationDocument {
+  id: string;
+  kind: DocumentKind;
+  name: string;
+  url: string;
+  uploadedAt: string;
+  status: DocumentStatus;
+}
+
+const DOCUMENT_KINDS: DocumentKind[] = ['KBIS', 'ASSURANCE', 'OTHER'];
+const DOCUMENT_STATUSES: DocumentStatus[] = ['PENDING', 'VERIFIED', 'REJECTED'];
+
+/** Parse défensif du JSON-as-string (champ Provider.verificationDocuments).
+ *  Les entrées incomplètes/corrompues sont ignorées, jamais throw. */
+function parseVerificationDocuments(raw: string | null | undefined): VerificationDocument[] {
+  try {
+    const arr = JSON.parse(raw ?? '[]') as unknown;
+    if (!Array.isArray(arr)) return [];
+    return arr.filter((d): d is VerificationDocument => {
+      if (typeof d !== 'object' || d === null) return false;
+      const doc = d as Partial<VerificationDocument>;
+      return (
+        typeof doc.id === 'string' &&
+        DOCUMENT_KINDS.includes(doc.kind as DocumentKind) &&
+        typeof doc.name === 'string' &&
+        typeof doc.url === 'string' &&
+        typeof doc.uploadedAt === 'string' &&
+        DOCUMENT_STATUSES.includes(doc.status as DocumentStatus)
+      );
+    });
+  } catch {
+    return [];
+  }
+}
+
 interface UpdateBody {
+  // --- action spéciale FIX-4 (review d'un document) ---
+  action?: string;
+  documentId?: string;
+  decision?: string;
+  // --- champs classiques (ÉTAPE 9, inchangés) ---
   businessName?: string;
   category?: string;
   subcategory?: string | null;
@@ -30,6 +82,101 @@ interface UpdateBody {
   isVerified?: boolean;
   isActive?: boolean;
   portfolioImages?: string[];
+}
+
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const admin = await requireSuperadmin();
+  if (!admin) return adminUnauthorized();
+
+  try {
+    const { id } = await params;
+    const provider = await db.provider.findUnique({
+      where: { id },
+      select: { id: true, isVerified: true, verificationDocuments: true },
+    });
+    if (!provider) {
+      return NextResponse.json({ error: 'Prestataire introuvable' }, { status: 404 });
+    }
+    return NextResponse.json({
+      isVerified: provider.isVerified,
+      documents: parseVerificationDocuments(provider.verificationDocuments),
+    });
+  } catch (error) {
+    console.error('[GET /api/admin/providers-admin/[id]] Error:', error);
+    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
+  }
+}
+
+/** FIX-4 — review d'un document de vérification (action PATCH dédiée).
+ *  Met à jour le status du document DANS le JSON (reste intact), puis
+ *  applique la règle badge : décision REJECTED → isVerified false ;
+ *  décision VERIFIED et tous les documents validés → isVerified true.
+ *  Les actions classiques (champs, isVerified toggle…) restent inchangées. */
+async function handleReviewDocument(
+  req: NextRequest,
+  admin: { id: string; email: string; name: string | null },
+  id: string,
+  body: UpdateBody
+) {
+  const documentId = typeof body.documentId === 'string' ? body.documentId.trim() : '';
+  const decision = body.decision;
+  if (!documentId) {
+    return NextResponse.json({ error: 'Identifiant de document manquant' }, { status: 400 });
+  }
+  if (decision !== 'VERIFIED' && decision !== 'REJECTED') {
+    return NextResponse.json({ error: 'Décision invalide (VERIFIED ou REJECTED)' }, { status: 400 });
+  }
+
+  const provider = await db.provider.findUnique({
+    where: { id },
+    select: { id: true, verificationDocuments: true },
+  });
+  if (!provider) {
+    return NextResponse.json({ error: 'Prestataire introuvable' }, { status: 404 });
+  }
+
+  const documents = parseVerificationDocuments(provider.verificationDocuments);
+  const doc = documents.find((d) => d.id === documentId);
+  if (!doc) {
+    return NextResponse.json({ error: 'Document introuvable' }, { status: 404 });
+  }
+
+  // Mise à jour du status du document seul — le reste du JSON est intact
+  doc.status = decision as DocumentStatus;
+
+  // Règle badge : REJECTED → false ; VERIFIED + aucun PENDING/REJECTED
+  // (≥1 document garanti ici) → true ; sinon on ne touche pas au badge.
+  const allVerified = documents.every((d) => d.status === 'VERIFIED');
+  const data: Record<string, unknown> = {
+    verificationDocuments: JSON.stringify(documents),
+  };
+  if (decision === 'REJECTED') {
+    data.isVerified = false;
+  } else if (allVerified) {
+    data.isVerified = true;
+  }
+
+  const updated = await db.provider.update({ where: { id }, data, select: { isVerified: true } });
+
+  await logAudit({
+    actor: admin,
+    action: 'provider.document.review',
+    entityType: 'provider',
+    entityId: id,
+    details: {
+      documentId,
+      decision,
+      kind: doc.kind,
+      name: doc.name,
+      documentsCount: documents.length,
+    },
+    ip: clientIp(req.headers),
+  });
+
+  return NextResponse.json({ ok: true, documents, isVerified: updated.isVerified });
 }
 
 export async function PATCH(
@@ -47,6 +194,12 @@ export async function PATCH(
     }
 
     const body = (await req.json()) as UpdateBody;
+
+    // --- FIX-4 : action 'review-document' (branche dédiée, court-circuit) ---
+    if (body.action === 'review-document') {
+      return await handleReviewDocument(req, admin, id, body);
+    }
+
     const data: Record<string, unknown> = {};
 
     if (body.businessName !== undefined) {

@@ -22,6 +22,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Table,
@@ -117,6 +127,10 @@ export function AdminTransactionsContent() {
   const [payoutAmount, setPayoutAmount] = useState('');
   const [payoutBusy, setPayoutBusy] = useState(false);
 
+  // AUD-FULL ④ — Remboursement Superadmin (moteur /api/admin/orders/[id]/refund)
+  const [refundTarget, setRefundTarget] = useState<OrderRow | null>(null);
+  const [refundBusy, setRefundBusy] = useState(false);
+
   const fetchOrders = useCallback(async () => {
     setLoading(true);
     try {
@@ -171,6 +185,30 @@ export function AdminTransactionsContent() {
       toast.error(err instanceof Error ? err.message : 'Erreur inconnue');
     } finally {
       setPayoutBusy(false);
+    }
+  };
+
+  // Remboursement total de la commande via le moteur partagé avec la
+  // route hôte (Stripe réel si clé configurée, sinon mode démo tracé).
+  const refundOrder = async () => {
+    if (!refundTarget) return;
+    setRefundBusy(true);
+    try {
+      const res = await fetch(`/api/admin/orders/${refundTarget.id}/refund`, { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Erreur serveur');
+      const amount = data.refund?.totalAmount ?? refundTarget.totalAmount;
+      toast.success(
+        data.refund?.mode === 'stripe'
+          ? `Remboursement Stripe de ${Number(amount).toFixed(2)} € effectué`
+          : `Remboursement de ${Number(amount).toFixed(2)} € enregistré (mode démo — sans clé Stripe)`,
+      );
+      setRefundTarget(null);
+      fetchOrders(); // refetch : statut + KPIs finance recalculés
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erreur inconnue');
+    } finally {
+      setRefundBusy(false);
     }
   };
 
@@ -238,6 +276,7 @@ export function AdminTransactionsContent() {
                         <TableHead className="hidden md:table-cell">Commission</TableHead>
                         <TableHead>Paiement</TableHead>
                         <TableHead className="hidden lg:table-cell">Date</TableHead>
+                        <TableHead className="w-32">Action</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -250,7 +289,14 @@ export function AdminTransactionsContent() {
                               <p className="max-w-56 truncate text-xs text-slate-500">{o.itemSummary}</p>
                             </TableCell>
                             <TableCell className="text-sm">{o.provider.businessName}</TableCell>
-                            <TableCell className="text-sm font-bold">{o.totalAmount.toFixed(2)} €</TableCell>
+                            <TableCell className="text-sm font-bold">
+                              <span className={o.paymentStatus === 'REFUNDED' ? 'text-slate-400 line-through' : ''}>
+                                {o.totalAmount.toFixed(2)} €
+                              </span>
+                              {o.paymentStatus === 'REFUNDED' && (
+                                <p className="text-xs font-normal text-slate-400">Remboursée au client</p>
+                              )}
+                            </TableCell>
                             <TableCell className="hidden text-sm text-slate-500 md:table-cell">
                               {o.commission.toFixed(2)} €
                             </TableCell>
@@ -261,6 +307,22 @@ export function AdminTransactionsContent() {
                             </TableCell>
                             <TableCell className="hidden text-sm text-slate-500 lg:table-cell">
                               {format(new Date(o.createdAt), 'dd MMM yyyy', { locale: fr })}
+                            </TableCell>
+                            <TableCell>
+                              {/* 💸 Rembourser : uniquement une commande PAID (le
+                                  moteur refuse UNPAID/FAILED/REFUNDED en 409). */}
+                              {o.paymentStatus === 'PAID' ? (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="border-red-200 text-red-700 hover:bg-red-50 hover:text-red-800"
+                                  onClick={() => setRefundTarget(o)}
+                                >
+                                  💸 Rembourser
+                                </Button>
+                              ) : (
+                                <span className="text-slate-300">—</span>
+                              )}
                             </TableCell>
                           </TableRow>
                         );
@@ -415,6 +477,50 @@ export function AdminTransactionsContent() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* ----- Confirmation remboursement (irréversible) ----- */}
+      <AlertDialog open={refundTarget !== null} onOpenChange={(o) => !o && setRefundTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>💸 Rembourser cette commande ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Remboursement total via Stripe sur le paiement d&apos;origine.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm">
+            <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5">
+              <dt className="font-medium text-slate-500">Invité</dt>
+              <dd className="font-semibold text-slate-900">{refundTarget?.guestName}</dd>
+              <dt className="font-medium text-slate-500">Service</dt>
+              <dd className="max-w-64 truncate font-semibold text-slate-900">{refundTarget?.itemSummary}</dd>
+              <dt className="font-medium text-slate-500">Prestataire</dt>
+              <dd className="font-semibold text-slate-900">{refundTarget?.provider.businessName}</dd>
+              <dt className="font-medium text-slate-500">Montant total</dt>
+              <dd className="text-base font-extrabold text-slate-900">
+                {refundTarget?.totalAmount.toFixed(2)} €
+              </dd>
+            </dl>
+          </div>
+          <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700">
+            ⚠️ Le remboursement Stripe est irréversible. La Transaction d&apos;origine passera au statut « refunded ».
+            {" "}Sans clé Stripe configurée, le remboursement est tracé en mode démo (états basculés en base, sans appel Stripe).
+          </p>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={refundBusy}>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={(e) => {
+                e.preventDefault();
+                if (refundTarget) refundOrder();
+              }}
+              disabled={refundBusy}
+            >
+              {refundBusy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Confirmer le remboursement
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

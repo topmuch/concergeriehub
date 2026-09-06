@@ -107,6 +107,46 @@ const EMPTY_FORM: ProviderForm = {
   portfolioText: '',
 };
 
+// ---------- FIX-4 : documents de vérification (convention API) ----------
+type VerificationDocKind = 'KBIS' | 'ASSURANCE' | 'OTHER';
+type VerificationDocStatus = 'PENDING' | 'VERIFIED' | 'REJECTED';
+
+interface VerificationDocument {
+  id: string;
+  kind: VerificationDocKind;
+  name: string;
+  url: string;
+  uploadedAt: string;
+  status: VerificationDocStatus;
+}
+
+const DOC_KIND_META: Record<VerificationDocKind, { label: string; emoji: string }> = {
+  KBIS: { label: 'Kbis', emoji: '🏛️' },
+  ASSURANCE: { label: 'Assurance', emoji: '🛡️' },
+  OTHER: { label: 'Autre', emoji: '📎' },
+};
+
+const DOC_STATUS_META: Record<VerificationDocStatus, { label: string; cls: string }> = {
+  PENDING: { label: 'En attente', cls: 'bg-amber-50 border-amber-300 text-amber-800' },
+  VERIFIED: { label: 'Validé', cls: 'bg-emerald-50 border-emerald-300 text-emerald-700' },
+  REJECTED: { label: 'Rejeté', cls: 'bg-red-50 border-red-200 text-red-600' },
+};
+
+/** Parse défensif côté client (l'API filtre déjà strictement). */
+function parseVerificationDocuments(raw: unknown): VerificationDocument[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.filter(
+    (d): d is VerificationDocument =>
+      typeof d === 'object' &&
+      d !== null &&
+      typeof (d as VerificationDocument).id === 'string' &&
+      typeof (d as VerificationDocument).url === 'string' &&
+      typeof (d as VerificationDocument).uploadedAt === 'string' &&
+      (d as VerificationDocument).kind in DOC_KIND_META &&
+      (d as VerificationDocument).status in DOC_STATUS_META,
+  );
+}
+
 export function AdminProvidersContent() {
   const [providers, setProviders] = useState<ProviderRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -126,6 +166,11 @@ export function AdminProvidersContent() {
   const [deleteTarget, setDeleteTarget] = useState<ProviderRow | null>(null);
   const [deleting, setDeleting] = useState(false);
 
+  // ----- FIX-4 : documents de vérification (fiche d'édition) -----
+  const [documents, setDocuments] = useState<VerificationDocument[] | null>(null);
+  const [docsLoading, setDocsLoading] = useState(false);
+  const [reviewingDocId, setReviewingDocId] = useState<string | null>(null);
+
   const load = useCallback(async () => {
     setLoading(true);
     setError('');
@@ -144,6 +189,26 @@ export function AdminProvidersContent() {
   useEffect(() => {
     load();
   }, [load]);
+
+  // ----- FIX-4 : charge les documents du prestataire ouvert dans la Sheet
+  // (GET /api/admin/providers-admin/[id] — la liste n'expose pas ce JSON)
+  // et resynchronise le switch « Vérifié » du formulaire avec le badge réel.
+  const fetchDocuments = useCallback(async (providerId: string) => {
+    setDocsLoading(true);
+    try {
+      const res = await fetch(`/api/admin/providers-admin/${providerId}`);
+      if (!res.ok) throw new Error('http');
+      const json = (await res.json()) as { documents?: unknown; isVerified?: boolean };
+      setDocuments(parseVerificationDocuments(json.documents));
+      if (typeof json.isVerified === 'boolean') {
+        setForm((f) => ({ ...f, isVerified: json.isVerified as boolean }));
+      }
+    } catch {
+      setDocuments(null);
+    } finally {
+      setDocsLoading(false);
+    }
+  }, []);
 
   // ----- Filtres -----
   const filtered = useMemo(() => {
@@ -184,6 +249,7 @@ export function AdminProvidersContent() {
     setEditingId(null);
     setForm(EMPTY_FORM);
     setFormError('');
+    setDocuments(null); // pas de fiche existante → pas de documents
     setDialogOpen(true);
   };
 
@@ -207,6 +273,35 @@ export function AdminProvidersContent() {
     });
     setFormError('');
     setDialogOpen(true);
+    void fetchDocuments(p.id);
+  };
+
+  // ---------- FIX-4 : review d'un document (✓ Valider / ✕ Rejeter) ----------
+  const reviewDocument = async (doc: VerificationDocument, decision: 'VERIFIED' | 'REJECTED') => {
+    if (!editingId) return;
+    setReviewingDocId(doc.id);
+    try {
+      const res = await fetch(`/api/admin/providers-admin/${editingId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'review-document', documentId: doc.id, decision }),
+      });
+      const json = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) throw new Error(json.error ?? 'Erreur serveur');
+      toast.success(
+        decision === 'VERIFIED'
+          ? `${DOC_KIND_META[doc.kind].label} validé ✅`
+          : `${DOC_KIND_META[doc.kind].label} rejeté`,
+        { description: 'Le badge ✓ Vérifié du prestataire est recalculé automatiquement.' },
+      );
+      // Refetch : documents + fiche (badge) + liste (badge inline)
+      await fetchDocuments(editingId);
+      await load();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'La review a échoué.');
+    } finally {
+      setReviewingDocId(null);
+    }
   };
 
   // ---------- Formulaire : soumission ----------
@@ -739,6 +834,104 @@ export function AdminProvidersContent() {
               </div>
             </fieldset>
 
+            {/* ----- FIX-4 : Documents de vérification (fiche existante uniquement) ----- */}
+            {editingId ? (
+              <section
+                aria-label="Documents de vérification"
+                className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                    📄 Documents de vérification
+                  </h3>
+                  {documents && documents.length > 0 && (
+                    <span className="text-[11px] text-slate-400">
+                      {documents.length}/5
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  Uploadés par le prestataire depuis son portail. Validez ou rejetez chaque
+                  document — le badge ✓ Vérifié est recalculé automatiquement.
+                </p>
+
+                {docsLoading && !documents ? (
+                  <div className="space-y-2" aria-busy="true">
+                    <Skeleton className="h-12 rounded-lg" />
+                    <Skeleton className="h-12 rounded-lg" />
+                  </div>
+                ) : !documents || documents.length === 0 ? (
+                  <p className="rounded-lg border border-dashed border-slate-300 bg-white px-3 py-4 text-center text-xs text-slate-500">
+                    Aucun document fourni
+                  </p>
+                ) : (
+                  <ul className="space-y-2">
+                    {documents.map((doc) => {
+                      const kindMeta = DOC_KIND_META[doc.kind];
+                      const statusMeta = DOC_STATUS_META[doc.status];
+                      const busy = reviewingDocId === doc.id;
+                      return (
+                        <li
+                          key={doc.id}
+                          className="rounded-lg border border-slate-200 bg-white p-3 flex flex-col gap-2"
+                        >
+                          <div className="flex items-start justify-between gap-2 flex-wrap">
+                            <div className="min-w-0">
+                              <p className="text-sm font-semibold text-slate-900 flex items-center gap-1.5">
+                                <span aria-hidden="true">{kindMeta.emoji}</span> {kindMeta.label}
+                              </p>
+                              <p className="text-[11px] text-slate-500 mt-0.5 truncate max-w-full">
+                                {doc.name} · {formatFrDate(doc.uploadedAt)}
+                              </p>
+                            </div>
+                            <Badge variant="outline" className={`${statusMeta.cls} border font-semibold shrink-0`}>
+                              {statusMeta.label}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center justify-between gap-2 flex-wrap">
+                            <a
+                              href={doc.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs font-semibold text-slate-600 underline underline-offset-2 hover:text-slate-900"
+                            >
+                              Voir le document ↗
+                            </a>
+                            <div className="flex items-center gap-1.5">
+                              <Button
+                                type="button"
+                                size="sm"
+                                disabled={busy || doc.status === 'VERIFIED'}
+                                onClick={() => reviewDocument(doc, 'VERIFIED')}
+                                className="h-8 text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
+                              >
+                                ✓ Valider
+                              </Button>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                disabled={busy || doc.status === 'REJECTED'}
+                                onClick={() => reviewDocument(doc, 'REJECTED')}
+                                className="h-8 text-xs text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 bg-white"
+                              >
+                                ✕ Rejeter
+                              </Button>
+                            </div>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </section>
+            ) : (
+              <p className="rounded-lg bg-blue-50 border border-blue-200 px-3 py-2 text-xs text-blue-800">
+                💡 Les documents de vérification (Kbis, assurance…) sont envoyés par le
+                prestataire depuis son portail, puis validés ici — d&apos;abord créez la fiche.
+              </p>
+            )}
+
             {formError && (
               <p role="alert" className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
                 {formError}
@@ -800,5 +993,18 @@ function parsePortfolio(p: ProviderRow): string[] {
     return arr.filter((u): u is string => typeof u === 'string');
   } catch {
     return [];
+  }
+}
+
+/** Date courte FR pour l'affichage des documents (ex. « 12 févr. 2025 »). */
+function formatFrDate(iso: string): string {
+  try {
+    return new Date(iso).toLocaleDateString('fr-FR', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+  } catch {
+    return iso;
   }
 }

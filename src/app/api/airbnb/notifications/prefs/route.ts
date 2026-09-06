@@ -6,6 +6,7 @@
 // rejetées (catalogue src/lib/notification-prefs.ts).
 // =============================================================
 import { NextRequest, NextResponse } from 'next/server';
+import type { Prisma } from '@prisma/client';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
@@ -44,7 +45,7 @@ export async function PUT(req: NextRequest) {
     }
     await db.user.update({
       where: { id: userId },
-      data: { notificationPrefs: result.prefs },
+      data: { notificationPrefs: result.prefs as unknown as Prisma.InputJsonValue },
     });
     return NextResponse.json({ prefs: effectivePrefs(result.prefs), saved: true });
   } catch (error) {

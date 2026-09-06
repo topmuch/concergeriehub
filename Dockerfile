@@ -62,6 +62,13 @@ RUN mkdir -p /app/data && chmod 777 /app/data
 COPY --from=builder /app/scripts/schema.sql /app/data/schema.sql
 COPY --from=builder /app/scripts/seed-users.sql /app/data/seed-users.sql
 
+# AUD-FULL/FIX-7 — Uploads persistants : logos branding + documents de
+# vérification + messages vocaux sont écrits dans /app/public/uploads.
+# Sans volume, ils sont perdus à chaque redéploiement. Coolify : monter
+# un volume sur /app/public/uploads.
+RUN mkdir -p /app/public/uploads && chmod 777 /app/public/uploads
+VOLUME ["/app/public/uploads"]
+
 # Verify SQL files, sqlite3 CLI, and write permission
 RUN echo "--- Container pre-flight ---" \
   && echo "sqlite3: $(which sqlite3)" \
