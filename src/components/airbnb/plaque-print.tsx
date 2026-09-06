@@ -11,13 +11,15 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Toaster } from '@/components/ui/sonner';
 
 // =============================================================
-// PlaquePrint — ÉTAPE 6 : fiche plaque imprimable (sticker).
+// PlaquePrint — ÉTAPE 6 / H4 : fiche plaque imprimable (sticker).
 //  - QR code généré côté client (qrcode → data URL) pointant
 //    vers {origin}/hub/{slug}
 //  - Aperçu écran + bouton "Imprimer / Enregistrer en PDF"
 //    (window.print(), l'utilisateur choisit "PDF" dans la boîte
 //    d'impression du navigateur)
 //  - @media print : seule la zone #plaque-print-area est imprimée
+//  - backHref : lien de retour (nouvelle route /airbnb/plates ;
+//    défaut : ancienne route /airbnb/dashboard/plaques)
 // =============================================================
 
 interface PlaqueDetail {
@@ -30,7 +32,14 @@ interface PlaqueDetail {
   property: { id: string; name: string } | null;
 }
 
-export function PlaquePrint({ params }: { params: Promise<{ id: string }> }) {
+export function PlaquePrint({
+  params,
+  backHref = '/airbnb/dashboard/plaques',
+}: {
+  params: Promise<{ id: string }>;
+  /** Lien "Retour" (défaut : ancienne route dashboard/plaques). */
+  backHref?: string;
+}) {
   const { id } = use(params);
   const [plaque, setPlaque] = useState<PlaqueDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -87,7 +96,7 @@ export function PlaquePrint({ params }: { params: Promise<{ id: string }> }) {
           <p className="mt-2 font-semibold text-slate-900">Plaque introuvable</p>
           <p className="text-sm text-slate-600 mt-1">{error || 'Cette plaque n\u2019existe pas ou ne vous appartient pas.'}</p>
           <Button asChild variant="outline" className="mt-4">
-            <Link href="/airbnb/dashboard/plaques">← Retour aux plaques</Link>
+            <Link href={backHref}>← Retour aux plaques</Link>
           </Button>
         </B2BCard>
         <Toaster position="top-center" richColors />
@@ -114,7 +123,7 @@ export function PlaquePrint({ params }: { params: Promise<{ id: string }> }) {
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <Button variant="outline" asChild>
-            <Link href="/airbnb/dashboard/plaques">
+            <Link href={backHref}>
               <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Retour
             </Link>
           </Button>

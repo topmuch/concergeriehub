@@ -23,6 +23,13 @@ import { canTransition, isOrderStatus, round2 } from '@/lib/orders';
 //
 // Auth : session NextAuth + accès bien (owner ou membre accepté).
 // IDs en QUERY PARAM (règle sandbox). Moteur never-throw.
+//
+// T4-b — propertyId='all' : agrégat multi-biens RÉEL. Les ids cibles
+//   viennent exclusivement de resolveUserProperties(userId) (owner +
+//   équipe acceptée → déjà autorisés, pas de re-vérification par id).
+//   Chaque commande est enrichie d'un champ `propertyName` (mappage
+//   id→nom depuis les biens accessibles) + d'un champ `propertyId`.
+//   `take: 300` pour 'all' (100 insuffisant sur un portfolio).
 // =============================================================
 
 export async function GET(req: NextRequest) {
@@ -36,26 +43,36 @@ export async function GET(req: NextRequest) {
     const properties = await resolveUserProperties(userId);
     const { searchParams } = new URL(req.url);
     const requestedId = searchParams.get('propertyId');
-    const property = requestedId
-      ? properties.find((p) => p.id === requestedId) ?? properties[0]
-      : properties[0];
+    // T4-b — 'all' = agrégat multi-biens ; sinon comportement historique
+    // (id précis avec fallback properties[0]).
+    const isAllScope = requestedId === 'all';
+    const property = isAllScope
+      ? null
+      : requestedId
+        ? properties.find((p) => p.id === requestedId) ?? properties[0]
+        : properties[0];
 
-    if (!property) {
+    if (!property && !isAllScope) {
       return NextResponse.json({
-        properties: [],
+        properties,
         property: null,
         orders: [],
         stats: emptyStats(),
       });
     }
-    if (!(await canAccessProperty(userId, property.id))) {
+    // 'all' : ids issus EXCLUSIVEMENT de resolveUserProperties → déjà
+    // autorisés (owner ou membre accepté). Bien précis : garde historique.
+    if (!isAllScope && property && !(await canAccessProperty(userId, property.id))) {
       return NextResponse.json({ error: 'Accès refusé' }, { status: 403 });
     }
 
+    const targetIds = isAllScope ? properties.map((p) => p.id) : property ? [property.id] : [];
+
     const orders = await db.serviceOrder.findMany({
-      where: { propertyId: property.id },
+      where: { propertyId: { in: targetIds } },
       orderBy: { createdAt: 'desc' },
-      take: 100,
+      // T4-b — 300 pour l'agrégat multi-biens (100 trop court), 100 sinon.
+      take: isAllScope ? 300 : 100,
       select: {
         id: true,
         bookingId: true,
@@ -71,9 +88,19 @@ export async function GET(req: NextRequest) {
         paidAt: true,
         deliveryDate: true,
         createdAt: true,
+        // T4-b — enrichissement propertyName côté client
+        propertyId: true,
         provider: { select: { businessName: true, category: true } },
       },
     });
+
+    // T4-b — mappage id→nom depuis les biens accessibles (jamais de
+    // fuite : les commandes viennent de targetIds ⊂ biens accessibles).
+    const nameById = new Map(properties.map((p) => [p.id, p.name]));
+    const enrichedOrders = orders.map((o) => ({
+      ...o,
+      propertyName: nameById.get(o.propertyId) ?? null,
+    }));
 
     // ── Stats financières (hors commandes annulées) ──
     let revenue = 0;
@@ -111,7 +138,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       properties,
       property,
-      orders,
+      orders: enrichedOrders,
       stats: {
         revenue: round2(revenue),
         commissionTotal: round2(commissionTotal),

@@ -1042,3 +1042,21 @@ Stage Summary:
 - ÉTAPE 1 livrée au commit c9ec750 : coquille complète du Dashboard Client conforme spec QRTags Pro (sidebar claire, header 3 widgets, profil+plan), contexte partagé + hooks + 4 composants réutilisables, gardes session/rôle réelles, anciennes pages héritent déjà du nouveau shell (portfolio/plaques/orders/providers/branding restent temporairement à leurs anciennes URLs jusqu'aux étapes 3-5).
 - Les entrées nav → nouvelles routes existent dès maintenant ; les pages correspondantes arrivent en H3/H4/H5 (404 attendus en transition).
 - Prochaines étapes (exécution continue, pas de NEXT) : H2 Vue d'ensemble (KPIs + recharts 30j + activité), H3 Mes Propriétés + wizard, H4 Plaques/Commandes/Prestataires/Équipe, H5 Calendrier/Paramètres/Facturation + redirects anciennes routes.
+
+---
+Task ID: H2
+Agent: Z.ai Code (orchestrator)
+Task: Dashboard Client — ÉTAPE 2 : page Vue d'ensemble (KPIs + graphique 30j + activité récente + actions rapides)
+
+Work Log:
+- API /api/airbnb/dashboard réécrite (rétro-compatible) : propertyId='all' (ou absent) → agrégat multi-propriétés réel via `in: targetIds` (ids issus exclusivement de resolveUserProperties) ; stats = scans ce mois + delta %, revenus upselling du mois = Σ ServiceOrder.totalAmount (paymentStatus=PAID, status≠CANCELLED, paidAt≥1er du mois) + delta %, note moyenne = review.aggregate via serviceRequest, propriétés actives = property.count(isActive) ; series = 30 points {date,label,scans,orders} groupés par jour en JS depuis scanLog/serviceOrder bruts ; activity = flux unifié 6 derniers de chaque type (scans, commandes ServiceOrder, bookings, voiceMessages guest) trié desc, limité 12 ; modules conservés.
+- Créé hook src/hooks/use-overview.ts (typage complet OverviewData/Stats/Series/Activity, garde réponse obsolète par requestId).
+- Créé composant src/components/airbnb/host/overview-content.tsx : en-tête salutation selon l'heure + date FR + bouton Actualiser (refetch + toast), bannière invitations en attente (données contexte), 4 KPICards (emoji/delta/hint réels), carte graphique AreaChart recharts 2 YAxis (scans #E23F2B / commandes #059669, gradients, Tooltip FR, Legend), carte Activité récente (emoji par type + montant vert + temps relatif relativeFrTime, max-h scroll), Actions rapides (4 liens, framer-motion), grille Modules QR (counts réels + prestataires à proximité).
+- Page /airbnb/dashboard réécrite (OverviewContent, ancien HostOverviewContent "Travl" remplacé).
+- Bugs trouvés/corrigés pendant E2E : VoiceMessage n'a PAS de transcript (select senderName/durationSec) ; variable activeProperties résiduelle → décalage déstructuration Promise.all (activePropertiesCount undefined puis recentScans=objet → .map crash) ; propriétés actives toujours 0 car UserPropertyLite ne porte pas isActive → count réel en base ; débordement mobile 390px (label actions rapides) → layout flex-col mobile/sm:flex-row + text-[13px] ; erreur hydratation salutation/date → suppressHydrationWarning (pattern Next pour horloge locale).
+- Preuves E2E (/tmp/e2e/H2-*.png) : desktop 1280 — KPIs 48 scans (▲129% vs mois précédent, réel), 26,00 € (1 commande payée, ▼80%), 4,7/5 (3 avis), 1/1 propriétés actives ; courbe 30j avec pics réels ; 12 événements activité (réservation Camille Laurent, commandes Paris Transfer 45 € / Chef Antoine 170 € / Sommelier 130 € — croisés en base) ; sélection "Loft Canal Saint-Martin" dans le sélecteur → sous-titre "Activité de Loft Canal Saint-Martin" + KPIs recalculés ; mobile 390 scrollWidth=390 (0 débordement), KPIs empilés, modules avec "1 QR actif · 5 prestataires à proximité" ; bouton Actualiser OK ; console 0 erreur hydratation/0 erreur page après fixes ; lint 0.
+
+Stage Summary:
+- ÉTAPE 2 livrée au commit dc73c44 : Vue d'ensemble 100 % branchée Prisma (aucun mock), graphique recharts temps réel 30 jours, flux d'activité unifié multi-sources, sélecteur de propriété fonctionnel (agrégat 'all' ↔ bien précis).
+- Divergence assumée : KPI "Revenus Upselling" = moteur ServiceOrder (V3) alors que les stats de grille portfolio utilisent ServiceRequest (V2) — moteurs distincts, étiquettes claires.
+- Prochaine étape : H3 Mes Propriétés (grille + wizard 3 étapes avec génération de plaque), puis H4 (Plaques/Commandes/Prestataires/Équipe) en sous-agents parallèles, H5 (Calendrier/Paramètres/redirects).

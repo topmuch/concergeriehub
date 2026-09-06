@@ -1,10 +1,14 @@
 // =============================================================
-// /api/airbnb/plaques/[id] — ÉTAPE 6 : une plaque QR
+// /api/airbnb/plaques/[id] — ÉTAPE 6 / H4 : une plaque QR
 //
 // GET   : détail d'une plaque (pour la fiche imprimable).
-// PATCH : changement de statut — 'active' | 'cancelled' | 'lost'.
-//         Ex. : désactiver une plaque remplacée, signaler une
-//         plaque perdue (le /hub/[slug] affiche alors une erreur).
+// PATCH : changement de statut.
+//         Contrat Dashboard Client : { status: 'inactive' | 'active' }
+//         (désactiver ↔ réactiver). 'cancelled' et 'lost' restent
+//         acceptés pour l'ancienne page /airbnb/dashboard/plaques
+//         (redirigée plus tard). Garde : une plaque 'lost' ne peut
+//         JAMAIS être modifiée (remplacement via support).
+//         Chaque changement écrit un ActivationLog.
 // =============================================================
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
@@ -12,8 +16,15 @@ import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { canAccessProperty } from '@/lib/b2b-server';
 
-const VALID_STATUSES = ['active', 'cancelled', 'lost'] as const;
+const VALID_STATUSES = ['active', 'inactive', 'cancelled', 'lost'] as const;
 type PlaqueStatus = (typeof VALID_STATUSES)[number];
+
+/** Action tracée dans ActivationLog selon le statut cible. */
+function activationActionFor(status: PlaqueStatus): string {
+  if (status === 'active') return 'activated';
+  if (status === 'lost') return 'marked_lost';
+  return 'deactivated'; // 'inactive' (nouveau contrat) et 'cancelled' (legacy)
+}
 
 const INCLUDE = {
   property: { select: { id: true, name: true } },
@@ -89,16 +100,31 @@ export async function PATCH(
 
     const plaque = await db.physicalQrCode.findUnique({
       where: { id },
-      select: { id: true, claimedByUserId: true, propertyId: true },
+      select: { id: true, status: true, claimedByUserId: true, propertyId: true },
     });
     if (!plaque || !(await ownsPlaque(userId, plaque))) {
       return NextResponse.json({ error: 'Plaque introuvable' }, { status: 404 });
+    }
+    // Garde : une plaque signalée perdue est figée (remplacement via support).
+    if (plaque.status === 'lost') {
+      return NextResponse.json(
+        { error: 'Plaque signalée perdue : elle ne peut plus être modifiée. Contactez le support pour la remplacer.' },
+        { status: 409 }
+      );
     }
 
     const updated = await db.physicalQrCode.update({
       where: { id },
       data: { status },
       include: INCLUDE,
+    });
+
+    await db.activationLog.create({
+      data: {
+        physicalQrCodeId: id,
+        userId,
+        action: activationActionFor(status as PlaqueStatus),
+      },
     });
 
     return NextResponse.json({
