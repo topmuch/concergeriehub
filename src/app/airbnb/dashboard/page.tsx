@@ -1,32 +1,20 @@
 import type { Metadata } from 'next';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { LoginGate } from '@/components/airbnb/login-gate';
-import { HostOverviewContent } from '@/components/airbnb/host-overview';
+import { OverviewContent } from '@/components/airbnb/host/overview-content';
 
 export const metadata: Metadata = {
-  title: 'Dashboard Hôte — Conciergerie Hub',
+  title: "Vue d'ensemble — Conciergerie Hub",
   description:
-    'Vue d\u2019ensemble de votre activité : occupation, scans de plaques, revenus upsell et planning des séjours.',
+    "Tableau de bord de votre activité : scans de plaques, revenus upselling, note moyenne et propriétés actives.",
 };
 
-// Chantier DASH-1 (redesign « Travl ») — la nouvelle vue d'ensemble :
-// KPI à tuiles, planning calendrier + prochaines arrivées, stats par
-// bien à onglets, cartes vertes à progression, totaux, bannière.
-// L'assistant d'onboarding post-inscription est préservé ici.
-// (La grille complète des biens a déménagé sur /airbnb/dashboard/portfolio.)
-export default async function DashboardPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}) {
-  const session = await getServerSession(authOptions);
-
-  if (!session?.user) {
-    return <LoginGate />;
-  }
-
-  await searchParams; // ?onboarding=1 : géré par la logique interne du wizard
-
-  return <HostOverviewContent />;
+// Chantier HOST-2 — Vue d'Ensemble du Dashboard Client (spec QRTags Pro) :
+// 4 KPIs réels (scans, revenus upselling, note moyenne, propriétés actives),
+// courbe d'activité recharts 30 jours (scans + commandes), flux d'activité
+// unifié, actions rapides. La session et le shell sont garantis par
+// /airbnb/layout.tsx (redirect si visiteur).
+export default async function DashboardPage() {
+  await getServerSession(authOptions); // garantit le rendu dynamique (session)
+  return <OverviewContent />;
 }

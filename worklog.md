@@ -1019,3 +1019,26 @@ Stage Summary:
 - 7 nouveaux modèles + 16 nouvelles routes API + 6 nouveaux composants/pages ; 14 handlers /api/client/* sécurisés superadmin-only ; endpoint externe x-api-key opérationnel.
 - Preuves E2E : screenshots /tmp/e2e/01…28, interactions réelles vérifiées en base (users, subs, coupons, lots, payouts, settings, flags, blacklist, clés API, tickets, audit). lint 0 erreur/0 warning ; dev.log sans erreur au terme (l'unique 500 historique scans a été corrigé).
 - Décisions : Coupon.merchantId optionnel ; Payout manuel tracé si Stripe non configuré ; reset-password renvoie le clair une seule fois + email outbox ; prefill mdp retiré de la gate (identifiants admin dans la note de livraison).
+
+---
+Task ID: H1
+Agent: Z.ai Code (orchestrator)
+Task: Dashboard Client — ÉTAPE 1 : Layout principal (Sidebar claire QRTags + Header) pour /airbnb/*
+
+Work Log:
+- Audit préalable : console Superadmin V3 (S1) déjà terminée au commit 8a570e0 (8 modules, preuves). Nouvelle mission utilisateur : Dashboard Client avec structure /airbnb/{dashboard,properties,plates,orders,providers,team,calendar,settings,billing}, sidebar claire, style QRTags Pro.
+- Créé src/components/airbnb/host/host-context.tsx : HostProvider (fetch unique /api/airbnb/properties partagé par le shell), sélection de propriété 'all'|id persistée localStorage (clé ch-host:selected-property), selectedIds() prêt pour Prisma `in`, plan + invitations exposés.
+- Créé les 3 hooks demandés : src/hooks/use-properties.ts (+ usePropertyStats agrégat, + useCreateProperty mutation wizard), use-orders.ts (+ useUpdateOrderStatus transitions PATCH), use-providers.ts (ownerServices/guestExperiences/hasGeoloc).
+- Créé composants réutilisables : host/kpi-card.tsx (emoji, delta %, framer-motion, accessible), host/status-badge.tsx (mapping 30+ statuts → tons), host/data-table.tsx (tri en-tête, pagination, hideBelow responsive), host/form-dialog.tsx, host/restricted-access.tsx (garde de rôle).
+- Créé host/host-shell.tsx : sidebar fixe 250px bg-white border-r (logo CH coral, 9 entrées avec emojis, item actif fond #FEF1EF + barre coral, profil bas avatar+nom+plan+logout), header sticky (burger Sheet mobile, PropertySelector dropdown avec check, NotificationsBell réutilisé badge réel, bouton + Ajouter une propriété → /airbnb/properties?new=1), contenu p-6, footer mt-auto + safe-area.
+- Créé src/app/airbnb/layout.tsx (serveur) : session NextAuth obligatoire (redirect /), superadmin → /admin/dashboard, accessLevel calculé réel (ownedCount + memberships MANAGER/OWNER acceptés → 'full', sinon 'team' = CLEANER/MAINTENANCE nav réduite), plan via getHostPlanLimits.
+- Supprimé src/app/airbnb/dashboard/layout.tsx (ancien shell coral — évite double sidebar) ; git mv dashboard/automations → /airbnb/automations.
+- billing/page.tsx : retrait DashboardShell (hérite du nouveau layout) + garde de rôle réel (RestrictedAccess pour CLEANER/MAINTENANCE).
+- Bugs trouvés/corrigés pendant E2E : HostShell rendait ShellRoot SANS HostProvider (crash useHostContext null) → wrapper ajouté ; import HostProvider manquant (ReferenceError SSR) ; drawer mobile Sheet héritait bg-background sombre → bg-white imposé ; lint setState-in-effect (fermeture drawer) → onClick sur nav.
+- Preuves E2E (/tmp/e2e/H1-*.png, session démo demo@ / Demo2024!) : /airbnb/dashboard rendu (9 entrées nav, sélecteur "Toutes les propriétés (1)", dropdown réel "Loft Canal Saint-Martin", badge notifications 5 non lues réel, bouton ajout) ; mobile 390 drawer blanc OK, scrollWidth=390 (0 débordement) ; /airbnb/billing dans nouveau shell (plan Airbnb Solo, Résilier) ; /airbnb/automations déplacée avec 7 règles réelles, toggle désactiver→activer vérifié en DB (automationRule.isActive) ; /airbnb/dashboard sans session → 307 vers landing (garde OK).
+- lint 0 erreur / 0 warning.
+
+Stage Summary:
+- ÉTAPE 1 livrée au commit c9ec750 : coquille complète du Dashboard Client conforme spec QRTags Pro (sidebar claire, header 3 widgets, profil+plan), contexte partagé + hooks + 4 composants réutilisables, gardes session/rôle réelles, anciennes pages héritent déjà du nouveau shell (portfolio/plaques/orders/providers/branding restent temporairement à leurs anciennes URLs jusqu'aux étapes 3-5).
+- Les entrées nav → nouvelles routes existent dès maintenant ; les pages correspondantes arrivent en H3/H4/H5 (404 attendus en transition).
+- Prochaines étapes (exécution continue, pas de NEXT) : H2 Vue d'ensemble (KPIs + recharts 30j + activité), H3 Mes Propriétés + wizard, H4 Plaques/Commandes/Prestataires/Équipe, H5 Calendrier/Paramètres/Facturation + redirects anciennes routes.
