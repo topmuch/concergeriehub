@@ -3,9 +3,10 @@ import { redirect } from 'next/navigation';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { DashboardShell } from '@/components/airbnb/dashboard-shell';
+import { normalizeMemberRole } from '@/lib/team';
 import { BillingContent, type CurrentSubscriptionView } from '@/components/airbnb/billing-content';
 import { getHostPlan } from '@/lib/billing';
+import { RestrictedAccess } from '@/components/airbnb/host/restricted-access';
 
 export const metadata: Metadata = {
   title: 'Abonnement — Conciergerie Hub',
@@ -15,6 +16,9 @@ export const metadata: Metadata = {
 // ÉTAPE 10 — Page facturation de l'Espace Hôte.
 // Session requise ; charge l'abonnement actif et le mode Stripe
 // (réel ou démo) puis délègue l'interactivité au composant client.
+// GARDE DE RÔLE : un CLEANER / MAINTENANCE (équipe, sans rôle de
+// gestion sur aucun bien) n'accède pas à la facturation.
+// Le shell (sidebar + header) est fourni par /airbnb/layout.tsx.
 export default async function BillingPage() {
   const session = await getServerSession(authOptions);
   const role = (session?.user as { role?: string } | undefined)?.role;
@@ -26,6 +30,22 @@ export default async function BillingPage() {
   if (role !== 'user') {
     // La console Superadmin a sa propre section /admin
     redirect('/admin/dashboard');
+  }
+
+  // ── Garde de rôle : facturation réservée aux gestionnaires ──
+  const [ownedCount, memberships] = await Promise.all([
+    db.property.count({ where: { ownerId: userId } }),
+    db.propertyMember.findMany({
+      where: { userId, acceptedAt: { not: null } },
+      select: { role: true },
+    }),
+  ]);
+  const isManagerSomewhere = memberships.some((m) => {
+    const r = normalizeMemberRole(m.role);
+    return r === 'OWNER' || r === 'MANAGER';
+  });
+  if (ownedCount === 0 && !isManagerSomewhere) {
+    return <RestrictedAccess feature="la facturation" />;
   }
 
   const [user, activeSub, isStripeMode] = await Promise.all([
@@ -55,16 +75,14 @@ export default async function BillingPage() {
   }
 
   return (
-    <DashboardShell userName={user?.fullName ?? user?.email ?? null}>
-      <BillingContent
-        host={{
-          name: user?.fullName ?? null,
-          email: user?.email ?? '',
-          selectedPlan: user?.selectedPlan ?? null,
-        }}
-        current={current}
-        stripeMode={isStripeMode}
-      />
-    </DashboardShell>
+    <BillingContent
+      host={{
+        name: user?.fullName ?? null,
+        email: user?.email ?? '',
+        selectedPlan: user?.selectedPlan ?? null,
+      }}
+      current={current}
+      stripeMode={isStripeMode}
+    />
   );
 }
