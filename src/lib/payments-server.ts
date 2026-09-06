@@ -7,6 +7,8 @@ import {
   renderGuestReceiptEmail,
   renderGuestRefundEmail,
 } from '@/lib/email-template-render';
+// FIX-14 — monitoring d'erreurs : trace AuditLog (action='runtime.error').
+import { captureError } from '@/lib/error-monitor';
 
 // =============================================================
 // ÉTAPE 17.6 + 20 (V3) — Paiement des commandes service (serveur UNIQUEMENT)
@@ -151,7 +153,8 @@ export async function markServiceOrderPaid(
         meta: { amount: order.totalAmount },
       });
     } catch (error) {
-      console.error('[payments] guest receipt email failed:', error);
+      // FIX-14 — l'email ne fait jamais échouer le paiement ; l'erreur reste traçée.
+      await captureError('payments.receipt.email', error, { serviceOrderId });
     }
   }
 
@@ -272,7 +275,8 @@ export async function refundServiceOrder(serviceOrderId: string): Promise<Refund
         meta: { amount: order.totalAmount },
       });
     } catch (error) {
-      console.error('[payments] guest refund email failed:', error);
+      // FIX-14 — l'email ne fait jamais échouer le remboursement ; l'erreur reste traçée.
+      await captureError('payments.refund.email', error, { serviceOrderId });
     }
   }
 

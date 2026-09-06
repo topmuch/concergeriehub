@@ -30,6 +30,7 @@ import { queueEmail } from '@/lib/email';
 // FIX-12 — rendu DB-first : modèle éditable 'admin_password_reset'
 // (onglet Modèles), fallback silencieux sur le template codé en dur.
 import { renderAdminPasswordResetEmail } from '@/lib/email-template-render';
+import { mutationGuard, mutationKey, MUTATIONS_LIMIT_ADMIN } from '@/lib/mutation-guard';
 
 const VALID_PLANS = ['airbnb_solo', 'airbnb_pro', 'agency', 'free'];
 
@@ -278,6 +279,10 @@ export async function PATCH(
   const admin = await requireSuperadmin();
   if (!admin) return adminUnauthorized();
 
+  // FIX-15 — anti-abus : 60 mutations/min par admin (Console Superadmin).
+  const mutGuard = await mutationGuard(mutationKey('admin-mut', req, admin.id), MUTATIONS_LIMIT_ADMIN);
+  if (mutGuard) return mutGuard;
+
   try {
     const { id } = await params;
     const action = req.nextUrl.searchParams.get('action');
@@ -400,6 +405,10 @@ export async function DELETE(
 ) {
   const admin = await requireSuperadmin();
   if (!admin) return adminUnauthorized();
+
+  // FIX-15 — anti-abus : 60 mutations/min par admin (Console Superadmin).
+  const mutGuard = await mutationGuard(mutationKey('admin-mut', req, admin.id), MUTATIONS_LIMIT_ADMIN);
+  if (mutGuard) return mutGuard;
 
   try {
     const { id } = await params;

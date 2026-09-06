@@ -21,6 +21,7 @@ import { requireSuperadmin, adminUnauthorized } from '@/lib/admin';
 import { db } from '@/lib/db';
 import { PROVIDER_AUDIENCES } from '@/lib/b2b';
 import { logAudit, clientIp } from '@/lib/audit';
+import { mutationGuard, mutationKey, MUTATIONS_LIMIT_ADMIN } from '@/lib/mutation-guard';
 
 // ---------- FIX-4 : convention documents de vérification ----------
 // (identique à /api/provider/documents)
@@ -186,6 +187,10 @@ export async function PATCH(
   const admin = await requireSuperadmin();
   if (!admin) return adminUnauthorized();
 
+  // FIX-15 — anti-abus : 60 mutations/min par admin (Console Superadmin).
+  const mutGuard = await mutationGuard(mutationKey('admin-mut', req, admin.id), MUTATIONS_LIMIT_ADMIN);
+  if (mutGuard) return mutGuard;
+
   try {
     const { id } = await params;
     const existing = await db.provider.findUnique({ where: { id }, select: { id: true } });
@@ -278,6 +283,10 @@ export async function DELETE(
 ) {
   const admin = await requireSuperadmin();
   if (!admin) return adminUnauthorized();
+
+  // FIX-15 — anti-abus : 60 mutations/min par admin (Console Superadmin).
+  const mutGuard = await mutationGuard(mutationKey('admin-mut', _req, admin.id), MUTATIONS_LIMIT_ADMIN);
+  if (mutGuard) return mutGuard;
 
   try {
     const { id } = await params;

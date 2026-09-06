@@ -20,6 +20,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import type Stripe from 'stripe';
 import { db } from '@/lib/db';
 import { markServiceOrderPaid } from '@/lib/payments-server';
+// FIX-14 — monitoring d'erreurs : trace AuditLog (action='runtime.error').
+import { captureError } from '@/lib/error-monitor';
 
 const isSimulation = !process.env.STRIPE_SECRET_KEY;
 
@@ -81,7 +83,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ received: true });
   } catch (error) {
-    console.error('[stripe webhook] Error:', error);
+    // FIX-14 — captureError console.error + trace AuditLog, ne jette jamais.
+    await captureError('stripe.webhook', error, undefined, request);
     return NextResponse.json({ error: 'Erreur interne du serveur' }, { status: 500 });
   }
 }

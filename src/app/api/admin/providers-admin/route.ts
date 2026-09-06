@@ -19,6 +19,7 @@ import { requireSuperadmin, adminUnauthorized } from '@/lib/admin';
 import { db } from '@/lib/db';
 import { PROVIDER_AUDIENCES } from '@/lib/b2b';
 import { parseVerificationDocuments } from '@/lib/provider-verification';
+import { mutationGuard, mutationKey, MUTATIONS_LIMIT_ADMIN } from '@/lib/mutation-guard';
 
 function slugifyBusiness(businessName: string): string {
   return businessName
@@ -100,6 +101,10 @@ interface CreateBody {
 export async function POST(req: NextRequest) {
   const admin = await requireSuperadmin();
   if (!admin) return adminUnauthorized();
+
+  // FIX-15 — anti-abus : 60 mutations/min par admin (Console Superadmin).
+  const mutGuard = await mutationGuard(mutationKey('admin-mut', req, admin.id), MUTATIONS_LIMIT_ADMIN);
+  if (mutGuard) return mutGuard;
 
   try {
     const body = (await req.json()) as CreateBody;

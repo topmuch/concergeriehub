@@ -6,6 +6,9 @@ import { isIpBlacklisted } from '@/lib/security';
 import { isFlagEnabled } from '@/lib/feature-flags';
 import { getPlatformSettings } from '@/lib/settings';
 import { queueEmail } from '@/lib/email';
+// FIX-14 — monitoring d'erreurs : toute erreur runtime serveur est tracée
+// en AuditLog (action='runtime.error') → /admin/logs.
+import { captureError } from '@/lib/error-monitor';
 // FIX-12 — rendu DB-first : modèle éditable 'welcome' (onglet Modèles),
 // fallback silencieux sur le template codé en dur.
 import { renderWelcomeEmail } from '@/lib/email-template-render';
@@ -100,7 +103,8 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, userId: user.id }, { status: 201 });
   } catch (error) {
-    console.error('Register error:', error);
+    // FIX-14 — captureError console.error + trace AuditLog, ne jette jamais.
+    await captureError('api.auth.register', error, undefined, req);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }
 }

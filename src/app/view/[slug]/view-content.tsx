@@ -7,6 +7,7 @@ import { Loader2, Send, Copy, Check, Phone, Mail, ExternalLink, ArrowLeft, Home 
 import { toast } from 'sonner';
 import { QRTCard, QRTButton } from '@/components/qrtags';
 import { QR_MODULE_LABELS } from '@/types/database';
+import { buildWifiQrString } from '@/lib/wifi-qr';
 
 // ── Types ──
 interface QrCodeData {
@@ -42,14 +43,9 @@ function getModuleLabel(type: string) { return (QR_MODULE_LABELS as Record<strin
 const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } };
 
 // ══════════════════════════════════════════════════════════════
-// WiFi QR Code Generator
+// WiFi QR Code Generator — FIX-16 : implémentation déplacée dans
+// src/lib/wifi-qr.ts (partagée avec la carte Wi-Fi du Hub invité)
 // ══════════════════════════════════════════════════════════════
-function buildWifiQrString(ssid: string, password: string, security: string = 'WPA'): string {
-  const esc = (s: string) => s.replace(/([\\;,:"'])/g, '\\$1');
-  if (!password) return `WIFI:T:nopass;S:${esc(ssid)};;`;
-  const t = security.toUpperCase().includes('WEP') ? 'WEP' : 'WPA';
-  return `WIFI:T:${t};S:${esc(ssid)};P:${esc(password)};;`;
-}
 
 // ══════════════════════════════════════════════════════════════
 // WiFi View

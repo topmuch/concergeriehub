@@ -10,6 +10,7 @@ import { requireSuperadmin, adminUnauthorized } from '@/lib/admin';
 import { getPlatformSettings, savePlatformSettings, type PlatformSettings } from '@/lib/settings';
 import { getAllFlags } from '@/lib/feature-flags';
 import { logAudit, clientIp } from '@/lib/audit';
+import { mutationGuard, mutationKey, MUTATIONS_LIMIT_ADMIN } from '@/lib/mutation-guard';
 
 export async function GET() {
   const admin = await requireSuperadmin();
@@ -38,6 +39,10 @@ export async function GET() {
 export async function PUT(req: NextRequest) {
   const admin = await requireSuperadmin();
   if (!admin) return adminUnauthorized();
+
+  // FIX-15 — anti-abus : 60 mutations/min par admin (Console Superadmin).
+  const mutGuard = await mutationGuard(mutationKey('admin-mut', req, admin.id), MUTATIONS_LIMIT_ADMIN);
+  if (mutGuard) return mutGuard;
 
   try {
     const body = (await req.json()) as Partial<PlatformSettings>;

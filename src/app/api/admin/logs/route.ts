@@ -1,7 +1,8 @@
 // =============================================================
 // /api/admin/logs — Module 8 : journal d'audit + logs de scan
 // GET ?type=audit (défaut) | scans
-//   audit : AuditLog paginé (filtre ?action= &search=)
+//   audit : AuditLog paginé (filtre ?action= &search= — FIX-14 :
+//           ?action=runtime.error alimente le filtre « Erreurs runtime »)
 //   scans : ScanLog paginé (bien, QR, date, UA) — analytics réels
 // 🔒 Superadmin.
 // =============================================================
@@ -65,6 +66,12 @@ export async function GET(req: NextRequest) {
 
     // ── audit (défaut) ──
     const where: Record<string, unknown> = {};
+    // FIX-14 — filtre par action exacte (ex. 'runtime.error' pour les
+    // erreurs runtime serveur + navigateur capturées par /api/errors).
+    const action = req.nextUrl.searchParams.get('action')?.trim() || '';
+    if (action) {
+      where.action = action;
+    }
     if (search) {
       where.OR = [
         { actorEmail: { contains: search } },

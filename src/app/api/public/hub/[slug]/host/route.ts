@@ -3,6 +3,8 @@ import { compare } from 'bcryptjs';
 import { db } from '@/lib/db';
 import { haversineKm, providerCategoryMeta, formatEur } from '@/lib/b2b';
 import { rateLimit } from '@/lib/rate-limit';
+// FIX-15 (B) — clientIp pour le rate-limit PIN IP-scopé (anti-lockout).
+import { clientIp } from '@/lib/audit';
 
 // =============================================================
 // POST /api/public/hub/[slug]/host   body: { pin }
@@ -171,8 +173,10 @@ export async function POST(
         { status: 403 },
       );
     }
-    // Anti brute-force : 10 tentatives/minute/slug (PIN 4 chiffres).
-    if (!(await rateLimit(`hubhostpin:${slug}`, 10))) {
+    // FIX-15 (B) — Anti brute-force par IP (10 tentatives/min, PIN 4 chiffres) ;
+    // le quota slug global serait un vecteur de DoS du mode hôte : un tiers
+    // pouvait épuiser `hubhostpin:<slug>` et verrouiller l'hôte légitime.
+    if (!(await rateLimit(`hubhostpin:${slug}:${clientIp(req.headers) ?? 'local'}`, 10))) {
       return NextResponse.json({ error: 'Trop de tentatives. Réessayez dans un instant.' }, { status: 429 });
     }
     const isValid = await compare(pin, property.pinHash);

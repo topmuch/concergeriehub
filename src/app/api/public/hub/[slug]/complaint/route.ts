@@ -4,6 +4,10 @@ import { db } from '@/lib/db';
 import { rateLimit } from '@/lib/rate-limit';
 // FIX-12 — notification SMS hôte (Twilio REST env-gated, fail-closed).
 import { sendSms } from '@/lib/sms';
+// FIX-14 — monitoring d'erreurs : trace AuditLog (action='runtime.error').
+import { captureError } from '@/lib/error-monitor';
+// FIX-15 (C) — zod sur la mutation publique + clientIp (rate-limit IP-scopé).
+import { z } from 'zod';
 
 // =============================================================
 // Réclamations écrites du Hub public — /api/public/hub/[slug]/complaint
@@ -83,6 +87,26 @@ const MAX_PHOTO_BYTES = 500 * 1024; // 500 KB décodé
 const MAX_PHOTOS = 3;
 const MAX_DESCRIPTION = 2000;
 
+// FIX-15 (C) — validation zod du POST complaint. Règles IDENTIQUES à la
+// validation manuelle remplacée : category enum, description 5-2000
+// (sur la chaîne trimée), photos ≤ 3 (troncature historique conservée),
+// isUrgent booléen, guestName optionnel. Mêmes messages 400 FR et mêmes
+// statuts → aucun changement de contrat pour le formulaire Hub.
+// `photos` continue d'être validée en COMPLÉMENT manuellement
+// (validatePhoto) : la contrainte réelle — dataURL + mime allowlist +
+// taille DÉCODÉE base64 ≤ 500 Ko — n'est pas exprimable proprement en zod.
+const complaintSchema = z.object({
+  category: z.enum(CATEGORIES, { message: 'Catégorie invalide.' }),
+  description: z
+    .string({ message: `Décrivez le problème en 5 à ${MAX_DESCRIPTION} caractères.` })
+    .trim()
+    .min(5, { message: `Décrivez le problème en 5 à ${MAX_DESCRIPTION} caractères.` })
+    .max(MAX_DESCRIPTION, { message: `Décrivez le problème en 5 à ${MAX_DESCRIPTION} caractères.` }),
+  photos: z.array(z.string()).optional().nullable(),
+  isUrgent: z.boolean().optional().nullable(),
+  guestName: z.string().optional().nullable(),
+});
+
 function clientIp(req: Request): string {
   const fwd = req.headers.get('x-forwarded-for');
   return (fwd ? fwd.split(',')[0].trim() : null) || 'local';
@@ -146,25 +170,24 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
       );
     }
 
-    const body = await req.json().catch(() => null);
-    if (!body || typeof body !== 'object') {
+    const rawBody = await req.json().catch(() => null);
+    if (!rawBody || typeof rawBody !== 'object') {
       return NextResponse.json({ error: 'Requête invalide.' }, { status: 400 });
     }
-
-    const category = body.category as Category;
-    if (!CATEGORIES.includes(category)) {
-      return NextResponse.json({ error: 'Catégorie invalide.' }, { status: 400 });
-    }
-
-    const description = typeof body.description === 'string' ? body.description.trim() : '';
-    if (description.length < 5 || description.length > MAX_DESCRIPTION) {
+    // FIX-15 (C) : zod remplace la validation manuelle (règles identiques).
+    const parsed = complaintSchema.safeParse(rawBody);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: `Décrivez le problème en 5 à ${MAX_DESCRIPTION} caractères.` },
+        { error: parsed.error.issues[0]?.message ?? 'Requête invalide.' },
         { status: 400 },
       );
     }
+    const category = parsed.data.category;
+    const description = parsed.data.description;
 
-    const rawPhotos = Array.isArray(body.photos) ? body.photos.slice(0, MAX_PHOTOS) : [];
+    // Photos : troncature à 3 conservée (comportement historique) puis
+    // validation manuelle dataURL/mime/taille décodée — cf. schema comment.
+    const rawPhotos = parsed.data.photos?.slice(0, MAX_PHOTOS) ?? [];
     const photos: string[] = [];
     for (const p of rawPhotos) {
       const v = validatePhoto(p);
@@ -172,10 +195,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
       photos.push(p as string);
     }
 
-    const isUrgent = body.isUrgent === true;
+    const isUrgent = parsed.data.isUrgent === true;
     const guestName =
-      typeof body.guestName === 'string' && body.guestName.trim()
-        ? body.guestName.trim().slice(0, 80)
+      typeof parsed.data.guestName === 'string' && parsed.data.guestName.trim()
+        ? parsed.data.guestName.trim().slice(0, 80)
         : null;
 
     const resolved = await resolvePropertyId(slug);
@@ -220,7 +243,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
       createdAt: complaint.createdAt.toISOString(),
     });
   } catch (error) {
-    console.error('Hub complaint POST error:', error);
+    // FIX-14 — captureError console.error + trace AuditLog, ne jette jamais.
+    await captureError('hub.complaint', error, undefined, req);
     return NextResponse.json(
       { error: 'Erreur serveur. Réessayez dans un instant.' },
       { status: 500 },
@@ -244,8 +268,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ slug: 
       return NextResponse.json({ error: 'PIN requis (4 chiffres).' }, { status: 400 });
     }
 
-    // Anti brute-force (même politique que le MODE HÔTE)
-    if (!(await rateLimit(`hubhostpin:${slug}`, 10))) {
+    // FIX-15 (B) — Anti brute-force par IP (10 tentatives/min) ; le quota
+    // slug global serait un vecteur de DoS du mode hôte : un tiers pouvait
+    // épuiser `hubhostpin:<slug>` et verrouiller l'hôte légitime.
+    if (!(await rateLimit(`hubhostpin:${slug}:${clientIp(req)}`, 10))) {
       return NextResponse.json({ error: 'Trop de tentatives. Réessayez dans un instant.' }, { status: 429 });
     }
 
@@ -287,7 +313,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ slug: 
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Hub complaint PATCH error:', error);
+    // FIX-14 — captureError console.error + trace AuditLog, ne jette jamais.
+    await captureError('hub.complaint.status', error, undefined, req);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }
 }

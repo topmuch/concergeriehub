@@ -5,6 +5,11 @@ import { db } from '@/lib/db';
 import crypto from 'crypto';
 import { compare } from 'bcryptjs';
 import { rateLimit } from '@/lib/rate-limit';
+// FIX-14 — monitoring d'erreurs : trace AuditLog (action='runtime.error').
+import { captureError } from '@/lib/error-monitor';
+// FIX-15 (C) — zod sur les champs texte du FormData + clientIp (rate-limit IP-scopé).
+import { z } from 'zod';
+import { clientIp } from '@/lib/audit';
 
 const UPLOAD_DIR = join(process.cwd(), 'public', 'uploads', 'voice');
 const MAX_DURATION_SEC = 30;
@@ -14,6 +19,15 @@ const MAX_FILE_SIZE_KB = 500; // ~500KB for 30s webm
 // (l'extension client n'est JAMAIS concaténée telle quelle).
 const ALLOWED_AUDIO_EXT = new Set(['webm', 'ogg', 'mp3', 'm4a', 'wav']);
 
+// FIX-15 (C) — zod sur les champs TEXTE du FormData. Le fichier audio reste
+// validé manuellement ci-dessous (type MIME + taille réelle du fichier :
+// contraintes binaires hors périmètre zod propre). senderName/durationSec
+// doivent être des chaînes — avant, un champ non-texte provoquait un 500.
+const voiceFormSchema = z.object({
+  senderName: z.string().optional(),
+  durationSec: z.string().optional(),
+});
+
 // POST: Upload a voice message for a hub
 export async function POST(
   req: Request,
@@ -21,14 +35,25 @@ export async function POST(
 ) {
   try {
     const { slug } = await params;
-    // Anti-spam : max 10 messages/minute/slug.
-    if (!(await rateLimit(`voice:${slug}`, 10))) {
+    // FIX-15 (B) — Anti-spam par IP (10 messages/min) ; le quota slug global
+    // serait un vecteur de DoS : un tiers pouvait épuiser `voice:<slug>`
+    // et bloquer les messages vocaux des invités légitimes.
+    if (!(await rateLimit(`voice:${slug}:${clientIp(req.headers) ?? 'local'}`, 10))) {
       return NextResponse.json({ error: 'Trop de tentatives. Réessayez dans un instant.' }, { status: 429 });
     }
     const formData = await req.formData();
     const audio = formData.get('audio') as File | null;
-    const senderName = (formData.get('senderName') as string) || 'Invité';
-    const durationSec = parseInt(formData.get('durationSec') as string) || 0;
+    // FIX-15 (C) — validation zod des champs texte du formulaire (400 si
+    // champ non-texte ; comportement des clients valides inchangé).
+    const parsedForm = voiceFormSchema.safeParse({
+      senderName: formData.get('senderName') ?? undefined,
+      durationSec: formData.get('durationSec') ?? undefined,
+    });
+    if (!parsedForm.success) {
+      return NextResponse.json({ error: 'Formulaire invalide.' }, { status: 400 });
+    }
+    const senderName = parsedForm.data.senderName || 'Invité';
+    const durationSec = parseInt(parsedForm.data.durationSec ?? '', 10) || 0;
 
     // Validate
     if (!audio) {
@@ -100,7 +125,8 @@ export async function POST(
       createdAt: voiceMsg.createdAt,
     }, { status: 201 });
   } catch (error) {
-    console.error('Voice upload error:', error);
+    // FIX-14 — captureError console.error + trace AuditLog, ne jette jamais.
+    await captureError('hub.voice.upload', error, undefined, req);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }
 }
@@ -161,8 +187,10 @@ export async function GET(
     if (!pin || !/^\d{4}$/.test(pin)) {
       return NextResponse.json({ error: 'PIN requis (4 chiffres)' }, { status: 400 });
     }
-    // Anti brute-force : 10 tentatives/minute/slug.
-    if (!(await rateLimit(`hubvoicepin:${slug}`, 10))) {
+    // FIX-15 (B) — Anti brute-force par IP (10 tentatives/min) ; le quota
+    // slug global serait un vecteur de DoS du mode hôte : un tiers pouvait
+    // épuiser `hubvoicepin:<slug>` et verrouiller l'hôte légitime.
+    if (!(await rateLimit(`hubvoicepin:${slug}:${clientIp(req.headers) ?? 'local'}`, 10))) {
       return NextResponse.json({ error: 'Trop de tentatives. Réessayez dans un instant.' }, { status: 429 });
     }
     const isValid = await compare(pin, property.pinHash);
@@ -188,7 +216,8 @@ export async function GET(
 
     return NextResponse.json({ messages });
   } catch (error) {
-    console.error('Voice list error:', error);
+    // FIX-14 — captureError console.error + trace AuditLog, ne jette jamais.
+    await captureError('hub.voice.list', error, undefined, req);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }
 }

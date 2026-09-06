@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
+import { GlobalErrorReporter } from "@/components/monitoring/global-error-reporter";
 import { siteName, siteUrl } from "@/lib/site";
 
 const geistSans = Geist({
@@ -49,6 +50,8 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
       >
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+          {/* FIX-14 — monitoring d'erreurs client (invisible, 1 seul rendu racine) */}
+          <GlobalErrorReporter />
           {children}
           <Toaster />
         </ThemeProvider>

@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireSuperadmin, adminUnauthorized } from '@/lib/admin';
 import { db } from '@/lib/db';
 import { logAudit, clientIp } from '@/lib/audit';
+import { mutationGuard, mutationKey, MUTATIONS_LIMIT_ADMIN } from '@/lib/mutation-guard';
 
 function randomCode(): string {
   const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -69,6 +70,10 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const admin = await requireSuperadmin();
   if (!admin) return adminUnauthorized();
+
+  // FIX-15 — anti-abus : 60 mutations/min par admin (Console Superadmin).
+  const mutGuard = await mutationGuard(mutationKey('admin-mut', req, admin.id), MUTATIONS_LIMIT_ADMIN);
+  if (mutGuard) return mutGuard;
 
   try {
     const body = (await req.json()) as {

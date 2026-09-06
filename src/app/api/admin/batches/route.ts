@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import crypto from 'crypto';
 import { requireSuperadmin, adminUnauthorized } from '@/lib/admin';
 import { logAudit, clientIp } from '@/lib/audit';
+import { mutationGuard, mutationKey, MUTATIONS_LIMIT_ADMIN } from '@/lib/mutation-guard';
 
 // GET /api/admin/batches — List all batches with aggregated QR code counts
 export async function GET() {
@@ -68,6 +69,10 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   const admin = await requireSuperadmin();
   if (!admin) return adminUnauthorized();
+
+  // FIX-15 — anti-abus : 60 mutations/min par admin (Console Superadmin).
+  const mutGuard = await mutationGuard(mutationKey('admin-mut', request, admin.id), MUTATIONS_LIMIT_ADMIN);
+  if (mutGuard) return mutGuard;
   try {
     const body = await request.json();
     const { quantity, designConfig, batchName, activationCodes } = body;

@@ -4,6 +4,8 @@ import { rateLimit } from '@/lib/rate-limit';
 import { isIpBlacklisted } from '@/lib/security';
 import { computeApplicationFeeCents } from '@/lib/stripe-connect';
 import { markServiceOrderPaid, orderStripeDescription } from '@/lib/payments-server';
+// FIX-14 — monitoring d'erreurs : trace AuditLog (action='runtime.error').
+import { captureError } from '@/lib/error-monitor';
 
 // =============================================================
 // ÉTAPE 17.6 (V3) — PAIEMENT IN-APP d'une commande service
@@ -216,7 +218,8 @@ export async function POST(
       demoRedirect: successUrl,
     });
   } catch (error) {
-    console.error('[public/service-orders/pay POST] Error:', error);
+    // FIX-14 — captureError console.error + trace AuditLog, ne jette jamais.
+    await captureError('payments.orderPay', error, undefined, req);
     return NextResponse.json(
       { ok: false, message: 'Erreur serveur. Réessayez dans un instant.' },
       { status: 500 },

@@ -26,6 +26,8 @@ import {
   X,
 } from 'lucide-react';
 import { QRTNumericKeypad } from '@/components/qrtags';
+import { buildWifiQrString } from '@/lib/wifi-qr';
+import { QRCodeSVG } from 'qrcode.react';
 import { BrandLogo } from '@/components/ui/brand-logo';
 import { EmojiIcon } from '@/components/ui/emoji-icon';
 import { Button } from '@/components/ui/button';
@@ -395,11 +397,20 @@ function HomeView({
         <BrandLogo size="sm" />
       </div>
 
-      {/* Carte bienvenue */}
+      {/* Carte bienvenue — FIX-16 : bouton ⚙️ d'accès hôte rapide (l'écran
+          d'accueil n'offrait aucun raccourci paramètres hors carte MODE HÔTE) */}
       <section
         aria-label="Bienvenue"
-        className="bg-white border border-slate-200 rounded-xl shadow-sm p-5 flex items-center gap-4"
+        className="relative bg-white border border-slate-200 rounded-xl shadow-sm p-5 flex items-center gap-4"
       >
+        <button
+          type="button"
+          onClick={onHostClick}
+          aria-label="Paramètres hôte — ouvrir le mode hôte"
+          className="absolute top-3 right-3 h-9 w-9 inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-400 hover:text-slate-700 hover:border-slate-300 active:scale-95 transition-all min-h-[36px] min-w-[36px]"
+        >
+          <Settings2 className="h-[18px] w-[18px]" aria-hidden="true" />
+        </button>
         <span className="text-4xl leading-none select-none" aria-hidden="true">
           {property.propertyTypeEmoji}
         </span>
@@ -579,6 +590,21 @@ function GuestView({
                       <Copy className="h-3.5 w-3.5" aria-hidden="true" /> Copier le mot de passe
                     </Button>
                   </div>
+                </div>
+                {/* FIX-16 — QR d'auto-connexion Wi-Fi (standard WIFI:, déjà
+                    présent dans /view — même générateur partagé) */}
+                <div className="flex flex-col items-center gap-2 bg-white border border-slate-200 rounded-lg px-3 py-3">
+                  <QRCodeSVG
+                    value={buildWifiQrString(guest.wifi.networkName, guest.wifi.password, guest.wifi.securityType)}
+                    size={116}
+                    bgColor="#FFFFFF"
+                    fgColor="#0F172A"
+                    level="M"
+                    aria-hidden="true"
+                  />
+                  <p className="text-[11px] text-slate-500 text-center leading-snug">
+                    Scannez ce code avec l&apos;appareil photo pour rejoindre le réseau automatiquement
+                  </p>
                 </div>
               </div>
             )}

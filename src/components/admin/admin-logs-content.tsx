@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import {
+  AlertTriangle,
   FileWarning,
   LifeBuoy,
   Loader2,
@@ -96,10 +97,59 @@ const TICKET_STATUS: Record<string, { label: string; className: string }> = {
   CLOSED: { label: 'Fermé', className: 'bg-slate-100 text-slate-600' },
 };
 
+// FIX-14 — erreurs runtime (action='runtime.error') : libellés lisibles
+// des sources (AuditLog.entityType). 'client' = erreur navigateur reçue
+// par POST /api/errors ; les autres = sites d'erreur serveur wirés dans
+// les routes critiques (cf. src/lib/error-monitor.ts).
+const RUNTIME_SOURCE_LABELS: Record<string, string> = {
+  client: '🌐 Navigateur client',
+  'api.auth.register': 'API · Inscription',
+  'stripe.webhook': 'Stripe · Webhook',
+  'payments.orderPay': 'Paiements · Paiement commande',
+  'payments.refund.host': 'Paiements · Remboursement (hôte)',
+  'payments.refund.admin': 'Paiements · Remboursement (admin)',
+  'payments.receipt.email': 'Paiements · Email de reçu',
+  'payments.refund.email': 'Paiements · Email de remboursement',
+  'hub.get': 'Hub · Accueil',
+  'hub.pin': 'Hub · PIN hôte',
+  'hub.update': 'Hub · Mise à jour',
+  'hub.voice.upload': 'Hub · Message vocal (envoi)',
+  'hub.voice.list': 'Hub · Message vocal (liste)',
+  'hub.complaint': 'Hub · Réclamation',
+  'hub.complaint.status': 'Hub · Réclamation (statut)',
+  'hub.guestbook': 'Hub · Livre d’or',
+};
+
+/** Extrait {name, message, url} du detailsJson d'une erreur runtime. */
+function parseRuntimeDetails(raw: string | null): { name: string; message: string; url: string | null } | null {
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as {
+      name?: unknown;
+      message?: unknown;
+      context?: { url?: unknown } | null;
+    };
+    const message = typeof parsed.message === 'string' ? parsed.message : '';
+    if (!message) return null;
+    return {
+      name: typeof parsed.name === 'string' ? parsed.name : 'Error',
+      message,
+      url:
+        parsed.context && typeof parsed.context.url === 'string'
+          ? parsed.context.url
+          : null,
+    };
+  } catch {
+    return null;
+  }
+}
+
 export function AdminLogsContent() {
   // Audit
   const [audit, setAudit] = useState<AuditRow[]>([]);
   const [auditSearch, setAuditSearch] = useState('');
+  // FIX-14 — filtre « Erreurs runtime » (action='runtime.error').
+  const [auditFilter, setAuditFilter] = useState<'all' | 'runtime'>('all');
   const [auditPage, setAuditPage] = useState(1);
   const [auditPagination, setAuditPagination] = useState<Pagination | null>(null);
   const [auditLoading, setAuditLoading] = useState(true);
@@ -123,6 +173,7 @@ export function AdminLogsContent() {
     try {
       const params = new URLSearchParams({ type: 'audit', page: String(auditPage), limit: '25' });
       if (auditSearch.trim()) params.set('search', auditSearch.trim());
+      if (auditFilter === 'runtime') params.set('action', 'runtime.error');
       const res = await fetch(`/api/admin/logs?${params.toString()}`);
       if (!res.ok) throw new Error('Erreur de chargement');
       const data = await res.json();
@@ -133,7 +184,7 @@ export function AdminLogsContent() {
     } finally {
       setAuditLoading(false);
     }
-  }, [auditPage, auditSearch]);
+  }, [auditPage, auditSearch, auditFilter]);
 
   const fetchScans = useCallback(async () => {
     setScanLoading(true);
@@ -235,16 +286,35 @@ export function AdminLogsContent() {
                 <div>
                   <CardTitle>📜 Journal d'audit</CardTitle>
                   <CardDescription>
-                    Chaque action d'administration est tracée : acteur, cible, détails, IP.
+                    Chaque action d'administration est tracée : acteur, cible, détails, IP. Les
+                    erreurs runtime (serveur & navigateur) sont marquées « Erreur runtime ».
                   </CardDescription>
                 </div>
-                <Input
-                  placeholder="Filtrer (action, email…)"
-                  value={auditSearch}
-                  onChange={(e) => { setAuditSearch(e.target.value); setAuditPage(1); }}
-                  className="sm:max-w-xs"
-                  aria-label="Rechercher dans l'audit"
-                />
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                  {/* FIX-14 — filtre « Erreurs runtime » (action='runtime.error') */}
+                  <Select
+                    value={auditFilter}
+                    onValueChange={(v) => {
+                      setAuditFilter(v === 'runtime' ? 'runtime' : 'all');
+                      setAuditPage(1);
+                    }}
+                  >
+                    <SelectTrigger className="w-full sm:w-44" aria-label="Filtrer le journal d'audit">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tous les événements</SelectItem>
+                      <SelectItem value="runtime">⚠️ Erreurs runtime</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    placeholder="Filtrer (action, email…)"
+                    value={auditSearch}
+                    onChange={(e) => { setAuditSearch(e.target.value); setAuditPage(1); }}
+                    className="sm:max-w-xs"
+                    aria-label="Rechercher dans l'audit"
+                  />
+                </div>
               </div>
             </CardHeader>
             <CardContent>
@@ -266,23 +336,47 @@ export function AdminLogsContent() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {audit.map((a) => (
-                          <TableRow key={a.id}>
-                            <TableCell className="whitespace-nowrap text-xs text-slate-500">
-                              {new Date(a.createdAt).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}
-                            </TableCell>
-                            <TableCell className="text-xs font-semibold">{a.actorEmail}</TableCell>
-                            <TableCell>
-                              <Badge variant="outline" className="border-slate-300 font-mono text-[11px] text-slate-700">{a.action}</Badge>
-                            </TableCell>
-                            <TableCell className="hidden text-xs text-slate-500 md:table-cell">
-                              {a.entityType}{a.entityId ? ` · ${a.entityId.slice(0, 10)}…` : ''}
-                            </TableCell>
-                            <TableCell className="hidden max-w-72 truncate font-mono text-[11px] text-slate-400 xl:table-cell">
-                              {a.details}
-                            </TableCell>
-                          </TableRow>
-                        ))}
+                        {audit.map((a) => {
+                          // FIX-14 — rendu lisible des erreurs runtime :
+                          // badge rouge, source en libellé, message extrait.
+                          const isRuntimeError = a.action === 'runtime.error';
+                          const runtimeDetails = isRuntimeError ? parseRuntimeDetails(a.details) : null;
+                          return (
+                            <TableRow key={a.id}>
+                              <TableCell className="whitespace-nowrap text-xs text-slate-500">
+                                {new Date(a.createdAt).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}
+                              </TableCell>
+                              <TableCell className="text-xs font-semibold">
+                                {isRuntimeError ? (
+                                  <span className="font-mono text-slate-500">{a.actorEmail}</span>
+                                ) : (
+                                  a.actorEmail
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                {isRuntimeError ? (
+                                  <Badge variant="destructive" className="gap-1 font-semibold">
+                                    <AlertTriangle className="h-3 w-3" aria-hidden="true" /> Erreur runtime
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="outline" className="border-slate-300 font-mono text-[11px] text-slate-700">{a.action}</Badge>
+                                )}
+                              </TableCell>
+                              <TableCell className="hidden text-xs text-slate-500 md:table-cell">
+                                {isRuntimeError
+                                  ? (RUNTIME_SOURCE_LABELS[a.entityType] ?? a.entityType)
+                                  : <>{a.entityType}{a.entityId ? ` · ${a.entityId.slice(0, 10)}…` : ''}</>}
+                              </TableCell>
+                              <TableCell className="hidden max-w-72 truncate font-mono text-[11px] text-slate-400 xl:table-cell">
+                                {isRuntimeError
+                                  ? runtimeDetails
+                                    ? `${runtimeDetails.name}: ${runtimeDetails.message}`
+                                    : a.details
+                                  : a.details}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
                       </TableBody>
                     </Table>
                   </div>

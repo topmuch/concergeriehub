@@ -1,9 +1,43 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { rateLimit } from '@/lib/rate-limit';
+// FIX-14 — monitoring d'erreurs : trace AuditLog (action='runtime.error').
+import { captureError } from '@/lib/error-monitor';
+// FIX-15 (C) — premier usage réel de zod + clientIp pour le rate-limit IP-scopé.
+import { z } from 'zod';
+import { clientIp } from '@/lib/audit';
 
 const DEMO_SLUG = 'demo-hub';
 const isDemo = (slug: string) => slug === DEMO_SLUG;
+
+// FIX-15 (C) — validation zod du POST guestbook. Contrat conservé : mêmes
+// messages 400 FR que la validation manuelle (Auteur et message requis,
+// message ≤ 2000 sur la longueur BRUTE, note entière 1-5 optionnelle).
+const guestbookSchema = z.object({
+  qrCodeId: z
+    .string({ message: 'Code QR requis' })
+    .min(1, { message: 'Code QR requis' }),
+  entry: z.object({
+    author: z
+      .string({ message: 'Auteur et message requis' })
+      .trim()
+      .min(1, { message: "L'auteur ne peut pas être vide" }),
+    // .max AVANT .trim() : la limite s'applique à la longueur brute,
+    // exactement comme l'ancien contrôle `entry.message.length > 2000`.
+    message: z
+      .string({ message: 'Auteur et message requis' })
+      .max(2000, { message: 'Le message ne peut pas dépasser 2000 caractères' })
+      .trim()
+      .min(1, { message: 'Le message ne peut pas être vide' }),
+    rating: z
+      .number({ message: 'La note doit être un entier entre 1 et 5' })
+      .int({ message: 'La note doit être un entier entre 1 et 5' })
+      .min(1, { message: 'La note doit être un entier entre 1 et 5' })
+      .max(5, { message: 'La note doit être un entier entre 1 et 5' })
+      .optional()
+      .nullable(),
+  }),
+});
 
 /**
  * POST /api/public/hub/[slug]/guestbook
@@ -24,45 +58,23 @@ export async function POST(
       return NextResponse.json({ error: 'Slug invalide' }, { status: 400 });
     }
 
-    // Anti-spam : max 5 avis/minute/slug.
-    if (!(await rateLimit(`guestbook:${slug}`, 5))) {
+    // FIX-15 (B) — Anti-spam par IP (5 avis/min) ; le quota slug global
+    // serait un vecteur de DoS : un tiers pouvait épuiser
+    // `guestbook:<slug>` et bloquer les invités légitimes.
+    if (!(await rateLimit(`guestbook:${slug}:${clientIp(req.headers) ?? 'local'}`, 5))) {
       return NextResponse.json({ error: 'Trop de tentatives. Réessayez dans un instant.' }, { status: 429 });
     }
 
-    const body = await req.json();
-    const { qrCodeId, entry } = body;
-
-    if (!qrCodeId) {
-      return NextResponse.json({ error: 'Code QR requis' }, { status: 400 });
-    }
-    if (!entry || !entry.author || !entry.message) {
+    const rawBody = await req.json().catch(() => null);
+    // FIX-15 (C) : payload malformé → 400 (premier message zod).
+    const parsed = guestbookSchema.safeParse(rawBody);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Auteur et message requis' },
-        { status: 400 }
+        { error: parsed.error.issues[0]?.message ?? 'Requête invalide' },
+        { status: 400 },
       );
     }
-
-    if (entry.author.trim().length === 0) {
-      return NextResponse.json({ error: 'L\'auteur ne peut pas être vide' }, { status: 400 });
-    }
-    if (entry.message.trim().length === 0) {
-      return NextResponse.json({ error: 'Le message ne peut pas être vide' }, { status: 400 });
-    }
-    if (entry.message.length > 2000) {
-      return NextResponse.json(
-        { error: 'Le message ne peut pas dépasser 2000 caractères' },
-        { status: 400 }
-      );
-    }
-    if (entry.rating !== undefined && entry.rating !== null) {
-      const r = Number(entry.rating);
-      if (!Number.isInteger(r) || r < 1 || r > 5) {
-        return NextResponse.json(
-          { error: 'La note doit être un entier entre 1 et 5' },
-          { status: 400 }
-        );
-      }
-    }
+    const { qrCodeId, entry } = parsed.data;
 
     // ── DEMO MODE: return success without saving ──
     if (isDemo(slug)) {
@@ -116,7 +128,7 @@ export async function POST(
     const newEntry = {
       author: entry.author.trim(),
       message: entry.message.trim(),
-      rating: entry.rating !== undefined && entry.rating !== null ? Number(entry.rating) : undefined,
+      rating: entry.rating ?? undefined,
       createdAt: new Date().toISOString(),
     };
 
@@ -155,7 +167,8 @@ export async function POST(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Hub guestbook POST error:', error);
+    // FIX-14 — captureError console.error + trace AuditLog, ne jette jamais.
+    await captureError('hub.guestbook', error, undefined, req);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }
 }

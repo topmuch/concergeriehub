@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
+import { mutationGuard, mutationKey } from '@/lib/mutation-guard';
 import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { getUserRoleForProperty } from '@/lib/b2b-server';
 import { refundServiceOrder } from '@/lib/payments-server';
+// FIX-14 — monitoring d'erreurs : trace AuditLog (action='runtime.error').
+import { captureError } from '@/lib/error-monitor';
 
 // =============================================================
 // ÉTAPE 21 (V3) — REMBOURSEMENT d'une commande service (côté HÔTE)
@@ -32,6 +35,9 @@ export async function POST(
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
     const userId = (session.user as { id: string }).id;
+    // FIX-15 — anti-abus : 30 mutations/min par hôte (userId, sinon IP).
+    const mutGuard = await mutationGuard(mutationKey('airbnb-mut', _req, userId));
+    if (mutGuard) return mutGuard;
 
     const { id } = await params;
     const orderId = (id || '').trim();
@@ -75,7 +81,8 @@ export async function POST(
       ...(result.stripeRefundId ? { stripeRefundId: result.stripeRefundId } : {}),
     });
   } catch (error) {
-    console.error('[airbnb/service-orders/refund POST] Error:', error);
+    // FIX-14 — captureError console.error + trace AuditLog, ne jette jamais.
+    await captureError('payments.refund.host', error, undefined, _req);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }
 }

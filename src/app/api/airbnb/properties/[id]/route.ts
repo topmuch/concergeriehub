@@ -8,6 +8,7 @@
 // =============================================================
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
+import { mutationGuard, mutationKey } from '@/lib/mutation-guard';
 import { hash } from 'bcryptjs';
 import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
@@ -73,6 +74,9 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
     if (!session?.user || !userId) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
+    // FIX-15 — anti-abus : 30 mutations/min par hôte (userId, sinon IP).
+    const mutGuard = await mutationGuard(mutationKey('airbnb-mut', req, userId));
+    if (mutGuard) return mutGuard;
 
     const { id } = await ctx.params;
     const myRole = await getUserRoleForProperty(userId, id);
@@ -206,6 +210,9 @@ export async function DELETE(_req: NextRequest, ctx: Ctx) {
     if (!session?.user || !userId) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
+    // FIX-15 — anti-abus : 30 mutations/min par hôte (userId, sinon IP).
+    const mutGuard = await mutationGuard(mutationKey('airbnb-mut', _req, userId));
+    if (mutGuard) return mutGuard;
 
     const { id } = await ctx.params;
     // Seul le PROPRIÉTAIRE peut supprimer (rôle OWNER d'équipe insuffisant)

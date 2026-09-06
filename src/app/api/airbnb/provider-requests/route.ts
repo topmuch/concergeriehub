@@ -18,6 +18,7 @@ import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { canAccessProperty } from '@/lib/b2b-server';
 import { PROVIDER_AUDIENCES, type ProviderAudience } from '@/lib/b2b';
+import { mutationGuard, mutationKey } from '@/lib/mutation-guard';
 
 export async function POST(req: NextRequest) {
   try {
@@ -26,6 +27,9 @@ export async function POST(req: NextRequest) {
     if (!session?.user || !user?.id) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
+    // FIX-15 — anti-abus : 30 mutations/min par hôte (userId, sinon IP).
+    const mutGuard = await mutationGuard(mutationKey('airbnb-mut', req, user.id));
+    if (mutGuard) return mutGuard;
 
     const body = (await req.json()) as {
       propertyId?: string;

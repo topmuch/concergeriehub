@@ -15,6 +15,7 @@ import { requireSuperadmin, adminUnauthorized } from '@/lib/admin';
 import { db } from '@/lib/db';
 import { logAudit, clientIp } from '@/lib/audit';
 import { extractTemplateVariables } from '@/lib/email-template-defaults';
+import { mutationGuard, mutationKey, MUTATIONS_LIMIT_ADMIN } from '@/lib/mutation-guard';
 
 const MAX_SUBJECT = 300;
 const MAX_HTML_BODY = 200_000;
@@ -59,6 +60,10 @@ export async function GET(_request: NextRequest, context: RouteContext) {
 export async function PUT(request: NextRequest, context: RouteContext) {
   const admin = await requireSuperadmin();
   if (!admin) return adminUnauthorized();
+
+  // FIX-15 — anti-abus : 60 mutations/min par admin (Console Superadmin).
+  const mutGuard = await mutationGuard(mutationKey('admin-mut', request, admin.id), MUTATIONS_LIMIT_ADMIN);
+  if (mutGuard) return mutGuard;
 
   const { key } = await context.params;
   if (!KEY_RE.test(key)) {

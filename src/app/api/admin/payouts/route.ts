@@ -18,6 +18,7 @@ import { db } from '@/lib/db';
 import { logAudit, clientIp } from '@/lib/audit';
 import { getStripe, stripeConnectEnabled } from '@/lib/stripe-connect';
 import { getPlatformSettings } from '@/lib/settings';
+import { mutationGuard, mutationKey, MUTATIONS_LIMIT_ADMIN } from '@/lib/mutation-guard';
 
 function round2(n: number): number {
   return Math.round(n * 100) / 100;
@@ -107,6 +108,10 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const admin = await requireSuperadmin();
   if (!admin) return adminUnauthorized();
+
+  // FIX-15 — anti-abus : 60 mutations/min par admin (Console Superadmin).
+  const mutGuard = await mutationGuard(mutationKey('admin-mut', req, admin.id), MUTATIONS_LIMIT_ADMIN);
+  if (mutGuard) return mutGuard;
 
   try {
     const body = (await req.json()) as { providerId?: string; amount?: number; note?: string };

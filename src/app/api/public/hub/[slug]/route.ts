@@ -3,6 +3,10 @@ import { compare } from 'bcryptjs';
 import { db } from '@/lib/db';
 import { haversineKm, providerCategoryMeta, formatEur, propertyTypeMeta } from '@/lib/b2b';
 import { rateLimit } from '@/lib/rate-limit';
+// FIX-14 — monitoring d'erreurs : trace AuditLog (action='runtime.error').
+import { captureError } from '@/lib/error-monitor';
+// FIX-15 (B) — clientIp pour le rate-limit PIN IP-scopé (anti-lockout).
+import { clientIp } from '@/lib/audit';
 
 // =============================================================
 // Hub public Conciergerie Hub — /hub/[slug]
@@ -170,7 +174,8 @@ export async function GET(
 
     return NextResponse.json(payload);
   } catch (error) {
-    console.error('Hub GET error:', error);
+    // FIX-14 — captureError console.error + trace AuditLog, ne jette jamais.
+    await captureError('hub.get', error, undefined, req);
     return NextResponse.json(
       { error: 'server', message: 'Erreur serveur. Réessayez dans un instant.' },
       { status: 500 }
@@ -294,8 +299,11 @@ export async function POST(
       return NextResponse.json({ error: 'PIN invalide' }, { status: 400 });
     }
 
-    // Anti brute-force : 10 essais/minute/slug (PIN 4 chiffres).
-    if (!(await rateLimit(`hubpin:${slug}`, 10))) {
+    // FIX-15 (B) — Anti brute-force par IP (10 essais/min, PIN 4 chiffres) ;
+    // le quota slug global serait un vecteur de DoS du mode hôte : un tiers
+    // pouvait épuiser `hubpin:<slug>` et empêcher l'hôte légitime de se
+    // connecter au MODE HÔTE.
+    if (!(await rateLimit(`hubpin:${slug}:${clientIp(req.headers) ?? 'local'}`, 10))) {
       return NextResponse.json({ error: 'Trop de tentatives. Réessayez dans un instant.' }, { status: 429 });
     }
 
@@ -342,7 +350,8 @@ export async function POST(
 
     return NextResponse.json({ success: true, propertyId: home.id });
   } catch (error) {
-    console.error('Hub PIN verify error:', error);
+    // FIX-14 — captureError console.error + trace AuditLog, ne jette jamais.
+    await captureError('hub.pin', error, undefined, req);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }
 }

@@ -2,14 +2,49 @@ import { NextResponse } from 'next/server';
 import { compare, hash } from 'bcryptjs';
 import { db } from '@/lib/db';
 import { rateLimit } from '@/lib/rate-limit';
+// FIX-14 — monitoring d'erreurs : trace AuditLog (action='runtime.error').
+import { captureError } from '@/lib/error-monitor';
+// FIX-15 (C) — premier usage réel de zod + clientIp pour le rate-limit IP-scopé.
+import { z } from 'zod';
+import { clientIp } from '@/lib/audit';
 
 const DEMO_SLUG = 'demo-hub';
 const isDemo = (slug: string) => slug === DEMO_SLUG;
 
-type UpdateItem = {
-  qrCodeId: string;
-  content: Record<string, any>;
-};
+// FIX-15 (C) — validation zod du payload PUT update. Contrat conservé :
+// mêmes champs, mêmes statuts (400) et mêmes messages FR que la validation
+// manuelle précédente. Particularités assumées :
+//  - `pin` reste validé PAR MODE plus bas (démo : 4 chiffres optionnels ;
+//    réel : requis 4 chiffres) — comportement historique identique ;
+//  - `updates[]` : zod garantit « tableau d'objets » ; les items incomplets
+//    restent ignorés (continue) et `content` reste un objet libre car chaque
+//    module du Hub définit son propre schéma de contenu (wifi, guidebook…) ;
+//  - `newPin` est désormais rejeté AVANT toute écriture (avant : le 400
+//    arrivait après application des updates — durcissement, mêmes
+//    message/statut ; les clients valides ne voient aucune différence).
+const updateSchema = z.object({
+  pin: z.string().optional(),
+  updates: z
+    .array(
+      z.object({
+        qrCodeId: z.string().optional(),
+        content: z.record(z.string(), z.unknown()).optional(),
+      }),
+    )
+    .optional(),
+  homeData: z
+    .object({
+      name: z.string().optional(),
+      address: z.string().optional(),
+    })
+    .optional()
+    .nullable(),
+  newPin: z
+    .string()
+    .regex(/^[0-9]{4}$/, { message: 'Le nouveau PIN doit comporter exactement 4 chiffres' })
+    .optional()
+    .nullable(),
+});
 
 /**
  * PUT /api/public/hub/[slug]/update
@@ -38,8 +73,17 @@ export async function PUT(
       return NextResponse.json({ error: 'Slug invalide' }, { status: 400 });
     }
 
-    const body = await req.json();
-    const { pin, updates, homeData, newPin } = body;
+    const rawBody = await req.json().catch(() => null);
+    // FIX-15 (C) : payload malformé → 400 avec le premier message zod
+    // (au lieu d'un 500 sur un champ inattendu). Clients valides inchangés.
+    const parsed = updateSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: parsed.error.issues[0]?.message ?? 'Requête invalide' },
+        { status: 400 },
+      );
+    }
+    const { pin, updates, homeData, newPin } = parsed.data;
 
     // ── DEMO MODE: any 4-digit PIN works, return success without saving ──
     if (isDemo(slug)) {
@@ -101,8 +145,10 @@ export async function PUT(
     if (!pin || !/^\d{4}$/.test(pin)) {
       return NextResponse.json({ error: 'PIN requis (4 chiffres)' }, { status: 400 });
     }
-    // Anti brute-force : 10 tentatives/minute/slug.
-    if (!(await rateLimit(`hubupdatepin:${slug}`, 10))) {
+    // FIX-15 (B) — Anti brute-force par IP (10 tentatives/min) ; le quota
+    // slug global serait un vecteur de DoS du mode hôte : un tiers pouvait
+    // épuiser `hubupdatepin:<slug>` et verrouiller l'hôte légitime.
+    if (!(await rateLimit(`hubupdatepin:${slug}:${clientIp(req.headers) ?? 'local'}`, 10))) {
       return NextResponse.json({ error: 'Trop de tentatives. Réessayez dans un instant.' }, { status: 429 });
     }
     const isValid = await compare(pin, home.pinHash);
@@ -168,15 +214,9 @@ export async function PUT(
       }
     }
 
-    // ── Change PIN ──
-    if (newPin !== undefined && newPin !== null) {
-      if (!/^[0-9]{4}$/.test(String(newPin))) {
-        return NextResponse.json(
-          { error: 'Le nouveau PIN doit comporter exactement 4 chiffres' },
-          { status: 400 }
-        );
-      }
-      const hashedPin = await hash(String(newPin), 10);
+    // ── Change PIN ── (format déjà validé par zod — FIX-15 (C))
+    if (newPin) {
+      const hashedPin = await hash(newPin, 10);
       await db.property.update({
         where: { id: home.id },
         data: { pinHash: hashedPin },
@@ -185,7 +225,8 @@ export async function PUT(
 
     return NextResponse.json({ success: true, updated: updatedCount });
   } catch (error) {
-    console.error('Hub PUT update error:', error);
+    // FIX-14 — captureError console.error + trace AuditLog, ne jette jamais.
+    await captureError('hub.update', error, undefined, req);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }
 }

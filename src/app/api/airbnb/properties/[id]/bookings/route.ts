@@ -18,6 +18,7 @@
 // =============================================================
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
+import { mutationGuard, mutationKey } from '@/lib/mutation-guard';
 import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { getUserRoleForProperty } from '@/lib/b2b-server';
@@ -97,6 +98,9 @@ export async function POST(req: NextRequest, ctx: Ctx) {
     if (!session?.user || !userId) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
+    // FIX-15 — anti-abus : 30 mutations/min par hôte (userId, sinon IP).
+    const mutGuard = await mutationGuard(mutationKey('airbnb-mut', req, userId));
+    if (mutGuard) return mutGuard;
 
     const { id: propertyId } = await ctx.params;
     const myRole = await getUserRoleForProperty(userId, propertyId);
@@ -194,6 +198,9 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
     if (!session?.user || !userId) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
+    // FIX-15 — anti-abus : 30 mutations/min par hôte (userId, sinon IP).
+    const mutGuard = await mutationGuard(mutationKey('airbnb-mut', req, userId));
+    if (mutGuard) return mutGuard;
 
     const { id: propertyId } = await ctx.params;
     const bookingId = new URL(req.url).searchParams.get('bookingId');
@@ -328,6 +335,9 @@ export async function DELETE(req: NextRequest, ctx: Ctx) {
     if (!session?.user || !userId) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
+    // FIX-15 — anti-abus : 30 mutations/min par hôte (userId, sinon IP).
+    const mutGuard = await mutationGuard(mutationKey('airbnb-mut', req, userId));
+    if (mutGuard) return mutGuard;
 
     const { id: propertyId } = await ctx.params;
     const bookingId = new URL(req.url).searchParams.get('bookingId');

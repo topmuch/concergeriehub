@@ -14,6 +14,7 @@
 // =============================================================
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
+import { mutationGuard, mutationKey } from '@/lib/mutation-guard';
 import { hash } from 'bcryptjs';
 import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
@@ -179,6 +180,10 @@ export async function POST(req: NextRequest) {
         { status: 403 },
       );
     }
+    // FIX-15 — anti-abus : 30 mutations/min par hôte (userId, sinon IP).
+    // Placé après les contrôles d'autorisation (session + rôle).
+    const mutGuard = await mutationGuard(mutationKey('airbnb-mut', req, userId));
+    if (mutGuard) return mutGuard;
 
     const body = (await req.json()) as {
       name?: string;

@@ -31,6 +31,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireSuperadmin, adminUnauthorized } from '@/lib/admin';
 import { db } from '@/lib/db';
 import { logAudit, clientIp } from '@/lib/audit';
+import { mutationGuard, mutationKey, MUTATIONS_LIMIT_ADMIN } from '@/lib/mutation-guard';
 
 /** Date ISO courte (YYYY-MM-DD) pour le suffixe de résolution. */
 function resolutionDate(date: Date): string {
@@ -43,6 +44,10 @@ export async function POST(
 ) {
   const admin = await requireSuperadmin();
   if (!admin) return adminUnauthorized();
+
+  // FIX-15 — anti-abus : 60 mutations/min par admin (Console Superadmin).
+  const mutGuard = await mutationGuard(mutationKey('admin-mut', req, admin.id), MUTATIONS_LIMIT_ADMIN);
+  if (mutGuard) return mutGuard;
 
   try {
     const { id } = await params;
