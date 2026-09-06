@@ -1099,3 +1099,19 @@ Work Log:
 Stage Summary:
 - ÉTAPE 5 livrée au commit efd1c31 : Calendrier complet avec import iCal réellement fonctionnel (preuve 209 imports Google Calendar), Paramètres 6 onglets tous branchés, structure de routes finale unifiée (/airbnb/{dashboard,properties,plates,orders,providers,team,calendar,settings,billing,automations}) — ancien dashboard retiré proprement (redirects), zéro orphelin.
 - Reste H6 : vérification E2E finale toutes routes (desktop+mobile, console), worklog, commit + push.
+
+---
+Task ID: H6
+Agent: Z.ai Code (orchestrator)
+Task: Dashboard Client — FINAL : vérification E2E complète, fixes hydration, push GitHub
+
+Work Log:
+- Balayage E2E des 10 routes /airbnb/* en session démo : toutes rendues avec leur titre correct (dashboard, properties, plates, orders, providers, team, calendar, settings, billing, automations) ; curl sans cookie → 307 (garde session OK).
+- Chasse aux erreurs d'hydratation : 3 mismatches localisés (intermittents, properties/providers) → cause = IDs Radix auto-générés (aria-controls="radix-…") instables entre SSR et hydratation (useId React + Turbopack dev). Fix canonique : montage post-hydratation via useSyncExternalStore du burger Sheet (host-shell) et de la cloche NotificationsBell, avec placeholders de même taille (pas de layout shift). Re-balayage 3 runs × 4 pages : 0 erreur.
+- Vérifications post-fix : cloche présente et fonctionnelle, burger mobile présent, scrollWidth mobile = 390.
+- dev.log : la seule ligne ⨯ est l'incident historique du redémarrage du serveur (port occupé pendant l'arrêt) — aucune erreur au terme (requêtes Prisma normales).
+- lint 0 erreur / 0 warning sur l'ensemble du projet.
+- Note persistée : le PAT GitHub a transité en clair dans la conversation — l'utilisateur DOIT le révoquer sur github.com/settings/tokens.
+
+Stage Summary:
+- Dashboard Client complet et vérifié : 10 pages réelles (Vue d'ensemble KPIs+recharts+activité, Propriétés+wizard, Plaques+print, Commandes+CSV+transitions, Prestataires géoloc+demande ticket, Équipe invitations/rôles, Calendrier+iCal réel, Paramètres 6 onglets, Facturation Stripe, Automatisations), shell QRTags Pro (sidebar claire, header sélecteur/notifications/ajout, rôles réels), 0 mock, preuves E2E croisées en base à chaque étape, 7 commits (c9ec750 → 7433421).
