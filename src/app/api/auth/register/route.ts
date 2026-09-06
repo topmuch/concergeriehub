@@ -6,7 +6,9 @@ import { isIpBlacklisted } from '@/lib/security';
 import { isFlagEnabled } from '@/lib/feature-flags';
 import { getPlatformSettings } from '@/lib/settings';
 import { queueEmail } from '@/lib/email';
-import { welcomeEmail } from '@/lib/email-templates';
+// FIX-12 — rendu DB-first : modèle éditable 'welcome' (onglet Modèles),
+// fallback silencieux sur le template codé en dur.
+import { renderWelcomeEmail } from '@/lib/email-template-render';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
@@ -83,7 +85,7 @@ export async function POST(req: Request) {
     // Chantier ONBOARD — email de bienvenue (fire-and-forget : ne peut
     // jamais faire échouer l'inscription, cf. lib/email.ts).
     const firstName = fullName.trim().split(/\s+/)[0] || 'hôte';
-    const tpl = welcomeEmail({ firstName, dashboardUrl: '/airbnb/dashboard?onboarding=1' });
+    const tpl = await renderWelcomeEmail({ firstName, dashboardUrl: '/airbnb/dashboard?onboarding=1' });
     void queueEmail({
       to: normalizedEmail,
       subject: tpl.subject,

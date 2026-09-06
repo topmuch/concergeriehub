@@ -1,7 +1,12 @@
 import { db } from '@/lib/db';
 import { computeSplit, round2, DEFAULT_COMMISSION_RATE } from '@/lib/orders';
 import { queueEmail } from '@/lib/email';
-import { guestReceiptEmail, guestRefundEmail } from '@/lib/email-templates';
+// FIX-12 — rendu DB-first : modèles éditables (/admin/emails → Modèles),
+// fallback silencieux sur les templates codés en dur.
+import {
+  renderGuestReceiptEmail,
+  renderGuestRefundEmail,
+} from '@/lib/email-template-render';
 
 // =============================================================
 // ÉTAPE 17.6 + 20 (V3) — Paiement des commandes service (serveur UNIQUEMENT)
@@ -126,7 +131,7 @@ export async function markServiceOrderPaid(
       const property = order.propertyId
         ? await db.property.findUnique({ where: { id: order.propertyId }, select: { name: true } })
         : null;
-      const tpl = guestReceiptEmail({
+      const tpl = await renderGuestReceiptEmail({
         guestName: order.guestName || 'invité',
         orderRef: order.id,
         itemsSummary: orderStripeDescription(order.items),
@@ -250,7 +255,7 @@ export async function refundServiceOrder(serviceOrderId: string): Promise<Refund
       const property = orderRow?.propertyId
         ? await db.property.findUnique({ where: { id: orderRow.propertyId }, select: { name: true } })
         : null;
-      const tpl = guestRefundEmail({
+      const tpl = await renderGuestRefundEmail({
         guestName: order.guestName || 'invité',
         orderRef: order.id,
         amount: order.totalAmount,

@@ -12,7 +12,7 @@ import { PrismaClient } from '@prisma/client';
 
 const db = new PrismaClient();
 
-const LOFT_SLUG = 'loft-canal-saint-martin-11wz';
+const LOFT_SLUG = process.env.SEED_SLUG ?? process.argv[2] ?? 'loft-canal-saint-martin-11wz'; // FIX-9 : paramétrable, défaut démo
 
 const HOUSE_RULES = [
   'Calme après 22 h — les voisins sont adorables mais sensibles 🌙',

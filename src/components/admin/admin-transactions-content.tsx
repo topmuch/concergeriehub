@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -8,6 +8,7 @@ import {
   Banknote,
   Loader2,
   RefreshCw,
+  Scale,
   ShoppingCart,
   Store,
   Wallet,
@@ -46,6 +47,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Textarea } from '@/components/ui/textarea';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { AdminMarketplace } from '@/components/admin/admin-marketplace';
 
 // =============================================================
@@ -56,6 +64,13 @@ import { AdminMarketplace } from '@/components/admin/admin-marketplace';
 //    endpoints /api/client/* désormais superadmin-only)
 //  - Onglet Reversements : payouts prestataires via
 //    /api/admin/payouts (Stripe Connect si configuré, sinon manuel)
+//    + workflow de litige FIX-13 : statut DISPUTED (champ String du
+//    modèle Payout, sans migration), ouverture via
+//    POST /api/admin/payouts/[id]/dispute, résolution via
+//    POST /api/admin/payouts/[id]/resolve. Note litige (format
+//    canonique documenté dans les 2 routes) :
+//    `[LITIGE <YYYY-MM-DD>] <raison>` puis résolution APPEND
+//    `[RÉSOLUTION <YYYY-MM-DD> RELEASE|REFUND] <note>`.
 // =============================================================
 
 interface OrderRow {
@@ -115,6 +130,28 @@ const PAY_STATUS: Record<string, { label: string; className: string }> = {
   FAILED: { label: 'Échec', className: 'bg-red-100 text-red-700' },
 };
 
+// FIX-13 — Badges de statut des payouts (palette chaude, pas de bleu :
+// DISPUTED = ambre, distinct de FAILED rouge et PENDING neutre).
+const PAYOUT_STATUS: Record<string, { label: string; className: string }> = {
+  PENDING: { label: 'En attente', className: 'bg-slate-100 text-slate-600' },
+  PAID: { label: 'Payé', className: 'bg-emerald-100 text-emerald-800' },
+  FAILED: { label: 'Échoué', className: 'bg-red-100 text-red-700' },
+  DISPUTED: { label: '⚖️ Litige', className: 'bg-amber-100 text-amber-800' },
+};
+
+const PAYOUT_FILTERS: {
+  key: 'ALL' | 'PENDING' | 'DISPUTED' | 'PAID' | 'FAILED';
+  label: string;
+}[] = [
+  { key: 'ALL', label: 'Tous' },
+  { key: 'PENDING', label: 'En attente' },
+  { key: 'DISPUTED', label: '⚖️ Litiges' },
+  { key: 'PAID', label: 'Payés' },
+  { key: 'FAILED', label: 'Échoués' },
+];
+
+type PayoutFilterKey = (typeof PAYOUT_FILTERS)[number]['key'];
+
 export function AdminTransactionsContent() {
   const [stats, setStats] = useState<OrdersStats | null>(null);
   const [orders, setOrders] = useState<OrderRow[]>([]);
@@ -130,6 +167,16 @@ export function AdminTransactionsContent() {
   // AUD-FULL ④ — Remboursement Superadmin (moteur /api/admin/orders/[id]/refund)
   const [refundTarget, setRefundTarget] = useState<OrderRow | null>(null);
   const [refundBusy, setRefundBusy] = useState(false);
+
+  // FIX-13 — Litiges payouts (workflow administratif, sans appel Stripe)
+  const [disputeTarget, setDisputeTarget] = useState<PayoutRow | null>(null);
+  const [disputeReason, setDisputeReason] = useState('');
+  const [disputeBusy, setDisputeBusy] = useState(false);
+  const [resolveTarget, setResolveTarget] = useState<PayoutRow | null>(null);
+  const [resolveOutcome, setResolveOutcome] = useState<'RELEASE' | 'REFUND'>('RELEASE');
+  const [resolveNote, setResolveNote] = useState('');
+  const [resolveBusy, setResolveBusy] = useState(false);
+  const [payoutFilter, setPayoutFilter] = useState<PayoutFilterKey>('ALL');
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
@@ -165,6 +212,20 @@ export function AdminTransactionsContent() {
     fetchOrders();
     fetchPayouts();
   }, [fetchOrders, fetchPayouts]);
+
+  // Compteurs par statut (filtre de l'historique reversements).
+  const payoutCounts = useMemo(() => {
+    const c: Record<PayoutFilterKey, number> = { ALL: payouts.length, PENDING: 0, DISPUTED: 0, PAID: 0, FAILED: 0 };
+    for (const p of payouts) {
+      if (p.status === 'PENDING' || p.status === 'DISPUTED' || p.status === 'PAID' || p.status === 'FAILED') {
+        c[p.status] += 1;
+      }
+    }
+    return c;
+  }, [payouts]);
+
+  const filteredPayouts =
+    payoutFilter === 'ALL' ? payouts : payouts.filter((p) => p.status === payoutFilter);
 
   const createPayout = async () => {
     if (!payoutTarget) return;
@@ -209,6 +270,57 @@ export function AdminTransactionsContent() {
       toast.error(err instanceof Error ? err.message : 'Erreur inconnue');
     } finally {
       setRefundBusy(false);
+    }
+  };
+
+  // FIX-13 — Ouvre un litige sur un payout PENDING/FAILED (l'API refuse
+  // PAID en 409) : status='DISPUTED' + note `[LITIGE <date>] <raison>`.
+  const openDispute = async () => {
+    if (!disputeTarget) return;
+    setDisputeBusy(true);
+    try {
+      const res = await fetch(`/api/admin/payouts/${disputeTarget.id}/dispute`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: disputeReason.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Erreur serveur');
+      toast.success(data.message || 'Litige ouvert');
+      setDisputeTarget(null);
+      setDisputeReason('');
+      fetchPayouts(); // refetch : badge Litige + note visibles
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erreur inconnue');
+    } finally {
+      setDisputeBusy(false);
+    }
+  };
+
+  // FIX-13 — Résout un litige : RELEASE (status='PAID', paidAt=now —
+  // marqué payé manuellement si method MANUAL, décision administrative
+  // sans écriture Stripe) ou REFUND (status='FAILED', montant redevient
+  // réversible) + note de résolution appended côté API.
+  const resolveDispute = async () => {
+    if (!resolveTarget) return;
+    setResolveBusy(true);
+    try {
+      const res = await fetch(`/api/admin/payouts/${resolveTarget.id}/resolve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ outcome: resolveOutcome, note: resolveNote.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Erreur serveur');
+      toast.success(data.message || 'Litige résolu');
+      setResolveTarget(null);
+      setResolveNote('');
+      setResolveOutcome('RELEASE');
+      fetchPayouts(); // refetch : statut final + paidAt + note de résolution
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erreur inconnue');
+    } finally {
+      setResolveBusy(false);
     }
   };
 
@@ -403,39 +515,118 @@ export function AdminTransactionsContent() {
               )}
 
               <div className="pt-2">
-                <CardTitle className="mb-2 text-base">📜 Historique des reversements</CardTitle>
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                  <CardTitle className="text-base">📜 Historique des reversements</CardTitle>
+                  {/* FIX-13 — Filtre par statut avec compteurs (inclut DISPUTED) */}
+                  {payouts.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {PAYOUT_FILTERS.map((f) => (
+                        <button
+                          key={f.key}
+                          type="button"
+                          onClick={() => setPayoutFilter(f.key)}
+                          className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors ${
+                            payoutFilter === f.key
+                              ? 'border-slate-900 bg-slate-900 text-white'
+                              : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                          }`}
+                        >
+                          {f.label} ({payoutCounts[f.key]})
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
                 {payouts.length === 0 ? (
                   <p className="text-sm text-slate-500">Aucun reversement encore enregistré.</p>
+                ) : filteredPayouts.length === 0 ? (
+                  <p className="text-sm text-slate-500">Aucun reversement pour ce filtre.</p>
                 ) : (
-                  <div className="max-h-72 overflow-y-auto rounded-lg border">
+                  <div className="max-h-72 overflow-auto rounded-lg border">
                     <Table>
                       <TableHeader className="sticky top-0 bg-white">
                         <TableRow>
                           <TableHead>Prestataire</TableHead>
                           <TableHead>Montant</TableHead>
                           <TableHead>Méthode</TableHead>
+                          <TableHead>Statut</TableHead>
                           <TableHead className="hidden sm:table-cell">Référence</TableHead>
                           <TableHead>Date</TableHead>
+                          <TableHead className="w-40">Action</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {payouts.map((p) => (
-                          <TableRow key={p.id}>
-                            <TableCell className="font-medium">{p.providerName}</TableCell>
-                            <TableCell className="text-sm font-bold">{p.amount.toFixed(2)} €</TableCell>
-                            <TableCell>
-                              <Badge variant={p.method === 'STRIPE_CONNECT' ? 'default' : 'outline'}>
-                                {p.method === 'STRIPE_CONNECT' ? 'Stripe Connect' : 'Manuel'}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="hidden font-mono text-xs text-slate-500 sm:table-cell">
-                              {p.stripeTransferId ?? '—'}
-                            </TableCell>
-                            <TableCell className="text-sm text-slate-500">
-                              {format(new Date(p.paidAt ?? p.createdAt), 'dd MMM yyyy HH:mm', { locale: fr })}
-                            </TableCell>
-                          </TableRow>
-                        ))}
+                        {filteredPayouts.map((p) => {
+                          const st = PAYOUT_STATUS[p.status] ?? { label: p.status, className: 'bg-slate-100 text-slate-600' };
+                          return (
+                            <TableRow key={p.id}>
+                              <TableCell>
+                                <p className="font-medium text-slate-900">{p.providerName}</p>
+                                {/* Note litige (FIX-13) : tronquée, complète au survol */}
+                                {p.note && (
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <p className="max-w-48 truncate text-xs text-amber-800">{p.note}</p>
+                                    </TooltipTrigger>
+                                    <TooltipContent className="max-w-80 whitespace-pre-wrap">
+                                      {p.note}
+                                    </TooltipContent>
+                                  </Tooltip>
+                                )}
+                              </TableCell>
+                              <TableCell className="text-sm font-bold">{p.amount.toFixed(2)} €</TableCell>
+                              <TableCell>
+                                <Badge variant={p.method === 'STRIPE_CONNECT' ? 'default' : 'outline'}>
+                                  {p.method === 'STRIPE_CONNECT' ? 'Stripe Connect' : 'Manuel'}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-bold ${st.className}`}>
+                                  {st.label}
+                                </span>
+                              </TableCell>
+                              <TableCell className="hidden font-mono text-xs text-slate-500 sm:table-cell">
+                                {p.stripeTransferId ?? '—'}
+                              </TableCell>
+                              <TableCell className="text-sm text-slate-500">
+                                {format(new Date(p.paidAt ?? p.createdAt), 'dd MMM yyyy HH:mm', { locale: fr })}
+                              </TableCell>
+                              <TableCell>
+                                {/* FIX-13 — Actions litige : ouverture sur
+                                    PENDING/FAILED (l'API refuse PAID en 409),
+                                    résolution sur DISPUTED uniquement. */}
+                                {p.status === 'PENDING' || p.status === 'FAILED' ? (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="border-amber-300 px-2 text-amber-800 hover:bg-amber-50 hover:text-amber-900"
+                                    onClick={() => {
+                                      setDisputeReason('');
+                                      setDisputeTarget(p);
+                                    }}
+                                  >
+                                    <Scale className="mr-1 h-3.5 w-3.5" /> Ouvrir un litige
+                                  </Button>
+                                ) : p.status === 'DISPUTED' ? (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="border-slate-300 px-2 text-slate-700 hover:bg-slate-50"
+                                    onClick={() => {
+                                      setResolveOutcome('RELEASE');
+                                      setResolveNote('');
+                                      setResolveTarget(p);
+                                    }}
+                                  >
+                                    Résoudre
+                                  </Button>
+                                ) : (
+                                  <span className="text-slate-300">—</span>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
                       </TableBody>
                     </Table>
                   </div>
@@ -521,6 +712,133 @@ export function AdminTransactionsContent() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* ----- FIX-13 — Dialog ouverture de litige (PENDING/FAILED) ----- */}
+      <Dialog open={disputeTarget !== null} onOpenChange={(o) => !o && setDisputeTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Scale className="h-5 w-5 text-amber-600" /> Ouvrir un litige — {disputeTarget?.providerName}
+            </DialogTitle>
+            <DialogDescription>
+              Reversement de {disputeTarget?.amount.toFixed(2)} € (
+              {disputeTarget?.method === 'STRIPE_CONNECT' ? 'Stripe Connect' : 'virement manuel'}). Le litige est un
+              suivi administratif : aucun mouvement Stripe n&apos;est déclenché. Un reversement déjà payé ne peut pas
+              être contesté.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-2 py-2">
+            <Label htmlFor="dispute-reason">Raison du litige (min. 10 caractères)</Label>
+            <Textarea
+              id="dispute-reason"
+              rows={4}
+              value={disputeReason}
+              onChange={(e) => setDisputeReason(e.target.value)}
+              placeholder="Ex : commande remboursée au client, le prestataire conteste le montant…"
+              disabled={disputeBusy}
+            />
+            <p
+              className={`text-xs ${
+                disputeReason.trim().length >= 10 ? 'text-emerald-600' : 'text-slate-500'
+              }`}
+            >
+              {disputeReason.trim().length}/10 caractères minimum
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDisputeTarget(null)} disabled={disputeBusy}>
+              Annuler
+            </Button>
+            <Button
+              className="bg-amber-600 text-white hover:bg-amber-700"
+              onClick={openDispute}
+              disabled={disputeBusy || disputeReason.trim().length < 10}
+            >
+              {disputeBusy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Ouvrir le litige
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ----- FIX-13 — Dialog résolution de litige (DISPUTED) ----- */}
+      <Dialog open={resolveTarget !== null} onOpenChange={(o) => !o && setResolveTarget(null)}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Scale className="h-5 w-5 text-amber-600" /> Résoudre le litige — {resolveTarget?.providerName}
+            </DialogTitle>
+            <DialogDescription>
+              Reversement de {resolveTarget?.amount.toFixed(2)} € en litige.
+            </DialogDescription>
+          </DialogHeader>
+          {/* Raison du litige (note `[LITIGE <date>] …`) affichée en clair */}
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+            <p className="mb-1 text-xs font-bold uppercase tracking-wide text-amber-800">Raison du litige</p>
+            <p className="whitespace-pre-wrap text-sm text-amber-900">{resolveTarget?.note ?? '—'}</p>
+          </div>
+          <RadioGroup
+            value={resolveOutcome}
+            onValueChange={(v) => setResolveOutcome(v as 'RELEASE' | 'REFUND')}
+            className="gap-2"
+            disabled={resolveBusy}
+          >
+            <Label
+              htmlFor="outcome-release"
+              className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 ${
+                resolveOutcome === 'RELEASE' ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200'
+              }`}
+            >
+              <RadioGroupItem id="outcome-release" value="RELEASE" className="mt-0.5" />
+              <span>
+                <span className="block font-semibold text-slate-900">✅ Libérer le paiement</span>
+                <span className="block text-xs font-normal text-slate-500">
+                  Le reversement est marqué Payé. Virement à exécuter manuellement si méthode manuelle — aucune
+                  écriture Stripe n&apos;est déclenchée (décision administrative).
+                </span>
+              </span>
+            </Label>
+            <Label
+              htmlFor="outcome-refund"
+              className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 ${
+                resolveOutcome === 'REFUND' ? 'border-red-400 bg-red-50' : 'border-slate-200'
+              }`}
+            >
+              <RadioGroupItem id="outcome-refund" value="REFUND" className="mt-0.5" />
+              <span>
+                <span className="block font-semibold text-slate-900">↩️ Marquer remboursé / annulé</span>
+                <span className="block text-xs font-normal text-slate-500">
+                  Le reversement passe en Échoué : le montant redevient réversible pour le prestataire.
+                </span>
+              </span>
+            </Label>
+          </RadioGroup>
+          <div className="grid gap-2">
+            <Label htmlFor="resolve-note">Note de résolution (min. 3 caractères)</Label>
+            <Textarea
+              id="resolve-note"
+              rows={3}
+              value={resolveNote}
+              onChange={(e) => setResolveNote(e.target.value)}
+              placeholder="Ex : virement exécuté le … / commande remboursée au client, payout annulé"
+              disabled={resolveBusy}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setResolveTarget(null)} disabled={resolveBusy}>
+              Annuler
+            </Button>
+            <Button
+              className={resolveOutcome === 'REFUND' ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-emerald-600 text-white hover:bg-emerald-700'}
+              onClick={resolveDispute}
+              disabled={resolveBusy || resolveNote.trim().length < 3}
+            >
+              {resolveBusy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Confirmer la résolution
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

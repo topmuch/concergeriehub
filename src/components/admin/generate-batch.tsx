@@ -15,6 +15,15 @@ import {
 } from 'lucide-react';
 import { generateUniqueCodes } from '@/lib/activation-code';
 import { generatePdf, type QrCodeForPdf } from '@/lib/pdf-export';
+import {
+  // FIX-11 — matériau réel de la plaque (aluminium défaut | bois | acrylique),
+  // persisté dans designConfig JSON (aucune migration).
+  DEFAULT_PLAQUE_MATERIAL,
+  PLAQUE_MATERIALS,
+  PLAQUE_MATERIAL_META,
+  normalizePlaqueMaterial,
+  type PlaqueMaterial,
+} from '@/lib/plaque-material';
 import { QRCodeSVG } from 'qrcode.react';
 
 /* ================================================================== */
@@ -29,6 +38,7 @@ export interface DesignConfig {
   cornersDotType: string;
   errorCorrectionLevel: string;
   logoPreset: string;
+  material: PlaqueMaterial; // FIX-11 — matériau de la plaque physique
 }
 
 const DOT_TYPES = [
@@ -74,6 +84,7 @@ const DEFAULT_DESIGN: DesignConfig = {
   cornersDotType: 'dot',
   errorCorrectionLevel: 'M',
   logoPreset: '',
+  material: DEFAULT_PLAQUE_MATERIAL,
 };
 
 /* ================================================================== */
@@ -331,6 +342,7 @@ function LivePreview({ design, qrLevel }: { design: DesignConfig; qrLevel: 'L' |
           />
         </div>
         <div className="w-full space-y-1.5 text-xs text-muted-foreground">
+          <div className="flex justify-between"><span>Matériau</span><span className="font-medium text-foreground">{PLAQUE_MATERIAL_META[design.material].emoji} {PLAQUE_MATERIAL_META[design.material].label}</span></div>
           <div className="flex justify-between"><span>Points</span><span className="font-mono font-medium text-foreground">{design.dotsType}</span></div>
           <div className="flex justify-between"><span>Coins</span><span className="font-mono font-medium text-foreground">{design.cornersSquareType}</span></div>
           <div className="flex justify-between"><span>Correction</span><span className="font-mono font-medium text-foreground">{design.errorCorrectionLevel}</span></div>
@@ -423,6 +435,40 @@ export function GenerateBatch() {
                   placeholder="Ex: Commande #1234"
                   className="h-11"
                 />
+              </div>
+
+              {/* FIX-11 — choix du matériau réel de la plaque (persisté
+                  dans designConfig JSON : QrBatch + PhysicalQrCode) */}
+              <div className="space-y-2">
+                <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  Matériau de la plaque
+                </Label>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  {PLAQUE_MATERIALS.map((m) => {
+                    const active = design.material === m.value;
+                    return (
+                      <button
+                        key={m.value}
+                        type="button"
+                        onClick={() => updateDesign('material', normalizePlaqueMaterial(m.value))}
+                        aria-pressed={active}
+                        className={`text-left rounded-xl border-2 p-3 transition-all ${
+                          active
+                            ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 shadow-sm'
+                            : 'border-transparent bg-muted/60 hover:border-muted-foreground/30 hover:bg-muted'
+                        }`}
+                      >
+                        <p className={`text-sm font-semibold ${active ? 'text-emerald-700 dark:text-emerald-300' : ''}`}>
+                          {m.emoji} {m.label}
+                        </p>
+                        <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">{m.hint}</p>
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  Le matériau est enregistré avec le design du lot (aluminium par défaut).
+                </p>
               </div>
             </CardContent>
           </Card>

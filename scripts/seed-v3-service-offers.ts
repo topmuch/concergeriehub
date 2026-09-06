@@ -8,7 +8,7 @@
 // =============================================================
 import { db } from '@/lib/db';
 
-const SLUG = 'loft-canal-saint-martin-11wz';
+const SLUG = process.env.SEED_SLUG ?? process.argv[2] ?? 'loft-canal-saint-martin-11wz'; // FIX-9 : paramétrable (SEED_SLUG=... ou arg), défaut démo
 
 interface OfferSeed {
   name: string;

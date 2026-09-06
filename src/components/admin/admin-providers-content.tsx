@@ -33,6 +33,17 @@ import {
   formatEur,
   type ProviderAudience,
 } from '@/lib/b2b';
+import {
+  // FIX-11 — convention documents FIX-4 + statut quadri-état dérivé
+  // (En attente / En revue / Rejeté / Vérifié) partagée API + UI.
+  DOC_KIND_META,
+  DOC_STATUS_META,
+  PROVIDER_REVIEW_STATUS_META,
+  deriveProviderReviewStatus,
+  parseVerificationDocuments,
+  type ProviderReviewStatus,
+  type VerificationDocument,
+} from '@/lib/provider-verification';
 
 // =============================================================
 // AdminProvidersContent — ÉTAPE 9.2 : gestion des prestataires.
@@ -61,6 +72,8 @@ interface ProviderRow {
   isUrgentAvailable: boolean;
   isVerified: boolean;
   isActive: boolean;
+  // FIX-11 — JSON FIX-4 déjà parsé par l'API de liste (lecture seule)
+  verificationDocuments: VerificationDocument[];
   portfolioImages: string;
   ratingAvg: number;
   totalReviews: number;
@@ -107,45 +120,9 @@ const EMPTY_FORM: ProviderForm = {
   portfolioText: '',
 };
 
-// ---------- FIX-4 : documents de vérification (convention API) ----------
-type VerificationDocKind = 'KBIS' | 'ASSURANCE' | 'OTHER';
-type VerificationDocStatus = 'PENDING' | 'VERIFIED' | 'REJECTED';
-
-interface VerificationDocument {
-  id: string;
-  kind: VerificationDocKind;
-  name: string;
-  url: string;
-  uploadedAt: string;
-  status: VerificationDocStatus;
-}
-
-const DOC_KIND_META: Record<VerificationDocKind, { label: string; emoji: string }> = {
-  KBIS: { label: 'Kbis', emoji: '🏛️' },
-  ASSURANCE: { label: 'Assurance', emoji: '🛡️' },
-  OTHER: { label: 'Autre', emoji: '📎' },
-};
-
-const DOC_STATUS_META: Record<VerificationDocStatus, { label: string; cls: string }> = {
-  PENDING: { label: 'En attente', cls: 'bg-amber-50 border-amber-300 text-amber-800' },
-  VERIFIED: { label: 'Validé', cls: 'bg-emerald-50 border-emerald-300 text-emerald-700' },
-  REJECTED: { label: 'Rejeté', cls: 'bg-red-50 border-red-200 text-red-600' },
-};
-
-/** Parse défensif côté client (l'API filtre déjà strictement). */
-function parseVerificationDocuments(raw: unknown): VerificationDocument[] {
-  if (!Array.isArray(raw)) return [];
-  return raw.filter(
-    (d): d is VerificationDocument =>
-      typeof d === 'object' &&
-      d !== null &&
-      typeof (d as VerificationDocument).id === 'string' &&
-      typeof (d as VerificationDocument).url === 'string' &&
-      typeof (d as VerificationDocument).uploadedAt === 'string' &&
-      (d as VerificationDocument).kind in DOC_KIND_META &&
-      (d as VerificationDocument).status in DOC_STATUS_META,
-  );
-}
+// ---------- FIX-4/FIX-11 : documents de vérification ----------
+// Types + parse défensif + méta déplacés dans src/lib/provider-verification.ts
+// (partagés avec l'API de liste et la dérivation du statut quadri-état).
 
 export function AdminProvidersContent() {
   const [providers, setProviders] = useState<ProviderRow[]>([]);
@@ -153,6 +130,8 @@ export function AdminProvidersContent() {
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
   const [audienceFilter, setAudienceFilter] = useState<string>('all');
+  // FIX-11 — filtre par statut de vérification (quadri-état dérivé)
+  const [statusFilter, setStatusFilter] = useState<'ALL' | ProviderReviewStatus>('ALL');
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   // ----- Formulaire -----
@@ -211,10 +190,36 @@ export function AdminProvidersContent() {
   }, []);
 
   // ----- Filtres -----
+  // FIX-11 — statut dérivé par prestataire (données DB réelles :
+  // isVerified + verificationDocuments), compteur par état.
+  const reviewStatuses = useMemo(() => {
+    const map = new Map<string, ProviderReviewStatus>();
+    for (const p of providers) {
+      map.set(
+        p.id,
+        deriveProviderReviewStatus(p.isVerified, parseVerificationDocuments(p.verificationDocuments)),
+      );
+    }
+    return map;
+  }, [providers]);
+
+  const statusCounts = useMemo(() => {
+    const counts: Record<ProviderReviewStatus, number> = {
+      PENDING: 0,
+      IN_REVIEW: 0,
+      REJECTED: 0,
+      VERIFIED: 0,
+    };
+    for (const st of reviewStatuses.values()) counts[st] += 1;
+    return counts;
+  }, [reviewStatuses]);
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return providers.filter((p) => {
       if (audienceFilter !== 'all' && p.audience !== audienceFilter) return false;
+      // FIX-11 — filtre par statut dérivé (quadri-état)
+      if (statusFilter !== 'ALL' && reviewStatuses.get(p.id) !== statusFilter) return false;
       if (!q) return true;
       const catLabel = providerCategoryMeta(p.category).label.toLowerCase();
       return (
@@ -223,7 +228,7 @@ export function AdminProvidersContent() {
         catLabel.includes(q)
       );
     });
-  }, [providers, search, audienceFilter]);
+  }, [providers, search, audienceFilter, statusFilter, reviewStatuses]);
 
   const mapProviders = useMemo(
     () =>
@@ -412,6 +417,15 @@ export function AdminProvidersContent() {
       ? { latitude: Number(form.latitude), longitude: Number(form.longitude) }
       : null;
 
+  // FIX-11 — statut quadri-état de la fiche ouverte (fiche = source
+  // fraîche : documents refetchés + isVerified resynchronisé). Rend
+  // l'état « En revue » visible dans l'UI de review FIX-4.
+  const sheetReviewStatus = deriveProviderReviewStatus(
+    form.isVerified,
+    documents ?? [],
+  );
+  const sheetStatusMeta = PROVIDER_REVIEW_STATUS_META[sheetReviewStatus];
+
   return (
     <div className="max-w-6xl mx-auto w-full px-4 py-8 space-y-6">
       {/* ================= En-tête ================= */}
@@ -469,13 +483,33 @@ export function AdminProvidersContent() {
           />
         </div>
         <Select value={audienceFilter} onValueChange={setAudienceFilter}>
-          <SelectTrigger aria-label="Filtrer par audience" className="w-full sm:w-[240px] bg-white font-semibold">
+          <SelectTrigger aria-label="Filtrer par audience" className="w-full sm:w-[220px] bg-white font-semibold">
             <SelectValue placeholder="Audience" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">🌐 Toutes les audiences</SelectItem>
             <SelectItem value="OWNER_SERVICE">🔧 Services Propriétaire</SelectItem>
             <SelectItem value="GUEST_EXPERIENCE">🥂 Expériences Invité</SelectItem>
+          </SelectContent>
+        </Select>
+        {/* FIX-11 — filtre par statut de vérification (quadri-état dérivé
+            des documents réels) avec compteur par état. */}
+        <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as 'ALL' | ProviderReviewStatus)}>
+          <SelectTrigger aria-label="Filtrer par statut de vérification" className="w-full sm:w-[220px] bg-white font-semibold">
+            <SelectValue placeholder="Statut" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">
+              🗂️ Tous les statuts ({providers.length})
+            </SelectItem>
+            {(Object.keys(PROVIDER_REVIEW_STATUS_META) as ProviderReviewStatus[]).map((st) => {
+              const meta = PROVIDER_REVIEW_STATUS_META[st];
+              return (
+                <SelectItem key={st} value={st}>
+                  {meta.emoji} {meta.label} ({statusCounts[st]})
+                </SelectItem>
+              );
+            })}
           </SelectContent>
         </Select>
         <Button variant="outline" onClick={load} className="bg-white" aria-label="Rafraîchir la liste">
@@ -512,6 +546,13 @@ export function AdminProvidersContent() {
               const meta = providerCategoryMeta(p.category);
               const audienceMeta = PROVIDER_AUDIENCE_META[p.audience as ProviderAudience];
               const selected = p.id === selectedId;
+              // FIX-11 — statut quadri-état dérivé (remplace le badge
+              // binaire « ✓ Vérifié » seul) : données réelles isVerified
+              // + verificationDocuments, même convention que la review.
+              const reviewStatus =
+                reviewStatuses.get(p.id) ??
+                deriveProviderReviewStatus(p.isVerified, parseVerificationDocuments(p.verificationDocuments));
+              const statusMeta = PROVIDER_REVIEW_STATUS_META[reviewStatus];
               return (
                 <B2BCard
                   key={p.id}
@@ -541,11 +582,13 @@ export function AdminProvidersContent() {
                               ⛔ Inactif
                             </Badge>
                           )}
-                          {p.isVerified && (
-                            <Badge variant="outline" className="bg-emerald-50 border-emerald-200 text-emerald-700 font-semibold">
-                              ✓ Vérifié
-                            </Badge>
-                          )}
+                          <Badge
+                            variant="outline"
+                            className={`${statusMeta.badgeCls} border font-semibold`}
+                            aria-label={`Statut de vérification : ${statusMeta.label}`}
+                          >
+                            {statusMeta.emoji} {statusMeta.label}
+                          </Badge>
                         </div>
                         <p className="text-xs text-slate-500 mt-0.5">
                           {meta.label}
@@ -844,11 +887,21 @@ export function AdminProvidersContent() {
                   <h3 className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
                     📄 Documents de vérification
                   </h3>
-                  {documents && documents.length > 0 && (
-                    <span className="text-[11px] text-slate-400">
-                      {documents.length}/5
-                    </span>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {/* FIX-11 — statut global cohérent avec les badges de la liste
+                        (Vérifié / Rejeté / En revue / En attente) */}
+                    <Badge
+                      variant="outline"
+                      className={`${sheetStatusMeta.badgeCls} border font-semibold`}
+                    >
+                      {sheetStatusMeta.emoji} {sheetStatusMeta.label}
+                    </Badge>
+                    {documents && documents.length > 0 && (
+                      <span className="text-[11px] text-slate-400">
+                        {documents.length}/5
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <p className="text-xs text-slate-500 leading-relaxed">
                   Uploadés par le prestataire depuis son portail. Validez ou rejetez chaque

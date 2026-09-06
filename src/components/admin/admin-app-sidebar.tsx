@@ -17,6 +17,7 @@ import {
   ShoppingCart,
   Users,
   Wrench,
+  Home,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -66,6 +67,15 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
         emoji: '👥',
         description: 'Comptes, plans et actions',
         icon: Users,
+      },
+      {
+        // AUD-FULL : /admin/hosts était orphelin (page existante,
+        // aucun lien) — intégré à la navigation (FIX-9c).
+        href: '/admin/hosts',
+        label: 'Biens & Plaques',
+        emoji: '🏠',
+        description: 'Hôtes, propriétés et plaques QR',
+        icon: Home,
       },
       {
         href: '/admin/subscriptions',

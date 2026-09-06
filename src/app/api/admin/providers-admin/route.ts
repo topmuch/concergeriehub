@@ -5,6 +5,10 @@
 // géolocaliser les prestataires. Les hôtes ne font que consulter.
 //
 // GET  : liste complète (toutes géolocalisations + audiences).
+//        FIX-11 : expose aussi verificationDocuments (parse
+//        défensif, LECTURE SEULE) + isVerified — la liste admin en
+//        dérive le statut quadri-état (En attente / En revue /
+//        Rejeté / Vérifié) sans migration (schéma gelé).
 // POST : création d'un prestataire — crée le User porteur +
 //        le Provider en transaction. Email auto-généré si absent.
 //
@@ -14,6 +18,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireSuperadmin, adminUnauthorized } from '@/lib/admin';
 import { db } from '@/lib/db';
 import { PROVIDER_AUDIENCES } from '@/lib/b2b';
+import { parseVerificationDocuments } from '@/lib/provider-verification';
 
 function slugifyBusiness(businessName: string): string {
   return businessName
@@ -54,6 +59,9 @@ export async function GET() {
         isUrgentAvailable: p.isUrgentAvailable,
         isVerified: p.isVerified,
         isActive: p.isActive,
+        // FIX-11 (lecture seule) — JSON FIX-4 parsé défensivement ;
+        // alimente le statut quadri-état + le filtre de la liste admin.
+        verificationDocuments: parseVerificationDocuments(p.verificationDocuments),
         portfolioImages: p.portfolioImages,
         ratingAvg: p.ratingAvg,
         totalReviews: p.totalReviews,

@@ -47,6 +47,11 @@ import {
 } from '@/components/ui/alert-dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { generatePdf, type QrCodeForPdf } from '@/lib/pdf-export';
+import {
+  // FIX-11 — matériau de la plaque (aluminium défaut | bois | acrylique)
+  parsePlaqueMaterial,
+  PLAQUE_MATERIAL_META,
+} from '@/lib/plaque-material';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -105,6 +110,17 @@ const STATUS_STYLES: Record<string, { label: string; cls: string }> = {
 
 function getStatusStyle(status: string) {
   return STATUS_STYLES[status] ?? { label: status, cls: 'bg-gray-100 text-gray-600 border-gray-200' };
+}
+
+/** FIX-11 — badge matériau d'une plaque/lot (designConfig JSON). */
+function MaterialBadge({ designConfig }: { designConfig: string | null | undefined }) {
+  const material = parsePlaqueMaterial(designConfig);
+  const meta = PLAQUE_MATERIAL_META[material];
+  return (
+    <Badge variant="outline" className="text-xs" title={`Matériau : ${meta.label}`}>
+      {meta.emoji} {meta.label}
+    </Badge>
+  );
 }
 
 const APP_URL = 'https://qrdomotik.roomscan.pro';
@@ -253,6 +269,8 @@ function BatchDetailDialog({
         <div className="flex items-center justify-between mb-2">
           <div className="flex gap-2">
             <Badge variant="secondary">Plaque Hub</Badge>
+            {/* FIX-11 — matériau du lot */}
+            <MaterialBadge designConfig={batch.designConfig} />
             <StatusBadge _count={batch._count} quantity={batch.quantity} />
           </div>
           <Button
@@ -475,6 +493,8 @@ export function ManageBatches() {
                           <Badge variant="outline" className="text-xs">
                             1 plaque
                           </Badge>
+                          {/* FIX-11 — matériau du lot (designConfig JSON) */}
+                          <MaterialBadge designConfig={batch.designConfig} />
                           <StatusBadge _count={batch._count} quantity={batch.quantity} />
                         </div>
                         <p className="text-xs text-muted-foreground mt-0.5">

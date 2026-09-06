@@ -27,6 +27,45 @@ import { getToken } from 'next-auth/jwt';
 const domainCache = new Map<string, { slug: string | null; expires: number }>();
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
+// =============================================================
+// AUD-FULL / FIX-8b — Content-Security-Policy stricte (nonce).
+// Pattern officiel Next.js : le middleware génère un nonce unique
+// par requête, le pose sur les en-têtes de la REQUÊTE (x-nonce +
+// CSP) — Next le propage automatiquement à ses <script> rendus —
+// et la CSP sur la réponse. 'strict-dynamic' rend obsolètes
+// 'unsafe-inline' et https: pour les navigateurs modernes tout en
+// servant de fallback aux anciens.
+// Calibration réelle du projet (aucun script externe, Stripe 100%
+// serveur) :
+//   - img https://*.tile.openstreetmap.org → tuiles Leaflet
+//     (admin-providers-map).
+//   - style 'unsafe-inline' → <style> injectés par Next.
+//   - media/blob + img data: → QR en data-URL, messages vocaux
+//     MediaRecorder (blob), previews photos.
+//   - dev uniquement : 'unsafe-eval' (React Refresh/Turbopack HMR)
+//     + ws: (websocket HMR).
+// =============================================================
+
+function buildCsp(nonce: string): string {
+  const isDev = process.env.NODE_ENV !== 'production';
+  return [
+    `default-src 'self'`,
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' 'unsafe-inline' https:${
+      isDev ? " 'unsafe-eval'" : ''
+    }`,
+    `style-src 'self' 'unsafe-inline'`,
+    `img-src 'self' blob: data: https://*.tile.openstreetmap.org`,
+    `font-src 'self' data:`,
+    `media-src 'self' blob:`,
+    `connect-src 'self'${isDev ? ' ws: wss:' : ''}`,
+    `worker-src 'self' blob:`,
+    `object-src 'none'`,
+    `base-uri 'self'`,
+    `form-action 'self'`,
+    `frame-ancestors 'self'`,
+  ].join('; ');
+}
+
 function appHostnames(): Set<string> {
   const hosts = new Set<string>(['localhost', '127.0.0.1', '0.0.0.0']);
   const envUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || '';
@@ -63,6 +102,18 @@ async function resolveCustomDomain(req: NextRequest, host: string): Promise<stri
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
+  // ── 0. CSP nonce (FIX-8b) — généré pour toute requête de page ──
+  const isApiRequest = pathname.startsWith('/api/');
+  const nonce = crypto.randomUUID().replace(/-/g, '');
+  const csp = isApiRequest ? null : buildCsp(nonce);
+  const requestHeaders = new Headers(req.headers);
+  if (csp) {
+    // Next lit le nonce dans l'en-tête CSP de la requête et l'applique
+    // à ses propres <script> (pattern officiel Content-Security-Policy).
+    requestHeaders.set('x-nonce', nonce);
+    requestHeaders.set('Content-Security-Policy', csp);
+  }
+
   // ── 1. Garde legacy : session obligatoire sur /api/client/** ──
   if (pathname.startsWith('/api/client')) {
     const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
@@ -71,6 +122,11 @@ export async function middleware(req: NextRequest) {
     }
     return NextResponse.next();
   }
+
+  const withCsp = (res: NextResponse): NextResponse => {
+    if (csp) res.headers.set('Content-Security-Policy', csp);
+    return res;
+  };
 
   // ── 2. White-label : pages servies depuis un domaine custom ──
   if (!pathname.startsWith('/api/')) {
@@ -82,12 +138,12 @@ export async function middleware(req: NextRequest) {
         const url = new URL(`/app/hub/${slug}/guest`, req.nextUrl.origin);
         // Conserve la query (?b=, ?paid=…) du domaine custom.
         req.nextUrl.searchParams.forEach((v, k) => url.searchParams.set(k, v));
-        return NextResponse.rewrite(url);
+        return withCsp(NextResponse.rewrite(url, { request: { headers: requestHeaders } }));
       }
     }
   }
 
-  return NextResponse.next();
+  return withCsp(NextResponse.next({ request: { headers: requestHeaders } }));
 }
 
 export const config = {

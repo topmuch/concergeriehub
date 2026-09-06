@@ -41,6 +41,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  // FIX-11 — matériau de la plaque (aluminium défaut | bois | acrylique)
+  parsePlaqueMaterial,
+  PLAQUE_MATERIAL_META,
+} from '@/lib/plaque-material';
 
 type QrStatus = 'inactive' | 'active' | 'lost' | 'cancelled';
 
@@ -57,6 +62,7 @@ interface PhysicalQr {
     id: string;
     quantity: number;
     createdAt: string;
+    designConfig: string; // FIX-11 — design du lot (matériau)
   };
   activatedBy?: { id: string; email: string; fullName: string | null } | null;
 }
@@ -278,6 +284,8 @@ export function ManagePhysicalQr() {
                   <TableRow>
                     <TableHead>Code d&apos;activation</TableHead>
                     <TableHead>Lot</TableHead>
+                    {/* FIX-11 — matériau de la plaque (designConfig du lot) */}
+                    <TableHead>Matériau</TableHead>
                     <TableHead>Statut</TableHead>
                     <TableHead>Activé par</TableHead>
                     <TableHead>Date d&apos;activation</TableHead>
@@ -294,6 +302,21 @@ export function ManagePhysicalQr() {
                         </TableCell>
                         <TableCell className="font-mono text-xs text-muted-foreground">
                           {qr.batchId.slice(0, 8)}…
+                        </TableCell>
+                        <TableCell>
+                          {(() => {
+                            const material = parsePlaqueMaterial(qr.batch.designConfig);
+                            const meta = PLAQUE_MATERIAL_META[material];
+                            return (
+                              <Badge
+                                variant="outline"
+                                className="text-xs whitespace-nowrap"
+                                title={`Matériau : ${meta.label}`}
+                              >
+                                {meta.emoji} {meta.label}
+                              </Badge>
+                            );
+                          })()}
                         </TableCell>
                         <TableCell>
                           <Badge

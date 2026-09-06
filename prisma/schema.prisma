@@ -1252,6 +1252,26 @@ model EmailOutbox {
 }
 
 // ==============================================================
+// TABLE 39bis: email_templates (FIX-12 — éditeur Superadmin)
+// Modèles d'emails éditables depuis /admin/emails (onglet Modèles).
+// Le rendu réel (lib/email-template-render.ts) lit D'ABORD la ligne
+// active par `key`, avec fallback silencieux sur les templates codés
+// en dur (lib/email-templates.ts) si absente ou isActive=false.
+// Variables du corps : jetons {{nom}} substitués au rendu.
+// ==============================================================
+model EmailTemplate {
+  id          String   @id @default(cuid())
+  key         String   @unique              // ex: 'guest_welcome'
+  subject     String
+  htmlBody    String
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  @@map("email_templates")
+}
+
+// ==============================================================
 // TABLE 40: audit_logs (Console Superadmin — Module 8 Logs)
 // Journal d'audit des actions d'administration : chaque mutation
 // faite depuis /admin/* est tracée (acteur, cible, détails, IP).

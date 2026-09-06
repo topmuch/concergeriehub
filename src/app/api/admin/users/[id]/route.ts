@@ -1,5 +1,13 @@
 // =============================================================
-// /api/admin/users/[id] — Module 2 Gestion Clients : actions
+// /api/admin/users/[id] — Module 2 Gestion Clients : fiche + actions
+//
+// GET : détail complet de la fiche client (FIX-10) —
+//   • Équipe : biens possédés + leurs membres (PropertyMember),
+//     et les équipes que le compte a rejointes chez d'autres hôtes.
+//   • Facturation : abonnements (actif : plan/statut/échéance),
+//     commandes de service sur ses biens (total + cumul), paiements
+//     enregistrés (Transaction où payerId = ce compte), références
+//     Stripe réelles (User.stripeAccountId, Subscription.stripeSubscriptionId).
 //
 // PATCH ?action=… :
 //   - toggle-active       : activer / désactiver le compte
@@ -19,7 +27,9 @@ import { requireSuperadmin, adminUnauthorized } from '@/lib/admin';
 import { db } from '@/lib/db';
 import { logAudit, clientIp } from '@/lib/audit';
 import { queueEmail } from '@/lib/email';
-import { adminPasswordResetEmail } from '@/lib/email-templates';
+// FIX-12 — rendu DB-first : modèle éditable 'admin_password_reset'
+// (onglet Modèles), fallback silencieux sur le template codé en dur.
+import { renderAdminPasswordResetEmail } from '@/lib/email-template-render';
 
 const VALID_PLANS = ['airbnb_solo', 'airbnb_pro', 'agency', 'free'];
 
@@ -28,6 +38,237 @@ function randomPassword(): string {
   let out = '';
   for (let i = 0; i < 12; i += 1) out += chars[Math.floor(Math.random() * chars.length)];
   return out;
+}
+
+// =============================================================
+// GET — Fiche client détaillée (FIX-10).
+// Toutes les données viennent de la DB : aucune valeur simulée.
+// Équipe = modèle PropertyMember réel (rôles OWNER/MANAGER/CLEANER/
+// MAINTENANCE) ; Facturation = Subscription + Transaction (payerId)
+// + ServiceOrder via les biens possédés.
+// =============================================================
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const admin = await requireSuperadmin();
+  if (!admin) return adminUnauthorized();
+
+  try {
+    const { id } = await params;
+
+    const user = await db.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        role: true,
+        isActive: true,
+        selectedPlan: true,
+        onboardingCompleted: true,
+        stripeAccountId: true,
+        createdAt: true,
+        profile: { select: { phone: true, address: true } },
+        providerProfile: { select: { businessName: true } },
+        ownedProperties: {
+          orderBy: { createdAt: 'asc' },
+          select: {
+            id: true,
+            name: true,
+            propertyType: true,
+            address: true,
+            isActive: true,
+            createdAt: true,
+            members: {
+              orderBy: [{ joinedAt: 'asc' }],
+              select: {
+                id: true,
+                role: true,
+                nickname: true,
+                invitedAt: true,
+                acceptedAt: true,
+                user: { select: { id: true, email: true, fullName: true } },
+              },
+            },
+          },
+        },
+        propertyMemberships: {
+          orderBy: { joinedAt: 'asc' },
+          select: {
+            id: true,
+            role: true,
+            invitedAt: true,
+            acceptedAt: true,
+            property: {
+              select: {
+                id: true,
+                name: true,
+                owner: { select: { email: true, fullName: true } },
+              },
+            },
+          },
+        },
+        subscriptions: {
+          orderBy: { createdAt: 'desc' },
+          select: {
+            id: true,
+            plan: true,
+            amount: true,
+            currency: true,
+            billingCycle: true,
+            status: true,
+            currentPeriodStart: true,
+            currentPeriodEnd: true,
+            stripeSubscriptionId: true,
+            createdAt: true,
+          },
+        },
+      },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: 'Utilisateur introuvable' }, { status: 404 });
+    }
+
+    // ----- Facturation : paiements (Transaction.payerId = ce compte)
+    // et commandes de service sur les biens qu'il possède -----
+    const ownedPropertyIds = user.ownedProperties.map((p) => p.id);
+    const [txAggregate, txItems, orderAggregate] = await Promise.all([
+      db.transaction.aggregate({
+        where: { payerId: id },
+        _count: { _all: true },
+        _sum: { amount: true },
+      }),
+      db.transaction.findMany({
+        where: { payerId: id },
+        orderBy: { createdAt: 'desc' },
+        take: 10,
+        select: {
+          id: true,
+          type: true,
+          amount: true,
+          currency: true,
+          status: true,
+          stripePaymentId: true,
+          createdAt: true,
+        },
+      }),
+      // ServiceOrder n'a pas de relation Prisma vers Property (champ
+      // propertyId brut dans le schéma) → agrégation par liste d'ids.
+      // Les commandes CANCELLED sont exclues du cumul (revenu réel).
+      ownedPropertyIds.length > 0
+        ? db.serviceOrder.aggregate({
+            where: { propertyId: { in: ownedPropertyIds }, status: { not: 'CANCELLED' } },
+            _count: { _all: true },
+            _sum: { totalAmount: true, hostEarning: true },
+          })
+        : Promise.resolve({ _count: { _all: 0 }, _sum: { totalAmount: null, hostEarning: null } }),
+    ]);
+
+    const activeSubscription = user.subscriptions.find((s) => s.status === 'active') ?? null;
+
+    return NextResponse.json({
+      user: {
+        id: user.id,
+        email: user.email,
+        fullName: user.fullName,
+        role: user.role,
+        isActive: user.isActive,
+        selectedPlan: user.selectedPlan,
+        onboardingCompleted: user.onboardingCompleted,
+        stripeAccountId: user.stripeAccountId,
+        createdAt: user.createdAt.toISOString(),
+        phone: user.profile?.phone ?? null,
+        address: user.profile?.address ?? null,
+        providerBusinessName: user.providerProfile?.businessName ?? null,
+      },
+      team: {
+        ownedProperties: user.ownedProperties.map((p) => ({
+          id: p.id,
+          name: p.name,
+          propertyType: p.propertyType,
+          address: p.address,
+          isActive: p.isActive,
+          createdAt: p.createdAt.toISOString(),
+          memberCount: p.members.length,
+          members: p.members.map((m) => ({
+            id: m.id,
+            role: m.role,
+            nickname: m.nickname,
+            invitedAt: m.invitedAt.toISOString(),
+            acceptedAt: m.acceptedAt?.toISOString() ?? null,
+            user: m.user,
+          })),
+        })),
+        // Équipes rejointes = adhésions à des biens possédés par
+        // D'AUTRES comptes (l'adhésion OWNER sur son propre bien est
+        // déjà couverte par ownedProperties ci-dessus).
+        memberships: user.propertyMemberships
+          .filter((m) => m.property.owner.email !== user.email)
+          .map((m) => ({
+            id: m.id,
+            role: m.role,
+            invitedAt: m.invitedAt.toISOString(),
+            acceptedAt: m.acceptedAt?.toISOString() ?? null,
+            property: {
+              id: m.property.id,
+              name: m.property.name,
+              ownerEmail: m.property.owner.email,
+              ownerName: m.property.owner.fullName,
+            },
+          })),
+      },
+      billing: {
+        activeSubscription: activeSubscription
+          ? {
+              id: activeSubscription.id,
+              plan: activeSubscription.plan,
+              amount: activeSubscription.amount,
+              currency: activeSubscription.currency,
+              billingCycle: activeSubscription.billingCycle,
+              status: activeSubscription.status,
+              currentPeriodStart: activeSubscription.currentPeriodStart?.toISOString() ?? null,
+              currentPeriodEnd: activeSubscription.currentPeriodEnd?.toISOString() ?? null,
+              stripeSubscriptionId: activeSubscription.stripeSubscriptionId,
+            }
+          : null,
+        subscriptions: user.subscriptions.map((s) => ({
+          id: s.id,
+          plan: s.plan,
+          amount: s.amount,
+          currency: s.currency,
+          billingCycle: s.billingCycle,
+          status: s.status,
+          currentPeriodEnd: s.currentPeriodEnd?.toISOString() ?? null,
+          createdAt: s.createdAt.toISOString(),
+        })),
+        // Commandes de service (invités) posées sur les biens du client
+        serviceOrders: {
+          count: orderAggregate._count._all,
+          totalAmount: orderAggregate._sum.totalAmount ?? 0,
+          hostEarnings: orderAggregate._sum.hostEarning ?? 0,
+        },
+        // Paiements réglés par ce compte (abonnements via checkout)
+        transactions: {
+          count: txAggregate._count._all,
+          totalAmount: txAggregate._sum.amount ?? 0,
+          items: txItems.map((t) => ({
+            id: t.id,
+            type: t.type,
+            amount: t.amount,
+            currency: t.currency,
+            status: t.status,
+            stripePaymentId: t.stripePaymentId,
+            createdAt: t.createdAt.toISOString(),
+          })),
+        },
+      },
+    });
+  } catch (error) {
+    console.error('[GET /api/admin/users/[id]] Error:', error);
+    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
+  }
 }
 
 export async function PATCH(
@@ -111,8 +352,12 @@ export async function PATCH(
 
       // Notification réelle via l'outbox (consultable dans /admin/emails)
       try {
-        const template = adminPasswordResetEmail(user.email, tempPassword, admin.name ?? admin.email);
-        await queueEmail({ to: user.email, subject: template.subject, html: template.html, template: 'custom' });
+        const template = await renderAdminPasswordResetEmail({
+          to: user.email,
+          tempPassword,
+          adminName: admin.name ?? admin.email,
+        });
+        await queueEmail({ to: user.email, subject: template.subject, html: template.html, template: 'admin_password_reset' });
       } catch (e) {
         console.error('[users/[id]] outbox reset email:', e);
       }

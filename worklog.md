@@ -1307,3 +1307,85 @@ Stage Summary:
 - Les 8 actions correctives de l'audit AUD-FULL sont exécutées, poussées sur GitHub (867595c) et re-prouvées E2E après reprise de session
 - Seule réserve assumée : CSP non posée (décision documentée dans next.config.ts, à traiter en passe dédiée)
 - Démo restaurée à l'état d'origine (Wi-Fi bienvenue2024), aucune modification de code dans cette passe
+---
+Task ID: FIX-13
+Agent: general-purpose (FIX-13)
+Task: Litiges payouts — statut DISPUTED + workflow UI admin
+
+Work Log:
+- Lu worklog (AUD-FULL « pas de litiges payouts », FIX-3 remboursement commandes dans le même fichier) + reconnaissance : model Payout (schema ~l.1366, status String default 'PENDING' → 'DISPUTED' utilisable SANS migration), GET/POST /api/admin/payouts (la liste EXPOSAIT DÉJÀ status + note — aucune extension nécessaire), requireSuperadmin/adminUnauthorized (lib/admin.ts), logAudit/clientIp (lib/audit.ts), route de référence FIX-3 /api/admin/orders/[id]/refund (params Promise, gardes 403→404→409, audit).
+- Créé POST /api/admin/payouts/[id]/dispute/route.ts : body {reason} trimsé min 10 chars (400), 404 introuvable, 409 si status PAID (« un reversement déjà payé ne s'ouvre pas en litige »), 409 si déjà DISPUTED ; note litige `[LITIGE <YYYY-MM-DD>] <raison>` (date ISO du jour) + conservation de la note d'origine sur ligne `[Note d'origine] …` ; status='DISPUTED' ; audit 'payout.dispute' (provider, amount, method, hadStripeTransfer, raison) ; format de note documenté en commentaire d'en-tête.
+- Créé POST /api/admin/payouts/[id]/resolve/route.ts : body {outcome:'RELEASE'|'REFUND', note min 3 chars} ; 404 introuvable, 400 outcome/note invalides, 409 si status !== 'DISPUTED' ; RELEASE → status='PAID' + paidAt=now (method MANUAL sans transferId = marqué payé manuellement, même sémantique que le flux existant POST /api/admin/payouts) ; REFUND → status='FAILED' (le montant redevient automatiquement réversible : paidOutTotal/KPIs ne comptent que PAID) ; note de résolution APPEND à la note litige : `[RÉSOLUTION <YYYY-MM-DD> RELEASE|REFUND] <note>` ; audit 'payout.resolve'.
+- DÉCISION DOCUMENTÉE (commentaires d'en-tête des 2 routes + dialog UI) : si un stripeTransferId existe déjà, l'argent est déjà parti du compte plateforme → le litige est PUREMENT ADMINISTRATIF : aucune écriture Stripe (ni reversal/clawback ni nouveau transfert) n'est déclenchée par dispute ou resolve — à traiter au besoin dans le dashboard Stripe ; hadStripeTransfer exposé dans l'audit.
+- UI src/components/admin/admin-transactions-content.tsx (onglet Reversements, section Historique — le remboursement commandes FIX-3 inchangé et re-testé) : map PAYOUT_STATUS (PENDING slate, PAID émeraude, FAILED rouge, DISPUTED ambre « ⚖️ Litige » — palette chaude, pas de bleu/indigo) ; filtre par statut avec compteurs live (Tous/En attente/⚖️ Litiges/Payés/Échoués, chips, états vides dédiés) ; colonnes Statut + Action ajoutées à l'historique ; note litige affichée tronquée (max-w-48) sous le prestataire avec Tooltip shadcn plein texte (whitespace-pre-wrap) ; bouton « Ouvrir un litige » (outline ambre, icône Scale) sur PENDING/FAILED, bouton « Résoudre » sur DISPUTED, « — » sur PAID ; Dialog litige : Textarea raison + compteur « n/10 caractères minimum », bouton désactivé < 10 chars et pendant mutation (busy + Loader2) ; Dialog résolution : bandeau ambre « Raison du litige » (note complète), RadioGroup Libérer le paiement (émeraude, checked par défaut) / Marquer remboursé-annulé (rouge) avec descriptions exactes, Textarea note (min 3), bouton coloré selon l'issue, désactivé pendant mutation ; toasts sonner succès (messages serveur) / erreur (data.error), refetch fetchPayouts() après chaque action (badge + compteurs + KPIs recalculés).
+- E2E payouts absents de la DB (le flux existant ne crée que des PAID directs) → script bun documenté scripts/tmp-fix13-payout.ts (marqueur @fix13.test) : 2 payouts PENDING 45 € et 30 € (CleanSuite Paris) ; SUPPRIMÉ après E2E.
+- curl (session superadmin NextAuth via csrf→callback/credentials) : dispute sans session → 403 « Accès réservé au Superadmin » ; raison 5 chars → 400 « au moins 10 caractères » ; resolve sur PENDING → 409 « Seul un reversement en litige… » ; outcome invalide → 400 ; dispute valable (30 €) → 200 {status:'DISPUTED', note:'[LITIGE 2026-09-06] Le prestataire conteste le montant…'} ; re-dispute → 409 « déjà en litige » ; resolve REFUND → 200 {status:'FAILED', note avec '\n[RÉSOLUTION 2026-09-06 REFUND] Commande annulée et remboursée au client…'} ; re-resolve → 409.
+- E2E agent-browser (session superadmin, /admin/transactions → onglet Reversements) : « Ouvrir un litige » sur le payout 45 € PENDING → dialog, bouton désactivé à 5 chars puis activé ≥ 10, screenshot FIX13-dispute-dialog.png, submit → toast + refetch → badge « ⚖️ Litige » + compteurs En attente (0)/⚖️ Litiges (1) (screenshot FIX13-badge-litige.png) ; filtre ⚖️ Litiges → seule la ligne DISPUTED ; « Résoudre » → dialog avec la note litige en clair + RELEASE coché (screenshot FIX13-resolve-dialog.png) → note « Virement manuel exécuté le 06/09… » → Confirmer → toast « Litige résolu : reversement de 45.00 € marqué payé » + compteurs Litiges (0)/Payés (1) ; filtre Payés → badge « Payé » + note complète [LITIGE…][Note d'origine][RÉSOLUTION … RELEASE] (screenshot FIX13-paye-final.png) ; 0 erreur console (agent-browser errors vide, console = HMR/Fast Refresh only) ; non-régression FIX-3 : onglet Commandes avec boutons « 💸 Rembourser » présents.
+- curl final : dispute sur le payout passé PAID → 409 « Un reversement déjà payé ne peut pas être ouvert en litige. » ; DB vérifiée : payout 45 € status=PAID paidAt=2026-09-06T16:17:39.199Z, payout 30 € status=FAILED, 4 AuditLog payout.dispute/payout.resolve (actorEmail admin@qrdomotik.roomscan.pro, detailsJson complets, ip ::1).
+- Cleanup complet : 2 payouts de test + 4 AuditLog supprimés (baseline 0 payouts restaurée), scripts tmp-fix13-*.ts supprimés, cookies/tmp purgés ; bun run lint 0 erreur ; tsc --noEmit : 0 erreur dans src/ (les seules erreurs signalées sont dans .next/dev/types/routes.d.ts, fichier GÉNÉRÉ en cours de réécriture par le dev server pendant l'ajout concurrent de routes par d'autres agents — transitoire, hors périmètre).
+- Incidents d'environnement (sans impact code) : .env a été complété NEXTAUTH_SECRET/NEXTAUTH_URL à 16:07 puis le dev server a été relancé à 16:15 par l'environnement (pas moi) — un re-login superadmin a suffi ; le serveur tourne sur localhost:3000 en fin de tâche, /api/health OK.
+
+Stage Summary:
+- Workflow de litige payouts livré de bout en bout dans Superadmin > Transactions : statut DISPUTED (String du modèle Payout, SANS migration), ouverture PENDING/FAILED → résolution RELEASE (PAID + paidAt) ou REFUND (FAILED → redevient réversible), refus strict sur PAID et hors DISPUTED.
+- Fichiers : NOUVEAUX src/app/api/admin/payouts/[id]/dispute/route.ts et /resolve/route.ts ; MODIFIÉ src/components/admin/admin-transactions-content.tsx (onglet Reversements uniquement — FIX-3 intact, re-vérifié). La route de liste /api/admin/payouts exposait déjà status+note (0 ligne modifiée).
+- Format exact de la note litige (canonique, documenté en tête des 2 routes) : ouverture `[LITIGE <YYYY-MM-DD>] <raison>` (+ éventuelle ligne `[Note d'origine] <ancienne note>`) ; résolution APPEND `\n[RÉSOLUTION <YYYY-MM-DD> RELEASE|REFUND] <note>`. Exemple réel en base : "[LITIGE 2026-09-06] Le prestataire conteste ce reversement : la commande correspondante a été remboursée au client.\n[Note d'origine] Payout de test E2E FIX-13 @fix13.test\n[RÉSOLUTION 2026-09-06 RELEASE] Virement manuel exécuté le 06/09 — prestation due confirmée après échange avec le prestataire."
+- Preuves : curl 403/400/400/409/409/409 + 200 dispute + 200 resolve ; E2E navigateur complet litige→badge→résolution RELEASE→Payé+paidAt avec screenshots /tmp/e2e/FIX13-{dispute-dialog,badge-litige,resolve-dialog,paye-final}.png ; 0 erreur console ; audit 'payout.dispute'/'payout.resolve' tracés (hadStripeTransfer pour le cas Stripe déjà transféré).
+- Décisions : litige sur payout avec stripeTransferId = PUREMENT ADMINISTRATIF (aucun appel Stripe dans les 2 routes) ; RELEASE = décision administrative (pas de nouveau transfert généré, marqué payé manuellement si MANUAL) ; REFUND = FAILED → montant redevient réversible automatiquement (invariant paidOutTotal).
+- lint 0/0 ; DB restaurée au baseline exact (0 payout, 0 audit log de test) ; prisma/schema.prisma NON touché par FIX-13 (modif visible = FIX-12 concurrent).
+
+---
+Task ID: FIX-9
+Agent: Z.ai Code (session principale)
+Task: Clôture des écarts audit restants — cleanup legacy, dette seed slug, sidebar /admin/hosts, CSP stricte (FIX-8b)
+
+Work Log:
+- Supprimé 5 composants legacy sans aucun import actif (référencés uniquement par src/app/page.tsx.bak) : super-admin-layout.tsx, admin-shell.tsx, admin-stats.tsx, stats-overview.tsx, admin-artisans.tsx + page.tsx.bak ; lint 0 après suppression
+- Dette seed slug levée : SLUG/LOFT_SLUG paramétrables dans scripts/seed-v3-{guest-app,service-orders,service-offers}.ts via SEED_SLUG (env) ou argv[2], fallback 'loft-canal-saint-martin-11wz'
+- /admin/hosts lié à la sidebar (groupe Pilotage, « Biens & Plaques », icône Home) — page existante mais orpheline (AUD-FULL)
+- FIX-8b CSP (pattern officiel Next.js nonce) : middleware génère un nonce par requête de page, pose x-nonce + CSP sur les en-têtes de requête (Next le propage à ses <script>), CSP sur la réponse ; script-src 'self' 'nonce-X' 'strict-dynamic' 'unsafe-inline' https: (+ 'unsafe-eval' et ws: en dev uniquement) ; img-src + tuiles openstreetmap ; media/worker blob: ; object-src 'none', frame-ancestors 'self' ; API requêtes non affectées ; calibration fondée sur audit du code réel (zéro script externe, Stripe 100 % serveur)
+- Preuves CSP : header présent avec nonce, 2 scripts noncés dans le HTML, landing + Hub (PIN → Espace Hôte 6/6 modules) + admin (login, users, providers, qr, emails, transactions) + /provider rendus, 0 violation console sur toutes les pages testées
+
+Stage Summary:
+- Les 3 réserves « passe séparée » de VERIFY-FIX sont closes (CSP, legacy, seed) ; seul reste le PAT GitHub à révoquer côté utilisateur
+- CSP enforcement actif avec nonce + strict-dynamic, non-régression E2E prouvée sur tous les parcours majeurs
+
+---
+Task ID: FIX-10
+Agent: general-purpose (FIX-10, code complété avant timeout ; vérification E2E par session principale)
+Task: Users — filtre date + fiche client équipe/facturation
+
+Work Log:
+- GET /api/admin/users : query params createdFrom/createdTo (bornes inclusives, createdTo = fin de journée) server-side
+- Fiche client : Sheet de détail avec sections ÉQUIPE (PropertyMember réels, « Équipes rejointes ») et FACTURATION (Subscription + références Stripe + totaux), uniquement des relations existantes du schéma (aucune migration)
+
+Stage Summary:
+- E2E prouvé : filtre date → URL ?createdFrom=…&createdTo=… + « 21 résultats pour la période » ; fiche Nina Lopez → sections ÉQUIPE (1 équipe réelle) et FACTURATION (références Stripe) alimentées DB
+
+---
+Task ID: FIX-11
+Agent: general-purpose (FIX-11, code complété avant timeout ; vérification E2E par session principale)
+Task: Prestataires tri-état + matériaux plaques Bois/Acrylique
+
+Work Log:
+- src/lib/provider-verification.ts : statut dérivé sans migration depuis verificationDocuments (PENDING zéro doc / IN_REVIEW ≥1 doc PENDING sans rejet / REJECTED ≥1 rejet non vérifié / VERIFIED isVerified), précédence documentée
+- Badges + filtre par statut dans /admin/providers (liste étendue pour exposer docs)
+- src/lib/plaque-material.ts : ALUMINIUM (défaut) | BOIS | ACRYLIQUE, persisté dans designConfig JSON (aucune migration) ; UI /admin/qr (generate-batch, manage-batches, manage-physical-qr)
+
+Stage Summary:
+- E2E prouvé : badges 4 états réels visibles sur 11 prestataires seedés (En attente/En revue/Vérifié/Rejeté) ; 3 boutons matériaux visibles à /admin/qr ; persistance designConfig vérifiée par l'agent
+
+---
+Task ID: FIX-12
+Agent: general-purpose (FIX-12, code complété avant timeout ; intégration, db:push et E2E par session principale)
+Task: EmailTemplate model + éditeur Superadmin + wiring envois + SMS Twilio env-gated
+
+Work Log:
+- Model EmailTemplate ajouté au schéma (key unique, subject, htmlBody, isActive) + db:push + seed scripts/seed-email-templates.ts (5 templates : admin_password_reset, guest_receipt, guest_refund, host_new_complaint, etc.)
+- API /api/admin/email-templates (GET liste) + /api/admin/email-templates/[key] (GET one + PUT subject/htmlBody/isActive, validation stricte, audit log, 403 sans session prouvé)
+- UI onglet « Modèles » dans /admin/emails (table, dialog édition sujet + HTML monospace + variables réelles, activer/désactiver)
+- Wiring : lib/email-template-render.ts rend D'ABORD le template DB actif par key (fallback silencieux sur les templates codés en dur) ; branché sur payments-server, automations-server, register, users, complaint
+- lib/sms.ts : REST Twilio réel via fetch (Basic auth, form-encoded), fail-closed sans env vars
+
+Stage Summary:
+- E2E prouvé : onglet Modèles visible, édition sujet → PUT 200 → persistance DB vérifiée (plusieurs allers-retours API prouvés, un 403 initial venait d'une session périmée avant re-login, pas d'un bug API) ; rendu réel : source 'db', variables {{guestName}} substituées, montant formaté ; SMS sans env → {sent:false, reason:'SMS_NOT_CONFIGURED'} avec warn explicite ; rendu branché sur 5 chemins d'envoi réels
+- Note automatisation : les clics coordonnés agent-browser sur « Enregistrer » atterrissaient sur « Annuler » (dialog fermé sans requête) — contourné par clic DOM (button.click()), aucune anomalie produit

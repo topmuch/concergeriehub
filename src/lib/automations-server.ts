@@ -22,7 +22,9 @@ import {
   type AutomationTrigger,
 } from '@/lib/automations';
 import { queueEmail } from '@/lib/email';
-import { hostNotificationEmail } from '@/lib/email-templates';
+// FIX-12 — rendu DB-first : le modèle éditable /admin/emails → Modèles
+// est lu en priorité, fallback silencieux sur le template codé en dur.
+import { renderHostNotificationEmail } from '@/lib/email-template-render';
 
 // -------------------------------------------------------------
 // Contextes de déclenchement
@@ -169,7 +171,7 @@ async function emailMirror(
     const propertyName = parsed.propertyName ?? 'Votre bien';
     for (const user of users) {
       if (!user.email) continue;
-      const tpl = hostNotificationEmail({
+      const tpl = await renderHostNotificationEmail({
         title: payload.title,
         body: payload.body,
         propertyName,

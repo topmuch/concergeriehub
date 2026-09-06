@@ -7,6 +7,8 @@ import { toast } from 'sonner';
 import {
   Ban,
   CheckCircle2,
+  CreditCard,
+  Eye,
   Home,
   KeyRound,
   Loader2,
@@ -17,6 +19,7 @@ import {
   UserPlus,
   Users,
   Wallet,
+  X,
 } from 'lucide-react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -67,6 +70,15 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
+import { Separator } from '@/components/ui/separator';
+import { memberRoleMeta } from '@/lib/team';
 
 // =============================================================
 // AdminUsers — Module 2 Gestion Clients & Hôtes
@@ -83,6 +95,13 @@ const PLANS = [
   { value: 'free', label: 'Gratuit' },
   { value: 'none', label: 'Aucun plan' },
 ];
+
+/** FIX-10 — lit un paramètre date (YYYY-MM-DD) de l'URL courante. */
+function readDateParam(name: string): string {
+  if (typeof window === 'undefined') return '';
+  const raw = new URLSearchParams(window.location.search).get(name) ?? '';
+  return /^\d{4}-\d{2}-\d{2}$/.test(raw) ? raw : '';
+}
 
 interface AdminUser {
   id: string;
@@ -111,6 +130,128 @@ interface PaginationMeta {
   totalPages: number;
 }
 
+// =============================================================
+// FIX-10 — Fiche client détaillée (GET /api/admin/users/[id]).
+// Équipe = PropertyMember réels ; Facturation = Subscription +
+// Transaction (payerId) + ServiceOrder sur les biens possédés.
+// =============================================================
+
+interface UserDetail {
+  user: {
+    id: string;
+    email: string;
+    fullName: string | null;
+    role: string;
+    isActive: boolean;
+    selectedPlan: string | null;
+    onboardingCompleted: boolean;
+    stripeAccountId: string | null;
+    createdAt: string;
+    phone: string | null;
+    address: string | null;
+    providerBusinessName: string | null;
+  };
+  team: {
+    ownedProperties: {
+      id: string;
+      name: string;
+      propertyType: string;
+      address: string | null;
+      isActive: boolean;
+      createdAt: string;
+      memberCount: number;
+      members: {
+        id: string;
+        role: string;
+        nickname: string | null;
+        invitedAt: string;
+        acceptedAt: string | null;
+        user: { id: string; email: string; fullName: string | null };
+      }[];
+    }[];
+    memberships: {
+      id: string;
+      role: string;
+      invitedAt: string;
+      acceptedAt: string | null;
+      property: { id: string; name: string; ownerEmail: string; ownerName: string | null };
+    }[];
+  };
+  billing: {
+    activeSubscription: {
+      id: string;
+      plan: string;
+      amount: number;
+      currency: string;
+      billingCycle: string;
+      status: string;
+      currentPeriodStart: string | null;
+      currentPeriodEnd: string | null;
+      stripeSubscriptionId: string | null;
+    } | null;
+    subscriptions: {
+      id: string;
+      plan: string;
+      amount: number;
+      currency: string;
+      billingCycle: string;
+      status: string;
+      currentPeriodEnd: string | null;
+      createdAt: string;
+    }[];
+    serviceOrders: { count: number; totalAmount: number; hostEarnings: number };
+    transactions: {
+      count: number;
+      totalAmount: number;
+      items: {
+        id: string;
+        type: string;
+        amount: number;
+        currency: string;
+        status: string;
+        stripePaymentId: string | null;
+        createdAt: string;
+      }[];
+    };
+  };
+}
+
+const PLAN_LABELS: Record<string, string> = {
+  airbnb_solo: 'Airbnb Solo',
+  airbnb_pro: 'Airbnb Pro',
+  agency: 'Agence',
+  free: 'Gratuit',
+};
+
+function planLabel(plan: string | null): string {
+  if (!plan) return 'Aucun plan';
+  return PLAN_LABELS[plan] ?? plan;
+}
+
+function subscriptionStatusBadge(status: string) {
+  if (status === 'active') return <Badge className="bg-emerald-600 hover:bg-emerald-700">Actif</Badge>;
+  if (status === 'past_due') return <Badge className="bg-amber-500 hover:bg-amber-600">Paiement en retard</Badge>;
+  if (status === 'trialing') return <Badge className="bg-sky-600 hover:bg-sky-700">Essai</Badge>;
+  if (status === 'cancelled') return <Badge variant="outline" className="border-slate-300 text-slate-600">Annulé</Badge>;
+  return <Badge variant="outline" className="border-slate-300 text-slate-600">{status}</Badge>;
+}
+
+function transactionStatusBadge(status: string) {
+  if (status === 'completed') return <Badge className="bg-emerald-600 hover:bg-emerald-700">Complété</Badge>;
+  if (status === 'refunded') return <Badge className="bg-amber-500 hover:bg-amber-600">Remboursé</Badge>;
+  if (status === 'failed') return <Badge className="bg-red-600 hover:bg-red-700">Échec</Badge>;
+  return <Badge variant="outline" className="border-slate-300 text-slate-600">{status}</Badge>;
+}
+
+const TRANSACTION_TYPE_LABELS: Record<string, string> = {
+  subscription: 'Abonnement',
+  service_order: 'Commande de service',
+  order: 'Commande',
+  payout: 'Reversement',
+  refund: 'Remboursement',
+  deposit: 'Dépôt',
+};
+
 function PlanBadge({ user }: { user: AdminUser }) {
   if (user.providerBusinessName) {
     return <Badge className="bg-slate-900 text-white hover:bg-slate-800">Prestataire</Badge>;
@@ -132,8 +273,18 @@ export function AdminUsers() {
   const [roleFilter, setRoleFilter] = useState('');
   const [planFilter, setPlanFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  // FIX-10 — plage de dates d'inscription (créés du / au), initialisée
+  // depuis l'URL puis re-synchronisée dans l'URL à chaque changement.
+  const [dateFrom, setDateFrom] = useState(() => readDateParam('createdFrom'));
+  const [dateTo, setDateTo] = useState(() => readDateParam('createdTo'));
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState<PaginationMeta | null>(null);
+
+  // Fiche client (FIX-10) — Sheet de détail avec sections Équipe / Facturation
+  const [detailTarget, setDetailTarget] = useState<AdminUser | null>(null);
+  const [detail, setDetail] = useState<UserDetail | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState<string | null>(null);
 
   // Create dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -159,6 +310,8 @@ export function AdminUsers() {
       if (roleFilter) params.set('role', roleFilter);
       if (planFilter) params.set('plan', planFilter);
       if (statusFilter) params.set('status', statusFilter);
+      if (dateFrom) params.set('createdFrom', dateFrom);
+      if (dateTo) params.set('createdTo', dateTo);
 
       const res = await fetch(`/api/admin/users?${params.toString()}`);
       if (!res.ok) throw new Error('Erreur lors du chargement des utilisateurs');
@@ -171,11 +324,49 @@ export function AdminUsers() {
     } finally {
       setLoading(false);
     }
-  }, [search, page, roleFilter, planFilter, statusFilter]);
+  }, [search, page, roleFilter, planFilter, statusFilter, dateFrom, dateTo]);
 
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
+
+  // FIX-10 — l'état du filtre date se reflète dans l'URL (partageable,
+  // rechargement conservant la plage) sans déclencher de navigation.
+  useEffect(() => {
+    const sp = new URLSearchParams(window.location.search);
+    if (dateFrom) sp.set('createdFrom', dateFrom);
+    else sp.delete('createdFrom');
+    if (dateTo) sp.set('createdTo', dateTo);
+    else sp.delete('createdTo');
+    const qs = sp.toString();
+    window.history.replaceState(null, '', `${window.location.pathname}${qs ? `?${qs}` : ''}`);
+  }, [dateFrom, dateTo]);
+
+  const clearDateFilter = () => {
+    setDateFrom('');
+    setDateTo('');
+    setPage(1);
+  };
+
+  /** FIX-10 — ouvre la fiche client et charge son détail réel. */
+  const openDetail = useCallback(async (user: AdminUser) => {
+    setDetailTarget(user);
+    setDetail(null);
+    setDetailError(null);
+    setDetailLoading(true);
+    try {
+      const res = await fetch(`/api/admin/users/${user.id}`);
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || 'Erreur lors du chargement de la fiche');
+      }
+      setDetail((await res.json()) as UserDetail);
+    } catch (err) {
+      setDetailError(err instanceof Error ? err.message : 'Erreur inconnue');
+    } finally {
+      setDetailLoading(false);
+    }
+  }, []);
 
   const handleCreateUser = async () => {
     if (!createForm.email.trim() || !createForm.fullName.trim() || !createForm.password.trim()) {
@@ -356,6 +547,40 @@ export function AdminUsers() {
                 className="pl-9"
               />
             </div>
+            {/* FIX-10 — filtre par date d'inscription (plage createdAt) */}
+            <div className="flex items-center gap-1.5">
+              <span className="hidden text-xs font-medium text-slate-500 xl:inline">Inscrit du</span>
+              <Input
+                type="date"
+                aria-label="Inscrit du (date de début)"
+                title="Filtrer les comptes inscrits à partir de cette date"
+                value={dateFrom}
+                onChange={(e) => { setDateFrom(e.target.value); setPage(1); }}
+                className="w-[9.5rem]"
+              />
+              <span className="text-xs text-slate-400" aria-hidden="true">au</span>
+              <Input
+                type="date"
+                aria-label="Inscrit au (date de fin)"
+                title="Filtrer les comptes inscrits jusqu'à cette date"
+                value={dateTo}
+                onChange={(e) => { setDateTo(e.target.value); setPage(1); }}
+                className="w-[9.5rem]"
+              />
+              {(dateFrom || dateTo) && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearDateFilter}
+                  aria-label="Effacer le filtre par date d'inscription"
+                  title="Effacer le filtre par date d'inscription"
+                  className="shrink-0 text-slate-500 hover:text-slate-900"
+                >
+                  <X className="mr-1 h-4 w-4" aria-hidden="true" />
+                  Effacer
+                </Button>
+              )}
+            </div>
             <Select value={roleFilter || 'all'} onValueChange={(v) => { setRoleFilter(v === 'all' ? '' : v); setPage(1); }}>
               <SelectTrigger className="w-full sm:w-40" aria-label="Filtrer par rôle"><SelectValue placeholder="Rôle" /></SelectTrigger>
               <SelectContent>
@@ -384,6 +609,19 @@ export function AdminUsers() {
           </div>
 
           {loading && <TableSkeleton />}
+
+          {!loading && !error && pagination && (
+            <p className="text-sm text-slate-500" role="status" aria-live="polite">
+              {pagination.total} résultat{pagination.total > 1 ? 's' : ''}
+              {(dateFrom || dateTo) && (
+                <>
+                  {' '}
+                  pour la période du <span className="font-medium text-slate-700">{dateFrom || '…'}</span> au{' '}
+                  <span className="font-medium text-slate-700">{dateTo || '…'}</span>
+                </>
+              )}
+            </p>
+          )}
 
           {error && !loading && (
             <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -419,7 +657,14 @@ export function AdminUsers() {
                     {users.map((user) => (
                       <TableRow key={user.id}>
                         <TableCell>
-                          <p className="font-semibold text-slate-900">{user.fullName || '—'}</p>
+                          <button
+                            type="button"
+                            className="text-left font-semibold text-slate-900 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-slate-900"
+                            onClick={() => openDetail(user)}
+                            aria-label={`Ouvrir la fiche de ${user.fullName || user.email}`}
+                          >
+                            {user.fullName || '—'}
+                          </button>
                           <p className="text-xs text-slate-500">{user.email}</p>
                           {user.role === 'superadmin' && (
                             <Badge className="mt-1 bg-amber-500 hover:bg-amber-600">Superadmin</Badge>
@@ -460,6 +705,10 @@ export function AdminUsers() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-56">
                               <DropdownMenuLabel>Actions compte</DropdownMenuLabel>
+                              <DropdownMenuItem className="cursor-pointer" onClick={() => openDetail(user)}>
+                                <Eye className="h-4 w-4" /> Voir la fiche client
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
                               <DropdownMenuItem
                                 className="cursor-pointer"
                                 onClick={() => runAction(user, 'toggle-active')}
@@ -609,6 +858,336 @@ export function AdminUsers() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* ----- FIX-10 : Sheet fiche client — sections Équipe / Facturation -----
+           Toutes les données affichées proviennent de GET /api/admin/users/[id]
+           (DB réelle). Rien n'est simulé. */}
+      <Sheet
+        open={detailTarget !== null}
+        onOpenChange={(o) => {
+          if (!o) {
+            setDetailTarget(null);
+            setDetail(null);
+            setDetailError(null);
+          }
+        }}
+      >
+        <SheetContent className="flex w-full flex-col gap-0 overflow-y-auto sm:max-w-lg">
+          <SheetHeader>
+            <SheetTitle className="text-lg font-bold text-slate-900">
+              Fiche client{detail ? ` — ${detail.user.fullName || detail.user.email}` : ''}
+            </SheetTitle>
+            <SheetDescription id="user-detail-desc">
+              {detailTarget?.email} — équipe, facturation et informations du compte (données de la base).
+            </SheetDescription>
+          </SheetHeader>
+
+          <div className="flex-1 space-y-6 px-4 pb-8">
+            {detailLoading && (
+              <div className="space-y-3" role="status" aria-live="polite">
+                <Skeleton className="h-5 w-44" />
+                <Skeleton className="h-16 w-full" />
+                <Skeleton className="h-36 w-full" />
+                <Skeleton className="h-44 w-full" />
+              </div>
+            )}
+
+            {detailError && !detailLoading && (
+              <div className="flex flex-col items-center gap-3 py-8 text-center">
+                <p className="text-sm text-destructive">{detailError}</p>
+                <Button variant="outline" size="sm" onClick={() => detailTarget && openDetail(detailTarget)}>
+                  Réessayer
+                </Button>
+              </div>
+            )}
+
+            {detail && !detailLoading && (
+              <>
+                {/* ----- Badges compte ----- */}
+                <div className="flex flex-wrap items-center gap-2">
+                  {detail.user.role === 'superadmin' && (
+                    <Badge className="bg-amber-500 hover:bg-amber-600">Superadmin</Badge>
+                  )}
+                  {detail.user.providerBusinessName && (
+                    <Badge className="bg-slate-900 text-white hover:bg-slate-800">
+                      Prestataire : {detail.user.providerBusinessName}
+                    </Badge>
+                  )}
+                  {detail.user.selectedPlan && detail.user.selectedPlan !== 'free' ? (
+                    <Badge variant="default">{planLabel(detail.user.selectedPlan)}</Badge>
+                  ) : (
+                    <Badge variant="outline" className="border-slate-300 text-slate-700">Gratuit</Badge>
+                  )}
+                  {detail.user.isActive ? (
+                    <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700">
+                      <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" /> Actif
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-xs font-semibold text-red-600">
+                      <Ban className="h-3.5 w-3.5" aria-hidden="true" /> Désactivé
+                    </span>
+                  )}
+                </div>
+
+                {/* ----- Profil (champs réels uniquement) ----- */}
+                <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                  <dt className="text-slate-500">Inscrit le</dt>
+                  <dd className="font-medium text-slate-900">
+                    {format(new Date(detail.user.createdAt), 'dd MMM yyyy', { locale: fr })}
+                  </dd>
+                  <dt className="text-slate-500">Téléphone</dt>
+                  <dd className="font-medium text-slate-900">{detail.user.phone ?? '—'}</dd>
+                  <dt className="text-slate-500">Adresse</dt>
+                  <dd className="font-medium text-slate-900">{detail.user.address ?? '—'}</dd>
+                </dl>
+
+                <Separator />
+
+                {/* ================= ÉQUIPE ================= */}
+                <section aria-labelledby="detail-team-title" className="space-y-3">
+                  <h3
+                    id="detail-team-title"
+                    className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-slate-500"
+                  >
+                    <Users className="h-4 w-4" aria-hidden="true" /> Équipe
+                  </h3>
+
+                  {detail.team.ownedProperties.length === 0 && detail.team.memberships.length === 0 ? (
+                    <div className="rounded-lg border border-dashed border-slate-300 p-6 text-center">
+                      <Users className="mx-auto mb-2 h-8 w-8 text-slate-300" aria-hidden="true" />
+                      <p className="text-sm font-medium text-slate-700">Aucun membre d&apos;équipe</p>
+                      <p className="mt-1 text-xs text-slate-500">
+                        Ce compte ne gère aucun bien et n&apos;appartient à l&apos;équipe d&apos;aucun autre hôte.
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      {detail.team.ownedProperties.length > 0 && (
+                        <div className="space-y-3">
+                          <h4 className="text-xs font-semibold uppercase text-slate-400">
+                            Biens gérés ({detail.team.ownedProperties.length})
+                          </h4>
+                          {detail.team.ownedProperties.map((p) => (
+                            <div key={p.id} className="rounded-lg border border-slate-200 bg-white p-3">
+                              <div className="flex flex-wrap items-center justify-between gap-2">
+                                <p className="font-semibold text-slate-900">{p.name}</p>
+                                <span className="flex items-center gap-1.5">
+                                  <Badge variant="outline">{p.propertyType}</Badge>
+                                  {p.isActive ? (
+                                    <Badge variant="outline" className="border-emerald-300 text-emerald-700">Actif</Badge>
+                                  ) : (
+                                    <Badge variant="outline" className="border-slate-300 text-slate-500">Désactivé</Badge>
+                                  )}
+                                </span>
+                              </div>
+                              {p.address && <p className="mt-0.5 text-xs text-slate-500">{p.address}</p>}
+                              <p className="mt-1.5 text-xs font-medium text-slate-600">
+                                {p.memberCount} membre{p.memberCount > 1 ? 's' : ''}
+                              </p>
+                              <ul className="mt-2 divide-y divide-slate-100">
+                                {p.members.map((m) => {
+                                  const meta = memberRoleMeta(m.role);
+                                  return (
+                                    <li key={m.id} className="flex flex-wrap items-center justify-between gap-2 py-1.5 text-sm">
+                                      <span className="flex min-w-0 items-center gap-1.5">
+                                        <span aria-hidden="true">{meta.emoji}</span>
+                                        <span className="truncate font-medium text-slate-900">
+                                          {m.user.fullName || m.user.email}
+                                        </span>
+                                        {m.user.fullName && (
+                                          <span className="truncate text-xs text-slate-400">{m.user.email}</span>
+                                        )}
+                                      </span>
+                                      <span className="flex shrink-0 flex-wrap items-center gap-1">
+                                        <Badge variant="secondary">{meta.label}</Badge>
+                                        {!m.acceptedAt && (
+                                          <Badge variant="outline" className="border-amber-300 text-amber-700">
+                                            Invitation en attente
+                                          </Badge>
+                                        )}
+                                      </span>
+                                    </li>
+                                  );
+                                })}
+                              </ul>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {detail.team.memberships.length > 0 && (
+                        <div className="space-y-2">
+                          <h4 className="text-xs font-semibold uppercase text-slate-400">
+                            Équipes rejointes ({detail.team.memberships.length})
+                          </h4>
+                          <ul className="rounded-lg border border-slate-200 bg-white divide-y divide-slate-100">
+                            {detail.team.memberships.map((m) => {
+                              const meta = memberRoleMeta(m.role);
+                              return (
+                                <li key={m.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-sm">
+                                  <span className="min-w-0">
+                                    <span className="block truncate font-medium text-slate-900">{m.property.name}</span>
+                                    <span className="block truncate text-xs text-slate-400">
+                                      hôte : {m.property.ownerName || m.property.ownerEmail}
+                                    </span>
+                                  </span>
+                                  <span className="flex shrink-0 flex-wrap items-center gap-1">
+                                    <Badge variant="secondary">{meta.label}</Badge>
+                                    {!m.acceptedAt && (
+                                      <Badge variant="outline" className="border-amber-300 text-amber-700">
+                                        Invitation en attente
+                                      </Badge>
+                                    )}
+                                  </span>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </section>
+
+                <Separator />
+
+                {/* ================= FACTURATION ================= */}
+                <section aria-labelledby="detail-billing-title" className="space-y-3">
+                  <h3
+                    id="detail-billing-title"
+                    className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-slate-500"
+                  >
+                    <CreditCard className="h-4 w-4" aria-hidden="true" /> Facturation
+                  </h3>
+
+                  {/* Abonnement actif : plan, statut, échéance */}
+                  {detail.billing.activeSubscription ? (
+                    <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className="font-semibold text-slate-900">
+                          {planLabel(detail.billing.activeSubscription.plan)}
+                        </p>
+                        {subscriptionStatusBadge(detail.billing.activeSubscription.status)}
+                      </div>
+                      <p className="mt-1 text-sm text-slate-700">
+                        <span className="font-semibold">
+                          {detail.billing.activeSubscription.amount.toFixed(2)} €
+                        </span>{' '}
+                        / {detail.billing.activeSubscription.billingCycle === 'monthly' ? 'mois' : 'an'}
+                      </p>
+                      <p className="mt-0.5 text-xs text-slate-500">
+                        Échéance :{' '}
+                        {detail.billing.activeSubscription.currentPeriodEnd
+                          ? format(new Date(detail.billing.activeSubscription.currentPeriodEnd), 'dd MMM yyyy', { locale: fr })
+                          : '—'}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="rounded-lg border border-slate-200 p-3 text-sm text-slate-500">
+                      Aucun abonnement actif.
+                    </div>
+                  )}
+
+                  {/* Commandes de service sur les biens + cumuls réels */}
+                  <dl className="grid grid-cols-3 gap-2">
+                    <div className="rounded-lg border border-slate-200 p-2.5 text-center">
+                      <dt className="text-[11px] uppercase text-slate-400">Commandes</dt>
+                      <dd className="text-lg font-bold text-slate-900">{detail.billing.serviceOrders.count}</dd>
+                    </div>
+                    <div className="rounded-lg border border-slate-200 p-2.5 text-center">
+                      <dt className="text-[11px] uppercase text-slate-400">Cumul commandes</dt>
+                      <dd className="text-lg font-bold text-slate-900">
+                        {detail.billing.serviceOrders.totalAmount.toFixed(2)} €
+                      </dd>
+                    </div>
+                    <div className="rounded-lg border border-slate-200 p-2.5 text-center">
+                      <dt className="text-[11px] uppercase text-slate-400">Part hôte</dt>
+                      <dd className="text-lg font-bold text-slate-900">
+                        {detail.billing.serviceOrders.hostEarnings.toFixed(2)} €
+                      </dd>
+                    </div>
+                  </dl>
+                  <p className="-mt-2 text-[11px] text-slate-400">
+                    Commandes de service (hors annulées) posées par les invités sur les biens du client.
+                  </p>
+
+                  {/* Historique d'abonnements */}
+                  {detail.billing.subscriptions.length > 0 && (
+                    <div className="space-y-1.5">
+                      <h4 className="text-xs font-semibold uppercase text-slate-400">Historique d&apos;abonnements</h4>
+                      <ul className="rounded-lg border border-slate-200 bg-white divide-y divide-slate-100">
+                        {detail.billing.subscriptions.map((s) => (
+                          <li key={s.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-sm">
+                            <span className="font-medium text-slate-900">{planLabel(s.plan)}</span>
+                            <span className="flex items-center gap-2">
+                              <span className="text-xs text-slate-500">
+                                {s.amount.toFixed(2)} € / {s.billingCycle === 'monthly' ? 'mois' : 'an'}
+                                {s.currentPeriodEnd
+                                  ? ` — échéance ${format(new Date(s.currentPeriodEnd), 'dd MMM yyyy', { locale: fr })}`
+                                  : ''}
+                              </span>
+                              {subscriptionStatusBadge(s.status)}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Paiements enregistrés (Transaction.payerId = ce compte) */}
+                  <div className="space-y-1.5">
+                    <h4 className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase text-slate-400">
+                      Paiements enregistrés
+                      <Badge variant="outline" className="font-mono text-[11px]">
+                        {detail.billing.transactions.count} · {detail.billing.transactions.totalAmount.toFixed(2)} €
+                      </Badge>
+                    </h4>
+                    {detail.billing.transactions.items.length === 0 ? (
+                      <p className="rounded-lg border border-dashed border-slate-300 p-3 text-xs text-slate-500">
+                        Aucun paiement enregistré pour ce compte.
+                      </p>
+                    ) : (
+                      <ul className="rounded-lg border border-slate-200 bg-white divide-y divide-slate-100">
+                        {detail.billing.transactions.items.map((t) => (
+                          <li key={t.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-sm">
+                            <span>
+                              <span className="block font-medium text-slate-900">
+                                {TRANSACTION_TYPE_LABELS[t.type] ?? t.type} — {t.amount.toFixed(2)} €
+                              </span>
+                              <span className="block text-xs text-slate-400">
+                                {format(new Date(t.createdAt), 'dd MMM yyyy HH:mm', { locale: fr })}
+                                {t.stripePaymentId ? ` · ${t.stripePaymentId}` : ''}
+                              </span>
+                            </span>
+                            {transactionStatusBadge(t.status)}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+
+                  {/* Références Stripe réelles (champs existants uniquement) */}
+                  <div className="space-y-1.5">
+                    <h4 className="text-xs font-semibold uppercase text-slate-400">Références Stripe</h4>
+                    <dl className="rounded-lg border border-slate-200 bg-white p-3 text-xs">
+                      <div className="flex items-center justify-between gap-2 py-0.5">
+                        <dt className="text-slate-500">Compte Connect (reversements)</dt>
+                        <dd className="truncate font-mono text-slate-900">{detail.user.stripeAccountId ?? '—'}</dd>
+                      </div>
+                      <div className="flex items-center justify-between gap-2 py-0.5">
+                        <dt className="text-slate-500">Abonnement Stripe</dt>
+                        <dd className="truncate font-mono text-slate-900">
+                          {detail.billing.activeSubscription?.stripeSubscriptionId ?? '—'}
+                        </dd>
+                      </div>
+                    </dl>
+                  </div>
+                </section>
+              </>
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

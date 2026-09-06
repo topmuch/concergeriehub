@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { compare } from 'bcryptjs';
 import { db } from '@/lib/db';
 import { rateLimit } from '@/lib/rate-limit';
+// FIX-12 — notification SMS hôte (Twilio REST env-gated, fail-closed).
+import { sendSms } from '@/lib/sms';
 
 // =============================================================
 // Réclamations écrites du Hub public — /api/public/hub/[slug]/complaint
@@ -22,6 +24,59 @@ const isDemo = (slug: string) => slug === DEMO_SLUG;
 
 const CATEGORIES = ['PLUMBING', 'ELECTRICAL', 'CLEANING', 'OTHER'] as const;
 type Category = (typeof CATEGORIES)[number];
+
+const CATEGORY_LABELS: Record<Category, string> = {
+  PLUMBING: 'Plomberie',
+  ELECTRICAL: 'Électricité',
+  CLEANING: 'Ménage',
+  OTHER: 'Autre',
+};
+
+/**
+ * FIX-12 — SMS hôte à la création d'une réclamation (notification la plus
+ * critique du Hub). Destinataire = propriétaire du bien, UNIQUEMENT s'il
+ * a un téléphone réel en DB (Profile.phone, format E.164). Sans téléphone
+ * renseigné → no-op silencieux (le SMS complète la consultation du MODE
+ * HÔTE, il ne la remplace pas — le flux existant est inchangé).
+ * Fire-and-forget : aucun échec SMS ne remonte à l'invité.
+ */
+async function notifyHostBySms(
+  propertyId: string,
+  data: {
+    complaintId: string;
+    category: Category;
+    description: string;
+    isUrgent: boolean;
+    guestName: string | null;
+  },
+): Promise<void> {
+  try {
+    const property = await db.property.findUnique({
+      where: { id: propertyId },
+      select: {
+        name: true,
+        owner: { select: { profile: { select: { phone: true } } } },
+      },
+    });
+    const phone = property?.owner?.profile?.phone?.trim();
+    if (!property || !phone) return;
+
+    const prefix = data.isUrgent ? '🚨 URGENT — ' : '🔔 ';
+    const guest = data.guestName ? ` (${data.guestName})` : '';
+    const body =
+      `${prefix}Conciergerie Hub — ${property.name} : nouvelle réclamation ` +
+      `${CATEGORY_LABELS[data.category]}${guest}. « ${data.description.slice(0, 120)} »`;
+    const result = await sendSms(phone, body);
+    if (!result.sent) {
+      console.warn(
+        `[complaint] SMS hôte non envoyé (${data.complaintId}) :`,
+        result.reason ?? result.error,
+      );
+    }
+  } catch (error) {
+    console.error('[complaint] notification SMS hôte failed:', error);
+  }
+}
 
 const ALLOWED_MIME = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'] as const;
 const MAX_PHOTO_BYTES = 500 * 1024; // 500 KB décodé
@@ -148,6 +203,16 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
       },
       select: { id: true, createdAt: true },
     });
+
+    // FIX-12 — SMS hôte (fire-and-forget : JAMAIS bloquant pour la réponse
+    // invité ; no-op si le propriétaire n'a pas de téléphone en DB).
+    void notifyHostBySms(resolved.propertyId, {
+      complaintId: complaint.id,
+      category,
+      description,
+      isUrgent,
+      guestName,
+    }).catch(() => undefined);
 
     return NextResponse.json({
       success: true,

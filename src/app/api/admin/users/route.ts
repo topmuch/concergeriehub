@@ -3,7 +3,9 @@
 //
 // GET : liste paginée des comptes avec filtres réels
 //       ?search= &role=user|superadmin &plan=airbnb_solo|…|none
-//       &status=active|inactive &page= &limit=
+//       &status=active|inactive &createdFrom=YYYY-MM-DD
+//       &createdTo=YYYY-MM-DD &page= &limit=   (FIX-10 : plage createdAt,
+//       bornes inclusives — createdTo s'arrête à la fin de la journée)
 //       + compteurs (biens, lots) + abonnement actif éventuel.
 //
 // 🔒 Superadmin. Chaque action de mutation est journalisée
@@ -27,6 +29,19 @@ export async function GET(request: NextRequest) {
     const limit = Math.min(100, Math.max(1, Number(searchParams.get('limit')) || 20));
     const skip = (page - 1) * limit;
 
+    // FIX-10 — filtre par date d'inscription (plage createdAt).
+    // Format attendu YYYY-MM-DD ; les valeurs malformées sont ignorées
+    // (l'UI ne peut de toute façon envoyer que des inputs type="date").
+    const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+    const createdFromParam = searchParams.get('createdFrom') ?? '';
+    const createdToParam = searchParams.get('createdTo') ?? '';
+    if (createdFromParam && !DATE_RE.test(createdFromParam)) {
+      return NextResponse.json({ error: 'createdFrom invalide (YYYY-MM-DD attendu)' }, { status: 400 });
+    }
+    if (createdToParam && !DATE_RE.test(createdToParam)) {
+      return NextResponse.json({ error: 'createdTo invalide (YYYY-MM-DD attendu)' }, { status: 400 });
+    }
+
     const where: Record<string, unknown> = {};
     if (search) {
       where.OR = [{ email: { contains: search } }, { fullName: { contains: search } }];
@@ -37,6 +52,16 @@ export async function GET(request: NextRequest) {
     }
     if (status === 'active') where.isActive = true;
     if (status === 'inactive') where.isActive = false;
+    if (createdFromParam || createdToParam) {
+      where.createdAt = {
+        ...(createdFromParam
+          ? { gte: new Date(`${createdFromParam}T00:00:00.000Z`) }
+          : {}),
+        ...(createdToParam
+          ? { lte: new Date(`${createdToParam}T23:59:59.999Z`) }
+          : {}),
+      };
+    }
 
     const [users, total] = await Promise.all([
       db.user.findMany({
