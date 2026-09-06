@@ -10,6 +10,7 @@ import {
   Copy,
   Eye,
   EyeOff,
+  ImagePlus,
   Loader2,
   Mail,
   Mic,
@@ -18,6 +19,7 @@ import {
   Square,
   TriangleAlert,
   Wrench,
+  X,
 } from 'lucide-react';
 import { QRTNumericKeypad } from '@/components/qrtags';
 import { BrandLogo } from '@/components/ui/brand-logo';
@@ -27,6 +29,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Toaster } from '@/components/ui/sonner';
 import {
   Dialog,
@@ -91,6 +95,17 @@ interface HostProvider {
   priceLabel: string;
 }
 
+interface HostWrittenComplaint {
+  id: string;
+  category: string;
+  categoryLabel: string;
+  description: string;
+  photos: string[];
+  isUrgent: boolean;
+  guestName: string | null;
+  createdAt: string;
+}
+
 interface HostData {
   wifi: {
     qrCodeId: string;
@@ -105,6 +120,8 @@ interface HostData {
     durationSec: number;
     createdAt: string;
   }[];
+  complaints: HostWrittenComplaint[];
+  openComplaints: number;
   pendingRequests: number;
   providers: HostProvider[];
 }
@@ -460,6 +477,7 @@ function GuestView({
   const [wifiOpen, setWifiOpen] = useState(false);
   const [showPwd, setShowPwd] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
+  const [complaintFormOpen, setComplaintFormOpen] = useState(false);
   const { property, guest } = payload;
 
   return (
@@ -564,11 +582,20 @@ function GuestView({
         {/* 3. 🥐 Commander un service */}
         <ServicesCard services={guest.services} contact={guest.contact} property={property} />
 
-        {/* 4. 🚨 Signaler un problème */}
+        {/* 4. 🚨 Signaler un problème — formulaire écrit */}
         <GuestCard
           emoji="🚨"
           title="Signaler un problème"
-          subtitle="Contacter l'hôte — réponse rapide garantie"
+          subtitle="Fuite, électricité, ménage… avec photos si besoin"
+          onClick={() => setComplaintFormOpen(true)}
+          arrow
+        />
+
+        {/* 5. 📞 Contacter l'hôte */}
+        <GuestCard
+          emoji="📞"
+          title="Contacter l'hôte"
+          subtitle={`${guest.contact.name} — appel, email, message vocal`}
           onClick={() => setContactOpen(true)}
           arrow
         />
@@ -579,6 +606,13 @@ function GuestView({
           Propulsé par 🗝️ <span className="font-semibold text-slate-600">Conciergerie Hub</span>
         </p>
       </footer>
+
+      <ComplaintFormDialog
+        open={complaintFormOpen}
+        onClose={() => setComplaintFormOpen(false)}
+        slug={slug}
+        propertyName={property.name}
+      />
 
       <ContactDialog
         open={contactOpen}
@@ -755,7 +789,38 @@ function HostView({
   const [wifiEditOpen, setWifiEditOpen] = useState(false);
   const [complaintsOpen, setComplaintsOpen] = useState(false);
   const [providersOpen, setProvidersOpen] = useState(false);
+  const [resolvingId, setResolvingId] = useState<string | null>(null);
   const unread = hostData?.unreadMessages.length ?? 0;
+  const written = hostData?.openComplaints ?? 0;
+  const totalAlerts = unread + written;
+
+  /** Marque une réclamation écrite résolue (garde PIN) puis rafraîchit. */
+  const resolveComplaint = async (id: string) => {
+    setResolvingId(id);
+    try {
+      const res = await fetch(`/api/public/hub/${encodeURIComponent(slug)}/complaint`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin, id, status: 'RESOLVED' }),
+      });
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        toast.error(j.error || 'Impossible de marquer comme résolue.');
+        return;
+      }
+      toast.success('Réclamation marquée résolue ✓');
+      const hostRes = await fetch(`/api/public/hub/${encodeURIComponent(slug)}/host`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin }),
+      });
+      if (hostRes.ok) onHostRefresh((await hostRes.json()) as HostData);
+    } catch {
+      toast.error('Erreur réseau. Réessayez.');
+    } finally {
+      setResolvingId(null);
+    }
+  };
 
   return (
     <div className="flex-1 w-full max-w-lg mx-auto px-4 py-8 flex flex-col">
@@ -795,18 +860,18 @@ function HostView({
             }
             onClick={() => setWifiEditOpen(true)}
           />
-          {/* 🚨 Réclamations en attente */}
+          {/* 🚨 Réclamations en attente (vocales + écrites) */}
           <HostActionCard
             emoji="🚨"
             title="Réclamations en attente"
             subtitle={
-              unread > 0
-                ? `${unread} message(s) voyageur à traiter${
+              totalAlerts > 0
+                ? `${written} écrite(s) · ${unread} vocale(s)${
                     hostData.pendingRequests > 0 ? ` · ${hostData.pendingRequests} demande(s) de service` : ''
                   }`
                 : 'Aucune réclamation en attente ✓'
             }
-            badge={unread > 0 ? String(unread) : undefined}
+            badge={totalAlerts > 0 ? String(totalAlerts) : undefined}
             onClick={() => setComplaintsOpen(true)}
           />
           {/* 🧹 Gérer les prestataires */}
@@ -844,49 +909,121 @@ function HostView({
               <TriangleAlert className="h-4 w-4 text-amber-500" aria-hidden="true" /> Réclamations en attente
             </DialogTitle>
             <DialogDescription className="text-xs text-slate-500">
-              Messages vocaux laissés par vos voyageurs.
+              Réclamations écrites (formulaire Hub) et messages vocaux de vos voyageurs.
             </DialogDescription>
           </DialogHeader>
-          {hostData && hostData.unreadMessages.length === 0 ? (
-            <div className="text-center py-8">
-              <span className="text-4xl" aria-hidden="true">✅</span>
-              <p className="mt-2 text-sm font-semibold text-slate-900">Tout est traité</p>
-              <p className="text-xs text-slate-500 mt-1">Aucun message en attente.</p>
-            </div>
-          ) : (
-            <div className="space-y-2.5">
-              {hostData?.unreadMessages.map((m) => (
-                <div key={m.id} className="bg-slate-50 border border-slate-200 rounded-lg p-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-bold text-slate-900">{m.senderName}</p>
-                    <span className="text-[11px] text-slate-400 shrink-0">
-                      {new Date(m.createdAt).toLocaleDateString('fr-FR', {
-                        day: 'numeric',
-                        month: 'short',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </span>
-                  </div>
-                  <div className="mt-2 flex items-center gap-2">
-                    {m.audioUrl && !m.audioUrl.startsWith('/demo/') ? (
-                      <audio
-                        controls
-                        preload="none"
-                        src={m.audioUrl}
-                        className="h-9 w-full max-w-[260px]"
-                        aria-label={`Message de ${m.senderName}`}
-                      />
-                    ) : (
-                      <span className="text-xs text-slate-400">
-                        🎙️ Message vocal de {m.durationSec} s (audio indisponible en démo)
+
+          {/* ── Section : réclamations écrites ── */}
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400 mb-2">
+              📝 Écrites ({hostData?.complaints.length ?? 0})
+            </p>
+            {!hostData || hostData.complaints.length === 0 ? (
+              <p className="text-xs text-slate-400 py-2">Aucune réclamation écrite en attente ✓</p>
+            ) : (
+              <div className="space-y-2.5">
+                {hostData.complaints.map((c) => (
+                  <div key={c.id} className="bg-slate-50 border border-slate-200 rounded-lg p-3">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <Badge className="bg-white border-slate-200 text-slate-700 font-semibold hover:bg-white shrink-0">
+                          {c.categoryLabel}
+                        </Badge>
+                        {c.isUrgent && (
+                          <Badge className="bg-red-50 border-red-200 text-red-700 font-bold hover:bg-red-50 shrink-0">
+                            ⚠️ Urgent
+                          </Badge>
+                        )}
+                      </div>
+                      <span className="text-[11px] text-slate-400 shrink-0">
+                        {new Date(c.createdAt).toLocaleDateString('fr-FR', {
+                          day: 'numeric',
+                          month: 'short',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
                       </span>
+                    </div>
+                    <p className="mt-2 text-sm text-slate-700 leading-relaxed">{c.description}</p>
+                    {c.guestName && (
+                      <p className="mt-1 text-[11px] text-slate-400">De : {c.guestName}</p>
                     )}
+                    {c.photos.length > 0 && (
+                      <div className="mt-2 flex gap-2">
+                        {c.photos.map((p, i) => (
+                           
+                          <img
+                            key={i}
+                            src={p}
+                            alt={`Photo ${i + 1} de la réclamation`}
+                            className="h-16 w-16 rounded-lg border border-slate-200 object-cover"
+                          />
+                        ))}
+                      </div>
+                    )}
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      disabled={resolvingId === c.id}
+                      className="mt-2.5 h-8 border-emerald-300 text-emerald-700 hover:bg-emerald-50 font-semibold"
+                      onClick={() => resolveComplaint(c.id)}
+                    >
+                      {resolvingId === c.id ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+                      ) : (
+                        <Check className="h-3.5 w-3.5" aria-hidden="true" />
+                      )}
+                      Marquer résolue
+                    </Button>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* ── Section : messages vocaux ── */}
+          <div className="pt-2 border-t border-slate-100">
+            <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400 mb-2 mt-2">
+              🎙️ Vocales ({hostData?.unreadMessages.length ?? 0})
+            </p>
+            {!hostData || hostData.unreadMessages.length === 0 ? (
+              <p className="text-xs text-slate-400 py-2">Aucun message vocal en attente ✓</p>
+            ) : (
+              <div className="space-y-2.5">
+                {hostData.unreadMessages.map((m) => (
+                  <div key={m.id} className="bg-slate-50 border border-slate-200 rounded-lg p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-bold text-slate-900">{m.senderName}</p>
+                      <span className="text-[11px] text-slate-400 shrink-0">
+                        {new Date(m.createdAt).toLocaleDateString('fr-FR', {
+                          day: 'numeric',
+                          month: 'short',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </span>
+                    </div>
+                    <div className="mt-2 flex items-center gap-2">
+                      {m.audioUrl && !m.audioUrl.startsWith('/demo/') ? (
+                        <audio
+                          controls
+                          preload="none"
+                          src={m.audioUrl}
+                          className="h-9 w-full max-w-[260px]"
+                          aria-label={`Message de ${m.senderName}`}
+                        />
+                      ) : (
+                        <span className="text-xs text-slate-400">
+                          🎙️ Message vocal de {m.durationSec} s (audio indisponible en démo)
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
 
@@ -1281,6 +1418,244 @@ function ContactDialog({
               </Button>
             )}
           </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// =============================================================
+// Formulaire écrit de réclamation (module 🚨 invité)
+// Catégorie + description + photos (≤ 3, 500 Ko, PNG/JPEG/WebP)
+// + checkbox Urgent + nom optionnel → POST /api/public/hub/[slug]/complaint
+// =============================================================
+const COMPLAINT_CATEGORIES = [
+  { value: 'PLUMBING', label: '🚰 Fuite / Plomberie' },
+  { value: 'ELECTRICAL', label: '⚡ Électricité' },
+  { value: 'CLEANING', label: '🧹 Ménage' },
+  { value: 'OTHER', label: '📝 Autre' },
+] as const;
+
+const MAX_PHOTO_BYTES = 500 * 1024;
+const MAX_PHOTOS = 3;
+
+function ComplaintFormDialog({
+  open,
+  onClose,
+  slug,
+  propertyName,
+}: {
+  open: boolean;
+  onClose: () => void;
+  slug: string;
+  propertyName: string;
+}) {
+  const [category, setCategory] = useState<string>('OTHER');
+  const [description, setDescription] = useState('');
+  const [photos, setPhotos] = useState<string[]>([]);
+  const [isUrgent, setIsUrgent] = useState(false);
+  const [guestName, setGuestName] = useState('');
+  const [sending, setSending] = useState(false);
+
+  const reset = useCallback(() => {
+    setCategory('OTHER');
+    setDescription('');
+    setPhotos([]);
+    setIsUrgent(false);
+    setGuestName('');
+  }, []);
+
+  const addPhotos = useCallback(
+    (files: FileList | null) => {
+      if (!files) return;
+      const remaining = MAX_PHOTOS - photos.length;
+      if (remaining <= 0) {
+        toast.error(`Maximum ${MAX_PHOTOS} photos.`);
+        return;
+      }
+      for (const file of Array.from(files).slice(0, remaining)) {
+        if (!['image/png', 'image/jpeg', 'image/jpg', 'image/webp'].includes(file.type)) {
+          toast.error(`« ${file.name} » : format non supporté (PNG, JPEG ou WebP).`);
+          continue;
+        }
+        if (file.size > MAX_PHOTO_BYTES) {
+          toast.error(`« ${file.name} » dépasse 500 Ko.`);
+          continue;
+        }
+        const reader = new FileReader();
+        reader.onload = () => {
+          if (typeof reader.result === 'string') {
+            setPhotos((prev) => (prev.length >= MAX_PHOTOS ? prev : [...prev, reader.result as string]));
+          }
+        };
+        reader.readAsDataURL(file);
+      }
+    },
+    [photos.length],
+  );
+
+  const submit = async () => {
+    if (description.trim().length < 5) {
+      toast.error('Décrivez le problème (5 caractères minimum).');
+      return;
+    }
+    setSending(true);
+    try {
+      const res = await fetch(`/api/public/hub/${encodeURIComponent(slug)}/complaint`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          category,
+          description: description.trim(),
+          photos,
+          isUrgent,
+          guestName: guestName.trim() || undefined,
+        }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toast.error(json.error || 'Envoi impossible. Réessayez.');
+        return;
+      }
+      toast.success('✅ Réclamation envoyée. L’hôte vous contactera bientôt.');
+      reset();
+      onClose();
+    } catch {
+      toast.error('Erreur réseau. Réessayez.');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !sending && !v && onClose()}>
+      <DialogContent className="max-w-md bg-white border border-slate-200 rounded-xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-base font-bold text-slate-900">🚨 Signaler un problème</DialogTitle>
+          <DialogDescription className="text-xs text-slate-500">
+            Un souci dans {propertyName} ? Décrivez-le — l&apos;hôte est notifié immédiatement.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          {/* Catégorie */}
+          <div>
+            <Label htmlFor="complaint-category" className="text-xs font-semibold text-slate-700">
+              Catégorie
+            </Label>
+            <select
+              id="complaint-category"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="mt-1.5 w-full h-11 rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+            >
+              {COMPLAINT_CATEGORIES.map((c) => (
+                <option key={c.value} value={c.value}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Description */}
+          <div>
+            <Label htmlFor="complaint-description" className="text-xs font-semibold text-slate-700">
+              Description
+            </Label>
+            <Textarea
+              id="complaint-description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Décrivez le problème constaté, sa localisation dans le logement…"
+              rows={4}
+              maxLength={2000}
+              className="mt-1.5 rounded-xl border-slate-300 text-sm focus-visible:ring-emerald-500"
+            />
+          </div>
+
+          {/* Photos */}
+          <div>
+            <Label className="text-xs font-semibold text-slate-700">
+              Photos <span className="font-normal text-slate-400">(optionnel — max {MAX_PHOTOS}, 500 Ko)</span>
+            </Label>
+            <div className="mt-1.5 flex items-center gap-2 flex-wrap">
+              {photos.map((p, i) => (
+                <div key={i} className="relative">
+                  { }
+                  <img
+                    src={p}
+                    alt={`Photo ${i + 1}`}
+                    className="h-16 w-16 rounded-lg border border-slate-200 object-cover"
+                  />
+                  <button
+                    type="button"
+                    aria-label={`Retirer la photo ${i + 1}`}
+                    className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-slate-900 text-white inline-flex items-center justify-center shadow-sm hover:bg-slate-700"
+                    onClick={() => setPhotos((prev) => prev.filter((_, j) => j !== i))}
+                  >
+                    <X className="h-3 w-3" aria-hidden="true" />
+                  </button>
+                </div>
+              ))}
+              {photos.length < MAX_PHOTOS && (
+                <label className="h-16 w-16 rounded-lg border-2 border-dashed border-slate-300 flex flex-col items-center justify-center cursor-pointer text-slate-400 hover:border-slate-400 hover:text-slate-600 transition-colors">
+                  <ImagePlus className="h-5 w-5" aria-hidden="true" />
+                  <span className="text-[9px] font-semibold mt-0.5">Ajouter</span>
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    multiple
+                    className="sr-only"
+                    onChange={(e) => {
+                      addPhotos(e.target.files);
+                      e.target.value = '';
+                    }}
+                  />
+                </label>
+              )}
+            </div>
+          </div>
+
+          {/* Urgent + nom */}
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="complaint-urgent"
+              checked={isUrgent}
+              onCheckedChange={(v) => setIsUrgent(v === true)}
+              className="border-slate-400"
+            />
+            <Label htmlFor="complaint-urgent" className="text-sm font-semibold text-red-600 cursor-pointer">
+              ⚠️ Urgent
+            </Label>
+          </div>
+          <div>
+            <Label htmlFor="complaint-name" className="text-xs font-semibold text-slate-700">
+              Votre nom <span className="font-normal text-slate-400">(optionnel)</span>
+            </Label>
+            <Input
+              id="complaint-name"
+              value={guestName}
+              onChange={(e) => setGuestName(e.target.value)}
+              placeholder="Ex : Camille, appartement 12…"
+              maxLength={80}
+              className="mt-1.5 h-11 rounded-xl border-slate-300 text-sm focus-visible:ring-emerald-500"
+            />
+          </div>
+
+          <Button
+            type="button"
+            disabled={sending}
+            className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl"
+            onClick={submit}
+          >
+            {sending ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Envoi en cours…
+              </>
+            ) : (
+              '🚨 Envoyer à l’hôte'
+            )}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

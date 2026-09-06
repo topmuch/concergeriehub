@@ -12,6 +12,8 @@ import { rateLimit } from '@/lib/rate-limit';
 // Retour :
 //  - wifi : contenu actuel du module Wi-Fi (pour "Modifier le Wi-Fi")
 //  - unreadMessages : messages vocaux invités non lus (réclamations)
+//  - complaints : réclamations écrites ouvertes (formulaire Hub)
+//  - openComplaints : nb de réclamations écrites OPEN (badge)
 //  - pendingRequests : demandes de service en attente
 //  - providers : prestataires dans le rayon (2 audiences)
 // =============================================================
@@ -25,6 +27,22 @@ function parseContent(json: string | null | undefined): Record<string, unknown> 
     return JSON.parse(json) as Record<string, unknown>;
   } catch {
     return {};
+  }
+}
+
+const CATEGORY_LABELS: Record<string, string> = {
+  PLUMBING: 'Fuite / Plomberie',
+  ELECTRICAL: 'Électricité',
+  CLEANING: 'Ménage',
+  OTHER: 'Autre',
+};
+
+function safeParsePhotos(json: string): string[] {
+  try {
+    const arr = JSON.parse(json);
+    return Array.isArray(arr) ? (arr as string[]).slice(0, 3) : [];
+  } catch {
+    return [];
   }
 }
 
@@ -58,6 +76,29 @@ export async function POST(
             createdAt: new Date(Date.now() - 7200000).toISOString(),
           },
         ],
+        complaints: [
+          {
+            id: 'demo-complaint-1',
+            category: 'PLUMBING',
+            categoryLabel: 'Fuite / Plomberie',
+            description: 'Le robinet de la cuisine goutte en permanence, dégât léger sous l\'évier.',
+            photos: [],
+            isUrgent: false,
+            guestName: 'Camille (voyageuse)',
+            createdAt: new Date(Date.now() - 3600000).toISOString(),
+          },
+          {
+            id: 'demo-complaint-2',
+            category: 'ELECTRICAL',
+            categoryLabel: 'Électricité',
+            description: "Une prise de la chambre ne fonctionne plus, le disjoncteur saute quand on la branche.",
+            photos: [],
+            isUrgent: true,
+            guestName: 'Pierre (voyageur)',
+            createdAt: new Date(Date.now() - 5400000).toISOString(),
+          },
+        ],
+        openComplaints: 2,
         pendingRequests: 1,
         providers: [
           { id: 'p1', name: 'CleanSuite Paris', emoji: '🧹', categoryLabel: 'Ménage', distanceKm: 2.1, audience: 'OWNER_SERVICE', priceLabel: 'dès 28,00 €' },
@@ -70,20 +111,36 @@ export async function POST(
       return NextResponse.json({ error: 'PIN requis (4 chiffres)' }, { status: 400 });
     }
 
-    // ── Plaque + bien ──
+    // ── Résolution du bien : plaque V1 OU hub du bien (É12, property.qrHubSlug) ──
+    let propertyId: string | null = null;
     const plaque = await db.physicalQrCode.findUnique({
       where: { hubSlug: slug },
       select: { propertyId: true, isClaimed: true, status: true },
     });
-    if (!plaque || !plaque.isClaimed || !plaque.propertyId) {
-      return NextResponse.json({ error: 'Hub non trouvé' }, { status: 404 });
-    }
-    if (plaque.status !== 'active') {
-      return NextResponse.json({ error: 'Cette plaque QR est désactivée.' }, { status: 410 });
+    if (plaque) {
+      if (!plaque.isClaimed || !plaque.propertyId) {
+        return NextResponse.json({ error: 'Hub non trouvé' }, { status: 404 });
+      }
+      if (plaque.status !== 'active') {
+        return NextResponse.json({ error: 'Cette plaque QR est désactivée.' }, { status: 410 });
+      }
+      propertyId = plaque.propertyId;
+    } else {
+      const propertyBySlug = await db.property.findUnique({
+        where: { qrHubSlug: slug },
+        select: { id: true, isActive: true },
+      });
+      if (!propertyBySlug) {
+        return NextResponse.json({ error: 'Hub non trouvé' }, { status: 404 });
+      }
+      if (!propertyBySlug.isActive) {
+        return NextResponse.json({ error: 'Ce bien a été désactivé par son hôte.' }, { status: 410 });
+      }
+      propertyId = propertyBySlug.id;
     }
 
     const property = await db.property.findUnique({
-      where: { id: plaque.propertyId },
+      where: { id: propertyId },
       select: {
         id: true,
         pinHash: true,
@@ -127,7 +184,7 @@ export async function POST(
         }
       : null;
 
-    // ── Réclamations : messages vocaux invités non lus ──
+    // ── Réclamations vocales : messages invités non lus ──
     const unreadMessages = await db.voiceMessage.findMany({
       where: { propertyId: property.id, senderType: 'guest', isRead: false },
       orderBy: { createdAt: 'desc' },
@@ -140,6 +197,14 @@ export async function POST(
         createdAt: true,
       },
     });
+
+    // ── Réclamations écrites (formulaire Hub) ouvertes ──
+    const complaintsRaw = await db.guestComplaint.findMany({
+      where: { propertyId: property.id, status: 'OPEN' },
+      orderBy: [{ isUrgent: 'desc' }, { createdAt: 'desc' }],
+      take: 10,
+    });
+    const openComplaints = complaintsRaw.length;
 
     // ── Demandes de service en attente ──
     const pendingRequests = await db.serviceRequest.count({
@@ -188,6 +253,17 @@ export async function POST(
         durationSec: m.durationSec,
         createdAt: m.createdAt.toISOString(),
       })),
+      complaints: complaintsRaw.map((c) => ({
+        id: c.id,
+        category: c.category,
+        categoryLabel: CATEGORY_LABELS[c.category as keyof typeof CATEGORY_LABELS] ?? 'Autre',
+        description: c.description,
+        photos: safeParsePhotos(c.photos),
+        isUrgent: c.isUrgent,
+        guestName: c.guestName,
+        createdAt: c.createdAt.toISOString(),
+      })),
+      openComplaints,
       pendingRequests,
       providers,
     });

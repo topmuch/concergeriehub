@@ -124,11 +124,37 @@ model Property {
   bookings          Booking[]
   automationRules   AutomationRule[]
   icalFeeds         PropertyIcalFeed[]
+  guestComplaints   GuestComplaint[]  @relation("PropertyGuestComplaints")
 
   @@index([ownerId])
   @@index([propertyType])
   @@index([qrHubSlug])
   @@map("properties")
+}
+
+// ==============================================================
+// TABLE Hub: guest_complaints (Hub QR — réclamations écrites invité)
+// Formulaire « Signaler un problème » du Hub public (/hub/[slug]).
+// category : 'PLUMBING' | 'ELECTRICAL' | 'CLEANING' | 'OTHER'
+// photos   : JSON string d'images base64 (dataURL) — ≤ 500 KB / photo
+// status   : 'OPEN' | 'RESOLVED' (côté hôte, mode Hôte du Hub)
+// ==============================================================
+model GuestComplaint {
+  id          String   @id @default(cuid())
+  propertyId  String   @map("property_id")
+  category    String   @default("OTHER")
+  description String
+  photos      String   @default("[]")
+  isUrgent    Boolean  @default(false) @map("is_urgent")
+  guestName   String?                                   // nom laissé par l'invité (optionnel)
+  status      String   @default("OPEN")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  property Property @relation("PropertyGuestComplaints", fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId, status])
+  @@index([createdAt])
+  @@map("guest_complaints")
 }
 
 // ==============================================================
