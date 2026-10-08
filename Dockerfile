@@ -84,4 +84,4 @@ CMD sh -c "mkdir -p /app/data /app/data/uploads/voice \
   && echo '=== Seed comptes (superadmin + client demo) ===' \
   && node scripts/create-admin.cjs || echo 'ATTENTION: seed a echoue - voir erreur ci-dessus' \
   && echo '=== Demarrage serveur ===' \
-  && exec node .next/standalone/server.js"
+  && { exec node .next/standalone/server.js ; } || { echo \"[debug] le serveur a quitte, code $?\" ; ls -la /app/.next/standalone/ 2>&1 | head -20 ; ls /app/.next/standalone/.next 2>&1 | head -10 ; node -e \"try{require('/app/.next/standalone/server.js')}catch(e){console.log('[debug] ERREUR require:',e.message)}\" ; sleep 3600 ; }"
