@@ -1,33 +1,31 @@
 # syntax=docker/dockerfile:1
-# ConcergerieHub — Dockerfile FINAL et STABLE (v4.0)
+# ConcergerieHub — Dockerfile FINAL et STABLE (v4.1 — INDÉPENDANT DU CONTEXTE)
 #
 # ═══════════════════════════════════════════════════════════════════
 #  CE FICHIER NE CHANGE PLUS JAMAIS.
 #
-#  Le code applicatif arrive par le fichier app-update.tar.xz posé à
-#  la racine du repo GitHub (à côté de ce Dockerfile).
+#  Fonctionne dans TOUS les cas de figure Coolify :
+#    • collé dans « Dockerfile Inline » (contexte vide) → OK
+#    • utilisé via « Dockerfile Path » depuis le repo GitHub → OK
 #
-#  MISE À JOUR = 1 SEUL GESTE :
-#    glisser-déposer le nouveau app-update.tar.xz sur GitHub → Deploy.
-#    • Zéro modification de ce Dockerfile
-#    • Zéro CACHEBUST (pas de git clone → pas de cache obsolète :
-#      chaque nouvel upload change le contexte de build, Docker
-#      reconstruit automatiquement les couches concernées)
-#    • Zéro patch : le tar contient TOUJOURS la totalité du code
-#      (correctifs FIX-1..9 + vocal + Messages inclus)
+#  Le code applicatif = app-update.tar.xz à la racine du repo GitHub.
+#  ADD distant + invalidation automatique : chaque nouveau commit sur
+#  GitHub change le fichier → Docker télécharge la nouvelle version
+#  (zéro CACHEBUST, zéro manipulation).
+#
+#  MISE À JOUR = pousser le nouveau app-update.tar.xz sur GitHub → Deploy.
 # ═══════════════════════════════════════════════════════════════════
 FROM node:20-alpine
 
-# Dépendances système (git inutile : plus de clone, le code vient du contexte)
 RUN apk add --no-cache libc6-compat sqlite \
   && npm install -g bun
 
 WORKDIR /app
 
-# ── Code applicatif : app-update.tar.xz (racine du repo GitHub) ─────
-# Le contexte de build = le repo cloné par Coolify → COPY toujours frais.
-# L'extraction échoue si l'archive est corrompue (pas de deploy silencieux).
-COPY app-update.tar.xz /tmp/app-update.tar.xz
+# ── Code applicatif : téléchargé depuis le repo GitHub ──────────────
+# L'invalidation du cache est automatique : si le fichier change sur
+# GitHub (nouveau commit), Docker le retélécharge. Échoue si absent.
+ADD https://raw.githubusercontent.com/topmuch/concergeriehub/main/app-update.tar.xz /tmp/app-update.tar.xz
 
 RUN set -e \
   && echo '[payload] extraction de app-update.tar.xz...' \
