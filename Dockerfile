@@ -1,86 +1,89 @@
-# QR Domotik - Optimized Multi-Stage Dockerfile for Coolify
+# syntax=docker/dockerfile:1
+# ConcergerieHub — Dockerfile FINAL et STABLE (v4.0)
+#
+# ═══════════════════════════════════════════════════════════════════
+#  CE FICHIER NE CHANGE PLUS JAMAIS.
+#
+#  Le code applicatif arrive par le fichier app-update.tar.xz posé à
+#  la racine du repo GitHub (à côté de ce Dockerfile).
+#
+#  MISE À JOUR = 1 SEUL GESTE :
+#    glisser-déposer le nouveau app-update.tar.xz sur GitHub → Deploy.
+#    • Zéro modification de ce Dockerfile
+#    • Zéro CACHEBUST (pas de git clone → pas de cache obsolète :
+#      chaque nouvel upload change le contexte de build, Docker
+#      reconstruit automatiquement les couches concernées)
+#    • Zéro patch : le tar contient TOUJOURS la totalité du code
+#      (correctifs FIX-1..9 + vocal + Messages inclus)
+# ═══════════════════════════════════════════════════════════════════
+FROM node:20-alpine
 
-# ── Stage 1: Dependencies ──
-FROM node:20-alpine AS deps
-RUN apk add --no-cache libc6-compat sqlite
-RUN npm install -g bun
+# Dépendances système (git inutile : plus de clone, le code vient du contexte)
+RUN apk add --no-cache libc6-compat sqlite \
+  && npm install -g bun
+
 WORKDIR /app
-COPY package.json bun.lock* package-lock* ./
-RUN bun install --frozen-lockfile 2>/dev/null || bun install
 
-# ── Stage 2: Build ──
-FROM deps AS builder
-COPY prisma ./prisma/
-COPY scripts ./scripts/
-COPY public ./public/
-COPY next.config.ts .
-COPY tsconfig.json .
-COPY postcss.config.mjs .
-COPY tailwind.config.ts .
-COPY components.json .
-COPY src ./src/
-ENV NEXT_TELEMETRY_DISABLED=1
-ENV DATABASE_URL=file:///app/data/qrdomotik.db
-# Use Node.js directly (not bun) so NODE_OPTIONS memory limit works
-ENV NODE_OPTIONS="--max-old-space-size=4096"
+# ── Code applicatif : app-update.tar.xz (racine du repo GitHub) ─────
+# Le contexte de build = le repo cloné par Coolify → COPY toujours frais.
+# L'extraction échoue si l'archive est corrompue (pas de deploy silencieux).
+COPY app-update.tar.xz /tmp/app-update.tar.xz
+
+RUN set -e \
+  && echo '[payload] extraction de app-update.tar.xz...' \
+  && tar -xJf /tmp/app-update.tar.xz -C /app \
+  && rm /tmp/app-update.tar.xz \
+  && echo '[payload] verifications...' \
+  && test -f /app/package.json \
+  && test -f /app/prisma/schema.prisma \
+  && test -f /app/scripts/create-admin.cjs \
+  && node --check /app/scripts/create-admin.cjs \
+  && grep -q "force-dynamic" /app/src/app/page.tsx \
+  && test -f '/app/src/app/api/uploads/voice/[file]/route.ts' \
+  && test -f /app/src/app/airbnb/messages/page.tsx \
+  && echo "[payload] OK — version : $(cat /app/VERSION.txt)"
+
+# Install dependencies + Prisma Client
+RUN bun install
 RUN npx prisma generate
-RUN npx next build
 
-# ── Stage 3: Production ──
-FROM node:20-alpine AS runner
-RUN apk add --no-cache sqlite && sqlite3 --version
-
-WORKDIR /app
-
-ENV NODE_ENV=production
+# Build the application
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV PORT=3000
-ENV HOSTNAME="0.0.0.0"
-ENV DATABASE_URL=file:///app/data/qrdomotik.db
+ENV DATABASE_URL=file:/app/data/concergeriehub.db
+ENV NEXT_PUBLIC_APP_URL=http://localhost:3000
 
-# Copy standalone output + static assets
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
-COPY --from=builder /app/public ./public
+# Create data directory + sync schema BEFORE build
+RUN mkdir -p /app/data && npx prisma db push --skip-generate --accept-data-loss
 
-# Remove project .env (has LOCAL db path) and write Docker-specific one
-# Generate a stable NEXTAUTH_SECRET so sessions survive container restarts
-RUN SECRET=$(node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))") \
-  && rm -f .env \
-  && echo "DATABASE_URL=file:///app/data/qrdomotik.db" > .env \
-  && echo "NEXTAUTH_SECRET=$SECRET" >> .env \
-  && echo "NEXTAUTH_URL=https://qrdomotik.roomscan.pro" >> .env
+# NextAuth exige un secret en production : on en génère un stable à l'image
+RUN echo "NEXTAUTH_SECRET=$(node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))")" > /app/.env.docker-secret
 
-# Copy prisma runtime (generated client)
-COPY --from=builder /app/prisma ./prisma/
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+RUN bun run build
 
-# Ensure data directory exists with WORLD-WRITABLE permissions.
-# Coolify runs containers as non-root user (node:1000), so root-owned
-# /app/data/ would be unwritable at runtime → sqlite3 "unable to open".
-RUN mkdir -p /app/data && chmod 777 /app/data
-COPY --from=builder /app/scripts/schema.sql /app/data/schema.sql
-COPY --from=builder /app/scripts/seed-users.sql /app/data/seed-users.sql
-
-# AUD-FULL/FIX-7 — Uploads persistants : logos branding + documents de
-# vérification + messages vocaux sont écrits dans /app/public/uploads.
-# Sans volume, ils sont perdus à chaque redéploiement. Coolify : monter
-# un volume sur /app/public/uploads.
-RUN mkdir -p /app/public/uploads && chmod 777 /app/public/uploads
-VOLUME ["/app/public/uploads"]
-
-# Verify SQL files, sqlite3 CLI, and write permission
-RUN echo "--- Container pre-flight ---" \
-  && echo "sqlite3: $(which sqlite3)" \
-  && sqlite3 --version \
-  && echo "schema.sql: $(wc -l < /app/data/schema.sql) lines" \
-  && echo "seed-users.sql: $(wc -l < /app/data/seed-users.sql) lines" \
-  && echo "/app/data perms: $(stat -c '%a %U:%G' /app/data)" \
-  && touch /app/data/.write-test && rm -f /app/data/.write-test \
-  && echo "Write test: OK" \
-  && echo "--- End pre-flight ---"
 EXPOSE 3000
 
-# instrumentation.ts (inside Next.js process) runs sqlite3 CLI.
-# CMD is simple - Coolify may override it, but can't override instrumentation.
-CMD ["node", "server.js"]
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+ENV DATABASE_URL=file:/app/data/concergeriehub.db
+
+# ── Start command ────────────────────────────────────────────────────
+# Toute la logique URL est évaluée par le shell INTERNE (préfixe \$)
+# pour éviter les problèmes d'héritage entre les deux shells imbriqués.
+# NEXTAUTH_URL : définissez-le dans Coolify (Variables d'environnement)
+# avec votre domaine public ; sinon le 1er domaine Coolify est utilisé
+# automatiquement (https:// ajouté si COOLIFY_URL est un FQDN nu).
+CMD sh -c "mkdir -p /app/data /app/data/uploads/voice \
+  && echo '=== ConcergerieHub — version deployee : '$(cat /app/VERSION.txt 2>/dev/null || echo '?')' ===' \
+  && cp /app/data/concergeriehub.db /app/data/concergeriehub.db.bak 2>/dev/null || echo '(premier demarrage : pas de backup precedent)' \
+  && export DATABASE_URL=file:/app/data/concergeriehub.db \
+  && export NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-$(cat /app/.env.docker-secret 2>/dev/null || echo)} \
+  && export BASE_URL=\${COOLIFY_URL%%,*} \
+  && case \"\$BASE_URL\" in https://|http://|\"\") BASE_URL=\"http://localhost:3000\" ;; *://*) : ;; *) BASE_URL=\"https://\$BASE_URL\" ;; esac \
+  && export NEXTAUTH_URL=\${NEXTAUTH_URL:-\$BASE_URL} \
+  && export NEXT_PUBLIC_APP_URL=\${NEXT_PUBLIC_APP_URL:-\$NEXTAUTH_URL} \
+  && echo '=== Sync schema DB (backup: concergeriehub.db.bak) ===' \
+  && npx prisma db push --skip-generate --accept-data-loss || echo 'ATTENTION: db push a echoue - voir erreur ci-dessus' \
+  && echo '=== Seed comptes (superadmin + client demo) ===' \
+  && node scripts/create-admin.cjs || echo 'ATTENTION: seed a echoue - voir erreur ci-dessus' \
+  && echo '=== Demarrage serveur ===' \
+  && exec node .next/standalone/server.js"
