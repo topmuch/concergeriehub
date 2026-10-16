@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-# ConcergerieHub — Dockerfile FINAL (v4.3 — secret NextAuth HORS image)
+# ConcergerieHub — Dockerfile FINAL (v4.4 — + curl pour Scheduled Tasks Coolify)
 #
 # ═══════════════════════════════════════════════════════════════════
 #  v4.3 (AUDIT 24-e / P0-3) : PLUS AUCUN NEXTAUTH_SECRET cuit dans
@@ -12,7 +12,11 @@
 # ═══════════════════════════════════════════════════════════════════
 FROM node:20-alpine
 
-RUN apk add --no-cache libc6-compat sqlite \
+# v4.4 : + curl — les Scheduled Tasks Coolify exécutent les crons DANS
+# ce conteneur (docker exec). Sans curl, chaque exécution échouait en
+# « sh: curl: not found » (monitoring-tick, briefings Coach, automations,
+# cleanup : jamais déclenchés depuis la création des tasks).
+RUN apk add --no-cache libc6-compat sqlite curl \
   && npm install -g bun
 
 WORKDIR /app
