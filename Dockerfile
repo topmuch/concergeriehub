@@ -28,7 +28,7 @@ WORKDIR /app
 # (symptôme : déployé mais changements invisibles). .gh-sync.mjs
 # remplace CACHEBUST par la version à CHAQUE push → URL différente →
 # couche reconstruite à coup sûr.
-ADD https://raw.githubusercontent.com/topmuch/concergeriehub/main/app-update.tar.xz?cb=v4.117 /tmp/app-update.tar.xz
+ADD https://raw.githubusercontent.com/topmuch/concergeriehub/main/app-update.tar.xz?cb=v4.117%20(2026-10-17)%20%E2%80%94%20v5.4%20Parcours%20post-paiement%3A%20page%20%2Fpayment%2Fsuccess%20%2B%20wizard%20onboarding%20dynamique%203%20etapes%20%2B%20capture%20guidee%20%2B%20PDF%20100%25%20personnalise%20sans%20N%2FA%20%2B%20config%20logement%20en%20base%20%2B%20Stripe%20success%20vers%20%2Fpayment%2Fsuccess /tmp/app-update.tar.xz
 
 RUN set -e; tar -xJf /tmp/app-update.tar.xz -C /app; rm /tmp/app-update.tar.xz; test -f /app/package.json; test -f /app/prisma/schema.prisma; test -f /app/scripts/create-admin.cjs; node --check /app/scripts/create-admin.cjs; grep -q "force-dynamic" /app/src/app/page.tsx; test -f "/app/src/app/api/uploads/voice/[file]/route.ts"; test -f /app/src/app/airbnb/messages/page.tsx; echo "[payload] OK version : $(cat /app/VERSION.txt)"
 
