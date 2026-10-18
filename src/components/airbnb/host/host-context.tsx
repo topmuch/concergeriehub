@@ -9,6 +9,9 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+// v4.81 (AUDIT QA) — session expirée : redirection login au lieu du
+// message « Rechargez la page » à l'infini.
+import { signOut } from 'next-auth/react';
 
 // =============================================================
 // HostContext — contexte global du Dashboard Client (Espace Hôte)
@@ -126,6 +129,15 @@ export function HostProvider({ children, accessLevel, userFirstName }: HostProvi
     try {
       setPropertiesError(null);
       const res = await fetch('/api/airbnb/properties', { cache: 'no-store' });
+      // v4.81 — 401/403 : la session a expiré ou a été révoquée →
+      // on renvoie proprement vers la landing (login) plutôt que de
+      // laisser un écran d'erreur sans issue.
+      if (res.status === 401 || res.status === 403) {
+        setPropertiesLoading(false);
+        // Purge la session + retour landing (callbackUrl, pas redirectTo).
+        await signOut({ callbackUrl: '/', redirect: true });
+        return;
+      }
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = (await res.json()) as {
         properties: HostProperty[];

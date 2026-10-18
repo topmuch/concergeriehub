@@ -51,8 +51,8 @@ const PROPERTY_TYPES: PropertyTypeOption[] = [
     propertyType: 'GITE',
     plan: 'airbnb_solo',
     emoji: '🏨',
-    name: 'Gîte & Chambre d\u2019hôtes',
-    description: 'Tourisme indépendant, maisons d\u2019hôtes et hébergements ruraux',
+    name: 'Gîte & Chambre d’hôtes',
+    description: 'Tourisme indépendant, maisons d’hôtes et hébergements ruraux',
     planLabel: 'Airbnb Solo — 9,90€/mois',
   },
   {
@@ -61,7 +61,7 @@ const PROPERTY_TYPES: PropertyTypeOption[] = [
     emoji: '🏢',
     name: 'Gestion multi-biens',
     description: 'Agence immobilière, co-hôtellerie, gestionnaire de plusieurs logements',
-    planLabel: 'Agence — 49€/mois · jusqu\u2019à 10 biens',
+    planLabel: 'Agence — 49€/mois · jusqu’à 10 biens',
   },
 ];
 
@@ -89,7 +89,7 @@ const fadeUp = {
 
 // ── B2B input / label classes ──
 const b2bInput =
-  'w-full bg-white border border-slate-300 rounded-xl p-3.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/10 transition-all';
+  'w-full bg-white border border-slate-300 rounded-xl p-3.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0066EF] focus:ring-2 focus:ring-[#0066EF]/10 transition-all';
 const b2bLabel =
   'text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5 block';
 
@@ -232,7 +232,7 @@ export function SetupPageContent({ params }: { params: Promise<{ token: string }
       },
       () => {
         setLocating(false);
-        toast.error('Impossible d\u2019obtenir la position. Renseignez l\u2019adresse manuellement.');
+        toast.error('Impossible d’obtenir la position. Renseignez l’adresse manuellement.');
       },
       { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 },
     );
@@ -241,8 +241,13 @@ export function SetupPageContent({ params }: { params: Promise<{ token: string }
   const handleInfoNext = () => {
     if (!fullName.trim()) { toast.error('Entrez votre nom'); return; }
     if (!email.trim() || !email.includes('@')) { toast.error('Email invalide'); return; }
-    if (!session?.user && (!password || password.length < 6)) {
-      toast.error('Mot de passe requis (6+ caractères)');
+    // Aligné sur la règle serveur (POST /api/setup/[token]) :
+    // 8 caractères minimum + au moins une lettre et un chiffre.
+    if (
+      !session?.user &&
+      (!password || password.length < 8 || !/[A-Za-z]/.test(password) || !/\d/.test(password))
+    ) {
+      toast.error('Mot de passe requis (8 caractères minimum, avec lettres et chiffres)');
       return;
     }
     if (!homeName.trim()) { toast.error('Nommez votre logement'); return; }
@@ -464,7 +469,7 @@ export function SetupPageContent({ params }: { params: Promise<{ token: string }
                     Bienvenue ! 🎉
                   </h1>
                   <p className="text-slate-600 text-sm leading-relaxed">
-                    Votre plaque <span className="font-semibold text-slate-900">Conciergerie Hub</span> est prête à être configurée.<br />
+                    Votre plaque <span className="font-semibold text-slate-900">RoomScan</span> est prête à être configurée.<br />
                     Cela ne prend que 2 minutes.
                   </p>
                 </motion.div>
@@ -556,7 +561,7 @@ export function SetupPageContent({ params }: { params: Promise<{ token: string }
                         onClick={() => handleTypeSelect(option)}
                         className={`w-full text-left bg-white border rounded-xl p-4 flex items-center gap-4 transition-all cursor-pointer ${
                           isSelected
-                            ? 'border-emerald-600 ring-2 ring-emerald-600/15 shadow-md'
+                            ? 'border-[#0066EF] ring-2 ring-[#0066EF]/15 shadow-md'
                             : 'border-slate-200 shadow-sm hover:border-slate-300 hover:shadow'
                         }`}
                         aria-pressed={isSelected}
@@ -566,16 +571,16 @@ export function SetupPageContent({ params }: { params: Promise<{ token: string }
                           <span className="block text-sm font-semibold text-slate-900">{option.name}</span>
                           <span className="block text-xs text-slate-500 mt-0.5 leading-relaxed">{option.description}</span>
                           <span className={`inline-block mt-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-full ${
-                            isSelected ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-50 text-slate-500 border border-slate-200'
+                            isSelected ? 'bg-[#EAF2FF] text-[#0052C4] border border-[#DBE8FF]' : 'bg-slate-50 text-slate-500 border border-slate-200'
                           }`}>
                             {option.planLabel}
                           </span>
                         </span>
                         {/* Radio dot */}
                         <span className={`h-5 w-5 rounded-full border-2 shrink-0 flex items-center justify-center transition-colors ${
-                          isSelected ? 'border-emerald-600' : 'border-slate-300'
+                          isSelected ? 'border-[#0066EF]' : 'border-slate-300'
                         }`}>
-                          {isSelected && <span className="h-2.5 w-2.5 rounded-full bg-emerald-600" />}
+                          {isSelected && <span className="h-2.5 w-2.5 rounded-full bg-[#0066EF]" />}
                         </span>
                       </motion.button>
                     );
@@ -657,7 +662,7 @@ export function SetupPageContent({ params }: { params: Promise<{ token: string }
                           <input
                             id="setup-password"
                             type={showPassword ? 'text' : 'password'}
-                            placeholder="6 caractères minimum"
+                            placeholder="8 caractères minimum, lettres et chiffres"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             className={`${b2bInput} pr-12`}
@@ -984,7 +989,7 @@ export function SetupPageContent({ params }: { params: Promise<{ token: string }
                     Configuration terminée !
                   </h2>
                   <p className="text-slate-600 text-sm mt-2 leading-relaxed">
-                    Votre <span className="font-semibold text-slate-900">Conciergerie Hub</span> est maintenant actif.<br />
+                    Votre <span className="font-semibold text-slate-900">RoomScan</span> est maintenant actif.<br />
                     Redirection vers votre tableau de bord...
                   </p>
                 </motion.div>
@@ -1008,7 +1013,7 @@ export function SetupPageContent({ params }: { params: Promise<{ token: string }
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-slate-500 font-medium">Essai gratuit</span>
-                        <span className="text-emerald-600 font-semibold">14 jours</span>
+                        <span className="text-[#0066EF] font-semibold">14 jours</span>
                       </div>
                     </div>
                   </QRTCard>

@@ -77,6 +77,7 @@ export async function POST(
             id: 'vm-2',
             senderName: 'Pierre (voyageur)',
             audioUrl: '',
+            audioData: null,
             durationSec: 8,
             createdAt: new Date(Date.now() - 7200000).toISOString(),
           },
@@ -104,6 +105,7 @@ export async function POST(
           },
         ],
         openComplaints: 2,
+        unreadComplaints: 2,
         pendingRequests: 1,
         guidebook: {
           qrCodeId: 'fqr-guide-1',
@@ -115,8 +117,8 @@ export async function POST(
           ],
         },
         providers: [
-          { id: 'p1', name: 'CleanSuite Paris', emoji: '🧹', categoryLabel: 'Ménage', distanceKm: 2.1, audience: 'OWNER_SERVICE', priceLabel: 'dès 28,00 €' },
-          { id: 'p2', name: 'Morning Box Paris', emoji: '🥐', categoryLabel: 'Petit-déjeuner', distanceKm: 0.7, audience: 'GUEST_EXPERIENCE', priceLabel: 'dès 12,00 €' },
+          { id: 'p1', name: 'CleanSuite Paris', emoji: '🧹', categoryLabel: 'Ménage', distanceKm: 2.1, audience: 'OWNER_SERVICE', priceLabel: 'dès 28,00 €', enabled: true },
+          { id: 'p2', name: 'Morning Box Paris', emoji: '🥐', categoryLabel: 'Petit-déjeuner', distanceKm: 0.7, audience: 'GUEST_EXPERIENCE', priceLabel: 'dès 12,00 €', enabled: true },
         ],
       });
     }
@@ -160,6 +162,7 @@ export async function POST(
         pinHash: true,
         latitude: true,
         longitude: true,
+        disabledProviders: true,
       },
     });
     if (!property) {
@@ -173,11 +176,12 @@ export async function POST(
         { status: 403 },
       );
     }
-    // FIX-15 (B) — Anti brute-force par IP (10 tentatives/min, PIN 4 chiffres) ;
-    // le quota slug global serait un vecteur de DoS du mode hôte : un tiers
+    // AUDIT PRÉ-PROD — Anti brute-force par IP : 5 tentatives / 15 min
+    // (PIN 4 chiffres = 10^4 combinaisons → fenêtre courte insuffisante).
+    // Le quota slug global serait un vecteur de DoS du mode hôte : un tiers
     // pouvait épuiser `hubhostpin:<slug>` et verrouiller l'hôte légitime.
-    if (!(await rateLimit(`hubhostpin:${slug}:${clientIp(req.headers) ?? 'local'}`, 10))) {
-      return NextResponse.json({ error: 'Trop de tentatives. Réessayez dans un instant.' }, { status: 429 });
+    if (!(await rateLimit(`hubhostpin:${slug}:${clientIp(req.headers) ?? 'local'}`, 5, 15 * 60_000))) {
+      return NextResponse.json({ error: 'Trop de tentatives. Réessayez dans 15 minutes.' }, { status: 429 });
     }
     const isValid = await compare(pin, property.pinHash);
     if (!isValid) {
@@ -218,6 +222,7 @@ export async function POST(
     };
 
     // ── Réclamations vocales : messages invités non lus ──
+    // v4.32 — audioData inclus (lecture durable, indépendante du disque).
     const unreadMessages = await db.voiceMessage.findMany({
       where: { propertyId: property.id, senderType: 'guest', isRead: false },
       orderBy: { createdAt: 'desc' },
@@ -226,6 +231,7 @@ export async function POST(
         id: true,
         senderName: true,
         audioUrl: true,
+        audioData: true,
         durationSec: true,
         createdAt: true,
       },
@@ -238,6 +244,9 @@ export async function POST(
       take: 10,
     });
     const openComplaints = complaintsRaw.length;
+    // v4.32 — badge rouge = notifications NON LUES uniquement : une
+    // réclamation vue mais encore ouverte n'allume plus le badge.
+    const unreadComplaints = complaintsRaw.filter((c) => !c.isRead).length;
 
     // ── Demandes de service en attente ──
     const pendingRequests = await db.serviceRequest.count({
@@ -245,6 +254,12 @@ export async function POST(
     });
 
     // ── Prestataires dans le rayon (haversine ≤ serviceRadiusKm) ──
+    // v4.32 « Prestataires autour » — l'hôte peut DÉSACTIVER chaque
+    // prestataire pour son bien (Property.disabledProviders) : la liste
+    // de gestion renvoie tout, avec l'état enabled (toggle UI).
+    const disabledProviders = Array.isArray(property.disabledProviders)
+      ? (property.disabledProviders as unknown[]).filter((x): x is string => typeof x === 'string')
+      : [];
     const providers: {
       id: string;
       name: string;
@@ -253,11 +268,30 @@ export async function POST(
       distanceKm: number;
       audience: string;
       priceLabel: string;
+      enabled: boolean;
     }[] = [];
 
     if (property.latitude != null && property.longitude != null) {
+      // PERF : pré-filtre SQL bounding box avant le haversine JS.
+      // 1° latitude ≈ 111 km, 1° longitude ≈ 74 km (latitude France) —
+      // fenêtre carrée couvrant le rayon max possible (200 km), pour ne
+      // pas charger TOUS les prestataires actifs puis filtrer en JS.
+      // Le haversine affine ensuite (le rayon effectif reste
+      // serviceRadiusKm de chaque prestataire, jamais > RADIUS_MAX_KM).
+      const RADIUS_MAX_KM = 200;
       const geoProviders = await db.provider.findMany({
-        where: { isActive: true },
+        where: {
+          isActive: true,
+          latitude: {
+            gte: property.latitude - RADIUS_MAX_KM / 111,
+            lte: property.latitude + RADIUS_MAX_KM / 111,
+          },
+          longitude: {
+            gte: property.longitude - RADIUS_MAX_KM / 74,
+            lte: property.longitude + RADIUS_MAX_KM / 74,
+          },
+        },
+        take: 200,
       });
       for (const p of geoProviders) {
         if (p.latitude == null || p.longitude == null) continue;
@@ -272,6 +306,7 @@ export async function POST(
           distanceKm: Math.round(d * 100) / 100,
           audience: p.audience,
           priceLabel: p.hourlyRate != null ? `dès ${formatEur(p.hourlyRate)}` : 'Sur devis',
+          enabled: !disabledProviders.includes(p.id),
         });
       }
       providers.sort((a, b) => a.distanceKm - b.distanceKm);
@@ -283,6 +318,7 @@ export async function POST(
         id: m.id,
         senderName: m.senderName,
         audioUrl: m.audioUrl,
+        audioData: m.audioData,
         durationSec: m.durationSec,
         createdAt: m.createdAt.toISOString(),
       })),
@@ -294,9 +330,11 @@ export async function POST(
         photos: safeParsePhotos(c.photos),
         isUrgent: c.isUrgent,
         guestName: c.guestName,
+        isRead: c.isRead,
         createdAt: c.createdAt.toISOString(),
       })),
       openComplaints,
+      unreadComplaints,
       pendingRequests,
       guidebook,
       providers,

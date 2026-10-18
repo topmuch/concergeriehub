@@ -1,9 +1,9 @@
 'use client';
 
-import { use, useState, useEffect, useCallback, useRef } from 'react';
+import { use, useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { QRCodeSVG } from 'qrcode.react';
-import { Loader2, Send, Copy, Check, Phone, Mail, ExternalLink, ArrowLeft, Home } from 'lucide-react';
+import { Copy, Check, Phone, Mail, ExternalLink, ArrowLeft, Home } from 'lucide-react';
 import { toast } from 'sonner';
 import { QRTCard, QRTButton } from '@/components/qrtags';
 import { QR_MODULE_LABELS } from '@/types/database';
@@ -19,25 +19,16 @@ interface QrCodeData {
   homeName: string | null;
 }
 
-interface VoiceMsg {
-  id: string;
-  senderName: string;
-  senderType: string;
-  audioUrl: string;
-  durationSec: number;
-  createdAt: string;
-}
-
 const MODULE_EMOJIS: Record<string, string> = {
-  wifi: '\uD83D\uDCF1', guestbook: '\uD83D\uDCD6', doorbell: '\uD83D\uDD14', emergency: '\uD83D\uDEA8',
-  note: '\uD83D\uDCDD', contact: '\uD83D\uDC65', shopping_list: '\uD83D\uDED2', inventory: '\uD83D\uDCE6',
-  chore: '\u2705', checklist: '\u2705', timer: '\u23F1\uFE0F', recipe: '\uD83C\uDF73',
-  medication: '\uD83D\uDC8A', meal_planner: '\uD83C\uDF7D\uFE0F', external_link: '\uD83D\uDD17',
-  home_manual: '\uD83D\uDCCB', house_rules: '\uD83D\uDEE1\uFE0F', voice_assistant: '\uD83C\uDFA4',
-  emergency_contacts: '\uD83D\uDCE0',
+  wifi: '📱', guestbook: '📖', doorbell: '🔔', emergency: '🚨',
+  note: '📝', contact: '👥', shopping_list: '🛒', inventory: '📦',
+  chore: '✅', checklist: '✅', timer: '⏱️', recipe: '🍳',
+  medication: '💊', meal_planner: '🍽️', external_link: '🔗',
+  home_manual: '📋', house_rules: '🛡️', voice_assistant: '🎤',
+  emergency_contacts: '📠',
 };
 
-function getModuleEmoji(type: string) { return MODULE_EMOJIS[type] || '\uD83D\uDCE6'; }
+function getModuleEmoji(type: string) { return MODULE_EMOJIS[type] || '📦'; }
 function getModuleLabel(type: string) { return (QR_MODULE_LABELS as Record<string, string>)[type] || type; }
 
 const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } };
@@ -63,7 +54,7 @@ function WifiView({ content }: { content: Record<string, unknown> }) {
     try {
       await navigator.clipboard.writeText(password);
       setCopied(true);
-      toast.success('Mot de passe copi\u00e9 !');
+      toast.success('Mot de passe copié !');
       setTimeout(() => setCopied(false), 2000);
     } catch {
       toast.error('Impossible de copier');
@@ -86,20 +77,20 @@ function WifiView({ content }: { content: Record<string, unknown> }) {
               fgColor="#000000"
             />
           </div>
-          <p className="text-[10px] text-black/30 mt-3">Utilisez l'appareil photo de votre t\u00e9l\u00e9phone</p>
+          <p className="text-[10px] text-black/30 mt-3">Utilisez l'appareil photo de votre téléphone</p>
         </QRTCard>
       )}
 
       {/* Network info */}
-      <QRTCard header={{ emoji: '\uD83D\uDCF1', title: 'R\u00e9seau Wi-Fi' }}>
+      <QRTCard header={{ emoji: '📱', title: 'Réseau Wi-Fi' }}>
         <div className="space-y-3">
           <div>
-            <p className="text-[10px] text-black/40 font-semibold uppercase tracking-wider">Nom du r\u00e9seau</p>
-            <p className="text-base font-bold text-black mt-1 truncate">{ssid || 'Non configur\u00e9'}</p>
+            <p className="text-[10px] text-black/40 font-semibold uppercase tracking-wider">Nom du réseau</p>
+            <p className="text-base font-bold text-black mt-1 truncate">{ssid || 'Non configuré'}</p>
           </div>
           {security && (
             <div>
-              <p className="text-[10px] text-black/40 font-semibold uppercase tracking-wider">S\u00e9curit\u00e9</p>
+              <p className="text-[10px] text-black/40 font-semibold uppercase tracking-wider">Sécurité</p>
               <p className="text-sm text-black mt-1">{security}</p>
             </div>
           )}
@@ -109,13 +100,13 @@ function WifiView({ content }: { content: Record<string, unknown> }) {
               <div className="flex items-center gap-2 mt-1.5">
                 <div className="flex-1 h-11 bg-gray-50 border-2 border-black rounded-[8px] flex items-center px-3">
                   <span className="text-sm font-mono text-black flex-1 truncate">
-                    {showPw ? password : '\u2022'.repeat(Math.min(password.length, 20))}
+                    {showPw ? password : '•'.repeat(Math.min(password.length, 20))}
                   </span>
                   <button
                     onClick={() => setShowPw(s => !s)}
                     className="text-black/40 hover:text-black/70 transition-colors text-sm ml-2"
                   >
-                    {showPw ? '\uD83D\uDE48' : '\uD83D\uDC41\uFE0F'}
+                    {showPw ? '🙈' : '👁️'}
                   </button>
                 </div>
                 <motion.button
@@ -124,7 +115,7 @@ function WifiView({ content }: { content: Record<string, unknown> }) {
                   className="h-11 px-4 bg-white border-2 border-black rounded-[8px] text-black text-xs font-bold flex items-center gap-1.5 shadow-[2px_2px_0_rgba(0,0,0,0.08)] active:translate-y-[1px] active:shadow-none transition-all hover:bg-gray-50"
                 >
                   {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-                  {copied ? 'Copi\u00e9' : 'Copier'}
+                  {copied ? 'Copié' : 'Copier'}
                 </motion.button>
               </div>
             </div>
@@ -155,7 +146,7 @@ function RulesView({ content }: { content: Record<string, unknown> }) {
           <motion.div key={i} variants={itemVariants} initial="hidden" animate="visible" transition={{ delay: i * 0.05 }}>
             <QRTCard>
               <div className="flex items-start gap-3">
-                <span className="h-6 min-w-6 rounded-full bg-[#059669] text-white text-xs font-bold flex items-center justify-center mt-0.5">
+                <span className="h-6 min-w-6 rounded-full bg-[#0066EF] text-white text-xs font-bold flex items-center justify-center mt-0.5">
                   {i + 1}
                 </span>
                 <p className="text-sm text-black leading-relaxed flex-1">{rule}</p>
@@ -170,8 +161,8 @@ function RulesView({ content }: { content: Record<string, unknown> }) {
       ) : (
         <QRTCard>
           <div className="text-center py-6">
-            <span className="text-3xl">\uD83D\uDCDC</span>
-            <p className="text-sm text-black/40 mt-2">Aucune r\u00e8gle d\u00e9finie</p>
+            <span className="text-3xl">📜</span>
+            <p className="text-sm text-black/40 mt-2">Aucune règle définie</p>
           </div>
         </QRTCard>
       )}
@@ -192,7 +183,7 @@ function ContactView({ content }: { content: Record<string, unknown> }) {
     <motion.div variants={itemVariants} initial="hidden" animate="visible" className="space-y-3">
       {/* Main contact */}
       {(name || phone || email) && (
-        <QRTCard header={{ emoji: '\uD83D\uDCDE', title: name || 'Contact' }}>
+        <QRTCard header={{ emoji: '📞', title: name || 'Contact' }}>
           <div className="space-y-2">
             {phone && (
               <a
@@ -259,7 +250,7 @@ function EmergencyView({ content }: { content: Record<string, unknown> }) {
     <motion.div variants={itemVariants} initial="hidden" animate="visible" className="space-y-3">
       <QRTCard className="!border-red-300">
         <div className="text-center">
-          <span className="text-4xl">\uD83D\uDEA8</span>
+          <span className="text-4xl">🚨</span>
           <p className="text-lg font-bold text-red-600 mt-2">Urgences</p>
         </div>
       </QRTCard>
@@ -282,12 +273,12 @@ function EmergencyView({ content }: { content: Record<string, unknown> }) {
       </a>
 
       {hospital && (
-        <QRTCard header={{ emoji: '\uD83C\uDFE5', title: 'H\u00f4pital le plus proche' }}>
+        <QRTCard header={{ emoji: '🏥', title: 'Hôpital le plus proche' }}>
           <p className="text-sm text-black">{hospital}</p>
         </QRTCard>
       )}
       {pharmacy && (
-        <QRTCard header={{ emoji: '\uD83D\uDC8A', title: 'Pharmacie' }}>
+        <QRTCard header={{ emoji: '💊', title: 'Pharmacie' }}>
           <p className="text-sm text-black">{pharmacy}</p>
         </QRTCard>
       )}
@@ -310,26 +301,26 @@ function RecipeView({ content }: { content: Record<string, unknown> }) {
 
   return (
     <motion.div variants={itemVariants} initial="hidden" animate="visible" className="space-y-4">
-      <QRTCard header={{ emoji: '\uD83C\uDF73', title }}>
+      <QRTCard header={{ emoji: '🍳', title }}>
         {!!content.description && (
           <p className="text-sm text-black/60 mb-3">{content.description as string}</p>
         )}
         {!!content.prep_time && (
-          <p className="text-xs text-black/40">\u23F1\uFE0F Pr\u00e9paration : {content.prep_time as string}</p>
+          <p className="text-xs text-black/40">⏱️ Préparation : {content.prep_time as string}</p>
         )}
         {!!content.cook_time && (
-          <p className="text-xs text-black/40">\uD83D\uDD25 Cuisson : {content.cook_time as string}</p>
+          <p className="text-xs text-black/40">🔥 Cuisson : {content.cook_time as string}</p>
         )}
       </QRTCard>
 
       {ingredients.length > 0 && (
         <div className="space-y-2">
-          <p className="text-xs text-white/50 font-semibold uppercase tracking-wider px-1">Ingr\u00e9dients</p>
+          <p className="text-xs text-white/50 font-semibold uppercase tracking-wider px-1">Ingrédients</p>
           <QRTCard>
             <ul className="space-y-1.5">
               {ingredients.map((ing, i) => (
                 <li key={i} className="flex items-start gap-2 text-sm text-black">
-                  <span className="text-[#059669] mt-0.5">\u2022</span>
+                  <span className="text-[#0066EF] mt-0.5">•</span>
                   {ing}
                 </li>
               ))}
@@ -340,11 +331,11 @@ function RecipeView({ content }: { content: Record<string, unknown> }) {
 
       {steps.length > 0 && (
         <div className="space-y-2">
-          <p className="text-xs text-white/50 font-semibold uppercase tracking-wider px-1">Pr\u00e9paration</p>
+          <p className="text-xs text-white/50 font-semibold uppercase tracking-wider px-1">Préparation</p>
           {steps.map((step, i) => (
             <QRTCard key={i}>
               <div className="flex items-start gap-3">
-                <span className="h-6 min-w-6 rounded-full bg-[#059669] text-white text-xs font-bold flex items-center justify-center mt-0.5">{i + 1}</span>
+                <span className="h-6 min-w-6 rounded-full bg-[#0066EF] text-white text-xs font-bold flex items-center justify-center mt-0.5">{i + 1}</span>
                 <p className="text-sm text-black leading-relaxed flex-1">{step}</p>
               </div>
             </QRTCard>
@@ -398,7 +389,7 @@ function ShoppingListView({ content }: { content: Record<string, unknown> }) {
             className={`w-full text-left bg-white border-2 rounded-[12px] p-3.5 flex items-center gap-3 shadow-[3px_3px_0_rgba(0,0,0,0.08)] active:translate-y-[1px] active:shadow-none transition-all ${checked.has(i) ? 'border-green-400 bg-green-50' : 'border-black'}`}
           >
             <div className={`h-5 w-5 rounded-[6px] border-2 flex items-center justify-center shrink-0 transition-colors ${checked.has(i) ? 'bg-green-500 border-green-500' : 'border-black'}`}>
-              {checked.has(i) && <span className="text-white text-xs">\u2713</span>}
+              {checked.has(i) && <span className="text-white text-xs">✓</span>}
             </div>
             <span className={`text-sm ${checked.has(i) ? 'text-black/40 line-through' : 'text-black font-medium'}`}>{item}</span>
           </motion.button>
@@ -406,7 +397,7 @@ function ShoppingListView({ content }: { content: Record<string, unknown> }) {
       ) : (
         <QRTCard>
           <div className="text-center py-6">
-            <span className="text-3xl">\uD83D\uDED2</span>
+            <span className="text-3xl">🛒</span>
             <p className="text-sm text-black/40 mt-2">Liste vide</p>
           </div>
         </QRTCard>
@@ -425,14 +416,14 @@ function ExternalLinkView({ content }: { content: Record<string, unknown> }) {
 
   return (
     <motion.div variants={itemVariants} initial="hidden" animate="visible" className="space-y-4">
-      <QRTCard header={{ emoji: '\uD83D\uDD17', title }}>
+      <QRTCard header={{ emoji: '🔗', title }}>
         {description && <p className="text-sm text-black/60 mb-4">{description}</p>}
         {url && (
           <a
             href={url}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 h-12 bg-[#059669] text-white font-bold text-sm rounded-[8px] border-2 border-black shadow-[3px_3px_0_rgba(0,0,0,0.15)] active:translate-y-[1px] active:shadow-none transition-all hover:bg-[#047857]"
+            className="flex items-center justify-center gap-2 h-12 bg-[#0066EF] text-white font-bold text-sm rounded-[8px] border-2 border-black shadow-[3px_3px_0_rgba(0,0,0,0.15)] active:translate-y-[1px] active:shadow-none transition-all hover:bg-[#0052C4]"
           >
             <ExternalLink className="h-4 w-4" />
             Ouvrir le lien
@@ -532,9 +523,9 @@ function UpsellingView({ content }: { content: Record<string, unknown> }) {
       <QRTCard header={{ emoji: '⭐', title, badge: price || 'Offre' }}>
         {body && <p className="text-sm text-black leading-relaxed whitespace-pre-wrap">{body}</p>}
         {price && (
-          <div className="mt-4 flex items-center justify-between bg-[#059669]/10 border-2 border-[#059669] rounded-[10px] px-4 py-3">
-            <span className="text-xs font-bold uppercase tracking-wide text-[#047857]">Prix</span>
-            <span className="text-lg font-black text-[#047857]">{price}</span>
+          <div className="mt-4 flex items-center justify-between bg-[#0066EF]/10 border-2 border-[#0066EF] rounded-[10px] px-4 py-3">
+            <span className="text-xs font-bold uppercase tracking-wide text-[#0052C4]">Prix</span>
+            <span className="text-lg font-black text-[#0052C4]">{price}</span>
           </div>
         )}
         <p className="text-xs text-black/40 mt-3">👋 Demandez à votre hôte pour en profiter</p>
@@ -558,7 +549,7 @@ function DirectoryView({ content }: { content: Record<string, unknown> }) {
         {phone && (
           <a
             href={`tel:${phone.replace(/\s/g, '')}`}
-            className="mt-4 flex items-center justify-center gap-2 h-12 bg-[#059669] text-white font-bold text-sm rounded-[8px] border-2 border-black shadow-[3px_3px_0_rgba(0,0,0,0.15)] active:translate-y-[1px] active:shadow-none transition-all hover:bg-[#047857]"
+            className="mt-4 flex items-center justify-center gap-2 h-12 bg-[#0066EF] text-white font-bold text-sm rounded-[8px] border-2 border-black shadow-[3px_3px_0_rgba(0,0,0,0.15)] active:translate-y-[1px] active:shadow-none transition-all hover:bg-[#0052C4]"
           >
             📞 Appeler {name}
           </a>
@@ -586,220 +577,12 @@ function GenericView({ content, type }: { content: Record<string, unknown>; type
             ))}
           </div>
         ) : (
-          <p className="text-sm text-black/40">Aucun contenu configur\u00e9</p>
+          <p className="text-sm text-black/40">Aucun contenu configuré</p>
         )}
       </QRTCard>
     </motion.div>
   );
 }
-
-// ══════════════════════════════════════════════════════════════
-// Voice Player
-// ══════════════════════════════════════════════════════════════
-function VoicePlayer({ msg }: { msg: VoiceMsg }) {
-  const audioRef = useRef<HTMLAudioElement>(null);
-  const [playing, setPlaying] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const togglePlay = () => {
-    if (!audioRef.current) return;
-    if (playing) {
-      audioRef.current.pause();
-      if (intervalRef.current != null) clearInterval(intervalRef.current);
-    } else {
-      audioRef.current.play().then(() => {
-        intervalRef.current = setInterval(() => {
-          if (audioRef.current) {
-            const pct = audioRef.current.duration ? (audioRef.current.currentTime / audioRef.current.duration) * 100 : 0;
-            setProgress(pct);
-          }
-        }, 200);
-      }).catch(() => {});
-    }
-    setPlaying(!playing);
-  };
-
-  useEffect(() => {
-    const onEnded = () => {
-      setPlaying(false);
-      setProgress(0);
-      if (intervalRef.current != null) clearInterval(intervalRef.current);
-    };
-    const el = audioRef.current;
-    el?.addEventListener('ended', onEnded);
-    return () => { el?.removeEventListener('ended', onEnded); if (intervalRef.current != null) clearInterval(intervalRef.current); };
-  }, []);
-
-  return (
-    <div className="flex items-center gap-3 bg-white border-2 border-black rounded-[12px] p-3">
-      <audio ref={audioRef} src={msg.audioUrl} preload="metadata" />
-      <button onClick={togglePlay} className="h-9 w-9 rounded-[8px] bg-white border-2 border-black flex items-center justify-center shrink-0 active:translate-y-[1px] transition-all shadow-[2px_2px_0_rgba(0,0,0,0.08)]">
-        <span className="text-sm">{playing ? '\u23F8\uFE0F' : '\u25B6\uFE0F'}</span>
-      </button>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between mb-1">
-          <p className="text-xs font-medium text-black truncate">{msg.senderName}</p>
-          <span className="text-[10px] text-black/40 shrink-0 ml-2">{msg.durationSec}s</span>
-        </div>
-        <div className="h-1.5 rounded-full bg-black/10 overflow-hidden">
-          <motion.div className="h-full rounded-full bg-[#059669]" animate={{ width: `${progress}%` }} transition={{ duration: 0.2 }} />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ══════════════════════════════════════════════════════════════
-// Voice Recorder
-// ══════════════════════════════════════════════════════════════
-function VoiceRecorder({ propertyId, onSent }: { propertyId: string; onSent: () => void }) {
-  const [recording, setRecording] = useState(false);
-  const [duration, setDuration] = useState(0);
-  const [senderName, setSenderName] = useState('');
-  const [showNameInput, setShowNameInput] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const startTimeRef = useRef<number>(0);
-
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mr = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
-      chunksRef.current = [];
-      mr.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
-      mr.onstop = () => {
-        stream.getTracks().forEach((t) => t.stop());
-        if (chunksRef.current.length > 0) setShowNameInput(true);
-        else toast.error('Enregistrement vide');
-      };
-      mr.start();
-      mediaRecorderRef.current = mr;
-      startTimeRef.current = Date.now();
-      setDuration(0);
-      setRecording(true);
-      timerRef.current = setInterval(() => {
-        const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
-        setDuration(elapsed);
-        if (elapsed >= 30) stopRecording();
-      }, 200);
-    } catch {
-      toast.error('Acc\u00e8s au micro refus\u00e9');
-    }
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current?.state === 'recording') mediaRecorderRef.current.stop();
-    if (timerRef.current != null) clearInterval(timerRef.current);
-    setRecording(false);
-  };
-
-  const cancelRecording = () => {
-    if (mediaRecorderRef.current?.state === 'recording') {
-      mediaRecorderRef.current.onstop = null;
-      mediaRecorderRef.current.stop();
-    }
-    if (timerRef.current != null) clearInterval(timerRef.current);
-    chunksRef.current = [];
-    setRecording(false);
-    setDuration(0);
-    setShowNameInput(false);
-  };
-
-  const handleSend = async () => {
-    if (chunksRef.current.length === 0) return;
-    setUploading(true);
-    try {
-      const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
-      const formData = new FormData();
-      formData.append('audio', blob, 'voice.webm');
-      formData.append('senderName', senderName.trim() || 'Invit\u00e9');
-      formData.append('durationSec', String(duration));
-      const res = await fetch(`/api/public/qr-voice/${encodeURIComponent(propertyId)}`, { method: 'POST', body: formData });
-      if (!res.ok) {
-        const json = await res.json().catch(() => ({}));
-        throw new Error((json as { error?: string }).error || 'Erreur');
-      }
-      toast.success('Message vocal envoy\u00e9 !');
-      setShowNameInput(false);
-      setDuration(0);
-      setSenderName('');
-      chunksRef.current = [];
-      onSent();
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "Erreur d'envoi";
-      toast.error(msg);
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  useEffect(() => {
-    return () => { if (timerRef.current != null) clearInterval(timerRef.current); };
-  }, []);
-
-  return (
-    <div className="space-y-3">
-      {recording && (
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-          className="bg-red-50 border-2 border-red-300 rounded-[12px] p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="h-3 w-3 rounded-full bg-red-500 animate-pulse" />
-              <span className="text-sm font-semibold text-red-600">Enregistrement en cours</span>
-            </div>
-            <span className="text-sm font-mono text-red-500">
-              {String(Math.floor(duration / 60)).padStart(2, '0')}:{String(duration % 60).padStart(2, '0')}
-            </span>
-          </div>
-          <div className="h-1 rounded-full bg-red-100 overflow-hidden">
-            <motion.div className="h-full rounded-full bg-red-500" animate={{ width: `${Math.min((duration / 30) * 100, 100)}%` }} />
-          </div>
-          <div className="flex gap-2">
-            <QRTButton variant="secondary" onClick={cancelRecording} className="flex-1 !py-2.5 !text-sm">Annuler</QRTButton>
-            <QRTButton variant="primary" onClick={stopRecording} className="flex-1 !py-2.5 !text-sm !bg-red-600 hover:!bg-red-700">Arr\u00eater</QRTButton>
-          </div>
-        </motion.div>
-      )}
-
-      <AnimatePresence>
-        {showNameInput && !recording && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-            className="bg-white border-2 border-black rounded-[12px] p-4 space-y-3 shadow-[4px_4px_0_rgba(0,0,0,0.08)]">
-            <p className="text-sm font-semibold text-black">Votre message ({duration}s)</p>
-            <input
-              type="text" placeholder="Votre nom (optionnel)" maxLength={50}
-              value={senderName} onChange={(e) => setSenderName(e.target.value)}
-              className="w-full h-11 bg-gray-50 border-2 border-black rounded-[8px] p-3.5 text-sm text-black focus:border-[#059669] focus:bg-white outline-none transition-all"
-              autoFocus
-            />
-            <div className="flex gap-2">
-              <QRTButton variant="secondary" onClick={() => { setShowNameInput(false); chunksRef.current = []; }} className="flex-1 !py-2.5 !text-sm">Annuler</QRTButton>
-              <QRTButton variant="primary" onClick={handleSend} disabled={uploading} className="flex-1 !py-2.5 !text-sm">
-                {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                {uploading ? 'Envoi...' : 'Envoyer'}
-              </QRTButton>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {!recording && !showNameInput && (
-        <motion.button whileTap={{ scale: 0.97 }} onClick={startRecording}
-          className="w-full bg-white border-2 border-black rounded-[12px] p-4 flex items-center justify-center gap-3 shadow-[4px_4px_0_rgba(0,0,0,0.08)] active:translate-y-[2px] active:shadow-[2px_2px_0_rgba(0,0,0,0.08)] transition-all hover:bg-gray-50">
-          <span className="text-3xl">\uD83C\uDFA4</span>
-          <div className="text-left">
-            <p className="text-sm font-semibold text-black">Laisser un message vocal</p>
-            <p className="text-xs text-black/40">Appuyez pour enregistrer (max 30s)</p>
-          </div>
-        </motion.button>
-      )}
-    </div>
-  );
-}
-
 // ══════════════════════════════════════════════════════════════
 // Main Component
 // ══════════════════════════════════════════════════════════════
@@ -809,14 +592,13 @@ export function ViewPageContent({ params }: { params: Promise<{ slug: string }> 
   const [content, setContent] = useState<Record<string, unknown>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [voiceMsgs, setVoiceMsgs] = useState<VoiceMsg[]>([]);
   const [hubSlug, setHubSlug] = useState<string | null>(null);
 
   const fetchQr = useCallback(async () => {
     try {
       const res = await fetch(`/api/public/qr/${encodeURIComponent(slug)}`);
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Module non trouv\u00e9');
+      if (!res.ok) throw new Error(json.error || 'Module non trouvé');
       setQrData(json.qrCode);
       setContent(json.content || {});
       setHubSlug((json.hubSlug as string) || null);
@@ -828,16 +610,7 @@ export function ViewPageContent({ params }: { params: Promise<{ slug: string }> 
     }
   }, [slug]);
 
-  const refreshVoice = useCallback(async () => {
-    if (!qrData?.id) return;
-    try {
-      const res = await fetch(`/api/public/qr-voice/${encodeURIComponent(qrData.id)}?limit=10`);
-      if (res.ok) { const json = await res.json(); setVoiceMsgs(json.messages || []); }
-    } catch { /* silent */ }
-  }, [qrData?.id]);
-
   useEffect(() => { fetchQr(); }, [fetchQr]);
-  useEffect(() => { if (qrData) refreshVoice(); }, [qrData, refreshVoice]);
 
   // ── Loading ──
   if (loading) {
@@ -859,11 +632,11 @@ export function ViewPageContent({ params }: { params: Promise<{ slug: string }> 
       <div className="min-h-screen bg-[#10B981] flex items-center justify-center p-4">
         <QRTCard className="w-full max-w-sm">
           <div className="text-center">
-            <span className="text-5xl">\u274C</span>
+            <span className="text-5xl">❌</span>
             <h1 className="text-xl font-bold text-black mt-3 mb-2">Module introuvable</h1>
-            <p className="text-sm text-black/50 mb-6">{error || "Ce module n'existe pas ou a \u00e9t\u00e9 d\u00e9sactiv\u00e9."}</p>
+            <p className="text-sm text-black/50 mb-6">{error || "Ce module n'existe pas ou a été désactivé."}</p>
             <div className="h-10 bg-gray-50 border-2 border-black rounded-[8px] flex items-center justify-center gap-2 text-sm text-black/60">
-              <span>\uD83D\uDCE6</span><span className="font-mono text-xs">{slug}</span>
+              <span>📦</span><span className="font-mono text-xs">{slug}</span>
             </div>
           </div>
         </QRTCard>
@@ -884,7 +657,7 @@ export function ViewPageContent({ params }: { params: Promise<{ slug: string }> 
       case 'guestbook': return <NoteView content={content} />;
       case 'shopping_list': return <ShoppingListView content={content} />;
       case 'external_link': return <ExternalLinkView content={content} />;
-      // Modules B2B Conciergerie Hub
+      // Modules B2B RoomScan
       case 'home_manual': return <GuidebookView content={content} />;
       case 'checklist': return <CheckoutView content={content} />;
       case 'promo': return <UpsellingView content={content} />;
@@ -935,24 +708,12 @@ export function ViewPageContent({ params }: { params: Promise<{ slug: string }> 
           <main className="flex-1 flex flex-col px-5 sm:px-6 py-5 max-w-lg lg:max-w-xl mx-auto w-full space-y-6">
             {renderModule()}
 
-            {/* Voice messages section */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 text-sm font-semibold text-white/70">
-                <span>\uD83D\uDCAC</span> Messages vocaux
-              </div>
-              <VoiceRecorder propertyId={qrData.id} onSent={refreshVoice} />
-              {voiceMsgs.length > 0 && (
-                <div className="space-y-2 max-h-48 overflow-y-auto scrollbar-thin">
-                  {voiceMsgs.map((vm) => <VoicePlayer key={vm.id} msg={vm} />)}
-                </div>
-              )}
-            </div>
           </main>
 
           {/* Footer */}
           <div className="mt-auto px-6 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] text-center">
             <p className="text-xs text-white/30">
-              Propulsé par Conciergerie Hub 🗝️
+              Propulsé par RoomScan 🗝️
             </p>
           </div>
         </div>

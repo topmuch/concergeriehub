@@ -62,6 +62,17 @@ model User {
   couponScans                   CouponScan[]          @relation("CouponScanUser")
   chatMessages                  ChatMessage[]         @relation("ChatMessageSender")
   notifications                 Notification[]        @relation("UserNotifications")
+  passwordResetTokens           PasswordResetToken[]
+  // v4.69 « COMMISSION & FACTURATION MENSUELLE » — config paiement hôte.
+  hostSettings                  HostSettings?
+  commissionInvoices            MonthlyCommissionInvoice[]
+  // v5.4 « COACH ROOMSCAN » — préférences du coach IA (relation 1:1).
+  coachPreferences              CoachPreferences?
+  // v4.96 « MÉNAGE » — interventions de ménage assignées au membre.
+  assignedHousekeepingTasks     HousekeepingTask[] @relation("HousekeepingTaskAssignee")
+  // v4.97 « MODULE STANDALONE ÉTAT DES LIEUX » — abonnement 99 €/an
+  // (1:1) du module EDL indépendant du Hub.
+  inspectionSubscription        InspectionSubscription?
 
   @@map("users")
 }
@@ -102,6 +113,40 @@ model Property {
   branding     Json?    // { logoUrl, primaryColor, companyName, welcomeMessage } (validé par src/lib/branding.ts)
   customDomain String?  @unique @map("custom_domain") // ex: "guests.ma-conciergerie.com" — CNAME vers le domaine de l'app
   customDomainVerified Boolean @default(false) @map("custom_domain_verified") // CNAME vérifié (resolveCname) — le middleware ne réécrit QUE les domaines vérifiés
+  // =============================================================
+  // DIGITAL CONCIERGE (V4.1) — modules enrichis du Hub Invité
+  // JSON libres (SQLite) — formes validées côté app dans
+  // src/components/guest-app (onglets Coffre-fort / Guide / Quartier / SOS)
+  // =============================================================
+  accessCodes   Json?    // Coffre-fort numérique : { building?, letterbox?, parking?, alarm?, safe?, note? } — tous String
+  appliances    Json?    // Guide des appareils : [ { id, name, emoji?, instructions, videoUrl?, imageUrl? } ]
+  localSpots    Json?    // Carte secrète de l'hôte : [ { id, name, category, lat, lng, address?, hostNote? } ]
+  emergencyInfo Json?    // SOS : { hospital?, hospitalLat?, hospitalLng?, pharmacy?, police?, hostPhone?, commonIssues?: [ { id, title, instructions, imageUrl? } ] }
+  // =============================================================
+  // PREMIUM « CONCIERGERIE 5 ÉTOILES » (V5) — modules premium du
+  // Hub Invité (expérience « wow » + upselling). JSON libres
+  // (SQLite), formes validées côté serveur dans src/lib/concierge.ts
+  // =============================================================
+  premiumFeatures  Json?  // { videoWelcomeUrl?, enableLateCheckout?, lateCheckoutPrice?, enableReviewShield?, reviewUrl? }
+  visualGuide      Json?  // Guide visuel d'arrivée pas à pas : [ { id, title, description?, imageUrl? } ]
+  survivalKitItems Json?  // Kit de survie (objets oubliés) : [ { id, name, location? } ]
+  // v4.31 « PHOTOS DE MON HUB » — personnalisation hôte des photos
+  // pleine carte de l'Espace Invité : { [cardKey]: dataURL image/jpeg
+  // (≤ ~500 Ko, redimensionnée côté client) }. Clés autorisées dans
+  // src/lib/hub-photos.ts (HUB_PHOTO_KEYS). Absent = photo curated.
+  hubPhotos        Json?
+  // v4.32 « Prestataires autour » — liste d'ids de prestataires
+  // DÉSACTIVÉS par l'hôte pour ce bien (string[]). Un prestataire
+  // désactivé disparaît des services invités (hub + PWA) mais reste
+  // visible avec son état dans les listes de gestion (mode hôte +
+  // dashboard). Toggle : /api/public/hub/[slug]/providers-toggle (PIN)
+  // et PATCH /api/airbnb/providers (session).
+  disabledProviders Json?
+  // v4.43 « ONGLET MÉNAGE DÉDIÉ » — checklist de nettoyage choisie par
+  // l'hôte (dashboard → Ménage). null = checklist générale (défaut,
+  // les 10 essentiels de src/lib/housekeeping.ts) ; sinon JSON array
+  // de strings (1..20 items, ≤ 120 car. — ex. ["Lits refaits", …]).
+  cleaningChecklist Json?
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -125,6 +170,56 @@ model Property {
   automationRules   AutomationRule[]
   icalFeeds         PropertyIcalFeed[]
   guestComplaints   GuestComplaint[]  @relation("PropertyGuestComplaints")
+  privateFeedbacks  PrivateFeedback[]
+  guestSessions     GuestSession[]
+  // v4.37 « MESSAGES VOCAUX DU HUB » — annonces audio de l'hôte pour ses
+  // invités (bienvenue / veille du départ / jour du départ), 4 langues.
+  hubVoiceMessages  HubVoiceMessage[]
+  // v4.41 « MODE MÉNAGE » — rapports de nettoyage de l'équipe staff.
+  cleaningReports   CleaningReport[]
+  // v4.44 « DÉPART DÉFINITIF » — départs confirmés par les voyageurs
+  // depuis le Hub (heure exacte enregistrée + alerte ménage envoyée).
+  checkoutFinalEvents CheckoutFinalEvent[]
+  // v4.50 « VERROUILLAGE DU HUB PAR CODE » — sessions d'accès invité
+  // (1 code de réservation → 1 token par appareil, expiration auto).
+  hubAccessSessions HubAccessSession[]
+  // v4.50 « MINIBAR DE CONFIANCE » — commandes persistées, validation
+  // d'inventaire d'arrivée et demandes de réapprovisionnement.
+  minibarOrders     MinibarOrder[]
+  minibarChecks     MinibarCheck[]
+  minibarRestocks   MinibarRestockRequest[]
+  // v4.52 « MIDDLE-STAY CARE » — réassorts/ménages en cours de séjour.
+  middleStayRequests MiddleStayRequest[]
+  // v4.52 « LIVRE D'OR VIVANT » — souvenirs des voyageurs (galerie modérée).
+  guestMemories     GuestMemory[]
+  // v4.53 « RAPPORT DE CHECK-OUT » — un récapitulatif auto par séjour.
+  checkoutReports   CheckoutReport[]
+  // v4.54 « PRESSING & BLANCHISSERIE EXPRESS » — commandes pressing invité.
+  laundryOrders     LaundryOrder[]
+  // v4.54 « ALERTES STOCK » — signalements d'équipe (serviettes, papier…).
+  inventoryAlerts   InventoryAlert[]
+  // v5.0 « ÉTAT DES LIEUX DE SORTIE » — inspection signée par l'invité avant
+  // son départ, avec photos, inventaire rendu et URL publique de preuve.
+  checkOutInspections CheckOutInspection[]
+  // v4.69 « MES PRESTATAIRES » — prestataires ajoutés manuellement par
+  // l'hôte (annuaire privé du bien, hors annuaire plateforme).
+  hostProviders     HostProvider[]
+  // v4.74 « SMART PROMPTS » — notifications temporelles configurables
+  // (petit-déjeuner / déjeuner / dîner / veille de départ) + journal.
+  notificationSettings NotificationSettings?
+  notificationLogs  NotificationLog[]
+  // v4.74 « BOUTIQUE DE SOUVENIRS » — produits vendus au départ + commandes.
+  souvenirProducts  SouvenirProduct[]
+  souvenirOrders    SouvenirOrder[]
+  // v5.4 « COACH ROOMSCAN » — insights du moteur d'analyse + analytics.
+  dashboardInsights DashboardInsight[]
+  coachAnalytics    CoachAnalytics[]
+  // v4.95 « DEMANDES PARTICULIÈRES » — demandes invités (lit d'appoint,
+  // lit bébé, siège bébé…) depuis le Hub, traitées par l'hôte.
+  specialRequests   SpecialRequest[]
+  // v4.96 « MÉNAGE — INTERVENTIONS PLANIFIÉES » — créneaux de ménage
+  // générés automatiquement entre le départ et l'arrivée suivante.
+  housekeepingTasks HousekeepingTask[]
 
   @@index([ownerId])
   @@index([propertyType])
@@ -133,21 +228,141 @@ model Property {
 }
 
 // ==============================================================
+// TABLE v4.41: cleaning_reports (MODE MÉNAGE — bouton Staff du Hub)
+// La femme de ménage scanne la même plaque, entre via « Mode Ménage »
+// (code staff), coche la checklist de nettoyage, uploade les photos de
+// l'appartement PROPRE et valide ses heures d'arrivée/départ. L'hôte
+// reçoit la notification « L'appartement est prêt pour le prochain
+// client ». Un GuestComplaint (CLEANING, RESOLVED, photos) est aussi
+// créé pour rendre le rapport visible dans Messages côté dashboard.
+// photos : JSON string de dataURL — ≤ 6 photos, ≤ 500 KB / photo.
+// ==============================================================
+model CleaningReport {
+  id            String    @id @default(cuid())
+  propertyId    String    @map("property_id")
+  staffName     String?                                  // prénom de l'agent (optionnel)
+  checklistJson String    @default("[]") @map("checklist_json") // [{ label, done }]
+  photos        String    @default("[]")                 // JSON dataURLs (appartement propre)
+  // v4.43 — vocal laissé par la femme de ménage EN MÊME TEMPS que les
+  // preuves (« vocale accompagnant les preuves ») : base64 ≤ ~1 Mo,
+  // mime allowlist (webm/mp4/ogg…), durée ≤ 90 s. null = pas de vocal.
+  voiceData     String?   @map("voice_data")
+  voiceMime     String?   @map("voice_mime")
+  voiceDurationSec Int?   @default(0) @map("voice_duration_sec")
+  startedAt     DateTime? @map("started_at")             // heure d'arrivée du staff
+  endedAt       DateTime? @map("ended_at")               // heure de validation (= départ)
+  // v4.50 « HORODATAGE & GÉOLOCALISATION DU MÉNAGE » — coordonnées GPS
+  // capturées sur le téléphone du staff à l'OUVERTURE du mode (arrivée)
+  // et à la VALIDATION (départ). L'hôte voit le temps d'intervention
+  // précis + le lieu (preuve de présence sur site entre 2 réservations).
+  startLat      Float?    @map("start_lat")
+  startLng      Float?    @map("start_lng")
+  endLat        Float?    @map("end_lat")
+  endLng        Float?    @map("end_lng")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId, createdAt])
+  @@map("cleaning_reports")
+}
+
+// ==============================================================
+// TABLE v4.96: housekeeping_tasks (MÉNAGE — INTERVENTIONS PLANIFIÉES)
+// Le cœur du business de l'hôte : chaque séjour CONFIRMÉ génère
+// AUTOMATIQUEMENT une intervention de ménage au créneau situé entre
+// le check-out du séjour et le check-in du séjour suivant sur le
+// même bien (ou check-out + 4 h si pas de suite connue).
+//
+//   scheduledAt/scheduledEndAt : créneau PRÉVU (planifié)
+//   startedAt/endedAt          : heures RÉELLES (staff ou hôte)
+//   status : 'PENDING' (à faire) | 'IN_PROGRESS' (en cours) | 'DONE'
+//   assigneeId : membre de l'équipe (User) chargé de l'intervention
+//   reportId   : CleaningReport lié (preuves photos + vocal + GPS)
+//   bookingId  : séjour déclencheur (1 ménage de sortie max / séjour,
+//                @@unique — null pour les interventions ad-hoc)
+//
+// Synchronisation : la validation du rapport staff dans le Hub
+// (/api/public/hub/[slug]/cleaning) passe la tâche à DONE et bascule
+// Booking.cleaningStatus = 'DONE' — une seule source de vérité.
+// ==============================================================
+model HousekeepingTask {
+  id             String    @id @default(cuid())
+  propertyId     String    @map("property_id")
+  bookingId      String?   @map("booking_id")
+  scheduledAt    DateTime  @map("scheduled_at")
+  scheduledEndAt DateTime? @map("scheduled_end_at")
+  assigneeId     String?   @map("assignee_id")
+  status         String    @default("PENDING") // 'PENDING' | 'IN_PROGRESS' | 'DONE'
+  startedAt      DateTime? @map("started_at")
+  endedAt        DateTime? @map("ended_at")
+  reportId       String?   @map("report_id")
+  note           String?
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  booking  Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  assignee User?    @relation("HousekeepingTaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+
+  @@unique([bookingId])
+  @@index([propertyId, scheduledAt])
+  @@index([status])
+  @@index([assigneeId])
+  @@map("housekeeping_tasks")
+}
+
+// ==============================================================
+// TABLE v4.44: checkout_final_events (DÉPART DÉFINITIF DU HUB)
+// Le voyageur appuie sur « 🚪 Départ définitif » dans son Hub :
+//   1. heure exacte du départ enregistrée (departedAt) ;
+//   2. alerte AUTOMATIQUE à l'équipe de ménage (hôte + managers via
+//      cloche + email + push — « Les voyageurs ont quitté le
+//      logement. Vous pouvez intervenir. ») ;
+//   3. le voyageur est redirigé vers le recueil d'avis (Review
+//      Booster 5 étoiles — pendant qu'il est encore positif).
+// bookingId optionnel (rattaché si fourni et re-validé par bien).
+// ==============================================================
+model CheckoutFinalEvent {
+  id          String   @id @default(cuid())
+  propertyId  String   @map("property_id")
+  bookingId   String?  @map("booking_id")
+  guestName   String?  @map("guest_name")
+  departedAt  DateTime @map("departed_at")      // heure exacte du départ confirmé
+  // Traçabilité de l'alerte ménage : 'SENT' (notifications créées)
+  // | 'NO_AUDIENCE' (aucun destinataire trouvé — jamais bloquant).
+  staffAlertStatus String @default("SENT") @map("staff_alert_status")
+  // v4.54 « ALERTE VOCALE & CHECKLIST DE DÉPART » — checklist finale
+  // confirmée par l'invité (JSON [{label,done}]) — null = départ sans
+  // checklist (séjours antérieurs).
+  checklistJson String? @map("checklist_json")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId, departedAt])
+  @@map("checkout_final_events")
+}
+
+// ==============================================================
 // TABLE Hub: guest_complaints (Hub QR — réclamations écrites invité)
 // Formulaire « Signaler un problème » du Hub public (/hub/[slug]).
 // category : 'PLUMBING' | 'ELECTRICAL' | 'CLEANING' | 'OTHER'
 // photos   : JSON string d'images base64 (dataURL) — ≤ 500 KB / photo
 // status   : 'OPEN' | 'RESOLVED' (côté hôte, mode Hôte du Hub)
+// isRead   : notification vue par l'hôte (badge rouge éteint même
+//            si la réclamation reste ouverte — v4.32)
 // ==============================================================
 model GuestComplaint {
   id          String   @id @default(cuid())
   propertyId  String   @map("property_id")
-  category    String   @default("OTHER")
+  category    String   @default("OTHER") // v4.41 : + 'BREAKAGE' (casse invité 1 clic) — v4.53 : SOS breakage → 'BREAKAGE' (fiche assurance)
   description String
   photos      String   @default("[]")
   isUrgent    Boolean  @default(false) @map("is_urgent")
   guestName   String?                                   // nom laissé par l'invité (optionnel)
   status      String   @default("OPEN")
+  isRead      Boolean  @default(false) @map("is_read")
   createdAt   DateTime @default(now()) @map("created_at")
 
   property Property @relation("PropertyGuestComplaints", fields: [propertyId], references: [id], onDelete: Cascade)
@@ -762,6 +977,10 @@ model Subscription {
   billingCycle          String    @default("annual") @map("billing_cycle") // 'monthly' | 'annual'
   maxProperties         Int       @default(1) @map("max_properties")      // nombre de biens inclus (airbnb_pro = 3)
   stripeSubscriptionId  String?   @map("stripe_subscription_id")
+  // v4.95 — PayPal pour les ABONNEMENTS PLATEFORME (premium / mise en
+  // avant) ; Stripe reste dédié aux paiements HÔTES (minibar, services).
+  paypalSubscriptionId  String?   @map("paypal_subscription_id")
+  paymentProvider       String    @default("stripe") @map("payment_provider") // 'stripe' | 'paypal'
   status                String    @default("active")                      // 'active' | 'past_due' | 'cancelled' | 'trialing'
   currentPeriodStart    DateTime? @map("current_period_start")
   currentPeriodEnd      DateTime? @map("current_period_end")
@@ -954,6 +1173,8 @@ model Notification {
   @@index([type])
   @@index([isRead])
   @@index([createdAt])
+  // AUDIT PRÉ-PROD — composite de la cloche (count non-lus, requête chaude)
+  @@index([userId, isRead])
   @@map("notifications")
 }
 
@@ -994,6 +1215,8 @@ model ScanLog {
   @@index([qrCodeId])
   @@index([propertyId])
   @@index([createdAt])
+  // AUDIT PRÉ-PROD — composite courbe 30 j / stats par bien
+  @@index([propertyId, createdAt])
   @@map("scan_logs")
 }
 
@@ -1052,11 +1275,23 @@ model VoiceMessage {
   propertyId  String   @map("property_id")
   senderName  String   @map("sender_name")       // nom affiché (invité ou membre de l'équipe)
   senderType  String   @default("guest") @map("sender_type") // 'guest' | 'host' | 'system'
-  audioUrl    String   @map("audio_url")         // URL Supabase Storage (ou local en dev)
+  audioUrl    String   @map("audio_url")         // URL fichier (route /api/uploads/voice/<fichier>)
+  // v4.32 — AUDIO DURABLE : copie dataURL (base64) stockée EN BASE.
+  // Les fichiers disque étaient perdus à chaque redéploiement Docker
+  // (dossier non garanti persistant) → 404 → « l'audio ne marche pas »
+  // dans le dashboard. La lecture privilégie audioData, audioUrl reste
+  // le repli pour les anciens messages. Null si fichier > plafond.
+  audioData   String?  @map("audio_data")
   durationSec Int      @default(0) @map("duration_sec")  // durée en secondes (max 30)
   fileSizeKb  Int      @default(0) @map("file_size_kb")  // taille du fichier audio
   isRead      Boolean  @default(false) @map("is_read")
   createdAt   DateTime @default(now()) @map("created_at")
+
+  // v4.77 « MESSAGERIE THREADÉE » — réponse de l'invité attachée au
+  // vocal précis auquel elle répond (senderType='guest', replyToId =
+  // id d'un vocal HÔTE). Null = message sans réponse (ex. « Contacter
+  // l'hôte » classique). Validé serveur (existe + même bien + vocal hôte).
+  replyToId   String?  @map("reply_to_id")
 
   property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
 
@@ -1064,7 +1299,42 @@ model VoiceMessage {
   @@index([senderType])
   @@index([isRead])
   @@index([createdAt])
+  @@index([replyToId])
   @@map("voice_messages")
+}
+
+// ==============================================================
+// TABLE Hub: hub_voice_messages (v4.37 « MESSAGES VOCAUX DU HUB »)
+// Annonces audio de l'hôte déclenchées côté invité :
+//   kind 'welcome'       → 1er clic « Mode Invité » (1× / appareil,
+//                          ré-armé si l'hôte régénère la voix ou > 14 j)
+//   kind 'checkout_eve'  → veille du départ, 1er scan après 20 h (1×)
+//   kind 'checkout_day'  → jour du départ dès 9 h, chaque ouverture
+// lang : 'fr' | 'en' | 'es' | 'ar' — repli lecture : français.
+// source : 'tts' (voix générée) | 'upload' (voix du propriétaire).
+// audioData : MP3/WAV base64 EN BASE (pattern v4.32 « audio durable »
+// — les fichiers disque sont perdus au redéploiement Docker).
+// @@unique([propertyId, kind, lang]) : une voix par langue et type.
+// ==============================================================
+model HubVoiceMessage {
+  id          String   @id @default(cuid())
+  propertyId  String   @map("property_id")
+  kind        String   // 'welcome' | 'checkout_eve' | 'checkout_day' | 'menage_note' (v4.43 : consigne vocale hôte → femme de ménage, lang 'fr')
+  lang        String   // 'fr' | 'en' | 'es' | 'ar'
+  source      String   @default("tts") @map("source") // 'tts' | 'upload'
+  text        String?  // texte source (TTS) ou légende de l'enregistrement
+  audioData   String   @map("audio_data")        // base64 MP3/WAV (durable)
+  audioMime   String   @default("audio/mpeg") @map("audio_mime")
+  durationSec Int      @default(0) @map("duration_sec")
+  fileSizeKb  Int      @default(0) @map("file_size_kb")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@unique([propertyId, kind, lang])
+  @@index([propertyId])
+  @@map("hub_voice_messages")
 }
 
 // ==============================================================
@@ -1080,6 +1350,9 @@ model Booking {
   propertyId     String   @map("property_id")
   guestName      String   @map("guest_name")
   guestEmail     String?  @map("guest_email")
+  // PREMIUM V5 — téléphone invité (E.164) pour le SMS « Bouclier
+  // d'avis » envoyé le matin du départ (automation review_shield_departure).
+  guestPhone     String?  @map("guest_phone")
   checkIn        DateTime @map("check_in")
   checkOut       DateTime @map("check_out")
   guests         Int      @default(2)
@@ -1088,15 +1361,64 @@ model Booking {
   cleaningStatus String   @default("PENDING") @map("cleaning_status")
   externalRef    String?  @map("external_ref")      // code de réservation plateforme
   notes          String?
+  // =============================================================
+  // PREMIUM « CONCIERGERIE 5 ÉTOILES » (V5) — ÉTAPE 3 (automations)
+  // =============================================================
+  // Bouclier d'avis : token unique → /app/hub/[slug]/guest/feedback?token=…
+  // (généré paresseusement au tick REVIEW_SHIELD_TODAY — lien direct
+  // vers le Review Shield pré-rempli, anti-spam, révocable).
+  feedbackToken String?   @unique @map("feedback_token")
+  // Late check-out : 'REQUESTED' (Checkout Session créée) | 'PAID'
+  // (webhook checkout.session.completed) | null (aucune demande).
+  lateCheckoutStatus String?   @map("late_checkout_status")
+  lateCheckoutPaidAt DateTime? @map("late_checkout_paid_at")
+  // v4.50 « VERROUILLAGE DU HUB PAR CODE » — code d'activation du hub
+  // pour CE séjour (4 caractères). Généré automatiquement à la création
+  // (4 derniers chiffres du téléphone → 4 derniers du code plateforme
+  // → aléatoire unique), modifiable par l'hôte (PATCH bookings).
+  accessCode     String?   @map("access_code")
+  // Départ tardif VALIDÉ par l'hôte (prolongement du verrouillage) :
+  // datetime exact du nouveau départ (ex. 12/10/2026 15:00). null =
+  // fin de séjour = checkOut (ou +11 h UTC si checkOut à minuit UTC).
+  lateCheckOutUntil DateTime? @map("late_checkout_until")
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
   property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  // v4.50 — sessions hub + minibar rattachés au séjour (supprimés avec).
+  hubAccessSessions HubAccessSession[]
+  minibarOrders     MinibarOrder[]
+  minibarChecks     MinibarCheck[]
+  minibarRestocks   MinibarRestockRequest[]
+  // v4.52 — middle-stay care + souvenirs rattachés au séjour (supprimés avec).
+  middleStayRequests MiddleStayRequest[]
+  guestMemories      GuestMemory[]
+  // v4.53 « PRÊT POUR L'ARRIVÉE » — notification anticipée envoyée au
+  // voyageur dès que le ménage est validé avant son arrivée (Early
+  // Check-in Alert). null = jamais envoyée (dédupe : 1 envoi / séjour).
+  readyNotificationSentAt DateTime? @map("ready_notification_sent_at")
+  // v4.53 « RAPPORT DE CHECK-OUT » — récapitulatifs auto du séjour.
+  checkoutReports    CheckoutReport[]
+  // v4.54 — commandes pressing + alertes stock rattachées au séjour.
+  laundryOrders      LaundryOrder[]
+  inventoryAlerts    InventoryAlert[]
+  // v5.0 — états des lieux de sortie signés par l'invité (preuve publique).
+  checkOutInspections CheckOutInspection[]
+  // v4.95 — demandes particulières du séjour (lit bébé, siège bébé…).
+  specialRequests     SpecialRequest[]
+  // v4.96 — intervention de ménage de sortie planifiée pour ce séjour
+  // (1 max / séjour, générée automatiquement à la confirmation).
+  housekeepingTasks   HousekeepingTask[]
+
+  @@index([propertyId, accessCode])
 
   @@index([propertyId])
   @@index([checkIn])
   @@index([checkOut])
   @@index([status])
+  // AUDIT PRÉ-PROD — index composites du tick quotidien (arrivée/départ/J-3/J+1)
+  @@index([propertyId, status, checkIn])
+  @@index([propertyId, status, checkOut])
   @@map("bookings")
 }
 
@@ -1155,6 +1477,9 @@ model ServiceOrder {
   guestName    String    @map("guest_name")
   guestEmail   String?   @map("guest_email")
   items        Json                             // Détails de la commande (ex: 2x Box M)
+  // REFONTE SERVICES PREMIUM (V4.11) — instructions de livraison
+  // dictées par l'invité au checkout (allergies, étage, creneau…).
+  guestNote    String?   @map("guest_note")
   totalAmount  Float     @map("total_amount")   // Montant total payé par l'invité
   commission   Float                            // La part de Conciergerie Hub
   hostEarning  Float     @map("host_earning")   // La part de l'hôte (si marge appliquée)
@@ -1198,6 +1523,9 @@ model ServiceOffer {
   unit        String   @default("prestation")
   isActive    Boolean  @default(true) @map("is_active")
   sortOrder   Int      @default(0) @map("sort_order")
+  // REFONTE SERVICES (v4.23) — photo réelle de l'offre (URL distante ou
+  // /uploads). Null → fallback gradient + emoji (service-visual.tsx).
+  imageUrl    String?  @map("image_url")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
@@ -1230,6 +1558,11 @@ model EmailOutbox {
   textBody  String?  @map("text_body")
   template  String   // clé de template : 'host_notification' | 'guest_receipt' | 'guest_refund' | 'custom'
   status    String   @default("QUEUED") // 'QUEUED' | 'SENT' | 'FAILED'
+
+  // Pièce jointe optionnelle (v5.3 — certificats PDF Bouclier).
+  attachmentData Bytes?  @map("attachment_data")
+  attachmentName String? @map("attachment_name")
+  attachmentMime String? @map("attachment_mime")
   provider  String?  // 'resend' | 'smtp' | 'demo'
   attempts  Int      @default(0)
   lastError String?  @map("last_error")
@@ -1402,4 +1735,1213 @@ model Payout {
   @@index([status])
   @@index([createdAt])
   @@map("payouts")
+}
+
+// ==============================================================
+// TABLE 48: private_feedbacks (PREMIUM V5 — ÉTAPE 3.4 — Alerte Guest)
+// Retours privés 1-3 ★ collectés par le Bouclier d'avis (Review
+// Shield). URGENCE hôte : alerte critique Email + Push immédiate.
+// rating : 1..5 (le flux n'y écrit QUE des avis 1-3, mais 4-5 est
+// toléré pour la traçabilité d'un retour privé spontané).
+// token  : feedbackToken du booking utilisé (traçabilité du lien).
+// isResolved : coché côté hôte une fois le problème traité.
+// ==============================================================
+model PrivateFeedback {
+  id         String   @id @default(cuid())
+  propertyId String   @map("property_id")
+  bookingId  String?  @map("booking_id")
+  rating     Int
+  comment    String?
+  guestName  String?  @map("guest_name")
+  token      String?
+  isResolved Boolean  @default(false) @map("is_resolved")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId, isResolved])
+  @@index([createdAt])
+  @@map("private_feedbacks")
+}
+
+// ==============================================================
+// TABLE 49: guest_sessions (PREMIUM V5 — ÉTAPE 3.5 — Premier scan)
+// Session anonyme de l'invité dans le Hub (deviceId UUID généré côté
+// client, stocké en localStorage). 1re ligne = premier scan du QR →
+// notification « 👋 [Nom] vient d'arriver et a scanné votre Hub ! »
+// à l'hôte. bookingId optionnel (si invité lié à un séjour ?b=).
+// ==============================================================
+model GuestSession {
+  id          String   @id @default(cuid())
+  propertyId  String   @map("property_id")
+  deviceId    String   @map("device_id")
+  bookingId   String?  @map("booking_id")
+  guestName   String?  @map("guest_name")
+  firstSeenAt DateTime @default(now()) @map("first_seen_at")
+  lastSeenAt  DateTime @default(now()) @map("last_seen_at")
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@unique([propertyId, deviceId])
+  @@index([propertyId])
+  @@index([firstSeenAt])
+  @@map("guest_sessions")
+}
+
+// ==============================================================
+// TABLE 50: password_reset_tokens (AUDIT PRÉ-PROD — Reset password)
+// Flux « mot de passe oublié » : token aléatoire 48 hex, stocké
+// HASHÉ (SHA-256) — la valeur en clair n'existe QUE dans l'email.
+// expiresAt : 1 h ; usedAt : single-use ; rate limit 3/h par IP.
+// ==============================================================
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String    @map("user_id")
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("password_reset_tokens")
+}
+
+// ==============================================================
+// TABLE v4.50: hub_access_sessions (VERROUILLAGE DU HUB PAR CODE)
+// Le hub d'un bien peut être PROTÉGÉ par un code d'activation unique
+// par séjour (Booking.accessCode). Le voyageur scanne le QR → écran
+// de verrouillage → saisit son code → le serveur crée une session :
+//   • token 48 hex renvoyé au client (localStorage) ;
+//   • SEUL le SHA-256 du token est stocké (jamais la valeur claire) ;
+//   • la fin de session est VÉRIFIÉE EN DIRECT contre la fin de séjour
+//     effective du booking (lateCheckOutUntil ?? checkOut) — une
+//     prolongation validée par l'hôte rallonge automatiquement la
+//     session au prochain appel (compte à rebours client aussi).
+// Chaque action du hub (minibar, commandes, tickets, départ) envoie
+// l'en-tête x-hub-token ; le serveur rejette en 403 SESSION_EXPIRED
+// dès que l'heure actuelle dépasse la fin de séjour.
+// ==============================================================
+model HubAccessSession {
+  id          String    @id @default(cuid())
+  propertyId  String    @map("property_id")
+  bookingId   String?   @map("booking_id")
+  tokenHash   String    @unique @map("token_hash")
+  // Plafond de sécurité absolu (fin de séjour + 7 jours) même si le
+  // booking disparaît — la session meurt au plus tard ici.
+  hardExpiresAt DateTime @map("hard_expires_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  lastUsedAt  DateTime? @map("last_used_at")
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  booking  Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+
+  @@index([propertyId])
+  @@index([bookingId])
+  @@map("hub_access_sessions")
+}
+
+// ==============================================================
+// TABLE v4.50: minibar_orders (MINIBAR DE CONFIANCE — commandes)
+// Chaque déclaration du minibar est PERSISTÉE (v4.44 ne faisait que
+// notifier) : l'onglet Check-in/Check-out du hub peut afficher les
+// produits consommés, et « Facturer au départ » s'appuie sur ces
+// lignes OPEN réglables à la sortie.
+// itemsJson : [{ id, name, emoji, qty, unitPrice, lineTotal, free }]
+// payment   : 'stripe' | 'onsite' | 'departure' | 'free'
+// status    : 'OPEN' (à régler) | 'PAID' (réglé — Stripe ou sur place)
+// ==============================================================
+model MinibarOrder {
+  id         String   @id @default(cuid())
+  propertyId String   @map("property_id")
+  bookingId  String?  @map("booking_id")
+  guestName  String?  @map("guest_name")
+  itemsJson  String   @map("items_json")
+  totalEur   Float    @default(0) @map("total_eur")
+  payment    String   @default("onsite")
+  status     String   @default("OPEN")            // 'OPEN' | 'PAID'
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  booking  Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+
+  @@index([propertyId, createdAt])
+  @@index([bookingId])
+  @@map("minibar_orders")
+}
+
+// ==============================================================
+// TABLE v4.50: minibar_checks (VALIDATION D'INVENTAIRE À L'ARRIVÉE)
+// Système de confiance : l'invité voit la photo du minibar rempli
+// (configurée par l'hôte) + la liste des articles, et valide en
+// UN CLIC « J'ai vérifié, tout est là ». La validation est horodatée
+// et rattachée au séjour courant — protège l'hôte ET l'invité.
+// ==============================================================
+model MinibarCheck {
+  id         String   @id @default(cuid())
+  propertyId String   @map("property_id")
+  bookingId  String?  @map("booking_id")
+  guestName  String?  @map("guest_name")
+  // v5.0 « ÉTAT DES LIEUX D'ENTRÉE » — token public de preuve (URL sans auth).
+  publicToken String?  @unique @map("public_token")
+  checkedAt  DateTime @default(now()) @map("checked_at")
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  booking  Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+
+  @@index([propertyId, checkedAt])
+  @@index([bookingId])
+  @@map("minibar_checks")
+}
+
+// ==============================================================
+// TABLE v4.50: minibar_restock_requests (RECHARGER LE FRIGO — 1 CLIC)
+// Si l'invité a consommé l'essentiel du minibar, un bouton lui permet
+// de demander un réapprovisionnement automatique pour le lendemain
+// matin lors du passage de l'équipe d'entretien. L'hôte voit la liste
+// PENDING dans le dashboard et la marque « traitée ».
+// status : 'PENDING' | 'DONE'
+// ==============================================================
+model MinibarRestockRequest {
+  id         String    @id @default(cuid())
+  propertyId String    @map("property_id")
+  bookingId  String?   @map("booking_id")
+  guestName  String?   @map("guest_name")
+  status     String    @default("PENDING")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  handledAt  DateTime? @map("handled_at")
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  booking  Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+
+  @@index([propertyId, status])
+  @@index([bookingId])
+  @@map("minibar_restock_requests")
+}
+
+// ==============================================================
+// TABLE v4.52: middle_stay_requests (MIDDLE-STAY CARE)
+// Séjours longs (≥ 7 nuits) : l'invité demande un RÉASSORT
+// (serviettes, papier toilette…) ou un MÉNAGE EN COURS DE SÉJOUR
+// depuis le Hub. L'hôte voit la file dans son espace et suit le
+// statut : pending → in_progress → completed.
+// price : Float (SQLite — Decimal non supporté) ; réserve pour un
+// futur ménage payant facturé via Stripe.
+// assignedTo : identifiant (email/id) du membre d'équipe assigné.
+// ==============================================================
+model MiddleStayRequest {
+  id          String    @id @default(cuid())
+  propertyId  String    @map("property_id")
+  bookingId   String?   @map("booking_id")
+  guestName   String    @map("guest_name")
+  guestEmail  String?   @map("guest_email")
+  requestType String    @map("request_type") // 'restock' | 'cleaning'
+  details     String? // ex. « Besoin de 4 serviettes et papier toilette »
+  status      String    @default("pending")  // pending | in_progress | completed
+  assignedTo  String?   @map("assigned_to")
+  price       Float? // ménage payant (si facturé)
+  createdAt   DateTime  @default(now()) @map("created_at")
+  completedAt DateTime? @map("completed_at")
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  booking  Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+
+  @@index([propertyId, status])
+  @@index([bookingId])
+  @@map("middle_stay_requests")
+}
+
+// ==============================================================
+// TABLE v4.52: guest_memories (LIVRE D'OR VIVANT — mur de souvenirs)
+// Chaque invité peut laisser un souvenir (note 1-5 + message + photos
+// + vocal). MODÉRATION hôte : isApproved (validé) ET isPublic
+// (autorisation du voyageur) → visible dans la galerie publique.
+// isPinned : coup de cœur épinglé par l'hôte. hostReply : remerciement
+// de l'hôte affiché sous le souvenir.
+// photoUrlsJson : JSON string [{ url, caption? }] — SQLite n'accepte
+// pas les listes scalaires ; dataURL ≤ ~400 Ko/photo, ≤ 5 photos.
+// audioUrl : dataURL du vocal (≤ 60 s, même pipeline que les voix).
+// ==============================================================
+model GuestMemory {
+  id            String    @id @default(cuid())
+  propertyId    String    @map("property_id")
+  bookingId     String?   @map("booking_id")
+  guestName     String    @map("guest_name")
+  guestEmail    String?   @map("guest_email")
+  guestCountry  String?   @map("guest_country") // ex. "France" → drapeau côté UI
+  rating        Int // 1 à 5
+  message       String?
+  photoUrlsJson String    @default("[]") @map("photo_urls_json")
+  audioUrl      String?   @map("audio_url")
+  isPublic      Boolean   @default(true) @map("is_public")
+  isApproved    Boolean   @default(false) @map("is_approved")
+  isPinned      Boolean   @default(false) @map("is_pinned")
+  hostReply     String?   @map("host_reply")
+  hostReplyAt   DateTime? @map("host_reply_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  booking  Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+
+  @@index([propertyId, isApproved, isPublic])
+  @@index([propertyId, isPinned])
+  @@index([bookingId])
+  @@map("guest_memories")
+}
+
+// =============================================================
+// TABLE v4.53: checkout_reports (RAPPORT DE CONSOMMATION AUTO)
+// Au moment où le compte à rebours du séjour expire (ou au départ
+// confirmé), RoomScan génère un récapitulatif NET pour l'hôte :
+//   « Consommations Minibar : 2 eaux, 1 vin — 12,50 €.
+//     Signalements : Aucun. Preuve Ménage : Validée à 14h15. »
+// Le rapport est COMPLÉTÉ à chaque événement (consommation, départ
+// confirmé, validation du ménage de rotation) et consultable en un
+// clic depuis le tableau de bord hôte (export PDF inclus).
+// minibarJson      : JSON [{ name, emoji, qty, total, free }]
+// signalementsJson : JSON [{ category, label, description, isUrgent,
+//                            status, createdAt }] (hors miroirs ménage)
+// minibarCheckedAt : inventaire d'arrivée validé par l'invité
+// cleaningValidatedAt : preuve ménage POST-départ (rotation suivante)
+// departedAt       : départ définitif confirmé (CheckoutFinalEvent)
+// =============================================================
+model CheckoutReport {
+  id               String    @id @default(cuid())
+  propertyId       String    @map("property_id")
+  bookingId        String?   @map("booking_id")
+  guestName        String?   @map("guest_name")
+  checkIn          DateTime? @map("check_in")
+  checkOut         DateTime? @map("check_out")
+  minibarJson      String    @default("[]") @map("minibar_json")
+  minibarTotal     Float     @default(0) @map("minibar_total")
+  // Inventaire d'arrivée validé par l'invité (MinibarCheck) —
+  // null = pas de validation (séjours antérieurs à v4.50).
+  minibarCheckedAt DateTime? @map("minibar_checked_at")
+  signalementsJson String    @default("[]") @map("signalements_json")
+  signalementsCount Int      @default(0) @map("signalements_count")
+  cleaningValidatedAt DateTime? @map("cleaning_validated_at")
+  cleaningStaffName   String?   @map("cleaning_staff_name")
+  departedAt       DateTime? @map("departed_at")
+  restockPending   Boolean   @default(false) @map("restock_pending")
+  generatedAt      DateTime  @default(now()) @map("generated_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  booking  Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+
+  @@unique([propertyId, bookingId])
+  @@index([propertyId, generatedAt])
+  @@map("checkout_reports")
+}
+
+// ==============================================================
+// TABLE v4.54: laundry_orders (PRESSING & BLANCHISSERIE EXPRESS)
+// Nouvel onglet du Hub Invité : l'invité choisit un service
+// (repassage express, lessive complète, pressing à sec), estime
+// ses pièces, choisit un créneau de récupération (matin/après-midi)
+// et paie par Stripe (cloné du late check-out) ou laisse une simple
+// demande à l'hôte. L'hôte suit les commandes et leur statut.
+// ==============================================================
+model LaundryOrder {
+  id          String   @id @default(cuid())
+  propertyId  String   @map("property_id")
+  bookingId   String?  @map("booking_id")
+  guestName   String?  @map("guest_name")
+  guestEmail  String?  @map("guest_email")
+  // 'ironing' (repassage 5 €/pièce) | 'washing' (lessive 15 €/panier)
+  // | 'drycleaning' (pressing à sec 8 €/pièce) — tarifs SERVEUR.
+  serviceType String   @map("service_type")
+  pieces      Int      @default(1)
+  // Créneau de récupération souhaité : 'morning' | 'afternoon'.
+  pickupSlot  String   @default("morning") @map("pickup_slot")
+  notes       String?
+  amountEur   Float    @default(0) @map("amount_eur")
+  // 'stripe' (Checkout Session) | 'host' (règlement avec l'hôte).
+  payment     String   @default("host")
+  // PENDING_PAYMENT → REQUESTED → PAID → IN_PROGRESS → READY → DELIVERED
+  // | CANCELLED. L'autorité d'affichage invité = status.
+  status      String   @default("REQUESTED")
+  stripeSessionId String? @map("stripe_session_id")
+  paidAt      DateTime? @map("paid_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  booking  Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+
+  @@index([propertyId, status])
+  @@index([propertyId, createdAt])
+  @@index([bookingId])
+  @@map("laundry_orders")
+}
+
+// ==============================================================
+// TABLE v4.54: inventory_alerts (ALERTES STOCK — équipe de ménage)
+// L'équipe scanne le QR « Ménage » et signale en 3 clics l'état du
+// stock (✅ OK / ⚠️ Stock bas / ❌ Épuisé) sur 4 postes : serviettes,
+// papier toilette, savon/shampooing, capsules café. Tout signalement
+// non-OK déclenche une alerte automatique à l'hôte (cloche + email).
+// ==============================================================
+model InventoryAlert {
+  id          String   @id @default(cuid())
+  propertyId  String   @map("property_id")
+  bookingId   String?  @map("booking_id")
+  // "serviettes" | "papier_toilette" | "savon_shampooing" | "capsules_cafe"
+  item        String
+  // "ok" | "low" | "empty"
+  status      String
+  // Nom du membre d'équipe qui a signalé (saisie libre).
+  reportedBy  String?  @map("reported_by")
+  note        String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  resolvedAt  DateTime? @map("resolved_at")
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  booking  Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+
+  @@index([propertyId, status])
+  @@index([propertyId, createdAt])
+  @@map("inventory_alerts")
+}
+
+// ==============================================================
+// TABLE v4.56: system_settings (CONFIG PLATEFORME — clé/valeur)
+// Réglages globaux éditables depuis la Console Superadmin
+// (ex : email.from, email.notifications_inbox).
+// Priorité de résolution : base de données > variable
+// d'environnement > défaut codé. Valeur vide = pas d'override.
+// ==============================================================
+model SystemSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("system_settings")
+}
+
+// ==============================================================
+// TABLE v5.0: check_out_inspections (ÉTAT DES LIEUX DE SORTIE)
+// L'invité constate l'état dans lequel il rend le logement avant de
+// partir : statut par pièce (good|dirty|damaged), photos des dégâts
+// (dataURL compressés côté client, convention ≤ 500 KB), inventaire
+// rendu, auto-évaluation, signature digitale. Un PDF horodaté est
+// généré à la demande (pdfkit, server-side) et une URL publique
+// unique (/public/inspection/[publicToken]) sert de preuve légale
+// consultable sans authentification. Email envoyé à l'hôte + l'invité.
+// status : 'pending' | 'reviewed' | 'resolved' | 'disputed'
+// ==============================================================
+model CheckOutInspection {
+  id               String   @id @default(cuid())
+  propertyId       String   @map("property_id")
+  bookingId        String?  @map("booking_id")
+  guestName        String   @map("guest_name")
+  guestEmail       String?  @map("guest_email")
+
+  // v4.80 — TYPE d'état des lieux : 'checkin' (entrée — validé après
+  // déverrouillage du hub, pièces + photos + signature) ou 'checkout'
+  // (sortie — inclut aussi l'inventaire du minibar). Le défaut
+  // 'checkout' garantit la rétrocompatibilité des enregistrements v5.0.
+  type             String   @default("checkout")
+
+  // Statut par pièce : 'good' | 'dirty' | 'damaged'
+  entranceStatus    String  @default("good") @map("entrance_status")
+  kitchenStatus     String  @default("good") @map("kitchen_status")
+  livingRoomStatus  String  @default("good") @map("living_room_status")
+  bedroomsStatus    String  @default("good") @map("bedrooms_status")
+  bathroomStatus    String  @default("good") @map("bathroom_status")
+
+  // Détails : issues = commentaires libres, damages = résumé des dégâts.
+  issues          String?
+  damages         String?
+  // Photos des problèmes (JSON array de dataURL images compressées).
+  damagePhotos    Json?    @map("damage_photos")
+  // Détail complet des pièces (JSON array [{id,label,status,comment,photos[]}]).
+  roomsData       Json?    @map("rooms_data")
+  // Inventaire rendu (JSON {keys,remotes,towels,…}).
+  inventoryCheck  Json?    @map("inventory_check")
+  // v4.80 « MINIBAR À LA SORTIE » — inventaire du minibar déclaré par
+  // l'invité : JSON [{ name, consumed }] (unités consommées par article).
+  minibarData     Json?    @map("minibar_data")
+
+  // Auto-évaluation de l'invité (1-5 étoiles).
+  selfAssessment  Int      @default(5) @map("self_assessment")
+
+  // Signature digitale (dataURL PNG) + traçabilité légale.
+  guestSignature  String?  @map("guest_signature")
+  signedAt        DateTime @default(now()) @map("signed_at")
+  ipAddress       String?  @map("ip_address")
+
+  // Preuve publique : /public/inspection/[publicToken] (sans auth).
+  publicToken     String   @unique @map("public_token")
+
+  // Résolution côté hôte.
+  status          String   @default("pending")
+  hostNotes       String?  @map("host_notes")
+  resolvedAt      DateTime? @map("resolved_at")
+
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  booking  Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+
+  @@index([propertyId, createdAt])
+  @@index([bookingId])
+  @@index([status])
+  @@map("check_out_inspections")
+}
+
+// ==============================================================
+// TABLE v4.69: host_settings (COMMISSION & PAIEMENT HÔTE)
+// Configuration économique par hôte : il encaisse les paiements via
+// son propre Stripe (useOwnStripe + clés) ou passe par la plateforme.
+// RoomScan prélève une commission (ex 0.10 ou 0.20) facturée en fin
+// de mois (MonthlyCommissionInvoice).
+// NB : SQLite ne supporte pas le type Decimal Prisma → montants Float
+// (convention déjà utilisée par Subscription.amount / Transaction).
+// ==============================================================
+model HostSettings {
+  id              String   @id @default(cuid())
+  userId          String   @unique @map("user_id")
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Configuration paiement
+  useOwnStripe    Boolean  @default(false) @map("use_own_stripe") // Si true, l'hôte utilise ses propres clés
+  stripePubKey    String?  @map("stripe_pub_key")
+  stripeSecretKey String?  @map("stripe_secret_key")
+
+  // Configuration commission (ex: 0.20 pour 20 %)
+  commissionRate  Float    @default(0.20) @map("commission_rate")
+
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("host_settings")
+}
+
+// ==============================================================
+// TABLE v4.69: monthly_commission_invoices (FACTURES DE COMMISSION)
+// Une facture par hôte et par mois : montant total des commandes
+// encaissées par l'hôte (minibar + services + pressing) × taux de
+// commission = commission due à RoomScan.
+// status : 'pending' | 'paid' | 'overdue'
+// ==============================================================
+model MonthlyCommissionInvoice {
+  id                String    @id @default(cuid())
+  hostId            String    @map("host_id")
+  host              User      @relation(fields: [hostId], references: [id], onDelete: Cascade)
+
+  month             Int       // ex: 10 (Octobre)
+  year              Int       // ex: 2026
+
+  totalOrdersAmount Float     @map("total_orders_amount") // Montant total des commandes encaissées par l'hôte
+  commissionRate    Float     @map("commission_rate")     // Taux appliqué (ex: 0.20)
+  commissionOwed    Float     @map("commission_owed")     // Montant dû à RoomScan (totalOrdersAmount × commissionRate)
+
+  ordersCount       Int       @default(0) @map("orders_count") // Détail : nombre de commandes facturées
+  breakdown         Json?     // Détail { minibar: X, services: Y, laundry: Z } (Floats)
+
+  status            String    @default("pending") // 'pending' | 'paid' | 'overdue'
+
+  invoicePdfUrl     String?   @map("invoice_pdf_url") // Lien vers le PDF généré (facultatif)
+  // v4.81 (AUDIT QA) — jeton public aléatoire pour accéder au PDF de la
+  // facture sans authentification (même pattern que CheckOutInspection).
+  pdfToken          String?   @unique @map("pdf_token")
+  dueDate           DateTime  @map("due_date")        // ex: 30 du mois suivant
+  paidAt            DateTime? @map("paid_at")
+
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  @@unique([hostId, month, year])
+  @@index([hostId])
+  @@index([status])
+  @@map("monthly_commission_invoices")
+}
+
+// ==============================================================
+// TABLE v4.69: host_providers (MES PRESTATAIRES — annuaire privé)
+// Prestataire ajouté manuellement par l'hôte pour un bien précis
+// (ex: son plombier habituel, sa baby-sitter). Hors annuaire
+// plateforme : visible uniquement sur CE bien, dans les onglets
+// Prestataires (dashboard) et services invités (hub/PWA).
+// audience : 'OWNER_SERVICE' | 'GUEST_EXPERIENCE'
+// ==============================================================
+model HostProvider {
+  id            String   @id @default(cuid())
+  propertyId    String   @map("property_id")
+  name          String
+  emoji         String   @default("🔧") // pastille catégorie (emoji libre)
+  category      String   @default("Autre")
+  description   String?
+  contactName   String?  @map("contact_name")
+  contactEmail  String?  @map("contact_email")
+  contactPhone  String?  @map("contact_phone")
+  website       String?
+  audience      String   @default("OWNER_SERVICE") // 'OWNER_SERVICE' | 'GUEST_EXPERIENCE'
+  isUrgentAvailable Boolean @default(false) @map("is_urgent_available")
+  isActive      Boolean  @default(true) @map("is_active") // désactivable comme un prestataire annuaire
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId])
+  @@index([audience])
+  @@map("host_providers")
+}
+
+// =============================================================
+// v4.74 « SMART PROMPTS » — NOTIFICATIONS VISUELLES TEMPORELLES
+// Système de notifications intelligentes affichées au bon moment
+// (repas, veille de départ) pour inciter l'invité à commander.
+// Configurables par le propriétaire du bien, journalisées pour
+// éviter les doublons. SQLite : pas d'enum → String documentées.
+// =============================================================
+
+// Configuration des notifications par propriété (1:1).
+model NotificationSettings {
+  id         String   @id @default(cuid())
+  propertyId String   @unique @map("property_id")
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  // ── Notifications temporelles (repas) ──
+  enableBreakfast  Boolean @default(true) @map("enable_breakfast")
+  breakfastTime    String  @default("08:00") @map("breakfast_time") // HH:mm
+  breakfastMessage String  @default("☀️ Bonjour ! Souhaitez-vous commander votre petit-déjeuner ce matin ?") @map("breakfast_message")
+
+  enableLunch      Boolean @default(true) @map("enable_lunch")
+  lunchTime        String  @default("12:00") @map("lunch_time")
+  lunchMessage     String  @default("🍽️ C'est l'heure du déjeuner ! Découvrez nos suggestions.") @map("lunch_message")
+
+  enableDinner     Boolean @default(true) @map("enable_dinner")
+  dinnerTime       String  @default("19:00") @map("dinner_time")
+  dinnerMessage    String  @default("🌙 Bonne soirée ! Envie d'un dîner ou d'une réservation au restaurant ?") @map("dinner_message")
+
+  // ── Notification veille de départ (boutique de souvenirs) ──
+  enableCheckoutReminder  Boolean @default(true) @map("enable_checkout_reminder")
+  checkoutReminderTime    String  @default("18:00") @map("checkout_reminder_time") // la veille du départ
+  checkoutReminderMessage String  @default("🛍️ Demain est votre dernier jour ! Découvrez notre boutique de souvenirs.") @map("checkout_reminder_message")
+
+  // Durée d'affichage de la carte (minutes) — 10 à 60 côté UI.
+  displayDuration Int @default(30) @map("display_duration")
+
+  // Inclure les recommandations de restaurants à proximité.
+  enableRestaurantRecommendations Boolean @default(true) @map("enable_restaurant_recommendations")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("notification_settings")
+}
+
+// Historique des notifications affichées (anti-doublon + analytics).
+model NotificationLog {
+  id               String   @id @default(cuid())
+  propertyId       String   @map("property_id")
+  property         Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  bookingId        String?  @map("booking_id")
+  // 'breakfast' | 'lunch' | 'dinner' | 'checkout_reminder'
+  notificationType String  @map("notification_type")
+  displayedAt      DateTime @default(now()) @map("displayed_at")
+  // Identifiant de session invité si disponible (anti-doublon fin).
+  guestId          String? @map("guest_id")
+
+  @@index([propertyId, notificationType])
+  @@index([propertyId, displayedAt])
+  @@map("notification_logs")
+}
+
+// =============================================================
+// v4.74 « BOUTIQUE DE SOUVENIRS » — produits gérés par l'hôte,
+// proposés à l'invité (notification veille de départ + module hub).
+// =============================================================
+model SouvenirProduct {
+  id         String   @id @default(cuid())
+  propertyId String   @map("property_id")
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  name        String
+  description String?
+  price       Float   // en euros (convention Float du schéma)
+  imageUrl    String? @map("image_url")
+  // 'food' | 'craft' | 'wine' | 'other'
+  category    String  @default("food")
+  isActive    Boolean @default(true) @map("is_active")
+  sort        Int     @default(0)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([propertyId, isActive])
+  @@map("souvenir_products")
+}
+
+// Commande de souvenirs passée depuis le hub invité.
+model SouvenirOrder {
+  id         String   @id @default(cuid())
+  propertyId String   @map("property_id")
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  bookingId  String?  @map("booking_id")
+  productId  String   @map("product_id")
+  productName String  @map("product_name") // snapshot (le produit peut changer)
+  quantity   Int      @default(1)
+  unitPrice  Float    @map("unit_price") // snapshot du prix au moment de la commande
+  // 'in_lodging' (livré au logement) | 'at_checkout' (à récupérer au départ)
+  deliveryMode String @default("in_lodging") @map("delivery_mode")
+  guestNote  String?  @map("guest_note")
+  guestName  String?  @map("guest_name")
+  // 'PENDING' | 'CONFIRMED' | 'DELIVERED' | 'CANCELLED'
+  status     String   @default("PENDING")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([propertyId, status])
+  @@index([propertyId, createdAt])
+  @@map("souvenir_orders")
+}
+
+// ==============================================================
+// TABLE v5.4: dashboard_insights (COACH ROOMSCAN — moteur d'analyse)
+// Chaque insight est un conseil ACTIONNABLE généré par le moteur
+// (src/lib/insight-engine.ts) à partir des données réelles du bien :
+// stocks, séjours, avis, commandes, ménage, comportement invité.
+// type     : 'STOCK' | 'REVENUE' | 'REVIEW' | 'UPSELL' | 'OPERATION'
+//            | 'QUALITY' | 'BEHAVIOR'
+// priority : 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW'
+// score    : 0-100 (calculé par calculatePriority — ordre d'affichage)
+// actionUrl: chemin RELATIF de la page d'action (deep-link cloche/push).
+// expiresAt: les insights sensibles au temps expirent (opportunités) ;
+//            null = visible jusqu'à résolution.
+// ==============================================================
+model DashboardInsight {
+  id          String    @id @default(uuid())
+  propertyId  String    @map("property_id")
+  property    Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  type        String
+  priority    String
+  score       Int
+
+  title       String
+  message     String // SQLite : TEXT illimité (pas de @db.Text)
+  actionLabel String
+  actionUrl   String
+
+  isResolved  Boolean   @default(false) @map("is_resolved")
+  resolvedAt  DateTime? @map("resolved_at")
+
+  createdAt   DateTime  @default(now()) @map("created_at")
+  expiresAt   DateTime? @map("expires_at")
+
+  actions     InsightAction[]
+
+  @@index([propertyId, isResolved, createdAt])
+  @@map("dashboard_insights")
+}
+
+// ==============================================================
+// TABLE v5.4: coach_preferences (préférences de l'hôte pour le coach)
+// Relation 1:1 avec User. Contrôle les canaux de notification des
+// insights critiques et la fréquence du rapport quotidien.
+// enabledInsightTypes : JSON string array (SQLite n'accepte pas les
+// listes scalaires) — ['STOCK','REVENUE','REVIEW','UPSELL',
+// 'OPERATION','QUALITY','BEHAVIOR'].
+// ==============================================================
+model CoachPreferences {
+  id                     String   @id @default(uuid())
+  userId                 String   @unique @map("user_id")
+  user                   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // ── Canaux de notification — urgences critiques ──
+  enableCriticalPush     Boolean  @default(true) @map("enable_critical_push")
+  enableCriticalEmail    Boolean  @default(true) @map("enable_critical_email")
+  enableCriticalSMS      Boolean  @default(false) @map("enable_critical_sms") // optionnel (futur)
+
+  // ── Canaux — opportunités de revenus ──
+  enableRevenueEmail     Boolean  @default(true) @map("enable_revenue_email")
+  enableRevenuePush      Boolean  @default(false) @map("enable_revenue_push")
+
+  // ── Canaux — analyse qualité ──
+  enableQualityEmail     Boolean  @default(true) @map("enable_quality_email")
+  enableQualityDashboard Boolean  @default(true) @map("enable_quality_dashboard")
+
+  // ── Conseils éducatifs dans le dashboard ──
+  enableEducational      Boolean  @default(true) @map("enable_educational")
+
+  // ── Fréquence du rapport quotidien ──
+  // 'daily' | 'weekly' | 'never'
+  reportFrequency        String   @default("daily") @map("report_frequency")
+  reportTime             String   @default("07:00") @map("report_time") // HH:mm
+
+  // ── Types d'insights affichés (JSON array de strings) ──
+  enabledInsightTypes    String   @default("[\"STOCK\",\"REVENUE\",\"REVIEW\",\"UPSELL\",\"OPERATION\",\"QUALITY\",\"BEHAVIOR\"]") @map("enabled_insight_types")
+
+  createdAt              DateTime @default(now()) @map("created_at")
+  updatedAt              DateTime @updatedAt @map("updated_at")
+
+  @@map("coach_preferences")
+}
+
+// ==============================================================
+// TABLE v5.4: insight_actions (historique des actions sur un insight)
+// actionType : 'RESOLVED' | 'DISMISSED' | 'SNOOZED' | 'CLICKED'
+// Alimente le taux d'adoption du coach (CoachAnalytics).
+// ==============================================================
+model InsightAction {
+  id         String           @id @default(uuid())
+  insightId  String           @map("insight_id")
+  insight    DashboardInsight @relation(fields: [insightId], references: [id], onDelete: Cascade)
+
+  userId     String           @map("user_id")
+  actionType String           @map("action_type")
+
+  createdAt  DateTime         @default(now()) @map("created_at")
+
+  @@index([insightId])
+  @@index([userId])
+  @@map("insight_actions")
+}
+
+// ==============================================================
+// TABLE v5.4: coach_analytics (impact du coach — agrégé par mois)
+// @@unique([propertyId, month, year]) — 1 ligne / bien / mois.
+// estimatedRevenue : Float (SQLite — Decimal non supporté, convention
+// du schéma). adoptionRate : % d'insights suivis (0-1).
+// ==============================================================
+model CoachAnalytics {
+  id                String   @id @default(uuid())
+  propertyId        String   @map("property_id")
+  property          Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  month             Int
+  year              Int
+
+  insightsGenerated Int     @default(0) @map("insights_generated")
+  insightsResolved  Int     @default(0) @map("insights_resolved")
+  insightsDismissed Int     @default(0) @map("insights_dismissed")
+
+  estimatedRevenue  Float   @default(0) @map("estimated_revenue")
+  disputesAvoided   Int     @default(0) @map("disputes_avoided")
+
+  adoptionRate      Float   @default(0) @map("adoption_rate")
+
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  @@unique([propertyId, month, year])
+  @@index([propertyId])
+  @@map("coach_analytics")
+}
+
+// ==============================================================
+// TABLES v5.6 : « TOUR DE CONTRÔLE » — MONITORING 100 % MAISON
+// (santé technique + métier, incidents, logs de cron)
+// ==============================================================
+
+// Métriques système — 1 ligne par tick (cron externe toutes les
+// 5 min → /api/admin/monitoring-tick). SQLite : Float partout,
+// externalChecks en JSON string (Stripe / Resend / disque).
+// ==============================================================
+model SystemMetric {
+  id               String   @id @default(uuid())
+  timestamp        DateTime @default(now())
+
+  // Santé technique
+  apiResponseTime  Float    // ms — durée du GET /api/health (self-fetch ou interne)
+  dbResponseTime   Float    // ms — ping SELECT 1
+  diskUsagePercent Float?   @map("disk_usage_percent") // % disque (si mesurable)
+
+  // Santé technique externe (JSON string SQLite) :
+  // { stripe: { status, latencyMs }, resend: { status, latencyMs } }
+  externalChecks   String   @default("{}") @map("external_checks")
+  status           String   @default("OK") // 'OK' | 'DEGRADED' | 'DOWN'
+
+  // Santé métier (fenêtre glissante du tick : 5 min / 1 h)
+  error500Count    Int      @default(0) @map("error_500_count") // AuditLog runtime.error 5 min
+  failedPayments   Int      @default(0) @map("failed_payments") // Stripe échecs 1 h
+  failedEmails     Int      @default(0) @map("failed_emails")   // outbox FAILED 1 h
+
+  @@index([timestamp])
+  @@map("system_metrics")
+}
+
+// Historique des incidents & alertes (détection + prédictif).
+// Déduplication : un tick sur anomalie existante incrémente
+// `occurrences` + met à jour `lastSeenAt` au lieu de recréer.
+// ==============================================================
+model SystemIncident {
+  id             String    @id @default(uuid())
+  severity       String    // 'INFO' | 'WARNING' | 'CRITICAL'
+  category       String    // 'SERVER' | 'DATABASE' | 'PAYMENT' | 'EMAIL' | 'PREDICTIVE'
+
+  title          String
+  description    String
+
+  isResolved     Boolean   @default(false) @map("is_resolved")
+  resolvedAt     DateTime? @map("resolved_at")
+  resolutionNote String?   @map("resolution_note")
+
+  occurrences    Int       @default(1)
+  lastSeenAt     DateTime  @default(now()) @map("last_seen_at")
+
+  // v4.98 — Dernier email d'alerte envoyé pour CET incident.
+  // Alimente l'ESCALADE : un incident non résolu reçoit un rappel
+  // email toutes les 4 h tant qu'il reste actif (le premier email
+  // peut être raté : SMTP en échec, boîte saturée…).
+  lastEmailAt    DateTime? @map("last_email_at")
+
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  @@index([isResolved, createdAt])
+  @@index([category, severity])
+  @@map("system_incidents")
+}
+
+// Logs d'exécution des cron jobs (succès / échec / durée).
+// Alimenté par les routes /api/admin/*-tick & co via logCronRun().
+// ==============================================================
+model SpecialRequest {
+  id         String    @id @default(cuid())
+  propertyId String    @map("property_id")
+  bookingId  String?   @map("booking_id")
+  guestName  String?   @map("guest_name")
+  // Type de demande : 'extra_bed' | 'baby_crib' | 'baby_seat' | 'high_chair'
+  // | 'towels' | 'iron' | 'cleaning' | 'other' (extensible).
+  itemType   String    @map("item_type")
+  quantity   Int       @default(1)
+  note       String?
+  // 'pending' | 'in_progress' | 'done' | 'cancelled'
+  status     String    @default("pending")
+  source     String    @default("hub")
+  requestedAt DateTime @default(now()) @map("requested_at")
+  handledAt  DateTime? @map("handled_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  booking  Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+
+  @@index([propertyId])
+  @@index([bookingId])
+  @@index([status])
+  @@map("special_requests")
+}
+
+model CronLog {
+  id           String   @id @default(uuid())
+  jobName      String   @map("job_name") // 'monitoring-tick' | 'daily-automations' | 'coach-reports' | …
+  status       String   // 'SUCCESS' | 'FAILED' | 'TIMEOUT'
+  duration     Int      // ms
+  errorMessage String?  @map("error_message")
+  executedAt   DateTime @default(now()) @map("executed_at")
+
+  @@index([jobName, executedAt])
+  @@index([executedAt])
+  @@map("cron_logs")
+}
+
+// ==============================================================
+// ==============================================================
+// MODULE STANDALONE « ÉTAT DES LIEUX » (v4.97)
+// ------------------------------------------------------------
+// Produit vendu 99 €/an, TOTALEMENT INDÉPENDANT du Hub :
+// le propriétaire (User + InspectionSubscription) crée des
+// inspections d'ENTRÉE / SORTIE, l'invité remplit le formulaire
+// public via le token (roomscan.pro/i/<publicToken>), signe, et
+// un PDF juridique (logo RoomScan + QR code) est généré à la
+// volée. Une entrée peut être liée à sa sortie (InspectionLink).
+// ==============================================================
+// ==============================================================
+
+// Abonnement au module EDL (limite « illimitée » du plan payant).
+model InspectionSubscription {
+  id        String   @id @default(cuid())
+  userId    String   @unique @map("user_id")
+  status    String   @default("active") // 'active' | 'cancelled'
+  plan      String   @default("edl_annual") // 299 €/an — générations PDF illimitées
+  endDate   DateTime @map("end_date")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  inspections Inspection[]
+  shieldProperties ShieldProperty[]
+
+  @@index([userId])
+  @@map("inspection_subscriptions")
+}
+
+// ============================================================== 
+// MODULE EDL STANDALONE — ACHAT PAYPAL 299 €/AN (v4.107)
+// 1 ligne par tentative d'achat : created (commande PayPal créée)
+// → paid (capture OK au retour) → activated (compte créé via le
+// jeton). L'activationToken (72 h) est le SEUL sésame pour créer
+// le compte post-paiement (lien unique envoyé au payeur).
+// ==============================================================
+model EdlPurchase {
+  id                  String    @id @default(cuid())
+  orderRef            String    @unique // référence interne (custom_id PayPal)
+  paypalOrderId       String?   @unique // id commande PayPal après création
+  amountEur           Int       @default(299)
+  status              String    @default("created") // created | paid | activated | cancelled
+  payerEmail          String?   @map("payer_email")
+  activationToken     String    @unique @map("activation_token")
+  activationExpiresAt DateTime  @map("activation_expires_at")
+  userId              String?   @map("user_id") // compte créé à l'activation
+  paidAt              DateTime? @map("paid_at")
+  activatedAt         DateTime? @map("activated_at")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  @@index([status])
+  @@map("edl_purchases")
+}
+
+// État des lieux principal (ENTRÉE ou SORTIE).
+model Inspection {
+  id             String @id @default(cuid())
+  subscriptionId String @map("subscription_id")
+
+  // Logement & propriétaire
+  propertyName    String @map("property_name")
+  propertyAddress String @map("property_address")
+  ownerName       String @map("owner_name")
+
+  // Invité
+  guestName  String  @map("guest_name")
+  guestEmail String? @map("guest_email")
+  guestPhone String? @map("guest_phone")
+
+  // Type & date visée
+  type          String // 'ENTREE' | 'SORTIE'
+  scheduledDate DateTime @map("scheduled_date")
+
+  // Statut & document public
+  status      String @default("PENDING") // 'PENDING' | 'IN_PROGRESS' | 'COMPLETED'
+  publicToken String @unique @map("public_token")
+  pdfUrl      String? @map("pdf_url") // null = PDF généré à la volée
+
+  // Section MÉNAGE intégrée (photo obligatoire si A_NETTOYER / TRES_SALE)
+  cleanlinessScore    String? @map("cleanliness_score") // 'IMPECCABLE' | 'CORRECT' | 'A_NETTOYER' | 'TRES_SALE'
+  cleanlinessComment  String? @map("cleanliness_comment")
+  cleanlinessPhotoUrl String? @map("cleanliness_photo_url")
+
+  // Signature électronique de l'invité (dataURL PNG)
+  guestSignature String?   @map("guest_signature")
+  signedAt       DateTime? @map("signed_at")
+
+  // Preuve & anti-fraude (v4.110) — « Fait à [Ville] » saisi à la
+  // création ; IP + GPS capturés à la signature ; SHA-256 du contenu
+  // canonique du document (vérification d'intégrité, affiché dans
+  // le PDF sous le QR code).
+  city        String? @map("city")
+  ipAddress   String? @map("ip_address")
+  gpsLocation String? @map("gps_location") // ex. "14.7167° N, 17.4677° W"
+  sha256Hash  String? @map("sha256_hash")
+
+  // Liaison entrée <-> sortie (l'EDL de sortie peut référencer l'entrée)
+  linkedInspectionId String?      @map("linked_inspection_id")
+  linkedInspection   Inspection?  @relation("InspectionLink", fields: [linkedInspectionId], references: [id], onDelete: SetNull)
+  linkedBy           Inspection[] @relation("InspectionLink")
+
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  completedAt DateTime? @map("completed_at")
+
+  subscription InspectionSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  rooms        InspectionRoom[]
+
+  @@index([subscriptionId, status])
+  @@index([subscriptionId, createdAt])
+  @@map("inspections")
+}
+
+// Pièce de l'état des lieux (Cuisine, Séjour, Chambre 1, Salle de bain…).
+model InspectionRoom {
+  id           String @id @default(cuid())
+  inspectionId String @map("inspection_id")
+  name         String
+  globalState  String @default("BON") @map("global_state") // 'TRES_BON' | 'BON' | 'MOYEN' | 'MAUVAIS'
+  comment      String?
+  sortOrder    Int    @default(0) @map("sort_order")
+
+  inspection Inspection     @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+  items      InspectionItem[]
+
+  @@index([inspectionId])
+  @@map("inspection_rooms")
+}
+
+// Élément / équipement d'une pièce (plaque de cuisson, télévision, lits…).
+// RÈGLE D'OR : state = 'MAUVAIS' → comment + photoUrl OBLIGATOIRES
+// (validés serveur dans /api/inspection/[token]/submit).
+model InspectionItem {
+  id        String  @id @default(cuid())
+  roomId    String  @map("room_id")
+  name      String
+  state     String  @default("BON") // 'TRES_BON' | 'BON' | 'MOYEN' | 'MAUVAIS'
+  comment   String?
+  photoUrl  String? @map("photo_url") // dataURL compressée ≤ ~500 Ko
+  // Appareils électroniques / électroménagers : preuve de
+  // fonctionnement (optionnelle) — photo appareil ALLUMÉ / ÉTEINT.
+  photoOnUrl  String? @map("photo_on_url")
+  photoOffUrl String? @map("photo_off_url")
+  sortOrder   Int     @default(0) @map("sort_order")
+
+  room InspectionRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@index([roomId])
+  @@map("inspection_items")
+}
+
+// ==============================================================
+// ROOMSCAN BOUCLIER AUTOMATISÉ (v5.1) — refonte du système
+// d'état des lieux & sortie selon le template client :
+//
+//   1. ONBOARDING UNE FOIS (hôte, 10 min à vie) : photo initiale
+//      des 6 zones + enregistrement des 4 appareils permanents →
+//      génération de la BIBLIOTHÈQUE DE RÉFÉRENCE (verrouillée).
+//   2. BIBLIOTHÈQUE RÉUTILISABLE : chaque appareil photographié
+//      UNE SEULE FOIS (QR: REF-PLQ-12126 + hash SHA-256) — la
+//      photo de référence est réutilisée à chaque check-in ; la
+//      re-validation du jour est prouvée par la vidéo 30 s.
+//   3. CHECK-IN / CHECK-OUT (agent, 90 s) : 6 PHOTOS FIXES aux
+//      mêmes angles (fantôme de l'angle de référence superposé)
+//      + VIDÉO WALKTHROUGH 30 s (QR géant + hash SHA-256).
+//      Le PDF de sortie est COMPARATIF (entrée vs sortie).
+//
+// Références : ONB-{VIL}-{AAAA}-{nnn} (onboarding),
+// REF-{KIND}-{DDMMYY} (appareil), CHK-{VIL}-{JJMMAAAA}-{nnn}
+// (session). Statuts zone : IMPECCABLE | A_NETTOYER | DEGRADATION.
+// ==============================================================
+
+// Logement onboardé UNE FOIS (bibliothèque de référence).
+model ShieldProperty {
+  id              String   @id @default(cuid())
+  subscriptionId  String   @map("subscription_id")
+  propertyName    String   @map("property_name")
+  propertyAddress String   @map("property_address")
+  city            String   @default("DAKAR")
+  ownerName       String   @map("owner_name")
+  onboardingRef   String   @unique @map("onboarding_ref") // ONB-DAK-2026-001
+  onboardedAt     DateTime @default(now()) @map("onboarded_at")
+  // ── CONFIG DYNAMIQUE (wizard post-paiement, règle d'or « zéro N/A ») ──
+  // SQLite ne supporte pas les listes Prisma natives → les listes sont
+  // stockées en JSON stringifié (ex: '["SALON","COULOIR","CHAMBRE 1"]').
+  nbChambres        Int    @default(0) @map("nb_chambres") // 0 = Studio, 3 = "3 chambres+"
+  pieces            String @default("[]") @map("pieces") // JSON: pièces réelles du logement
+  equipementsCoches String @default("[]") @map("equipements_coches") // JSON: kinds d'équipements présents
+  nbPhotosMenage    Int    @default(4) @map("nb_photos_menage") // nb de photos par check-in = nb de zones
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  subscription InspectionSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  zones        ShieldZone[]
+  devices      ShieldDevice[]
+  sessions     ShieldSession[]
+
+  @@index([subscriptionId])
+  @@map("shield_properties")
+}
+
+// Zone fixe (SALON, COULOIR, CHAMBRE 1, CHAMBRE 2, CUISINE,
+// TOILETTE / SDB) — la photo de référence sert de FANTÔME
+// d'angle à chaque capture check-in / check-out.
+model ShieldZone {
+  id             String @id @default(cuid())
+  propertyId     String @map("property_id")
+  name           String
+  referencePhoto String @map("reference_photo") // dataURL JPEG compressée
+  sortOrder      Int    @default(0) @map("sort_order")
+
+  property ShieldProperty   @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  shots    ShieldZoneShot[]
+
+  @@index([propertyId])
+  @@map("shield_zones")
+}
+
+// Appareil permanent photographié UNE SEULE FOIS (bibliothèque
+// réutilisable) — PLAQUE DE CUISSON, TÉLÉVISION, RÉFRIGÉRATEUR,
+// MICRO-ONDES… QR unique REF-{KIND}-{code} + hash SHA-256 du
+// fichier photo. Légal : « Photo de référence du JJ/MM/AAAA —
+// réutilisée et re-validée [date] par [agent] (vidéo walkthrough) ».
+model ShieldDevice {
+  id             String   @id @default(cuid())
+  propertyId     String   @map("property_id")
+  name           String
+  kind           String   @default("CUSTOM") // 'PLQ' | 'TV' | 'FRIGO' | 'MO' | 'CUSTOM'
+  referencePhoto String   @map("reference_photo") // dataURL JPEG
+  referenceHash  String   @map("reference_hash") // SHA-256 hex du fichier photo
+  referenceCode  String   @unique @map("reference_code") // REF-PLQ-12126
+  referenceDate  DateTime @map("reference_date") // date de la photo de référence
+  sortOrder      Int      @default(0) @map("sort_order")
+
+  property ShieldProperty @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId])
+  @@map("shield_devices")
+}
+
+// Session CHECK_IN ou CHECK_OUT (90 secondes : 6 photos + 1 vidéo).
+// Un CHECK_OUT est lié automatiquement au dernier CHECK_IN (PDF
+// comparatif entrée vs sortie). Le certificat PDF final est envoyé
+// AUTOMATIQUEMENT par email à l'hôte + à l'invité (s'il est renseigné).
+model ShieldSession {
+  id              String   @id @default(cuid())
+  propertyId      String   @map("property_id")
+  type            String   // 'CHECK_IN' | 'CHECK_OUT'
+  agentName       String   @map("agent_name") // ex. « Agent Awa »
+  guestName       String?  // nom de l'invité (optionnel — destinataire PDF)
+  guestEmail      String?  @map("guest_email") // email invité (optionnel — PJ PDF)
+  sessionRef      String   @unique @map("session_ref") // CHK-DAK-18102026-778
+  linkedSessionId String?  @map("linked_session_id") // dernier CHECK_IN lié
+  completedAt     DateTime @default(now()) @map("completed_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  property ShieldProperty   @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  shots    ShieldZoneShot[]
+  video    ShieldVideo?
+
+  @@index([propertyId, type])
+  @@map("shield_sessions")
+}
+
+// Photo d'une zone pour une session — même angle que la référence
+// (fantôme) → comparable pixel par pixel avec le check-in opposé.
+model ShieldZoneShot {
+  id         String   @id @default(cuid())
+  sessionId  String   @map("session_id")
+  zoneId     String   @map("zone_id")
+  zoneName   String   @map("zone_name") // dénormalisé (robustesse PDF)
+  photo      String // dataURL JPEG compressée
+  status     String   @default("IMPECCABLE") // 'IMPECCABLE' | 'A_NETTOYER' | 'DEGRADATION'
+  comment    String?
+  capturedAt DateTime @default(now()) @map("captured_at")
+
+  session ShieldSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  zone    ShieldZone    @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@map("shield_zone_shots")
+}
+
+// Vidéo walkthrough (jusqu'à 60 s) — preuve reine de re-validation
+// globale de la bibliothèque. Stockée en BLOB (SQLite Bytes,
+// déploiement sûr) et servie via /api/shield/video/[publicToken] ;
+// le QR du PDF pointe vers /shield/video/[publicToken].
+model ShieldVideo {
+  id          String   @id @default(cuid())
+  sessionId   String   @unique @map("session_id")
+  publicToken String   @unique @map("public_token") // 24 car.
+  mimeType    String   @default("video/webm") @map("mime_type")
+  data        Bytes
+  sizeBytes   Int      @map("size_bytes")
+  durationSec Int      @default(60) @map("duration_sec")
+  sha256      String // SHA-256 hex du fichier vidéo (intégrité)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  session ShieldSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@map("shield_videos")
 }

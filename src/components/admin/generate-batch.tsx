@@ -8,11 +8,6 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
-import {
-  QrCode, Download, Sparkles, Palette, Layout, ImageIcon,
-  Loader2, Check, Package, Home, Wifi,
-  List, Bell, ShieldCheck, Eye, Copy,
-} from 'lucide-react';
 import { generateUniqueCodes } from '@/lib/activation-code';
 import { generatePdf, type QrCodeForPdf } from '@/lib/pdf-export';
 import {
@@ -126,16 +121,12 @@ function getPresetLogoDataUrl(preset: string): string {
   return `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svgs[preset])))})}`;
 }
 
-const LOGO_ICON_MAP: Record<string, React.ReactNode> = {
-  none: <Package className="h-5 w-5" />,
-  wifi: <Wifi className="h-5 w-5" />,
-  home: <Home className="h-5 w-5" />,
-  list: <List className="h-5 w-5" />,
-  bell: <Bell className="h-5 w-5" />,
-  shield: <ShieldCheck className="h-5 w-5" />,
-};
-
-const APP_URL = 'https://qrdomotik.roomscan.pro';
+// FIX-DOMAINE : l'ancien domaine était hardcodé (qrdomotik.roomscan.pro) → les
+// QR générés pointaient vers l'ancien projet (page d'erreur + « ancienne accueil »).
+// On utilise le domaine courant à l'exécution : correct quel que soit le déploiement.
+const APP_URL = typeof window !== 'undefined'
+  ? window.location.origin
+  : (process.env.NEXT_PUBLIC_APP_URL || '');
 
 /* ================================================================== */
 /*  Color picker component                                             */
@@ -152,7 +143,7 @@ const PALETTE_COLORS = [
 function ColorPicker({ value, onChange, label }: { value: string; onChange: (v: string) => void; label: string }) {
   return (
     <div className="space-y-2">
-      <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{label}</Label>
+      <Label className="lux-eyebrow !text-[10px]">{label}</Label>
       <div className="flex items-center gap-2 flex-wrap">
         {PALETTE_COLORS.map((c) => (
           <button
@@ -160,10 +151,10 @@ function ColorPicker({ value, onChange, label }: { value: string; onChange: (v: 
             onClick={() => onChange(c)}
             className={`h-7 w-7 rounded-lg border-2 transition-all hover:scale-110 ${
               value.toUpperCase() === c.toUpperCase()
-                ? 'border-foreground ring-2 ring-foreground/20 scale-110'
-                : 'border-transparent'
+                ? 'border-white/80 ring-2 ring-white/25 scale-110'
+                : 'border-white/10'
             }`}
-            style={{ backgroundColor: c, boxShadow: c === '#FFFFFF' ? 'inset 0 0 0 1px rgba(0,0,0,0.1)' : undefined }}
+            style={{ backgroundColor: c, boxShadow: c === '#FFFFFF' ? 'inset 0 0 0 1px rgba(255,255,255,0.2)' : undefined }}
           />
         ))}
         <div className="relative ml-1">
@@ -171,7 +162,7 @@ function ColorPicker({ value, onChange, label }: { value: string; onChange: (v: 
             type="color"
             value={value}
             onChange={(e) => onChange(e.target.value)}
-            className="h-7 w-7 p-0 cursor-pointer border-0"
+            className="h-7 w-7 p-0 cursor-pointer border-0 bg-transparent"
           />
         </div>
       </div>
@@ -193,16 +184,16 @@ function StyleSelector({
 }) {
   return (
     <div className="space-y-2">
-      <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{label}</Label>
+      <Label className="lux-eyebrow !text-[10px]">{label}</Label>
       <div className="flex flex-wrap gap-1.5">
         {options.map((o) => (
           <button
             key={o.value}
             onClick={() => onChange(o.value)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+            className={`rounded-full px-3 py-1.5 text-xs font-medium transition-all ${
               value === o.value
-                ? 'bg-foreground text-background shadow-sm'
-                : 'bg-muted/80 text-muted-foreground hover:bg-muted hover:text-foreground'
+                ? 'bg-[#e9c47c] text-[#1a1206] shadow-sm'
+                : 'bg-white/[0.05] text-[#8fa0c2] hover:bg-white/10 hover:text-white'
             }`}
           >
             {o.label}
@@ -261,25 +252,22 @@ function GeneratedQrGrid({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
-            <Check className="h-4 w-4 text-emerald-600" />
-          </div>
+          <span className="lux-dot shrink-0" style={{ backgroundColor: '#34d399' }} aria-hidden="true" />
           <div>
-            <p className="text-sm font-semibold">Plaque QR Hub générée</p>
-            <p className="text-xs text-muted-foreground">Téléchargez en PDF ou individuellement</p>
+            <p className="text-sm font-semibold text-white">Plaque QR Hub générée</p>
+            <p className="text-xs text-[#8fa0c2]">Téléchargez en PDF ou individuellement</p>
           </div>
         </div>
-        <Button onClick={handleDownloadAllPdf} className="gap-2 bg-emerald-600 hover:bg-emerald-700">
-          <Download className="h-4 w-4" />
+        <Button onClick={handleDownloadAllPdf} className="lux-btn h-9 rounded-full px-4 text-xs">
           Télécharger PDF
         </Button>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 max-h-[480px] overflow-y-auto pr-1">
+      <div className="lux-scroll grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 max-h-[480px] overflow-y-auto pr-1">
         {codes.map((code) => (
           <div
             key={code}
-            className="group relative flex flex-col items-center gap-2 rounded-2xl border bg-white p-3 shadow-sm hover:shadow-lg transition-all duration-200"
+            className="group relative flex flex-col items-center gap-2 rounded-2xl border border-white/10 p-3 shadow-sm transition-all duration-200 hover:border-white/20"
             style={{ backgroundColor: design.backgroundColor }}
           >
             <div id={`generated-qr-${code}`}>
@@ -291,21 +279,21 @@ function GeneratedQrGrid({
                 level={qrLevel}
               />
             </div>
-            <span className="font-mono text-[10px] font-bold text-center break-all leading-tight text-gray-700">
+            <span className="font-mono text-[10px] font-bold text-center break-all leading-tight text-black/70">
               {code}
             </span>
             <div className="flex gap-1 opacity-70 group-hover:opacity-100 transition-opacity">
               <button
                 onClick={() => handleCopyCode(code)}
-                className="flex items-center gap-1 rounded-md bg-gray-100 px-2 py-1 text-[10px] font-medium text-gray-600 hover:bg-gray-200 transition-colors"
+                className="rounded-md bg-black/5 px-2 py-1 text-[10px] font-medium text-black/60 hover:bg-black/10 transition-colors"
               >
-                <Copy className="h-2.5 w-2.5" /> Copier
+                Copier
               </button>
               <button
                 onClick={() => handleDownloadSingle(code)}
-                className="flex items-center gap-1 rounded-md bg-gray-100 px-2 py-1 text-[10px] font-medium text-gray-600 hover:bg-gray-200 transition-colors"
+                className="rounded-md bg-black/5 px-2 py-1 text-[10px] font-medium text-black/60 hover:bg-black/10 transition-colors"
               >
-                <Download className="h-2.5 w-2.5" /> PNG
+                PNG
               </button>
             </div>
           </div>
@@ -321,12 +309,9 @@ function GeneratedQrGrid({
 
 function LivePreview({ design, qrLevel }: { design: DesignConfig; qrLevel: 'L' | 'M' | 'Q' | 'H' }) {
   return (
-    <Card className="border-2 border-dashed border-muted-foreground/20 bg-gradient-to-b from-muted/30 to-muted/10">
+    <Card className="lux-card rounded-2xl border-dashed border-white/15 bg-white/[0.02]">
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-sm">
-          <Eye className="h-4 w-4" />
-          Aperçu en direct
-        </CardTitle>
+        <CardTitle className="lux-eyebrow !text-[10px]">Aperçu en direct</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col items-center gap-4">
         <div
@@ -341,12 +326,12 @@ function LivePreview({ design, qrLevel }: { design: DesignConfig; qrLevel: 'L' |
             level={qrLevel}
           />
         </div>
-        <div className="w-full space-y-1.5 text-xs text-muted-foreground">
-          <div className="flex justify-between"><span>Matériau</span><span className="font-medium text-foreground">{PLAQUE_MATERIAL_META[design.material].emoji} {PLAQUE_MATERIAL_META[design.material].label}</span></div>
-          <div className="flex justify-between"><span>Points</span><span className="font-mono font-medium text-foreground">{design.dotsType}</span></div>
-          <div className="flex justify-between"><span>Coins</span><span className="font-mono font-medium text-foreground">{design.cornersSquareType}</span></div>
-          <div className="flex justify-between"><span>Correction</span><span className="font-mono font-medium text-foreground">{design.errorCorrectionLevel}</span></div>
-          <div className="flex justify-between"><span>Logo</span><span className="font-mono font-medium text-foreground">{design.logoPreset || 'Aucun'}</span></div>
+        <div className="w-full space-y-1.5 text-xs text-[#8fa0c2]">
+          <div className="flex justify-between"><span>Matériau</span><span className="font-medium text-white">{PLAQUE_MATERIAL_META[design.material].label}</span></div>
+          <div className="flex justify-between"><span>Points</span><span className="font-mono font-medium text-white">{design.dotsType}</span></div>
+          <div className="flex justify-between"><span>Coins</span><span className="font-mono font-medium text-white">{design.cornersSquareType}</span></div>
+          <div className="flex justify-between"><span>Correction</span><span className="font-mono font-medium text-white">{design.errorCorrectionLevel}</span></div>
+          <div className="flex justify-between"><span>Logo</span><span className="font-mono font-medium text-white">{design.logoPreset || 'Aucun'}</span></div>
         </div>
       </CardContent>
     </Card>
@@ -404,14 +389,9 @@ export function GenerateBatch() {
   return (
     <div className="space-y-6">
       {/* Page title */}
-      <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 shadow-lg shadow-emerald-500/25">
-          <QrCode className="h-5 w-5 text-white" />
-        </div>
-        <div>
-          <h2 className="text-lg font-bold">Générer une plaque QR Hub</h2>
-          <p className="text-sm text-muted-foreground">Personnalisez le design de votre plaque</p>
-        </div>
+      <div className="flex flex-col gap-1">
+        <h2 className="lux-display text-2xl font-semibold text-white">Générer une plaque QR Hub</h2>
+        <p className="text-sm text-[#8fa0c2]">Personnalisez le design de votre plaque</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -419,28 +399,25 @@ export function GenerateBatch() {
         <div className="lg:col-span-8 space-y-6">
 
           {/* ---- Configuration ---- */}
-          <Card className="border-0 shadow-sm">
-            <CardHeader className="bg-gradient-to-r from-muted/50 to-transparent border-b">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <Layout className="h-4 w-4 text-blue-500" />
-                Configuration
-              </CardTitle>
+          <Card className="lux-card">
+            <CardHeader className="border-b border-white/8">
+              <CardTitle className="lux-display text-lg text-white">Configuration</CardTitle>
             </CardHeader>
             <CardContent className="pt-4 space-y-4">
               <div className="space-y-2">
-                <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Référence (optionnel)</Label>
+                <Label className="lux-eyebrow !text-[10px]">Référence (optionnel)</Label>
                 <Input
                   value={batchName}
                   onChange={(e) => setBatchName(e.target.value)}
                   placeholder="Ex: Commande #1234"
-                  className="h-11"
+                  className="h-11 rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
                 />
               </div>
 
               {/* FIX-11 — choix du matériau réel de la plaque (persisté
                   dans designConfig JSON : QrBatch + PhysicalQrCode) */}
               <div className="space-y-2">
-                <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                <Label className="lux-eyebrow !text-[10px]">
                   Matériau de la plaque
                 </Label>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -454,19 +431,19 @@ export function GenerateBatch() {
                         aria-pressed={active}
                         className={`text-left rounded-xl border-2 p-3 transition-all ${
                           active
-                            ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 shadow-sm'
-                            : 'border-transparent bg-muted/60 hover:border-muted-foreground/30 hover:bg-muted'
+                            ? 'border-[#5c8af0]/60 bg-[#5c8af0]/10 shadow-sm'
+                            : 'border-white/10 bg-white/[0.03] hover:border-white/20 hover:bg-white/[0.06]'
                         }`}
                       >
-                        <p className={`text-sm font-semibold ${active ? 'text-emerald-700 dark:text-emerald-300' : ''}`}>
-                          {m.emoji} {m.label}
+                        <p className={`text-sm font-semibold ${active ? 'text-white' : 'text-[#c7d3ec]'}`}>
+                          {m.label}
                         </p>
-                        <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">{m.hint}</p>
+                        <p className="text-[11px] text-[#8fa0c2] mt-0.5 leading-snug">{m.hint}</p>
                       </button>
                     );
                   })}
                 </div>
-                <p className="text-[11px] text-muted-foreground">
+                <p className="text-[11px] text-[#8fa0c2]">
                   Le matériau est enregistré avec le design du lot (aluminium par défaut).
                 </p>
               </div>
@@ -474,28 +451,25 @@ export function GenerateBatch() {
           </Card>
 
           {/* ---- Design ---- */}
-          <Card className="border-0 shadow-sm">
-            <CardHeader className="bg-gradient-to-r from-muted/50 to-transparent border-b">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <Palette className="h-4 w-4 text-emerald-500" />
-                Style & Design
-              </CardTitle>
+          <Card className="lux-card">
+            <CardHeader className="border-b border-white/8">
+              <CardTitle className="lux-display text-lg text-white">Style &amp; Design</CardTitle>
             </CardHeader>
             <CardContent className="pt-4">
               <Tabs defaultValue="style">
-                <TabsList className="w-full mb-4">
-                  <TabsTrigger value="style" className="flex-1 gap-1.5">
-                    <Palette className="h-3.5 w-3.5" /> Couleurs & Style
+                <TabsList className="mb-4 w-full rounded-full border border-white/10 bg-white/[0.04] p-1">
+                  <TabsTrigger value="style" className="flex-1 rounded-full text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fa0c2] transition-colors data-[state=active]:bg-white/10 data-[state=active]:text-white">
+                    Couleurs &amp; Style
                   </TabsTrigger>
-                  <TabsTrigger value="logo" className="flex-1 gap-1.5">
-                    <ImageIcon className="h-3.5 w-3.5" /> Logo central
+                  <TabsTrigger value="logo" className="flex-1 rounded-full text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fa0c2] transition-colors data-[state=active]:bg-white/10 data-[state=active]:text-white">
+                    Logo central
                   </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="style" className="space-y-5 mt-0">
                   <ColorPicker label="Couleur des points" value={design.dotsColor} onChange={(v) => updateDesign('dotsColor', v)} />
                   <ColorPicker label="Couleur de fond" value={design.backgroundColor} onChange={(v) => updateDesign('backgroundColor', v)} />
-                  <Separator />
+                  <Separator className="bg-white/10" />
                   <StyleSelector label="Style des points" options={DOT_TYPES} value={design.dotsType} onChange={(v) => updateDesign('dotsType', v)} />
                   <StyleSelector label="Coins extérieurs" options={CORNER_SQUARE_TYPES} value={design.cornersSquareType} onChange={(v) => updateDesign('cornersSquareType', v)} />
                   <StyleSelector label="Coins intérieurs" options={CORNER_DOT_TYPES} value={design.cornersDotType} onChange={(v) => updateDesign('cornersDotType', v)} />
@@ -510,16 +484,13 @@ export function GenerateBatch() {
                         onClick={() => updateDesign('logoPreset', preset.value)}
                         className={`flex flex-col items-center gap-2 rounded-xl p-3 border-2 transition-all ${
                           design.logoPreset === preset.value
-                            ? 'border-foreground bg-muted shadow-sm'
-                            : 'border-transparent hover:border-muted-foreground/30 hover:bg-muted/50'
+                            ? 'border-[#e9c47c]/50 bg-[#e9c47c]/10'
+                            : 'border-white/10 bg-white/[0.03] hover:border-white/20 hover:bg-white/[0.06]'
                         }`}
                       >
-                        <div className={`h-10 w-10 flex items-center justify-center rounded-lg ${
-                          design.logoPreset === preset.value ? 'text-foreground' : 'text-muted-foreground'
-                        }`}>
-                          {LOGO_ICON_MAP[preset.icon]}
-                        </div>
-                        <span className="text-[10px] font-medium">{preset.label}</span>
+                        <span className={`text-[10px] font-medium ${design.logoPreset === preset.value ? 'text-[#e9c47c]' : 'text-[#8fa0c2]'}`}>
+                          {preset.label}
+                        </span>
                       </button>
                     ))}
                   </div>
@@ -532,15 +503,14 @@ export function GenerateBatch() {
           <Button
             onClick={handleGenerate}
             disabled={generating}
-            className="w-full h-14 text-base font-bold gap-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-lg shadow-emerald-600/25 transition-all hover:shadow-xl"
+            className="lux-btn h-14 w-full rounded-full text-base font-semibold"
           >
-            {generating ? <Loader2 className="h-5 w-5 animate-spin" /> : <Sparkles className="h-5 w-5" />}
             {generating ? 'Génération en cours...' : 'Générer la plaque QR'}
           </Button>
 
           {/* ---- Generated Grid ---- */}
           {codes.length > 0 && (
-            <Card ref={previewRef} className="border-0 shadow-sm">
+            <Card ref={previewRef} className="lux-card">
               <CardContent className="pt-6">
                 <GeneratedQrGrid codes={codes} design={design} qrLevel={qrLevel} />
               </CardContent>

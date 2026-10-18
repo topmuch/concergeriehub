@@ -1,21 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 
-// GET: List notifications for a user
+// GET: List notifications for the logged-in user (?userId= ignoré — scoping session)
 export async function GET(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+    }
+
+    const userId = (session.user as { id?: string }).id;
+
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
     const unreadOnly = searchParams.get('unreadOnly') === 'true';
     const limitParam = searchParams.get('limit');
     const limit = Math.min(Math.max(parseInt(limitParam || '50', 10), 1), 100);
-
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'userId est requis' },
-        { status: 400 }
-      );
-    }
 
     const where: Record<string, unknown> = { userId };
     if (unreadOnly) { where.isRead = false; }
@@ -41,21 +42,30 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST: Create a notification
+// POST: Create a notification — userId forcé à la session (jamais le body)
 export async function POST(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+    }
+
+    const userId = (session.user as { id?: string }).id;
+    if (!userId) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+    }
+
     const body = await request.json();
-    const { userId, type, title, body: notifBody, dataJson } = body as {
-      userId: string;
+    const { type, title, body: notifBody, dataJson } = body as {
       type: string;
       title: string;
       body?: string;
       dataJson?: string;
     };
 
-    if (!userId || !type || !title) {
+    if (!type || !title) {
       return NextResponse.json(
-        { error: 'userId, type et title sont requis' },
+        { error: 'type et title sont requis' },
         { status: 400 }
       );
     }
@@ -80,18 +90,15 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// PUT: Mark all notifications as read for a user
-export async function PUT(request: NextRequest) {
+// PUT: Mark all notifications as read for the logged-in user
+export async function PUT() {
   try {
-    const body = await request.json();
-    const { userId } = body as { userId: string };
-
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'userId est requis' },
-        { status: 400 }
-      );
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
+
+    const userId = (session.user as { id?: string }).id;
 
     const result = await db.notification.updateMany({
       where: { userId, isRead: false },

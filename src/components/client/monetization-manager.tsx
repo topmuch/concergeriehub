@@ -499,13 +499,13 @@ export function MonetizationManager() {
               key={plan.id}
               className={`relative p-6 flex flex-col ${
                 isFeatured
-                  ? 'border-2 border-transparent bg-gradient-to-br from-primary/10 via-background to-emerald-500/10 ring-2 ring-primary/30'
+                  ? 'border-2 border-transparent bg-gradient-to-br from-primary/10 via-background to-blue-500/10 ring-2 ring-primary/30'
                   : ''
               }`}
             >
               {isFeatured && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <Badge className="bg-emerald-600 text-white border-0 px-3 py-0.5">
+                  <Badge className="bg-blue-600 text-white border-0 px-3 py-0.5">
                     <Sparkles className="size-3 mr-1" />
                     Populaire
                   </Badge>

@@ -163,7 +163,7 @@ export async function POST(req: NextRequest) {
             amount: Math.round(amount * 100),
             currency: 'eur',
             destination: provider.stripeAccountId,
-            description: `Reversement Conciergerie Hub — ${provider.businessName}`,
+            description: `Reversement RoomScan — ${provider.businessName}`,
           });
           method = 'STRIPE_CONNECT';
           stripeTransferId = transfer.id;

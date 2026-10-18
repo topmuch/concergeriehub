@@ -75,7 +75,7 @@ export async function GET() {
         kind: 'plaque_lost' as const,
         emoji: '🔎',
         title: `Plaque déclarée perdue — ${p.activationCode}`,
-        detail: 'Vérifier l\u2019inventaire plaques',
+        detail: 'Vérifier l’inventaire plaques',
         href: '/admin/qr?tab=plaques',
         at: now.toISOString(),
       })),

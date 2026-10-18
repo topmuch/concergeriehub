@@ -25,6 +25,13 @@ import { queueEmail } from '@/lib/email';
 // FIX-12 — rendu DB-first : le modèle éditable /admin/emails → Modèles
 // est lu en priorité, fallback silencieux sur le template codé en dur.
 import { renderHostNotificationEmail } from '@/lib/email-template-render';
+// PREMIUM V5 — « Bouclier d'avis au départ » : SMS Twilio (env-gated,
+// fail-closed) + URL canonique + parseur premiumFeatures.
+import { sendSms } from '@/lib/sms';
+// AUDIT PRÉ-PROD — CRON iCal : parse + upsert des réservations distantes
+import { parseIcalEvents, upsertIcalBookings } from '@/lib/ical';
+import { siteUrl } from '@/lib/site';
+import { parsePremiumFeatures } from '@/lib/concierge';
 
 // -------------------------------------------------------------
 // Contextes de déclenchement
@@ -150,6 +157,9 @@ async function resolveAudience(propertyId: string, action: AutomationAction): Pr
  * d'une notification d'équipe reçoit aussi un email (même contenu,
  * template générique). Fire-and-forget : ne lève jamais, n'échoue
  * jamais le flux appelant.
+ *
+ * v4.58 — expédié PAR la boîte système (expéditeur global) VERS le
+ * mail de chaque compte destinataire — plus aucune redirection.
  */
 async function emailMirror(
   userIds: string[],
@@ -164,11 +174,12 @@ async function emailMirror(
     } catch {
       return;
     }
+    const propertyName = parsed.propertyName ?? 'Votre bien';
+
     const users = await db.user.findMany({
       where: { id: { in: userIds } },
       select: { id: true, email: true },
     });
-    const propertyName = parsed.propertyName ?? 'Votre bien';
     for (const user of users) {
       if (!user.email) continue;
       const tpl = await renderHostNotificationEmail({
@@ -372,7 +383,22 @@ export async function runAutomationTrigger(
 // Rappels quotidiens (évaluation lazy)
 // -------------------------------------------------------------
 
-const DAILY_TRIGGERS: AutomationTrigger[] = ['CHECK_IN_TODAY', 'CHECK_OUT_TODAY'];
+const DAILY_TRIGGERS: AutomationTrigger[] = [
+  'CHECK_IN_TODAY',
+  'CHECK_OUT_TODAY',
+  // AUDIT PRÉ-PROD (Module 5.3) — messages automatiques J-3 / J+1
+  'CHECK_IN_J3',
+  'CHECK_OUT_J1',
+  'REVIEW_SHIELD_TODAY', // PREMIUM V5 — lien Bouclier d'avis aux départs du jour
+];
+
+/** Décalage en jours de la FENÊTRE DE RECHERCHE par rapport à AUJOURD'HUI. */
+const TRIGGER_DAY_OFFSET: Record<string, number> = {
+  CHECK_IN_TODAY: 0,
+  CHECK_OUT_TODAY: 0,
+  CHECK_IN_J3: 3,  // J-3 : le tick cherche les ARRIVÉES dans 3 jours
+  CHECK_OUT_J1: -1, // J+1 : le tick cherche les DÉPARTS d'hier
+};
 
 /**
  * Tick lazy des rappels arrivée/départ du jour. À appeler à la
@@ -396,6 +422,28 @@ export async function runDailyAutomations(propertyIds: string[]): Promise<number
     });
 
     for (const rule of rules) {
+      // AUDIT PRÉ-PROD — marque le tick AVANT le traitement (sémantique
+      // at-most-once) : deux ticks concurrents au 1er appel du jour ne
+      // peuvent plus créer de doublons de notifications.
+      await db.automationRule
+        .update({ where: { id: rule.id }, data: { lastRunAt: new Date() } })
+        .catch(() => undefined);
+
+      // PREMIUM V5 — ⭐ Bouclier d'avis : SMS/email au voyageur qui
+      // part aujourd'hui + récapitulatif à l'équipe.
+      if (rule.trigger === 'REVIEW_SHIELD_TODAY') {
+        created += await runReviewShieldForRule(rule);
+        continue;
+      }
+
+      // AUDIT PRÉ-PROD — J-3 (pré-arrivée) / J+1 (post-départ, ménage) :
+      // même mécanique d'évaluation lazy que Jour J, décalé de N jours.
+      const offset = TRIGGER_DAY_OFFSET[rule.trigger];
+      if (offset !== undefined && offset !== 0) {
+        created += await runOffsetDayForRule(rule, offset);
+        continue;
+      }
+
       const isCheckIn = rule.trigger === 'CHECK_IN_TODAY';
       const bookings = await db.booking.findMany({
         where: {
@@ -441,16 +489,253 @@ export async function runDailyAutomations(propertyIds: string[]): Promise<number
           created += await pushNotifications(audience, payload, dataJson);
         }
       }
-
-      // Marquer le tick du jour même sans séjour (évite de re-scanner)
-      await db.automationRule
-        .update({ where: { id: rule.id }, data: { lastRunAt: new Date() } })
-        .catch(() => undefined);
     }
     return created;
   } catch (error) {
     console.error('[automations] runDailyAutomations failed:', error);
     return created;
+  }
+}
+
+/**
+ * AUDIT PRÉ-PROD — triggers décalés (J-3 pré-arrivée / J+1 post-départ).
+ * offset = -3 : séJOURS dont checkIn est dans 3 jours ;
+ * offset = +1 : séJOURS terminés hier (ménage non fait → tâche équipe).
+ * Retourne le nombre de notifications créées. Jamais de throw.
+ */
+async function runOffsetDayForRule(
+  rule: { id: string; propertyId: string; trigger: string; action: string },
+  offset: number,
+): Promise<number> {
+  try {
+    const dayStart = new Date();
+    dayStart.setHours(0, 0, 0, 0);
+    dayStart.setDate(dayStart.getDate() + offset);
+    const dayEnd = new Date(dayStart);
+    dayEnd.setHours(23, 59, 59, 999);
+
+    const isPreArrival = offset > 0;
+    const bookings = await db.booking.findMany({
+      where: {
+        propertyId: rule.propertyId,
+        status: { not: 'CANCELLED' },
+        ...(isPreArrival
+          ? { checkIn: { gte: dayStart, lte: dayEnd } }
+          : { checkOut: { gte: dayStart, lte: dayEnd } }),
+      },
+      select: {
+        id: true,
+        guestName: true,
+        guests: true,
+        ...(isPreArrival ? {} : { cleaningStatus: true }),
+      },
+    });
+    if (bookings.length === 0) return 0;
+
+    const property = await db.property.findUnique({
+      where: { id: rule.propertyId },
+      select: { name: true },
+    });
+    const propertyName = property?.name ?? 'Votre bien';
+    let created = 0;
+
+    for (const booking of bookings) {
+      let payload: NotificationPayload;
+      if (isPreArrival) {
+        payload = {
+          type: 'host_prearrival',
+          title: '✉️ Arrivée dans 3 jours',
+          body: `${propertyName} : ${booking.guestName} arrive le ${formatFrDate(dayStart)} (${booking.guests} pers.) — préparez le logement et envoyez les informations d'accès.`,
+        };
+      } else {
+        const cleaningPending = (booking as { cleaningStatus?: string }).cleaningStatus === 'PENDING';
+        payload = {
+          type: 'host_cleaning_followup',
+          title: cleaningPending ? '🧽 Ménage à faire (J+1)' : '✅ Ménage déjà fait',
+          body: cleaningPending
+            ? `${propertyName} : ${booking.guestName} est parti hier et le ménage est toujours « à faire » — planifiez-le aujourd'hui.`
+            : `${propertyName} : séjour de ${booking.guestName} terminé, ménage déjà effectué. Rien à faire.`,
+        };
+      }
+      const dataJson = JSON.stringify({
+        propertyId: rule.propertyId,
+        propertyName,
+        trigger: rule.trigger,
+        bookingId: booking.id,
+        url: '/airbnb/dashboard',
+      });
+      created += await pushNotifications(
+        await resolveAudience(rule.propertyId, rule.action as AutomationAction),
+        payload,
+        dataJson,
+      );
+    }
+    return created;
+  } catch (error) {
+    console.error('[automations] runOffsetDayForRule failed:', error);
+    return 0;
+  }
+}
+
+// -------------------------------------------------------------
+// PREMIUM V5 — ⭐ Bouclier d'avis au départ (REVIEW_SHIELD_TODAY)
+// -------------------------------------------------------------
+
+/** Échappe les caractères HTML d'un fragment texte (emails invité). */
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/**
+ * Envoie le lien du Bouclier d'avis aux départs du jour d'un bien :
+ *   1. SMS prioritaire si `booking.guestPhone` est renseigné (Twilio,
+ *      env-gated fail-closed — sans clés : no-op tracé).
+ *   2. Sinon email si `booking.guestEmail` existe (outbox 'custom').
+ *   3. Dans tous les cas, notification équipe (traçabilité ; et si
+ *      aucun canal, message « envoyez-lui le lien manuellement »).
+ *
+ * LIEN TOKENISÉ (ÉTAPE 3.2) : chaque booking reçoit un
+ * `feedbackToken` unique (généré paresseusement, idempotent) →
+ *   /app/hub/[slug]/guest/feedback?token=…
+ * Le lien ouvre DIRECTEMENT le Review Shield pré-rempli (nom, bien,
+ * avis public) et rattache le retour privé au séjour (traçabilité,
+ * anti-spam — token révocable en base).
+ *
+ * Gardes : règle active + Bouclier activé sur CE bien (premiumFeatures)
+ * + bien possédant un Hub (qrHubSlug). Jamais de throw.
+ */
+async function runReviewShieldForRule(rule: {
+  id: string;
+  propertyId: string;
+}): Promise<number> {
+  try {
+    const property = await db.property.findUnique({
+      where: { id: rule.propertyId },
+      select: {
+        id: true,
+        name: true,
+        qrHubSlug: true,
+        premiumFeatures: true,
+        owner: { select: { id: true } },
+      },
+    });
+    if (!property) return 0;
+
+    // Garde métier : Bouclier activé + Hub Invité existant (jamais cru client).
+    const premium = parsePremiumFeatures(property.premiumFeatures);
+    if (!premium?.enableReviewShield || !property.qrHubSlug) return 0;
+
+    // Départs du jour (hors annulés) — avec leurs canaux de contact.
+    const bookings = await db.booking.findMany({
+      where: {
+        propertyId: property.id,
+        status: { not: 'CANCELLED' },
+        checkOut: { gte: startOfToday(), lte: endOfToday() },
+      },
+      select: {
+        id: true,
+        guestName: true,
+        guestEmail: true,
+        guestPhone: true,
+        feedbackToken: true,
+      },
+    });
+    if (bookings.length === 0) return 0;
+
+    const hubUrl = `${siteUrl}/app/hub/${property.qrHubSlug}/guest`;
+    let created = 0;
+
+    for (const booking of bookings) {
+      // ÉTAPE 3.2 — token unique du Bouclier (généré paresseusement,
+      // idempotent : un départ relancé le même jour garde son lien).
+      let feedbackToken = booking.feedbackToken;
+      if (!feedbackToken) {
+        feedbackToken = crypto.randomUUID().replace(/-/g, '');
+        try {
+          await db.booking.update({
+            where: { id: booking.id },
+            data: { feedbackToken },
+          });
+        } catch (error) {
+          console.error('[automations] feedbackToken persist failed:', error);
+          feedbackToken = null; // repli : lien Hub générique
+        }
+      }
+      const shieldUrl = feedbackToken
+        ? `${siteUrl}/app/hub/${property.qrHubSlug}/guest/feedback?token=${feedbackToken}`
+        : hubUrl;
+
+      const firstName = booking.guestName.trim().split(/\s+/)[0] || booking.guestName;
+      const smsBody =
+        `Bonjour ${firstName} ! C'est votre dernier jour à ${property.name} 🏡 ` +
+        `Comment s'est passé votre séjour ? Donnez votre avis en 30 s : ${shieldUrl} À bientôt !`;
+
+      // 1) SMS prioritaire (si téléphone E.164 renseigné et Twilio configuré)
+      let channel: 'sms' | 'email' | 'none' = 'none';
+      const phone = booking.guestPhone?.trim();
+      if (phone) {
+        const sms = await sendSms(phone, smsBody);
+        if (sms.sent) channel = 'sms';
+      }
+
+      // 2) Fallback email (SMS absent/échoué + email présent)
+      if (channel === 'none' && booking.guestEmail) {
+        await queueEmail({
+          to: booking.guestEmail,
+          subject: `☀️ Bonjour ${firstName}, c'est votre dernier jour ! Votre avis sur ${property.name}`,
+          html:
+            `<p style="margin:0 0 12px">Bonjour <strong>${escapeHtml(firstName)}</strong>,</p>` +
+            `<p style="margin:0 0 12px">☀️ C'est votre dernier jour à <strong>${escapeHtml(property.name)}</strong> — nous espérons que votre séjour a été parfait&nbsp;!</p>` +
+            `<p style="margin:0 0 16px">Comment s'est passé votre séjour&nbsp;? Votre avis nous aide énormément :</p>` +
+            `<p style="margin:0 0 16px"><a href="${shieldUrl}" style="display:inline-block;background:#0f766e;color:#fff;padding:12px 20px;border-radius:12px;font-weight:700;text-decoration:none">⭐ Donner mon avis en 30 secondes</a></p>` +
+            `<p style="margin:0;color:#64748b;font-size:13px">Si le bouton ne fonctionne pas : ${shieldUrl}</p>`,
+          text: smsBody,
+          template: 'custom',
+          propertyId: property.id,
+          referenceType: 'review_shield',
+          referenceId: booking.id,
+          meta: { trigger: 'REVIEW_SHIELD_TODAY', shieldUrl, feedbackToken },
+        }).catch(() => undefined);
+        channel = 'email';
+      }
+
+      // 3) Récapitulatif équipe (OWNER + MANAGER)
+      const recap: NotificationPayload = {
+        type: 'host_review_shield',
+        title: '⭐ Demande d’avis au départ',
+        body:
+          `${property.name} : ${booking.guestName} part aujourd’hui — ` +
+          (channel === 'sms'
+            ? 'le lien du Bouclier d’avis vient de lui être envoyé par SMS.'
+            : channel === 'email'
+              ? 'le lien du Bouclier d’avis vient de lui être envoyé par email.'
+              : 'aucun téléphone/email sur la réservation — envoyez-lui le lien manuellement depuis le Hub.'),
+      };
+      const dataJson = JSON.stringify({
+        propertyId: property.id,
+        propertyName: property.name,
+        trigger: 'REVIEW_SHIELD_TODAY',
+        bookingId: booking.id,
+        shieldUrl,
+        hubUrl,
+        channel,
+        url: `/app/hub/${property.qrHubSlug}/guest`,
+      });
+      created += await pushNotifications(
+        await resolveAudience(property.id, 'NOTIFY_OWNERS'),
+        recap,
+        dataJson,
+      );
+    }
+    return created;
+  } catch (error) {
+    console.error('[automations] runReviewShieldForRule failed:', error);
+    return 0;
   }
 }
 
@@ -468,6 +753,156 @@ export async function runDailyAutomationsForUser(userId: string): Promise<number
     return await runDailyAutomations(ids);
   } catch (error) {
     console.error('[automations] runDailyAutomationsForUser failed:', error);
+    return 0;
+  }
+}
+
+// -------------------------------------------------------------
+// ÉTAPE 3.2 — checkDailyAutomations() — tick GLOBAL (cron)
+// -------------------------------------------------------------
+
+export interface DailyAutomationsReport {
+  propertiesChecked: number;
+  notificationsCreated: number;
+  /** AUDIT PRÉ-PROD — CRON iCal : feeds synchronisés ce tick (throttle 1 h). */
+  feedsSynced?: number;
+  durationMs: number;
+}
+
+/**
+ * Tick global des automatisations du jour, sur TOUS les biens actifs
+ * possédant au moins une règle active. Appelé par :
+ *  - POST /api/admin/trigger-daily-automations (cron externe —
+ *    Cron-job.org, Coolify scheduled task…) — Bearer CRON_SECRET ;
+ *  - un superadmin depuis la Console (test manuel).
+ *
+ * lastRunAt garantit une exécution réelle UNE fois par jour et par
+ * règle : appeler la route plusieurs fois par jour est donc sûr
+ * (idempotent) et sert de « rattrapage » si le cron a raté.
+ */
+export async function checkDailyAutomations(): Promise<DailyAutomationsReport> {
+  const startedAt = Date.now();
+  let propertiesChecked = 0;
+  try {
+    // AUDIT PRÉ-PROD — déploie les NOUVELLES règles du catalogue (J-3 /
+    // J+1) sur tous les biens actifs existants (idempotent : filtre les
+    // clés déjà présentes), puis tick des rappels du jour.
+    try {
+      const activeProps = await db.property.findMany({
+        where: { isActive: true },
+        select: { id: true },
+      });
+      await Promise.all(activeProps.map((p) => ensureDefaultRules(p.id)));
+    } catch (error) {
+      console.error('[automations] catalogue deployment failed:', error);
+    }
+
+    // AUDIT PRÉ-PROD — CRON iCal : synchronise tous les feeds dus
+    // (lastSyncAt > 1 h) — appelé par le cron externe (Cron-job.org
+    // hourly) ou le tick lazy. Throttle 1 h par feed.
+    let feedsSynced = 0;
+    try {
+      feedsSynced = await syncDueIcalFeeds();
+    } catch (error) {
+      console.error('[automations] ical sync failed:', error);
+    }
+
+    const rules = await db.automationRule.findMany({
+      where: { isActive: true },
+      select: { propertyId: true },
+    });
+    const propertyIds = Array.from(new Set(rules.map((r) => r.propertyId)));
+    propertiesChecked = propertyIds.length;
+    const created = await runDailyAutomations(propertyIds);
+    return {
+      propertiesChecked,
+      notificationsCreated: Math.max(created, 0),
+      feedsSynced,
+      durationMs: Date.now() - startedAt,
+    };
+  } catch (error) {
+    console.error('[automations] checkDailyAutomations failed:', error);
+    return { propertiesChecked, notificationsCreated: 0, feedsSynced: 0, durationMs: Date.now() - startedAt };
+  }
+}
+
+/**
+ * AUDIT PRÉ-PROD — CRON iCal (Module 3.5) : synchronise chaque feed
+ * dont la dernière synchro date de plus d'1 h (ou jamais). Télécharge
+ * le calendrier, parse les VEVENT et upsert les Bookings (idempotent,
+ * source 'ICAL'). Retourne le nombre de feeds traités. Jamais de throw.
+ */
+const ICAL_SYNC_THROTTLE_MS = 60 * 60 * 1000;
+
+export async function syncDueIcalFeeds(): Promise<number> {
+  // AUDIT 24-c (P1) — EXPORTÉE : le tick lazy du dashboard
+  // (/api/airbnb/automations GET) l'appelle en fire-and-forget pour que
+  // les calendriers iCal se resynchronisent MÊME sans cron externe
+  // (throttle interne : chaque feed n'est relu qu'au-delà d'1 h).
+  try {
+    const cutoff = new Date(Date.now() - ICAL_SYNC_THROTTLE_MS);
+    const feeds = await db.propertyIcalFeed.findMany({
+      where: { OR: [{ lastSyncAt: null }, { lastSyncAt: { lt: cutoff } }] },
+      select: { id: true, url: true, propertyId: true },
+      take: 50, // garde-fou : 50 feeds max par tick
+    });
+
+    let synced = 0;
+    for (const feed of feeds) {
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15_000);
+        let imported = 0;
+        let lastError: string | null = null;
+        try {
+          const res = await fetch(feed.url, {
+            signal: controller.signal,
+            headers: { Accept: 'text/calendar, text/plain, */*' },
+            cache: 'no-store',
+          });
+          if (res.ok) {
+            const content = await res.text();
+            const { events, error } = parseIcalEvents(content);
+            if (error) {
+              lastError = error;
+            } else {
+              imported = await db.$transaction((tx) =>
+                upsertIcalBookings(tx, feed.propertyId, events),
+              );
+            }
+          } else {
+            lastError = `HTTP ${res.status}`;
+          }
+        } finally {
+          clearTimeout(timeout);
+        }
+        await db.propertyIcalFeed.update({
+          where: { id: feed.id },
+          data: {
+            lastSyncAt: new Date(),
+            lastStatus: lastError ? 'ERROR' : 'OK',
+            lastError,
+            lastImported: imported,
+          },
+        });
+        synced++;
+      } catch (error) {
+        // Feed injoignable : trace + horodatage (retry au prochain tick)
+        await db.propertyIcalFeed
+          .update({
+            where: { id: feed.id },
+            data: {
+              lastSyncAt: new Date(),
+              lastStatus: 'ERROR',
+              lastError: error instanceof Error ? error.message.slice(0, 200) : 'erreur réseau',
+            },
+          })
+          .catch(() => undefined);
+      }
+    }
+    return synced;
+  } catch (error) {
+    console.error('[automations] syncDueIcalFeeds failed:', error);
     return 0;
   }
 }

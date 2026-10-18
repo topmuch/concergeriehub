@@ -13,9 +13,17 @@ export const AUTOMATION_TRIGGERS = [
   'CLEANING_DONE',
   'CHECK_IN_TODAY',
   'CHECK_OUT_TODAY',
+  // AUDIT PRÉ-PROD (Module 5.3) — messages automatiques J-3 / J+1 :
+  //   CHECK_IN_J3  → 3 jours avant l'arrivée (pré-arrivée, préparez votre séjour)
+  //   CHECK_OUT_J1 → le lendemain du départ (ménage à planifier + suivi)
+  'CHECK_IN_J3',
+  'CHECK_OUT_J1',
   'MAINTENANCE_REQUESTED',
   'MEMBER_ACCEPTED',
   'ORDER_CREATED', // ÉTAPE 17.3 : commande service depuis l'app invitée
+  // PREMIUM V5 — « Conciergerie 5 Étoiles » : le matin du départ,
+  // envoie au voyageur le lien du Bouclier d'avis (SMS + email).
+  'REVIEW_SHIELD_TODAY',
 ] as const;
 export type AutomationTrigger = (typeof AUTOMATION_TRIGGERS)[number];
 
@@ -25,6 +33,9 @@ export const AUTOMATION_ACTIONS = [
   'NOTIFY_TEAM', // propriétaire + gestionnaires + ménage
   'NOTIFY_CLEANERS', // personnel de ménage (fallback : owners)
   'NOTIFY_MAINTENANCE', // maintenance (fallback : owners)
+  // PREMIUM V5 — cible l'INVITÉ (SMS/email) plutôt que l'équipe :
+  // chaque départ du jour reçoit le lien du Bouclier d'avis du Hub.
+  'REVIEW_SHIELD_GUEST',
 ] as const;
 export type AutomationAction = (typeof AUTOMATION_ACTIONS)[number];
 
@@ -39,7 +50,7 @@ export interface AutomationMeta {
 }
 
 /**
- * Catalogue fixe — 8 automatisations. Déployé automatiquement sur
+ * Catalogue fixe — 11 automatisations. Déployé automatiquement sur
  * chaque bien (ensureDefaultRules), activé par défaut.
  */
 export const AUTOMATIONS_CATALOG: AutomationMeta[] = [
@@ -113,6 +124,33 @@ export const AUTOMATIONS_CATALOG: AutomationMeta[] = [
     trigger: 'ORDER_CREATED',
     action: 'NOTIFY_OWNERS',
   },
+  {
+    key: 'review_shield_departure',
+    emoji: '⭐',
+    label: 'Demande d’avis au départ',
+    description:
+      'Le matin du départ, envoie au voyageur le lien du Bouclier d’avis (SMS si téléphone renseigné, sinon email) — seulement si le Bouclier est activé sur le bien. Un récapitulatif est laissé à l’équipe.',
+    trigger: 'REVIEW_SHIELD_TODAY',
+    action: 'REVIEW_SHIELD_GUEST',
+  },
+  {
+    key: 'checkin_j3_reminder',
+    emoji: '✉️',
+    label: 'Message pré-arrivée (J-3)',
+    description:
+      '3 jours avant l’arrivée, rappelle à l’équipe de préparer le séjour et d’envoyer les informations d’accès au voyageur.',
+    trigger: 'CHECK_IN_J3',
+    action: 'NOTIFY_TEAM',
+  },
+  {
+    key: 'checkout_j1_cleaning',
+    emoji: '🧽',
+    label: 'Suivi post-départ (J+1)',
+    description:
+      'Le lendemain du départ, crée la tâche de ménage : rappel à l’équipe de ménage (statut du ménage resté « à faire ») et récapitulatif à l’hôte.',
+    trigger: 'CHECK_OUT_J1',
+    action: 'NOTIFY_CLEANERS',
+  },
 ];
 
 const CATALOG_BY_KEY = new Map(AUTOMATIONS_CATALOG.map((m) => [m.key, m]));
@@ -151,6 +189,18 @@ export function notificationEmoji(type: string): string {
       return '👥';
     case 'host_order':
       return '🥐';
+    // AUDIT PRÉ-PROD — automatisations J-3 / J+1
+    case 'host_prearrival':
+      return '✉️';
+    case 'host_cleaning_followup':
+      return '🧽';
+    // PREMIUM V5 — bouclier d'avis + late check-out (notifications invité)
+    case 'guest_feedback':
+      return '⭐';
+    case 'guest_latecheckout':
+      return '⏱️';
+    case 'host_review_shield':
+      return '⭐';
     default:
       return '🔔';
   }

@@ -94,7 +94,7 @@ export function PlaquePrint({
         <B2BCard className="max-w-md w-full text-center">
           <p className="text-3xl" aria-hidden="true">🔒</p>
           <p className="mt-2 font-semibold text-slate-900">Plaque introuvable</p>
-          <p className="text-sm text-slate-600 mt-1">{error || 'Cette plaque n\u2019existe pas ou ne vous appartient pas.'}</p>
+          <p className="text-sm text-slate-600 mt-1">{error || 'Cette plaque n’existe pas ou ne vous appartient pas.'}</p>
           <Button asChild variant="outline" className="mt-4">
             <Link href={backHref}>← Retour aux plaques</Link>
           </Button>
@@ -181,7 +181,7 @@ export function PlaquePrint({
         >
           {/* Marque */}
           <p className="text-sm font-bold text-slate-900">
-            🗝️ Conciergerie <span className="text-emerald-600">Hub</span>
+            🗝️ RoomScan<span className="text-[#0066EF]">.</span>
           </p>
 
           {/* Accueil */}
@@ -197,6 +197,8 @@ export function PlaquePrint({
                 src={qrDataUrl}
                 alt={`QR code du Hub ${propertyName}`}
                 className="h-44 w-44 block"
+                loading="lazy"
+                decoding="async"
               />
             ) : (
               <div className="h-44 w-44 flex items-center justify-center text-xs text-slate-400">
@@ -220,7 +222,7 @@ export function PlaquePrint({
           <p className="mt-4 text-[11px] text-slate-400 break-all px-2">{hubUrl}</p>
 
           <p className="mt-3 text-[10px] uppercase tracking-widest text-slate-400">
-            Propulsé par Conciergerie Hub
+            Propulsé par RoomScan
           </p>
         </div>
       </div>

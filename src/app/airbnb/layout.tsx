@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { normalizeMemberRole } from '@/lib/team';
 import { getHostPlanLimits } from '@/lib/b2b-server';
+import { hasActiveEdlSubscription } from '@/lib/edl-billing';
 import { HostShell } from '@/components/airbnb/host/host-shell';
 
 // =============================================================
@@ -11,6 +12,10 @@ import { HostShell } from '@/components/airbnb/host/host-shell';
 //
 // • Session NextAuth OBLIGATOIRE (sinon retour accueil).
 // • Les comptes superadmin sont renvoyés vers leur console.
+// • v4.107 — Les comptes « EDL seul » (acheteurs du module standalone
+//   299 €/an : abonnement actif, AUCUN bien, AUCUNE équipe) sont
+//   redirigés vers LEUR tableau de bord : /inspection/dashboard —
+//   ils n'accèdent JAMAIS au Hub classique.
 // • Calcule le niveau d'accès réel en base :
 //   'full'  → possède un bien OU manager accepté d'au moins un bien
 //   'team'  → uniquement CLEANER / MAINTENANCE (navigation réduite :
@@ -49,6 +54,14 @@ export default async function AirbnbLayout({
   });
 
   const accessLevel: 'full' | 'team' = ownedCount > 0 || isManagerSomewhere ? 'full' : 'team';
+
+  // v4.107 — Compte « EDL seul » → son dashboard dédié, jamais le Hub.
+  if (ownedCount === 0 && memberships.length === 0) {
+    const edlOnly = await hasActiveEdlSubscription(userId);
+    if (edlOnly) {
+      redirect('/inspection/dashboard');
+    }
+  }
 
   return (
     <HostShell

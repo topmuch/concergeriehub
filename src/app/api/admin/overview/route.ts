@@ -41,8 +41,12 @@ export async function GET() {
       db.property.count(),
       db.property.count({ where: { isActive: true } }),
 
+      // PERF : take 1000 max + orderBy — bornes anti-full-scan, les plus
+      // récentes d'abord (le MRR reste exact tant que le total actif < 1000).
       db.subscription.findMany({
         where: { userId: { not: null }, status: 'active' },
+        orderBy: { createdAt: 'desc' },
+        take: 1000,
         select: { amount: true, currency: true, billingCycle: true, plan: true },
       }),
 

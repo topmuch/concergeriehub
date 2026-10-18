@@ -2,18 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import {
-  AlertTriangle,
-  FileWarning,
-  LifeBuoy,
-  Loader2,
-  MousePointerClick,
-  Plus,
-  ScrollText,
-  ShieldCheck,
-} from 'lucide-react';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -38,7 +27,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -49,7 +37,35 @@ import { Skeleton } from '@/components/ui/skeleton';
 //  - Audit : journal des actions Superadmin (audit_logs réels)
 //  - Scans : analytics réels des scans QR (scan_logs)
 //  - Tickets : support (création, changement de statut — audité)
+// Design v5.2 « Saphir Luxe » : sombre bleuté, sans icônes.
 // =============================================================
+
+// ---------- Design « Saphir Luxe » : champs & portails sombres ----------
+const LUX_FIELD =
+  'rounded-xl! border-white/12! bg-white/[0.04]! text-white! placeholder:text-[#8fa0c2]/60! focus-visible:ring-[#5c8af0]/50!';
+const LUX_SELECT_TRIGGER =
+  'rounded-xl! border-white/12! bg-white/[0.04]! text-white! focus-visible:ring-[#5c8af0]/50!';
+const LUX_SELECT_CONTENT = 'border-white/10! bg-[#0b1226]! text-white!';
+const LUX_SELECT_ITEM = 'focus:bg-white/8! focus:text-white!';
+const LUX_TABS_LIST = 'h-auto rounded-full! border border-white/10! bg-white/[0.04]! p-1';
+const LUX_TABS_TRIGGER =
+  'rounded-full! px-4! text-[11px]! font-semibold uppercase tracking-[0.12em] text-[#8fa0c2]! data-[state=active]:bg-white/10! data-[state=active]:text-white!';
+const LUX_BTN_GHOST_SM =
+  'h-8 rounded-full! border-white/10! bg-white/[0.04]! px-3! text-xs! font-semibold text-white! hover:bg-white/[0.08]! hover:text-white!';
+
+// Pastille de statut ticket (design) — libellés métier inchangés.
+const TICKET_STATUS: Record<string, { label: string; dot: string }> = {
+  OPEN: { label: 'Ouvert', dot: '#fbbf24' },
+  PENDING: { label: 'En cours', dot: '#5c8af0' },
+  RESOLVED: { label: 'Résolu', dot: '#34d399' },
+  CLOSED: { label: 'Fermé', dot: '#8fa0c2' },
+};
+
+// Couleur de pastille priorité (design).
+const PRIORITY_DOT: Record<string, string> = {
+  URGENT: '#f07d6a',
+  HIGH: '#fbbf24',
+};
 
 interface AuditRow {
   id: string;
@@ -90,19 +106,12 @@ interface Pagination {
   totalPages: number;
 }
 
-const TICKET_STATUS: Record<string, { label: string; className: string }> = {
-  OPEN: { label: 'Ouvert', className: 'bg-amber-100 text-amber-800' },
-  PENDING: { label: 'En cours', className: 'bg-sky-100 text-sky-800' },
-  RESOLVED: { label: 'Résolu', className: 'bg-emerald-100 text-emerald-800' },
-  CLOSED: { label: 'Fermé', className: 'bg-slate-100 text-slate-600' },
-};
-
 // FIX-14 — erreurs runtime (action='runtime.error') : libellés lisibles
 // des sources (AuditLog.entityType). 'client' = erreur navigateur reçue
 // par POST /api/errors ; les autres = sites d'erreur serveur wirés dans
 // les routes critiques (cf. src/lib/error-monitor.ts).
 const RUNTIME_SOURCE_LABELS: Record<string, string> = {
-  client: '🌐 Navigateur client',
+  client: 'Navigateur client',
   'api.auth.register': 'API · Inscription',
   'stripe.webhook': 'Stripe · Webhook',
   'payments.orderPay': 'Paiements · Paiement commande',
@@ -266,73 +275,72 @@ export function AdminLogsContent() {
   return (
     <div className="p-4 sm:p-6">
       <Tabs defaultValue="audit" className="gap-4">
-        <TabsList className="h-auto flex-wrap justify-start gap-1 bg-slate-100 p-1">
-          <TabsTrigger value="audit" className="gap-1.5">
-            <ShieldCheck className="h-4 w-4" /> Audit
+        <TabsList className={LUX_TABS_LIST}>
+          <TabsTrigger value="audit" className={LUX_TABS_TRIGGER}>
+            Audit
           </TabsTrigger>
-          <TabsTrigger value="scans" className="gap-1.5">
-            <MousePointerClick className="h-4 w-4" /> Scans QR
+          <TabsTrigger value="scans" className={LUX_TABS_TRIGGER}>
+            Scans QR
           </TabsTrigger>
-          <TabsTrigger value="tickets" className="gap-1.5">
-            <LifeBuoy className="h-4 w-4" /> Tickets
+          <TabsTrigger value="tickets" className={LUX_TABS_TRIGGER}>
+            Tickets
           </TabsTrigger>
         </TabsList>
 
         {/* ----- Audit ----- */}
         <TabsContent value="audit">
-          <Card className="border-slate-200 bg-white">
-            <CardHeader>
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <CardTitle>📜 Journal d'audit</CardTitle>
-                  <CardDescription>
-                    Chaque action d'administration est tracée : acteur, cible, détails, IP. Les
-                    erreurs runtime (serveur & navigateur) sont marquées « Erreur runtime ».
-                  </CardDescription>
-                </div>
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                  {/* FIX-14 — filtre « Erreurs runtime » (action='runtime.error') */}
-                  <Select
-                    value={auditFilter}
-                    onValueChange={(v) => {
-                      setAuditFilter(v === 'runtime' ? 'runtime' : 'all');
-                      setAuditPage(1);
-                    }}
-                  >
-                    <SelectTrigger className="w-full sm:w-44" aria-label="Filtrer le journal d'audit">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Tous les événements</SelectItem>
-                      <SelectItem value="runtime">⚠️ Erreurs runtime</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Input
-                    placeholder="Filtrer (action, email…)"
-                    value={auditSearch}
-                    onChange={(e) => { setAuditSearch(e.target.value); setAuditPage(1); }}
-                    className="sm:max-w-xs"
-                    aria-label="Rechercher dans l'audit"
-                  />
-                </div>
+          <div className="lux-card p-5 sm:p-6">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="lux-eyebrow">Traçabilité</p>
+                <h2 className="lux-display mt-1 text-xl font-semibold text-white">Journal d&apos;audit</h2>
+                <p className="mt-1 text-sm text-[#8fa0c2]">
+                  Chaque action d'administration est tracée : acteur, cible, détails, IP. Les
+                  erreurs runtime (serveur &amp; navigateur) sont marquées « Erreur runtime ».
+                </p>
               </div>
-            </CardHeader>
-            <CardContent>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                {/* FIX-14 — filtre « Erreurs runtime » (action='runtime.error') */}
+                <Select
+                  value={auditFilter}
+                  onValueChange={(v) => {
+                    setAuditFilter(v === 'runtime' ? 'runtime' : 'all');
+                    setAuditPage(1);
+                  }}
+                >
+                  <SelectTrigger className={`w-full sm:w-44 ${LUX_SELECT_TRIGGER}`} aria-label="Filtrer le journal d'audit">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className={LUX_SELECT_CONTENT}>
+                    <SelectItem value="all" className={LUX_SELECT_ITEM}>Tous les événements</SelectItem>
+                    <SelectItem value="runtime" className={LUX_SELECT_ITEM}>Erreurs runtime</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Input
+                  placeholder="Filtrer (action, email…)"
+                  value={auditSearch}
+                  onChange={(e) => { setAuditSearch(e.target.value); setAuditPage(1); }}
+                  className={`sm:max-w-xs ${LUX_FIELD}`}
+                  aria-label="Rechercher dans l'audit"
+                />
+              </div>
+            </div>
+            <div className="mt-4">
               {auditLoading ? (
                 <TableSkeletonRows />
               ) : audit.length === 0 ? (
-                <EmptyState icon={ScrollText} text="Aucune entrée d'audit — elles apparaissent dès la première action admin." />
+                <EmptyState text="Aucune entrée d'audit — elles apparaissent dès la première action admin." />
               ) : (
                 <>
-                  <div className="max-h-[32rem] overflow-y-auto rounded-lg border">
+                  <div className="lux-scroll max-h-[32rem] overflow-y-auto rounded-xl border border-white/10">
                     <Table>
-                      <TableHeader className="sticky top-0 bg-white">
-                        <TableRow>
-                          <TableHead>Date</TableHead>
-                          <TableHead>Acteur</TableHead>
-                          <TableHead>Action</TableHead>
-                          <TableHead className="hidden md:table-cell">Cible</TableHead>
-                          <TableHead className="hidden xl:table-cell">Détails</TableHead>
+                      <TableHeader className="sticky top-0 z-10 bg-[#0d1530]">
+                        <TableRow className="border-white/8 hover:bg-transparent">
+                          <TableHead className="lux-eyebrow text-[9.5px]!">Date</TableHead>
+                          <TableHead className="lux-eyebrow text-[9.5px]!">Acteur</TableHead>
+                          <TableHead className="lux-eyebrow text-[9.5px]!">Action</TableHead>
+                          <TableHead className="lux-eyebrow text-[9.5px]! hidden md:table-cell">Cible</TableHead>
+                          <TableHead className="lux-eyebrow text-[9.5px]! hidden xl:table-cell">Détails</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -342,32 +350,33 @@ export function AdminLogsContent() {
                           const isRuntimeError = a.action === 'runtime.error';
                           const runtimeDetails = isRuntimeError ? parseRuntimeDetails(a.details) : null;
                           return (
-                            <TableRow key={a.id}>
-                              <TableCell className="whitespace-nowrap text-xs text-slate-500">
+                            <TableRow key={a.id} className="border-white/8 hover:bg-white/[0.04]">
+                              <TableCell className="whitespace-nowrap text-xs text-[#8fa0c2]">
                                 {new Date(a.createdAt).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}
                               </TableCell>
                               <TableCell className="text-xs font-semibold">
                                 {isRuntimeError ? (
-                                  <span className="font-mono text-slate-500">{a.actorEmail}</span>
+                                  <span className="font-mono text-[#8fa0c2]">{a.actorEmail}</span>
                                 ) : (
-                                  a.actorEmail
+                                  <span className="text-white">{a.actorEmail}</span>
                                 )}
                               </TableCell>
                               <TableCell>
                                 {isRuntimeError ? (
-                                  <Badge variant="destructive" className="gap-1 font-semibold">
-                                    <AlertTriangle className="h-3 w-3" aria-hidden="true" /> Erreur runtime
-                                  </Badge>
+                                  <span className="lux-chip px-2! py-0.5! text-[10px]!">
+                                    <span className="lux-dot" style={{ backgroundColor: '#f07d6a' }} aria-hidden="true" />
+                                    Erreur runtime
+                                  </span>
                                 ) : (
-                                  <Badge variant="outline" className="border-slate-300 font-mono text-[11px] text-slate-700">{a.action}</Badge>
+                                  <span className="rounded-md border border-white/10 bg-white/[0.05] px-1.5 py-0.5 font-mono text-[10.5px] text-[#c7d3ea]">{a.action}</span>
                                 )}
                               </TableCell>
-                              <TableCell className="hidden text-xs text-slate-500 md:table-cell">
+                              <TableCell className="hidden text-xs text-[#8fa0c2] md:table-cell">
                                 {isRuntimeError
                                   ? (RUNTIME_SOURCE_LABELS[a.entityType] ?? a.entityType)
                                   : <>{a.entityType}{a.entityId ? ` · ${a.entityId.slice(0, 10)}…` : ''}</>}
                               </TableCell>
-                              <TableCell className="hidden max-w-72 truncate font-mono text-[11px] text-slate-400 xl:table-cell">
+                              <TableCell className="hidden max-w-72 truncate font-mono text-[11px] text-[#8fa0c2]/70 xl:table-cell">
                                 {isRuntimeError
                                   ? runtimeDetails
                                     ? `${runtimeDetails.name}: ${runtimeDetails.message}`
@@ -383,51 +392,54 @@ export function AdminLogsContent() {
                   <PaginationBar pagination={auditPagination} onPage={setAuditPage} />
                 </>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </TabsContent>
 
         {/* ----- Scans ----- */}
         <TabsContent value="scans">
-          <Card className="border-slate-200 bg-white">
-            <CardHeader>
-              <CardTitle>🖱️ Logs de scan QR</CardTitle>
-              <CardDescription>Analytics réels : chaque scan de QR dynamique est journalisé.</CardDescription>
-            </CardHeader>
-            <CardContent>
+          <div className="lux-card p-5 sm:p-6">
+            <div>
+              <p className="lux-eyebrow">Analytics</p>
+              <h2 className="lux-display mt-1 text-xl font-semibold text-white">Logs de scan QR</h2>
+              <p className="mt-1 text-sm text-[#8fa0c2]">Analytics réels : chaque scan de QR dynamique est journalisé.</p>
+            </div>
+            <div className="mt-4">
               {scanLoading ? (
                 <TableSkeletonRows />
               ) : scans.length === 0 ? (
-                <EmptyState icon={MousePointerClick} text="Aucun scan enregistré." />
+                <EmptyState text="Aucun scan enregistré." />
               ) : (
                 <>
-                  <div className="max-h-[32rem] overflow-y-auto rounded-lg border">
+                  <div className="lux-scroll max-h-[32rem] overflow-y-auto rounded-xl border border-white/10">
                     <Table>
-                      <TableHeader className="sticky top-0 bg-white">
-                        <TableRow>
-                          <TableHead>Date</TableHead>
-                          <TableHead>QR</TableHead>
-                          <TableHead>Bien</TableHead>
-                          <TableHead className="hidden md:table-cell">Module</TableHead>
-                          <TableHead className="hidden lg:table-cell">IP</TableHead>
-                          <TableHead className="hidden xl:table-cell">User agent</TableHead>
+                      <TableHeader className="sticky top-0 z-10 bg-[#0d1530]">
+                        <TableRow className="border-white/8 hover:bg-transparent">
+                          <TableHead className="lux-eyebrow text-[9.5px]!">Date</TableHead>
+                          <TableHead className="lux-eyebrow text-[9.5px]!">QR</TableHead>
+                          <TableHead className="lux-eyebrow text-[9.5px]!">Bien</TableHead>
+                          <TableHead className="lux-eyebrow text-[9.5px]! hidden md:table-cell">Module</TableHead>
+                          <TableHead className="lux-eyebrow text-[9.5px]! hidden lg:table-cell">IP</TableHead>
+                          <TableHead className="lux-eyebrow text-[9.5px]! hidden xl:table-cell">User agent</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {scans.map((s) => (
-                          <TableRow key={s.id}>
-                            <TableCell className="whitespace-nowrap text-xs text-slate-500">
+                          <TableRow key={s.id} className="border-white/8 hover:bg-white/[0.04]">
+                            <TableCell className="whitespace-nowrap text-xs text-[#8fa0c2]">
                               {new Date(s.createdAt).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}
                             </TableCell>
-                            <TableCell className="text-sm font-semibold">{s.qrName}</TableCell>
-                            <TableCell className="text-sm">{s.propertyName}</TableCell>
+                            <TableCell className="text-sm font-semibold text-white">{s.qrName}</TableCell>
+                            <TableCell className="text-sm text-white/85">{s.propertyName}</TableCell>
                             <TableCell className="hidden md:table-cell">
-                              {s.moduleType ? <Badge variant="outline" className="border-slate-300 text-slate-700">{s.moduleType}</Badge> : '—'}
+                              {s.moduleType ? (
+                                <span className="rounded-md border border-white/10 bg-white/[0.05] px-1.5 py-0.5 font-mono text-[10.5px] text-[#c7d3ea]">{s.moduleType}</span>
+                              ) : '—'}
                             </TableCell>
-                            <TableCell className="hidden font-mono text-xs text-slate-500 lg:table-cell">
+                            <TableCell className="hidden font-mono text-xs text-[#8fa0c2] lg:table-cell">
                               {s.visitorIp ?? '—'}
                             </TableCell>
-                            <TableCell className="hidden max-w-64 truncate text-xs text-slate-400 xl:table-cell">
+                            <TableCell className="hidden max-w-64 truncate text-xs text-[#8fa0c2]/70 xl:table-cell">
                               {s.userAgent ?? '—'}
                             </TableCell>
                           </TableRow>
@@ -438,79 +450,84 @@ export function AdminLogsContent() {
                   <PaginationBar pagination={scanPagination} onPage={setScanPage} />
                 </>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </TabsContent>
 
         {/* ----- Tickets ----- */}
         <TabsContent value="tickets">
-          <Card className="border-slate-200 bg-white">
-            <CardHeader>
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <CardTitle>🎫 Tickets support</CardTitle>
-                  <CardDescription>
-                    {ticketStats
-                      ? `${ticketStats.open} ouvert(s) · ${ticketStats.pending} en cours · ${ticketStats.resolved} résolu(s)`
-                      : '…'}
-                  </CardDescription>
-                </div>
-                <Button size="sm" onClick={() => setTicketDialog(true)}>
-                  <Plus className="mr-2 h-4 w-4" /> Nouveau ticket
-                </Button>
+          <div className="lux-card p-5 sm:p-6">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="lux-eyebrow">Support</p>
+                <h2 className="lux-display mt-1 text-xl font-semibold text-white">Tickets support</h2>
+                <p className="mt-1 text-sm text-[#8fa0c2]">
+                  {ticketStats
+                    ? `${ticketStats.open} ouvert(s) · ${ticketStats.pending} en cours · ${ticketStats.resolved} résolu(s)`
+                    : '…'}
+                </p>
               </div>
-            </CardHeader>
-            <CardContent>
+              <button type="button" onClick={() => setTicketDialog(true)} className="lux-btn shrink-0">
+                Nouveau ticket
+              </button>
+            </div>
+            <div className="mt-4">
               {ticketsLoading ? (
                 <TableSkeletonRows />
               ) : tickets.length === 0 ? (
-                <EmptyState icon={FileWarning} text="Aucun ticket — créez-en un ou générez-en depuis un email en échec." />
+                <EmptyState text="Aucun ticket — créez-en un ou générez-en depuis un email en échec." />
               ) : (
-                <div className="max-h-[32rem] overflow-y-auto rounded-lg border">
+                <div className="lux-scroll max-h-[32rem] overflow-y-auto rounded-xl border border-white/10">
                   <Table>
-                    <TableHeader className="sticky top-0 bg-white">
-                      <TableRow>
-                        <TableHead>Sujet</TableHead>
-                        <TableHead className="hidden sm:table-cell">Demandeur</TableHead>
-                        <TableHead>Priorité</TableHead>
-                        <TableHead>Statut</TableHead>
-                        <TableHead className="hidden md:table-cell">Créé le</TableHead>
+                    <TableHeader className="sticky top-0 z-10 bg-[#0d1530]">
+                      <TableRow className="border-white/8 hover:bg-transparent">
+                        <TableHead className="lux-eyebrow text-[9.5px]!">Sujet</TableHead>
+                        <TableHead className="lux-eyebrow text-[9.5px]! hidden sm:table-cell">Demandeur</TableHead>
+                        <TableHead className="lux-eyebrow text-[9.5px]!">Priorité</TableHead>
+                        <TableHead className="lux-eyebrow text-[9.5px]!">Statut</TableHead>
+                        <TableHead className="lux-eyebrow text-[9.5px]! hidden md:table-cell">Créé le</TableHead>
                         <TableHead className="w-40"><span className="sr-only">Changer statut</span></TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {tickets.map((t) => {
-                        const st = TICKET_STATUS[t.status] ?? { label: t.status, className: 'bg-slate-100 text-slate-600' };
+                        const st = TICKET_STATUS[t.status] ?? { label: t.status, dot: '#8fa0c2' };
                         return (
-                          <TableRow key={t.id}>
+                          <TableRow key={t.id} className="border-white/8 hover:bg-white/[0.04]">
                             <TableCell>
-                              <p className="font-semibold text-slate-900">{t.subject}</p>
-                              {t.body && <p className="max-w-64 truncate text-xs text-slate-500">{t.body}</p>}
+                              <p className="font-semibold text-white">{t.subject}</p>
+                              {t.body && <p className="max-w-64 truncate text-xs text-[#8fa0c2]">{t.body}</p>}
                             </TableCell>
-                            <TableCell className="hidden text-sm sm:table-cell">{t.email}</TableCell>
+                            <TableCell className="hidden text-sm text-white/85 sm:table-cell">{t.email}</TableCell>
                             <TableCell>
-                              <Badge variant={t.priority === 'URGENT' ? 'destructive' : t.priority === 'HIGH' ? 'default' : 'outline'}>
+                              <span className="lux-chip px-2! py-0.5! text-[10px]!">
+                                <span
+                                  className="lux-dot"
+                                  style={{ backgroundColor: PRIORITY_DOT[t.priority] ?? '#8fa0c2' }}
+                                  aria-hidden="true"
+                                />
                                 {t.priority}
-                              </Badge>
+                              </span>
                             </TableCell>
                             <TableCell>
-                              <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-bold ${st.className}`}>
+                              <span className="lux-chip px-2! py-0.5! text-[10px]!">
+                                <span className="lux-dot" style={{ backgroundColor: st.dot }} aria-hidden="true" />
                                 {st.label}
                               </span>
                             </TableCell>
-                            <TableCell className="hidden text-xs text-slate-500 md:table-cell">
+                            <TableCell className="hidden text-xs text-[#8fa0c2] md:table-cell">
                               {new Date(t.createdAt).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}
                             </TableCell>
                             <TableCell>
                               <Select value={t.status} onValueChange={(v) => changeTicketStatus(t, v)}>
-                                <SelectTrigger className="h-8 w-36" aria-label={`Changer le statut de ${t.subject}`}>
+                                <SelectTrigger className={`h-8 w-36 ${LUX_SELECT_TRIGGER}`} aria-label={`Changer le statut de ${t.subject}`}>
                                   <SelectValue />
                                 </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="OPEN">Ouvert</SelectItem>
-                                  <SelectItem value="PENDING">En cours</SelectItem>
-                                  <SelectItem value="RESOLVED">Résolu</SelectItem>
-                                  <SelectItem value="CLOSED">Fermé</SelectItem>
+                                <SelectContent className={LUX_SELECT_CONTENT}>
+                                  <SelectItem value="OPEN" className={LUX_SELECT_ITEM}>Ouvert</SelectItem>
+                                  <SelectItem value="PENDING" className={LUX_SELECT_ITEM}>En cours</SelectItem>
+                                  <SelectItem value="RESOLVED" className={LUX_SELECT_ITEM}>Résolu</SelectItem>
+                                  <SelectItem value="CLOSED" className={LUX_SELECT_ITEM}>Fermé</SelectItem>
                                 </SelectContent>
                               </Select>
                             </TableCell>
@@ -521,39 +538,39 @@ export function AdminLogsContent() {
                   </Table>
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
 
       {/* ----- Dialog création ticket ----- */}
       <Dialog open={ticketDialog} onOpenChange={setTicketDialog}>
-        <DialogContent>
+        <DialogContent className="border-white/10! bg-[#0b1226]! text-white!">
           <DialogHeader>
-            <DialogTitle>Nouveau ticket support</DialogTitle>
-            <DialogDescription>Le suivi est assuré depuis cette console.</DialogDescription>
+            <DialogTitle className="lux-display text-xl font-semibold text-white">Nouveau ticket support</DialogTitle>
+            <DialogDescription className="text-[#8fa0c2]!">Le suivi est assuré depuis cette console.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-2">
             <div className="grid gap-2">
               <Label htmlFor="ticket-subject">Sujet</Label>
-              <Input id="ticket-subject" value={ticketForm.subject}
+              <Input id="ticket-subject" value={ticketForm.subject} className={LUX_FIELD}
                 onChange={(e) => setTicketForm((f) => ({ ...f, subject: e.target.value }))} />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="ticket-email">Email du demandeur</Label>
-              <Input id="ticket-email" type="email" value={ticketForm.email}
+              <Input id="ticket-email" type="email" value={ticketForm.email} className={LUX_FIELD}
                 onChange={(e) => setTicketForm((f) => ({ ...f, email: e.target.value }))} />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-2">
                 <Label>Priorité</Label>
                 <Select value={ticketForm.priority} onValueChange={(v) => setTicketForm((f) => ({ ...f, priority: v }))}>
-                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="LOW">Basse</SelectItem>
-                    <SelectItem value="NORMAL">Normale</SelectItem>
-                    <SelectItem value="HIGH">Haute</SelectItem>
-                    <SelectItem value="URGENT">Urgente</SelectItem>
+                  <SelectTrigger className={`w-full ${LUX_SELECT_TRIGGER}`}><SelectValue /></SelectTrigger>
+                  <SelectContent className={LUX_SELECT_CONTENT}>
+                    <SelectItem value="LOW" className={LUX_SELECT_ITEM}>Basse</SelectItem>
+                    <SelectItem value="NORMAL" className={LUX_SELECT_ITEM}>Normale</SelectItem>
+                    <SelectItem value="HIGH" className={LUX_SELECT_ITEM}>Haute</SelectItem>
+                    <SelectItem value="URGENT" className={LUX_SELECT_ITEM}>Urgente</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -562,15 +579,18 @@ export function AdminLogsContent() {
               <Label htmlFor="ticket-body">Description</Label>
               <textarea
                 id="ticket-body"
-                className="min-h-24 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                className="min-h-24 rounded-xl border border-white/12 bg-white/[0.04] px-3 py-2 text-sm text-white placeholder:text-[#8fa0c2]/60 outline-none focus:border-[#5c8af0]/50"
                 value={ticketForm.body}
                 onChange={(e) => setTicketForm((f) => ({ ...f, body: e.target.value }))}
               />
             </div>
           </div>
           <DialogFooter>
-            <Button onClick={createTicket} disabled={ticketBusy || ticketForm.subject.trim().length < 3 || !ticketForm.email.trim()}>
-              {ticketBusy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <Button
+              onClick={createTicket}
+              disabled={ticketBusy || ticketForm.subject.trim().length < 3 || !ticketForm.email.trim()}
+              className="lux-btn h-9 rounded-full px-4 text-xs"
+            >
               Créer le ticket
             </Button>
           </DialogFooter>
@@ -584,14 +604,14 @@ function PaginationBar({ pagination, onPage }: { pagination: Pagination | null; 
   if (!pagination || pagination.totalPages <= 1) return null;
   return (
     <div className="mt-3 flex items-center justify-between">
-      <p className="text-sm text-slate-500">
+      <p className="text-sm text-[#8fa0c2]">
         Page {pagination.page} / {pagination.totalPages} — {pagination.total} entrée{pagination.total > 1 ? 's' : ''}
       </p>
       <div className="flex gap-2">
-        <Button variant="outline" size="sm" disabled={pagination.page <= 1} onClick={() => onPage(pagination.page - 1)}>
+        <Button variant="outline" size="sm" className={LUX_BTN_GHOST_SM} disabled={pagination.page <= 1} onClick={() => onPage(pagination.page - 1)}>
           Précédent
         </Button>
-        <Button variant="outline" size="sm" disabled={pagination.page >= pagination.totalPages} onClick={() => onPage(pagination.page + 1)}>
+        <Button variant="outline" size="sm" className={LUX_BTN_GHOST_SM} disabled={pagination.page >= pagination.totalPages} onClick={() => onPage(pagination.page + 1)}>
           Suivant
         </Button>
       </div>
@@ -599,11 +619,10 @@ function PaginationBar({ pagination, onPage }: { pagination: Pagination | null; 
   );
 }
 
-function EmptyState({ icon: Icon, text }: { icon: React.ElementType; text: string }) {
+function EmptyState({ text }: { text: string }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-12 text-center">
-      <Icon className="mb-3 h-10 w-10 text-slate-300" aria-hidden="true" />
-      <p className="max-w-md text-sm text-slate-500">{text}</p>
+    <div className="lux-empty flex flex-col items-center justify-center rounded-2xl py-12 text-center">
+      <p className="max-w-md px-4 text-sm text-[#8fa0c2]">{text}</p>
     </div>
   );
 }
@@ -612,7 +631,7 @@ function TableSkeletonRows() {
   return (
     <div className="space-y-3">
       {Array.from({ length: 6 }).map((_, i) => (
-        <Skeleton key={i} className="h-11 w-full" />
+        <Skeleton key={i} className="h-11 w-full bg-white/8" />
       ))}
     </div>
   );

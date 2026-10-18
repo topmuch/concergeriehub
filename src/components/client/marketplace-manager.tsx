@@ -802,7 +802,7 @@ export function MarketplaceManager() {
             <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-white/10" />
             <div className="absolute -right-2 -bottom-6 h-16 w-16 rounded-full bg-white/5" />
           </div>
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-400 via-emerald-500 to-teal-600 p-5 text-white shadow-lg">
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 p-5 text-white shadow-lg">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
                 <p className="text-sm font-medium text-white/80">Vérifiés</p>
@@ -846,7 +846,7 @@ export function MarketplaceManager() {
             <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-white/10" />
             <div className="absolute -right-2 -bottom-6 h-16 w-16 rounded-full bg-white/5" />
           </div>
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-400 via-emerald-500 to-teal-600 p-5 text-white shadow-lg">
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 p-5 text-white shadow-lg">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
                 <p className="text-sm font-medium text-white/80">Actives</p>
@@ -889,7 +889,7 @@ export function MarketplaceManager() {
             </div>
             <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-white/10" />
           </div>
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-400 via-emerald-500 to-teal-600 p-5 text-white shadow-lg">
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 p-5 text-white shadow-lg">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
@@ -948,7 +948,7 @@ export function MarketplaceManager() {
             </div>
             <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-white/10" />
           </div>
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-400 via-emerald-500 to-teal-600 p-5 text-white shadow-lg">
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 p-5 text-white shadow-lg">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
                 <p className="text-sm font-medium text-white/80">Actifs</p>
@@ -972,7 +972,7 @@ export function MarketplaceManager() {
             </div>
             <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-white/10" />
           </div>
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-rose-400 via-rose-500 to-pink-600 p-5 text-white shadow-lg">
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 p-5 text-white shadow-lg">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
                 <p className="text-sm font-medium text-white/80">Économie totale</p>
@@ -1002,7 +1002,7 @@ export function MarketplaceManager() {
             <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-white/10" />
             <div className="absolute -right-2 -bottom-6 h-16 w-16 rounded-full bg-white/5" />
           </div>
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-400 via-emerald-500 to-teal-600 p-5 text-white shadow-lg">
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 p-5 text-white shadow-lg">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
                 <p className="text-sm font-medium text-white/80">Montant total</p>
@@ -1048,7 +1048,7 @@ export function MarketplaceManager() {
               onClick={() => setActiveTab(key)}
               className={
                 activeTab === key
-                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm'
+                  ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm'
                   : ''
               }
             >
@@ -1063,7 +1063,7 @@ export function MarketplaceManager() {
           {activeTab === 'merchants' && (
             <Dialog open={createMerchantOpen} onOpenChange={setCreateMerchantOpen}>
               <DialogTrigger asChild>
-                <Button className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md">
+                <Button className="gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-md">
                   <Plus className="h-4 w-4" />
                   Nouveau commerçant
                 </Button>
@@ -1071,7 +1071,7 @@ export function MarketplaceManager() {
               <DialogContent className="sm:max-w-[520px] max-h-[85vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2">
-                    <Store className="h-5 w-5 text-emerald-500" />
+                    <Store className="h-5 w-5 text-blue-500" />
                     Nouveau commerçant
                   </DialogTitle>
                 </DialogHeader>
@@ -1125,7 +1125,7 @@ export function MarketplaceManager() {
                   <Button
                     onClick={handleCreateMerchant}
                     disabled={!merchFormName.trim() || merchSubmitting}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
                   >
                     {merchSubmitting ? 'Création...' : 'Créer'}
                   </Button>
@@ -1137,7 +1137,7 @@ export function MarketplaceManager() {
           {activeTab === 'promos' && (
             <Dialog open={createPromoOpen} onOpenChange={setCreatePromoOpen}>
               <DialogTrigger asChild>
-                <Button className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md">
+                <Button className="gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-md">
                   <Plus className="h-4 w-4" />
                   Nouvelle promo
                 </Button>
@@ -1145,7 +1145,7 @@ export function MarketplaceManager() {
               <DialogContent className="sm:max-w-[520px] max-h-[85vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2">
-                    <Tag className="h-5 w-5 text-emerald-500" />
+                    <Tag className="h-5 w-5 text-blue-500" />
                     Nouvelle promotion
                   </DialogTitle>
                 </DialogHeader>
@@ -1222,7 +1222,7 @@ export function MarketplaceManager() {
                   <Button
                     onClick={handleCreatePromo}
                     disabled={!promoFormTitle.trim() || promoSubmitting}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
                   >
                     {promoSubmitting ? 'Création...' : 'Créer'}
                   </Button>
@@ -1234,7 +1234,7 @@ export function MarketplaceManager() {
           {activeTab === 'flash' && (
             <Dialog open={createFlashOpen} onOpenChange={setCreateFlashOpen}>
               <DialogTrigger asChild>
-                <Button className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md">
+                <Button className="gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-md">
                   <Plus className="h-4 w-4" />
                   Nouvelle vente flash
                 </Button>
@@ -1323,7 +1323,7 @@ export function MarketplaceManager() {
                   <Button
                     onClick={handleCreateFlashSale}
                     disabled={!flashFormMerchantId || !flashFormPromoId || !flashFormFlashPrice || !flashFormStartsAt || !flashFormEndsAt || flashSubmitting}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
                   >
                     {flashSubmitting ? 'Création...' : 'Créer'}
                   </Button>
@@ -1335,7 +1335,7 @@ export function MarketplaceManager() {
           {activeTab === 'coupons' && (
             <Dialog open={createCouponOpen} onOpenChange={setCreateCouponOpen}>
               <DialogTrigger asChild>
-                <Button className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md">
+                <Button className="gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-md">
                   <Plus className="h-4 w-4" />
                   Réclamer un coupon
                 </Button>
@@ -1343,7 +1343,7 @@ export function MarketplaceManager() {
               <DialogContent className="sm:max-w-[520px] max-h-[85vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2">
-                    <Ticket className="h-5 w-5 text-emerald-500" />
+                    <Ticket className="h-5 w-5 text-blue-500" />
                     Réclamer un coupon
                   </DialogTitle>
                 </DialogHeader>
@@ -1407,7 +1407,7 @@ export function MarketplaceManager() {
                   <Button
                     onClick={handleClaimCoupon}
                     disabled={!couponFormMerchantId || !couponFormDiscountValue || couponSubmitting}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
                   >
                     {couponSubmitting ? 'Réclamation...' : 'Réclamer'}
                   </Button>
@@ -1496,7 +1496,7 @@ export function MarketplaceManager() {
                           <div className="flex flex-col items-end gap-2 shrink-0">
                             <button
                               onClick={(e) => handleToggleActive(m, e)}
-                              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${m.isActive ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-600'}`}
+                              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${m.isActive ? 'bg-blue-500' : 'bg-gray-300 dark:bg-gray-600'}`}
                             >
                               <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-sm ${m.isActive ? 'translate-x-4' : 'translate-x-0.5'}`} />
                             </button>
@@ -1574,7 +1574,7 @@ export function MarketplaceManager() {
                             <div className="grid grid-cols-3 gap-2">
                               {selectedMerchant.merchantPhotos.map((photo) => (
                                 <div key={photo.id} className="aspect-square rounded-lg overflow-hidden bg-muted">
-                                  <img src={photo.url} alt={photo.altText || ''} className="h-full w-full object-cover" />
+                                  <img src={photo.url} alt={photo.altText || ''} className="h-full w-full object-cover" loading="lazy" decoding="async" />
                                 </div>
                               ))}
                             </div>
@@ -1583,7 +1583,7 @@ export function MarketplaceManager() {
 
                         {/* Promo count */}
                         <div className="flex items-center gap-2 text-sm">
-                          <Tag className="h-4 w-4 text-emerald-500" />
+                          <Tag className="h-4 w-4 text-blue-500" />
                           <span className="text-muted-foreground">
                             {getMerchantPromos(selectedMerchant.id).length} promotion(s)
                           </span>
@@ -1687,7 +1687,7 @@ export function MarketplaceManager() {
                             size="sm"
                             variant="outline"
                             onClick={() => handleRedeemPromo(p.id)}
-                            className="shrink-0 text-emerald-600 hover:bg-emerald-50"
+                            className="shrink-0 text-blue-600 hover:bg-blue-50"
                           >
                             Récupérer
                           </Button>
@@ -1784,7 +1784,7 @@ export function MarketplaceManager() {
                                   size="sm"
                                   variant="outline"
                                   onClick={() => handleFlashStatus(f.id, 'active')}
-                                  className="text-emerald-600 hover:bg-emerald-50"
+                                  className="text-blue-600 hover:bg-blue-50"
                                 >
                                   <Play className="h-3 w-3 mr-1" />Activer
                                 </Button>
@@ -1823,7 +1823,7 @@ export function MarketplaceManager() {
                     onClick={() => { setCouponStatusFilter(st); fetchTabData('coupons'); }}
                     className={
                       couponStatusFilter === st
-                        ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                        ? 'bg-blue-600 hover:bg-blue-700 text-white'
                         : ''
                     }
                   >
@@ -1910,7 +1910,7 @@ export function MarketplaceManager() {
                             size="sm"
                             variant="outline"
                             onClick={() => handleScanCoupon(c.id, c.merchantId)}
-                            className="shrink-0 text-emerald-600 hover:bg-emerald-50"
+                            className="shrink-0 text-blue-600 hover:bg-blue-50"
                           >
                             <QrCode className="h-3.5 w-3.5 mr-1.5" />
                             Scanner

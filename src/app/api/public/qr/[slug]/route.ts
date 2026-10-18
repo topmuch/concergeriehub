@@ -1,4 +1,5 @@
 import { db } from '@/lib/db';
+import { dispatchWebhooks } from '@/lib/webhook-dispatcher';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(
@@ -30,13 +31,16 @@ export async function GET(
   }
 
   // Find hub slug for this QR code's home
+  // FIX RC3 — fallback sur Property.qrHubSlug : pour un bien créé par
+  // wizard (sans plaque), le bouton « Hub » du guidebook tombait sur
+  // « / » au lieu du hub du bien.
   let hubSlug: string | null = null;
   if (qrCode.propertyId) {
     const plaque = await db.physicalQrCode.findFirst({
       where: { propertyId: qrCode.propertyId, isClaimed: true, hubSlug: { not: null } },
       select: { hubSlug: true },
     });
-    hubSlug = plaque?.hubSlug || null;
+    hubSlug = plaque?.hubSlug || qrCode.property?.qrHubSlug || null;
   }
 
   // Get scan count
@@ -66,6 +70,16 @@ export async function GET(
     },
   }).catch(() => {
     // Silently ignore scan log failures
+  });
+
+  // AUDIT PRÉ-PROD (Module 5) — WEBHOOK SORTANT 'scan' (HMAC) : le
+  // dispatcher existed sans call-site — branché sur le scan QR.
+  void dispatchWebhooks(qrCode.propertyId, 'scan', {
+    event: 'scan',
+    qrCodeId: qrCode.id,
+    qrName: qrCode.name,
+    type: qrCode.type,
+    locale,
   });
 
   return NextResponse.json({

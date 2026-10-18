@@ -1,16 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { requireSuperadmin, adminUnauthorized } from '@/lib/admin';
 import { db } from '@/lib/db';
 import {
   TRANSACTION_STATUSES,
   type TransactionStatus,
 } from '@/types/database';
 
-// GET: Get single transaction
+// GET: Get single transaction — visible par le payeur, le receveur ou le Superadmin
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+    }
+
+    const userId = (session.user as { id?: string }).id;
+    const role = (session.user as { role?: string }).role;
     const { id } = await params;
 
     const transaction = await db.transaction.findUnique({
@@ -24,6 +34,15 @@ export async function GET(
       );
     }
 
+    const isSuperadmin = role === 'superadmin';
+    if (
+      !isSuperadmin &&
+      transaction.payerId !== userId &&
+      transaction.receiverId !== userId
+    ) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
+    }
+
     return NextResponse.json({ transaction });
   } catch (error) {
     console.error('[transactions/:id GET] Error:', error);
@@ -34,11 +53,13 @@ export async function GET(
   }
 }
 
-// PATCH: Update transaction status
+// PATCH: Update transaction status — opération comptable plateforme, Superadmin uniquement
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const admin = await requireSuperadmin();
+  if (!admin) return adminUnauthorized();
   try {
     const { id } = await params;
     const body = await request.json();
@@ -81,11 +102,13 @@ export async function PATCH(
   }
 }
 
-// DELETE: Soft delete (set status='refunded' if was 'completed')
+// DELETE: Soft delete (set status='refunded' if was 'completed') — Superadmin uniquement
 export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const admin = await requireSuperadmin();
+  if (!admin) return adminUnauthorized();
   try {
     const { id } = await params;
 

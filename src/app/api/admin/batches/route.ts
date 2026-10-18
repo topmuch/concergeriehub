@@ -4,6 +4,8 @@ import crypto from 'crypto';
 import { requireSuperadmin, adminUnauthorized } from '@/lib/admin';
 import { logAudit, clientIp } from '@/lib/audit';
 import { mutationGuard, mutationKey, MUTATIONS_LIMIT_ADMIN } from '@/lib/mutation-guard';
+// v4.81 (AUDIT QA-3) — CSPRNG isomorphe pour les codes d'activation.
+import { generateActivationCode } from '@/lib/activation-code';
 
 // GET /api/admin/batches — List all batches with aggregated QR code counts
 export async function GET() {
@@ -116,47 +118,66 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Build the batch and its QR codes inside a transaction
-    const batch = await db.$transaction(async (tx) => {
-      // Ensure a superadmin user exists for the createdBy FK
-      let admin = await tx.user.findFirst({ where: { role: 'superadmin' } });
-      if (!admin) {
-        admin = await tx.user.create({
+    // Build the batch and its QR codes inside a transaction.
+    // v4.81 (AUDIT QA-3) — retry anti-collision : une collision @unique
+    // (activationCode ou setupToken) échouait TOUT le lot en 500. On
+    // rejoue la transaction jusqu'à 3× (les tokens sont régénérés à chaque
+    // passe quand ils ne sont pas fournis par l'appelant).
+    let batch: { batch: { id: string; quantity: number }; createdCount: number } | null = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        batch = await db.$transaction(async (tx) => {
+        // AUDIT PRÉ-PROD : plus de création fallback d'un superadmin sans
+        // mot de passe — requireSuperadmin() garantit l'existence du compte
+        // appelant (l'utilisateur courant est le creator).
+        const admin = await tx.user.findFirst({ where: { role: 'superadmin' } });
+        if (!admin) {
+          throw new Error('Aucun superadmin existant — création du lot impossible.');
+        }
+
+        const createdBatch = await tx.qrBatch.create({
           data: {
-            email: 'superadmin@qrdomotik.roomscan.pro',
-            fullName: 'Superadmin',
-            role: 'superadmin',
+            quantity,
+            designConfig,
+            createdBy: admin.id,
           },
         });
+
+        const codes = Array.from({ length: quantity }, (_, i) => {
+          // AUDIT 24-d (P1) — 12 octets aléatoires (96 bits) au lieu de 4
+          // (32 bits) : avec setupToken @unique, une collision (paradoxe des
+          // anniversaires ≈ 1,2 % pour un lot de 10 000 à 32 bits) faisait
+          // échouer TOUT le lot en 500 + rollback. À 96 bits, la probabilité
+          // devient négligeable (~10⁻²⁰ par lot de 10 000).
+          const setupToken = `SETUP-${crypto.randomBytes(12).toString('hex').toUpperCase()}`;
+          return {
+            batchId: createdBatch.id,
+            // v4.81 (AUDIT QA-3) — si l'appelant ne fournit pas de codes :
+            // CSPRNG au lieu de QR-{batchId}-{i} séquentiel (prévisible).
+            activationCode:
+              activationCodes?.[i] ??
+              generateActivationCode(),
+            setupToken,
+            status: 'inactive' as const,
+            designConfig,
+          };
+        });
+
+        const createdCodes = await tx.physicalQrCode.createMany({
+          data: codes,
+        });
+
+        return { batch: createdBatch, createdCount: createdCodes.count };
+        });
+        break;
+      } catch (error) {
+        if (attempt === 2) throw error;
+        console.warn(`[batches POST] collision unique (tentative ${attempt + 1}/3), retry…`, error);
       }
-
-      const createdBatch = await tx.qrBatch.create({
-        data: {
-          quantity,
-          designConfig,
-          createdBy: admin.id,
-        },
-      });
-
-      const codes = Array.from({ length: quantity }, (_, i) => {
-        const setupToken = `SETUP-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
-        return {
-          batchId: createdBatch.id,
-          activationCode:
-            activationCodes?.[i] ??
-            `QR-${createdBatch.id.slice(0, 8).toUpperCase()}-${String(i + 1).padStart(4, '0')}`,
-          setupToken,
-          status: 'inactive' as const,
-          designConfig,
-        };
-      });
-
-      const createdCodes = await tx.physicalQrCode.createMany({
-        data: codes,
-      });
-
-      return { batch: createdBatch, createdCount: createdCodes.count };
-    });
+    }
+    if (!batch) {
+      return NextResponse.json({ error: 'Création du lot impossible après 3 tentatives.' }, { status: 500 });
+    }
 
     // Fetch the freshly-created codes for the response
     const physicalQrCodes = await db.physicalQrCode.findMany({

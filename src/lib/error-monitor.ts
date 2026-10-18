@@ -46,6 +46,28 @@ function safeStringify(value: unknown): string {
   }
 }
 
+// ── v4.76 — RÉDACTION DES PARAMÈTRES SENSIBLES DANS LES LOGS ──
+// Aucune valeur de ces paramètres d'URL ne doit être persistée en clair
+// (AuditLog lisible dans /admin/logs) : pin hôte, codes d'accès, tokens…
+const SENSITIVE_QUERY_KEYS = new Set(['pin', 'code', 'token', 'password', 'secret', 'access']);
+
+/** Écrase `?pin=1234` → `?pin=***` (ne jette jamais — retour brut si URL invalide). */
+function redactSensitiveUrl(rawUrl: string): string {
+  try {
+    const u = new URL(rawUrl);
+    let touched = false;
+    for (const key of [...u.searchParams.keys()]) {
+      if (SENSITIVE_QUERY_KEYS.has(key.toLowerCase())) {
+        u.searchParams.set(key, '***');
+        touched = true;
+      }
+    }
+    return touched ? u.toString() : rawUrl;
+  } catch {
+    return rawUrl;
+  }
+}
+
 /**
  * Capture une erreur serveur : console + trace persistante AuditLog.
  * Ne jette jamais — appelable dans n'importe quel catch.
@@ -81,7 +103,10 @@ export async function captureError(
     // (diagnostic : quelle route, quel slug/id dans l'URL).
     const fullContext: Record<string, unknown> = { ...context };
     if (req) {
-      fullContext.url = req.url;
+      // v4.76 — HYGIÈNE : le PIN ne doit JAMAIS atterrir en clair dans
+      // l'AuditLog (visible dans /admin/logs). Les paramètres sensibles
+      // de l'URL (pin, token, code…) sont écrasés avant persistance.
+      fullContext.url = redactSensitiveUrl(req.url);
       fullContext.method = req.method;
     }
 

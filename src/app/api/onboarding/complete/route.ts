@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
     if (body.qrHubSlug !== undefined && body.qrHubSlug !== '') {
       slug = body.qrHubSlug
         .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[̀-ͯ]/g, '')
         .toLowerCase()
         .replace(/[^a-z0-9-]+/g, '-')
         .replace(/^-+|-+$/g, '');

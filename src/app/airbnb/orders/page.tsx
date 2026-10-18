@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { OrdersContent } from '@/components/airbnb/host/orders-content';
 
 export const metadata: Metadata = {
-  title: 'Commandes & Revenus — Conciergerie Hub',
+  title: 'Commandes & Revenus — RoomScan',
   description:
     'Suivi des commandes invités par bien : encaissements réels, commissions Hub, reversements prestataires et export CSV comptable.',
 };

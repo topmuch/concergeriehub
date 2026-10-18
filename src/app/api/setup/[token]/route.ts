@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { hash } from 'bcryptjs';
+import { getServerSession } from 'next-auth';
 import { db } from '@/lib/db';
+import { authOptions } from '@/lib/auth';
 import crypto from 'crypto';
 import { rateLimit } from '@/lib/rate-limit';
 
@@ -81,7 +83,10 @@ function getDefaultRooms(opts: {
           content: {
             rules: [
               'Pas de fumer à l\'intérieur',
-              'Départ avant 11h le jour du checkout',
+              // Neutre volontairement : n'annonce AUCUNE heure de départ
+              // (l'hôte peut activer un late check-out payant — une heure
+              // par défaut ici la contredirait).
+              'Départ : suivez les instructions de votre hôte',
               'Merci de ne pas faire de bruit après 22h',
               'Éteindre la climatisation en votre absence',
               'Signaler tout dégât ou casse immédiatement',
@@ -123,7 +128,7 @@ function getDefaultRooms(opts: {
           name: 'Liste de courses',
           isPrivate: true,
           content: {
-            items: ['Lait', 'Pain', '\u0152ufs', 'Fromage', 'Fruits', 'Eau minérale'],
+            items: ['Lait', 'Pain', 'Œufs', 'Fromage', 'Fruits', 'Eau minérale'],
           },
         },
         {
@@ -230,14 +235,24 @@ export async function GET(
       return NextResponse.json({ error: 'Plaque non trouvée' }, { status: 404 });
     }
 
+    // ROBUSTESSE PROD : une plaque orpheline (lot supprimé manuellement ou
+    // volume DB ancien) faisait crasher plaque.batch.id → 500 « Erreur serveur »
+    // sur la page d'activation. On renvoie désormais une 404 explicite.
+    if (!plaque.batch) {
+      console.error('[GET /api/setup] Plaque orpheline (batch introuvable):', plaque.id);
+      return NextResponse.json(
+        { error: 'Plaque invalide : son lot d\'origine est introuvable. Régénérez-la depuis le dashboard.' },
+        { status: 404 }
+      );
+    }
+
     if (plaque.isClaimed && plaque.propertyId) {
       return NextResponse.json({
         status: 'claimed',
         message: 'Cette plaque est déjà configurée',
         hubSlug: plaque.hubSlug || undefined,
-        claimedBy: plaque.claimedBy
-          ? { fullName: plaque.claimedBy.fullName, email: plaque.claimedBy.email }
-          : undefined,
+        // AUDIT PRÉ-PROD — SÉCURITÉ : plus de fuite de l'identité du
+        // claimant (fullName/email étaient exposés publiquement).
         homeName: plaque.property?.name || undefined,
       });
     }
@@ -266,8 +281,10 @@ export async function POST(
   try {
     const { token } = await params;
 
-    // Anti brute-force des setupToken : max 10 soumissions/minute/token.
-    if (!(await rateLimit(`setup:${token}`, 10))) {
+    // Anti brute-force des setupToken : max 10 soumissions/minute/token
+    // + AUDIT PRÉ-PROD : garde PAR IP (énumération de tokens bridée).
+    const setupIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'local';
+    if (!(await rateLimit(`setup:${token}`, 10)) || !(await rateLimit(`setup-ip:${setupIp}`, 20))) {
       return NextResponse.json({ error: 'Trop de tentatives. Réessayez dans un instant.' }, { status: 429 });
     }
 
@@ -307,8 +324,10 @@ export async function POST(
     // Validate inputs
     if (!fullName?.trim()) return NextResponse.json({ error: 'Nom requis' }, { status: 400 });
     if (!email?.trim()) return NextResponse.json({ error: 'Email requis' }, { status: 400 });
-    if (!existingUserId && (!password || password.length < 6)) {
-      return NextResponse.json({ error: 'Mot de passe requis (6 caractères minimum)' }, { status: 400 });
+    // AUDIT PRÉ-PROD — politique alignée sur /api/airbnb/security/password :
+    // 8 caractères minimum + au moins une lettre et un chiffre.
+    if (!existingUserId && (!password || password.length < 8 || !/[A-Za-z]/.test(password) || !/\d/.test(password))) {
+      return NextResponse.json({ error: 'Mot de passe requis (8 caractères minimum, lettres et chiffres)' }, { status: 400 });
     }
     if (!pin || !/^\d{4}$/.test(pin)) {
       return NextResponse.json({ error: 'Code PIN à 4 chiffres requis' }, { status: 400 });
@@ -339,10 +358,26 @@ export async function POST(
     if (plaque.isClaimed) return NextResponse.json({ error: 'Cette plaque est déjà configurée' }, { status: 409 });
 
     // ── Find or create user ──
+    // AUDIT PRÉ-PROD — BLOQUANT (IDOR) : rattacher la plaque à un compte
+    // EXISTANT exige une session NextAuth valide, et l'id est FORCÉ à
+    // l'utilisateur connecté (existingUserId du body n'est plus cru —
+    // sinon quiconque connaît un userId pouvait s'approprier la plaque
+    // ET modifier selectedPlan/onboardingCompleted de ce compte).
     let userId = existingUserId || null;
     let isNewUser = false;
 
     if (userId) {
+      const session = await getServerSession(authOptions);
+      const sessionUserId = (session?.user as { id?: string } | undefined)?.id;
+      if (!sessionUserId) {
+        return NextResponse.json(
+          { error: 'Connectez-vous d\'abord pour rattacher cette plaque à votre compte.' },
+          { status: 401 },
+        );
+      }
+      if (userId !== sessionUserId) {
+        return NextResponse.json({ error: 'Session invalide pour ce compte.' }, { status: 403 });
+      }
       const existingUser = await db.user.findUnique({ where: { id: userId } });
       if (!existingUser) return NextResponse.json({ error: 'Utilisateur introuvable' }, { status: 400 });
       await db.user.update({ where: { id: userId }, data: { selectedPlan: plan, onboardingCompleted: true } });
@@ -370,7 +405,7 @@ export async function POST(
     const pinHash = await hash(pin, 10);
 
     // ── Generate hubSlug ──
-    const baseSlug = homeName.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const baseSlug = homeName.trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
     const suffix = crypto.randomBytes(3).toString('hex');
     let hubSlug = `${baseSlug}-${suffix}`;
     let slugExists = await db.physicalQrCode.findUnique({ where: { hubSlug } });
@@ -503,9 +538,13 @@ export async function POST(
     }
 
     // ── Claim the main plaque (hub) ──
-    const setupToken = plaque.setupToken || `SETUP-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
-    await db.physicalQrCode.update({
-      where: { id: plaque.id },
+    // AUDIT PRÉ-PROD — CLAIM ATOMIQUE (anti TOCTOU) : la mise à jour
+    // n'aboutit QUE si la plaque est encore non-réclamée → deux
+    // requêtes simultanées avec le même token ne peuvent pas créer
+    // deux biens (la 2ᵉ échoue avec 409).
+    const setupToken = plaque.setupToken || `SETUP-${crypto.randomBytes(12).toString('hex').toUpperCase()}`;
+    const claimed = await db.physicalQrCode.updateMany({
+      where: { id: plaque.id, isClaimed: false },
       data: {
         isClaimed: true,
         claimedByUserId: userId!,
@@ -516,6 +555,9 @@ export async function POST(
         setupToken,
       },
     });
+    if (claimed.count === 0) {
+      return NextResponse.json({ error: 'Cette plaque est déjà configurée' }, { status: 409 });
+    }
 
     // ── Subscription (non-blocking) ──
     try {

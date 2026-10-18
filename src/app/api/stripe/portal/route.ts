@@ -16,6 +16,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { resolveOrigin, siteUrl } from '@/lib/site';
 
 const isStripeMode = Boolean(process.env.STRIPE_SECRET_KEY);
 
@@ -85,7 +86,7 @@ export async function POST(req: NextRequest) {
       customerId = customer.id;
     }
 
-    const origin = req.headers.get('origin') || process.env.NEXTAUTH_URL || 'http://localhost:3000';
+    const origin = resolveOrigin(req);
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: customerId,
       return_url: `${origin}/airbnb/billing`,

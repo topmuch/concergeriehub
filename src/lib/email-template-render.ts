@@ -27,7 +27,10 @@ import {
   guestRefundEmail,
   welcomeEmail,
   adminPasswordResetEmail,
+  hubAlertEmail,
+  readyForArrivalEmail,
 } from '@/lib/email-templates';
+import { siteUrl } from '@/lib/site';
 
 /** Échappement HTML identique à esc() de lib/email-templates.ts. */
 function escHtml(value: string): string {
@@ -197,6 +200,71 @@ export async function renderAdminPasswordResetEmail(params: {
       email: params.to,
       tempPassword: params.tempPassword,
       adminName: params.adminName,
+    },
+  });
+}
+
+/** key 'hub_alert' — v4.46 : alerte activité Hub (commande / SOS /
+ *  problème / avis) — le CTA est absolutisé avec siteUrl (le template
+ *  codé en dur reste pur, sans dépendance env). */
+export async function renderHubAlertEmail(params: {
+  heading: string;
+  propertyName: string;
+  guestName?: string | null;
+  rows: { label: string; value: string }[];
+  totalLabel?: string;
+  totalValue?: string;
+  introNote?: string;
+  /** Chemin relatif ou URL absolue — absolutisé ici. */
+  ctaLabel?: string;
+  ctaUrl?: string;
+  footerNote?: string;
+}): Promise<RenderedEmail> {
+  const ctaUrl = params.ctaUrl
+    ? params.ctaUrl.startsWith('http')
+      ? params.ctaUrl
+      : `${siteUrl}${params.ctaUrl}`
+    : undefined;
+  return renderFromDbOrFallback({
+    key: 'hub_alert',
+    fallback: () =>
+      hubAlertEmail({ ...params, ctaLabel: params.ctaLabel, ctaUrl }),
+    vars: {
+      heading: params.heading,
+      propertyName: params.propertyName,
+      guestName: params.guestName ?? '',
+      totalLabel: params.totalLabel ?? '',
+      totalValue: params.totalValue ?? '',
+      introNote: params.introNote ?? '',
+      ctaLabel: params.ctaLabel ?? '',
+      ctaUrl: ctaUrl ?? '',
+    },
+  });
+}
+
+/** key 'ready_for_arrival' — v4.53 : Early Check-in Alert INVITÉ
+ *  (« votre logement est propre et prêt à vous accueillir plus tôt
+ *  que prévu »), envoyée dès validation du ménage avant l'arrivée. */
+export async function renderReadyForArrivalEmail(params: {
+  guestName: string | null;
+  propertyName: string;
+  checkInLabel: string;
+  /** Chemin relatif ou URL absolue — absolutisé ici. */
+  hubUrl?: string;
+}): Promise<RenderedEmail> {
+  const hubUrl = params.hubUrl
+    ? params.hubUrl.startsWith('http')
+      ? params.hubUrl
+      : `${siteUrl}${params.hubUrl}`
+    : undefined;
+  return renderFromDbOrFallback({
+    key: 'ready_for_arrival',
+    fallback: () => readyForArrivalEmail({ ...params, hubUrl }),
+    vars: {
+      guestName: params.guestName ?? '',
+      propertyName: params.propertyName,
+      checkInLabel: params.checkInLabel,
+      hubUrl: hubUrl ?? '',
     },
   });
 }

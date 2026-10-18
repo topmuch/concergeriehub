@@ -16,7 +16,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { resolveUserProperties } from '@/lib/b2b-server';
+import { resolveUserProperties, resolveManagedPropertyIds } from '@/lib/b2b-server';
 import { DASHBOARD_MODULES, haversineKm } from '@/lib/b2b';
 
 const MS_PER_DAY = 86_400_000;
@@ -53,6 +53,13 @@ export async function GET(req: NextRequest) {
       : properties.find((p) => p.id === requestedId) ?? properties[0];
     // Les ids ciblés proviennent TOUJOURS de resolveUserProperties (accès déjà garanti).
     const targetIds = target ? [target.id] : properties.map((p) => p.id);
+
+    // AUDIT PRÉ-PROD — SÉPARATION FINANCIÈRE : un CLEANER ou MAINTENANCE
+    // ne voit AUCUN revenu (upsellingRevenue, commandes). Les KPIs
+    // scans/note/propriétés restent visibles sur ses biens d'équipe.
+    const managedIds = new Set(await resolveManagedPropertyIds(userId));
+    const financeIds = targetIds.filter((id) => managedIds.has(id));
+    const canSeeFinance = financeIds.length > 0;
 
     // ----- Bornes de temps -----
     const now = new Date();
@@ -224,14 +231,17 @@ export async function GET(req: NextRequest) {
         amount: null,
         at: s.createdAt.toISOString(),
       })),
-      ...recentOrders.map((o): ActivityItem => ({
-        id: `order-${o.id}`,
-        type: 'order',
-        title: `Commande — ${o.provider?.businessName ?? 'Prestataire'}`,
-        detail: `Invité : ${o.guestName} · ${orderStatusLabel(o.status)}`,
-        amount: o.totalAmount,
-        at: o.createdAt.toISOString(),
-      })),
+      // AUDIT PRÉ-PROD — commandes (montants) masquées aux CLEANER/MAINTENANCE
+      ...(canSeeFinance
+        ? recentOrders.map((o): ActivityItem => ({
+            id: `order-${o.id}`,
+            type: 'order',
+            title: `Commande — ${o.provider?.businessName ?? 'Prestataire'}`,
+            detail: `Invité : ${o.guestName} · ${orderStatusLabel(o.status)}`,
+            amount: o.totalAmount,
+            at: o.createdAt.toISOString(),
+          }))
+        : []),
       ...recentBookings.map((b): ActivityItem => ({
         id: `booking-${b.id}`,
         type: 'booking',
@@ -302,9 +312,9 @@ export async function GET(req: NextRequest) {
         lastScanAt: lastScan?.createdAt?.toISOString() ?? null,
         avgRating: reviewsAgg._avg.rating ?? null,
         reviewsCount: reviewsAgg._count,
-        upsellingRevenue: ordersThisMonth._sum.totalAmount ?? 0,
-        ordersThisMonth: ordersThisMonth._count,
-        ordersDelta,
+        upsellingRevenue: canSeeFinance ? (ordersThisMonth._sum.totalAmount ?? 0) : 0,
+        ordersThisMonth: canSeeFinance ? ordersThisMonth._count : 0,
+        ordersDelta: canSeeFinance ? ordersDelta : null,
         unreadGuestMessages: await db.voiceMessage.count({
           where: { propertyId: { in: targetIds }, senderType: 'guest', isRead: false },
         }),

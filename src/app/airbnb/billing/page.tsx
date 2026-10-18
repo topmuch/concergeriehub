@@ -1,23 +1,25 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getServerSession } from 'next-auth';
+import { CreditCard } from 'lucide-react';
 import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { normalizeMemberRole } from '@/lib/team';
 import { BillingContent, type CurrentSubscriptionView } from '@/components/airbnb/billing-content';
 import { getHostPlan } from '@/lib/billing';
-import { RestrictedAccess } from '@/components/airbnb/host/restricted-access';
 
 export const metadata: Metadata = {
-  title: 'Abonnement — Conciergerie Hub',
+  title: 'Abonnement — RoomScan',
   description: 'Gérez votre abonnement Airbnb Solo ou Airbnb Pro.',
 };
 
 // ÉTAPE 10 — Page facturation de l'Espace Hôte.
 // Session requise ; charge l'abonnement actif et le mode Stripe
 // (réel ou démo) puis délègue l'interactivité au composant client.
-// GARDE DE RÔLE : un CLEANER / MAINTENANCE (équipe, sans rôle de
-// gestion sur aucun bien) n'accède pas à la facturation.
+// GARDE DE RÔLE (audit 4-c — durcie) : la facturation est réservée
+// au PROPRIÉTAIRE du compte — un MANAGER membre d'équipe (comme un
+// CLEANER / MAINTENANCE) n'y accède pas : seuls les biens possédés
+// (Property.ownerId) ouvrent cette page.
 // Le shell (sidebar + header) est fourni par /airbnb/layout.tsx.
 export default async function BillingPage() {
   const session = await getServerSession(authOptions);
@@ -32,20 +34,10 @@ export default async function BillingPage() {
     redirect('/admin/dashboard');
   }
 
-  // ── Garde de rôle : facturation réservée aux gestionnaires ──
-  const [ownedCount, memberships] = await Promise.all([
-    db.property.count({ where: { ownerId: userId } }),
-    db.propertyMember.findMany({
-      where: { userId, acceptedAt: { not: null } },
-      select: { role: true },
-    }),
-  ]);
-  const isManagerSomewhere = memberships.some((m) => {
-    const r = normalizeMemberRole(m.role);
-    return r === 'OWNER' || r === 'MANAGER';
-  });
-  if (ownedCount === 0 && !isManagerSomewhere) {
-    return <RestrictedAccess feature="la facturation" />;
+  // ── Garde de rôle : facturation réservée au propriétaire du compte ──
+  const ownedCount = await db.property.count({ where: { ownerId: userId } });
+  if (ownedCount === 0) {
+    return <OwnerOnlyBilling />;
   }
 
   const [user, activeSub, isStripeMode] = await Promise.all([
@@ -71,6 +63,8 @@ export default async function BillingPage() {
       billingCycle: activeSub.billingCycle,
       amount: activeSub.amount,
       currentPeriodEnd: activeSub.currentPeriodEnd?.toISOString() ?? null,
+      // v4.95 — route la Résiliation vers Stripe ou PayPal (cf. UI).
+      paymentProvider: activeSub.paymentProvider ?? 'stripe',
     };
   }
 
@@ -84,5 +78,40 @@ export default async function BillingPage() {
       current={current}
       stripeMode={isStripeMode}
     />
+  );
+}
+
+// ── Écran de garde owner-only (audit 4-c) : carte élégante, pas
+// d'erreur brute. Les membres d'équipe (CLEANER / MAINTENANCE /
+// MANAGER non propriétaires) retournent vers leur espace. ──
+function OwnerOnlyBilling() {
+  return (
+    <div className="flex min-h-[60vh] items-center justify-center">
+      <div className="max-w-md rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+        <span
+          aria-hidden="true"
+          className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100"
+        >
+          <CreditCard className="h-7 w-7 text-slate-500" />
+        </span>
+        <h1 className="mt-4 text-lg font-bold text-slate-900">
+          Facturation réservée au propriétaire du compte
+        </h1>
+        <p className="mt-2 text-sm leading-relaxed text-slate-600">
+          Les moyens de paiement et l&apos;abonnement sont gérés par le propriétaire
+          des biens. Votre rôle dans l&apos;équipe vous donne accès à vos tâches et
+          aux informations de terrain, mais pas à la facturation.
+        </p>
+        <p className="mt-1 text-xs text-slate-400">
+          Besoin d&apos;une facture ? Contactez le propriétaire du compte.
+        </p>
+        <Link
+          href="/airbnb/dashboard"
+          className="mt-5 inline-flex h-10 items-center justify-center rounded-lg bg-[#0066EF] px-4 text-sm font-bold text-white shadow-sm transition-colors hover:bg-[#0052C4]"
+        >
+          ← Retour à la vue d&apos;ensemble
+        </Link>
+      </div>
+    </div>
   );
 }

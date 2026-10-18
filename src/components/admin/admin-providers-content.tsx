@@ -3,11 +3,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { toast } from 'sonner';
-import { Pencil, Plus, RefreshCw, Trash2, MapPin, Search } from 'lucide-react';
-import { B2BCard } from '@/components/ui/b2b-card';
-import { EmojiIcon } from '@/components/ui/emoji-icon';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -54,8 +49,30 @@ import {
 // Carte Leaflet — rendu 100 % client uniquement
 const AdminProvidersMap = dynamic(() => import('./admin-providers-map'), {
   ssr: false,
-  loading: () => <Skeleton className="h-[420px] w-full rounded-xl" />,
+  loading: () => <Skeleton className="h-[420px] w-full rounded-xl bg-white/8" />,
 });
+
+// ---------- Design « Saphir Luxe » : champ de formulaire (portails & surfaces sombres) ----------
+const LUX_FIELD =
+  'rounded-xl! border-white/12! bg-white/[0.04]! text-white! placeholder:text-[#8fa0c2]/60! focus-visible:ring-[#5c8af0]/50!';
+const LUX_SELECT_TRIGGER =
+  'rounded-xl! border-white/12! bg-white/[0.04]! text-white! font-semibold focus-visible:ring-[#5c8af0]/50!';
+const LUX_SELECT_CONTENT = 'border-white/10! bg-[#0b1226]! text-white!';
+const LUX_SELECT_ITEM = 'focus:bg-white/8! focus:text-white!';
+
+// Pastilles de statut (design) — données PROVIDER_REVIEW_STATUS_META / DOC_STATUS_META inchangées.
+const REVIEW_STATUS_DOT: Record<ProviderReviewStatus, string> = {
+  PENDING: '#8fa0c2',
+  IN_REVIEW: '#fbbf24',
+  REJECTED: '#f07d6a',
+  VERIFIED: '#34d399',
+};
+
+const DOC_STATUS_DOT: Record<string, string> = {
+  PENDING: '#fbbf24',
+  VERIFIED: '#34d399',
+  REJECTED: '#f07d6a',
+};
 
 interface ProviderRow {
   id: string;
@@ -429,119 +446,116 @@ export function AdminProvidersContent() {
   return (
     <div className="max-w-6xl mx-auto w-full px-4 py-8 space-y-6">
       {/* ================= En-tête ================= */}
-      <section className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <section className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
-            Prestataires 🧹
+          <p className="lux-eyebrow">Catalogue plateforme</p>
+          <h1 className="lux-display mt-2 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+            Prestataires
           </h1>
-          <p className="text-sm text-slate-600 mt-1">
+          <p className="mt-2 text-sm text-[#8fa0c2]">
             Le catalogue central — ajout, géolocalisation et audiences réservés au Superadmin.
           </p>
         </div>
-        <Button
-          onClick={openCreate}
-          className="bg-slate-900 hover:bg-slate-800 text-white font-semibold h-11"
-        >
-          <Plus className="h-4 w-4" /> Ajouter un prestataire
-        </Button>
+        <button type="button" onClick={openCreate} className="lux-btn shrink-0">
+          Ajouter un prestataire
+        </button>
       </section>
 
       {/* ================= Carte ================= */}
       <section aria-label="Carte interactive des prestataires">
-        <AdminProvidersMap
-          providers={mapProviders}
-          selectedId={selectedId}
-          onSelect={setSelectedId}
-          placingMode={dialogOpen}
-          draftPosition={draftPosition}
-          draftRadiusKm={draftRadius}
-          onMapClick={(lat, lng) => {
-            if (!dialogOpen) return;
-            setForm((f) => ({
-              ...f,
-              latitude: lat.toFixed(6),
-              longitude: lng.toFixed(6),
-            }));
-          }}
-        />
-        <p className="mt-2 text-xs text-slate-400 text-center">
+        <div className="overflow-hidden rounded-xl border border-white/10">
+          <AdminProvidersMap
+            providers={mapProviders}
+            selectedId={selectedId}
+            onSelect={setSelectedId}
+            placingMode={dialogOpen}
+            draftPosition={draftPosition}
+            draftRadiusKm={draftRadius}
+            onMapClick={(lat, lng) => {
+              if (!dialogOpen) return;
+              setForm((f) => ({
+                ...f,
+                latitude: lat.toFixed(6),
+                longitude: lng.toFixed(6),
+              }));
+            }}
+          />
+        </div>
+        <p className="mt-2 text-center text-xs text-[#8fa0c2]/70">
           Cliquez sur un marqueur pour le sélectionner · un clic sur la carte remplit les
           coordonnées quand le formulaire est ouvert.
         </p>
       </section>
 
       {/* ================= Filtres ================= */}
-      <section className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" aria-hidden="true" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Rechercher un nom, une catégorie, une ville…"
-            aria-label="Rechercher un prestataire"
-            className="pl-9 bg-white"
-          />
-        </div>
+      <section className="flex flex-col gap-3 sm:flex-row">
+        <Input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Rechercher un nom, une catégorie, une ville…"
+          aria-label="Rechercher un prestataire"
+          className={`flex-1 ${LUX_FIELD}`}
+        />
         <Select value={audienceFilter} onValueChange={setAudienceFilter}>
-          <SelectTrigger aria-label="Filtrer par audience" className="w-full sm:w-[220px] bg-white font-semibold">
+          <SelectTrigger aria-label="Filtrer par audience" className={`w-full sm:w-[220px] ${LUX_SELECT_TRIGGER}`}>
             <SelectValue placeholder="Audience" />
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">🌐 Toutes les audiences</SelectItem>
-            <SelectItem value="OWNER_SERVICE">🔧 Services Propriétaire</SelectItem>
-            <SelectItem value="GUEST_EXPERIENCE">🥂 Expériences Invité</SelectItem>
+          <SelectContent className={LUX_SELECT_CONTENT}>
+            <SelectItem value="all" className={LUX_SELECT_ITEM}>Toutes les audiences</SelectItem>
+            <SelectItem value="OWNER_SERVICE" className={LUX_SELECT_ITEM}>Services Propriétaire</SelectItem>
+            <SelectItem value="GUEST_EXPERIENCE" className={LUX_SELECT_ITEM}>Expériences Invité</SelectItem>
           </SelectContent>
         </Select>
         {/* FIX-11 — filtre par statut de vérification (quadri-état dérivé
             des documents réels) avec compteur par état. */}
         <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as 'ALL' | ProviderReviewStatus)}>
-          <SelectTrigger aria-label="Filtrer par statut de vérification" className="w-full sm:w-[220px] bg-white font-semibold">
+          <SelectTrigger aria-label="Filtrer par statut de vérification" className={`w-full sm:w-[220px] ${LUX_SELECT_TRIGGER}`}>
             <SelectValue placeholder="Statut" />
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="ALL">
-              🗂️ Tous les statuts ({providers.length})
+          <SelectContent className={LUX_SELECT_CONTENT}>
+            <SelectItem value="ALL" className={LUX_SELECT_ITEM}>
+              Tous les statuts ({providers.length})
             </SelectItem>
             {(Object.keys(PROVIDER_REVIEW_STATUS_META) as ProviderReviewStatus[]).map((st) => {
               const meta = PROVIDER_REVIEW_STATUS_META[st];
               return (
-                <SelectItem key={st} value={st}>
-                  {meta.emoji} {meta.label} ({statusCounts[st]})
+                <SelectItem key={st} value={st} className={LUX_SELECT_ITEM}>
+                  {meta.label} ({statusCounts[st]})
                 </SelectItem>
               );
             })}
           </SelectContent>
         </Select>
-        <Button variant="outline" onClick={load} className="bg-white" aria-label="Rafraîchir la liste">
-          <RefreshCw className={cn('h-4 w-4', loading && 'animate-spin')} /> Actualiser
-        </Button>
+        <button type="button" onClick={load} className="lux-btn-ghost shrink-0" aria-label="Rafraîchir la liste">
+          Actualiser
+        </button>
       </section>
 
       {/* ================= Liste ================= */}
       <section aria-label="Liste des prestataires" className="pb-6">
         {loading && providers.length === 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {[0, 1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-40 rounded-xl" />
+              <Skeleton key={i} className="h-40 rounded-xl bg-white/8" />
             ))}
           </div>
         ) : error ? (
-          <B2BCard className="text-center">
-            <p className="text-sm text-slate-600">{error}</p>
-            <Button onClick={load} className="mt-3 bg-slate-900 hover:bg-slate-800 text-white">
-              <RefreshCw className="h-4 w-4" /> Réessayer
-            </Button>
-          </B2BCard>
+          <div className="lux-card p-8 text-center" role="alert">
+            <span className="lux-dot mx-auto" style={{ backgroundColor: '#f07d6a' }} aria-hidden="true" />
+            <p className="mt-3 text-sm text-[#8fa0c2]">{error}</p>
+            <button type="button" onClick={load} className="lux-btn mt-5">
+              Réessayer
+            </button>
+          </div>
         ) : filtered.length === 0 ? (
-          <B2BCard className="text-center">
-            <p className="text-3xl" aria-hidden="true">🔍</p>
-            <p className="mt-2 font-semibold text-slate-900">Aucun prestataire trouvé</p>
-            <p className="text-sm text-slate-600 mt-1">
+          <div className="lux-empty mt-2 rounded-2xl px-4 py-10 text-center">
+            <p className="text-sm font-semibold text-white">Aucun prestataire trouvé</p>
+            <p className="mx-auto mt-1 max-w-sm text-sm text-[#8fa0c2]">
               Modifiez la recherche ou ajoutez un nouveau prestataire.
             </p>
-          </B2BCard>
+          </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {filtered.map((p) => {
               const meta = providerCategoryMeta(p.category);
               const audienceMeta = PROVIDER_AUDIENCE_META[p.audience as ProviderAudience];
@@ -554,12 +568,11 @@ export function AdminProvidersContent() {
                 deriveProviderReviewStatus(p.isVerified, parseVerificationDocuments(p.verificationDocuments));
               const statusMeta = PROVIDER_REVIEW_STATUS_META[reviewStatus];
               return (
-                <B2BCard
+                <div
                   key={p.id}
-                  hover
                   className={cn(
-                    'cursor-pointer transition-colors',
-                    selected && 'ring-2 ring-slate-900 ring-offset-2',
+                    'lux-card lux-card-hover p-5',
+                    selected && 'ring-1 ring-[#5c8af0]/60',
                     !p.isActive && 'opacity-75',
                   )}
                 >
@@ -573,41 +586,50 @@ export function AdminProvidersContent() {
                     }}
                   >
                     <div className="flex items-start gap-3">
-                      <EmojiIcon emoji={meta.emoji} size="md" variant="accent" />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <h3 className="text-sm font-bold text-slate-900">{p.businessName}</h3>
+                      <span
+                        className="lux-num flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#3d6fe0]/15 text-base text-[#a9c4ff] ring-1 ring-[#5c8af0]/25"
+                        aria-hidden="true"
+                      >
+                        {meta.label.charAt(0)}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="text-sm font-bold text-white">{p.businessName}</h3>
                           {!p.isActive && (
-                            <Badge variant="outline" className="bg-red-50 border-red-200 text-red-600 font-semibold">
-                              ⛔ Inactif
-                            </Badge>
+                            <span className="lux-chip px-2! py-0.5! text-[10px]!">
+                              <span className="lux-dot" style={{ backgroundColor: '#f07d6a' }} aria-hidden="true" />
+                              Inactif
+                            </span>
                           )}
-                          <Badge
-                            variant="outline"
-                            className={`${statusMeta.badgeCls} border font-semibold`}
+                          <span
+                            className="lux-chip px-2! py-0.5! text-[10px]!"
                             aria-label={`Statut de vérification : ${statusMeta.label}`}
                           >
-                            {statusMeta.emoji} {statusMeta.label}
-                          </Badge>
+                            <span
+                              className="lux-dot"
+                              style={{ backgroundColor: REVIEW_STATUS_DOT[reviewStatus] }}
+                              aria-hidden="true"
+                            />
+                            {statusMeta.label}
+                          </span>
                         </div>
-                        <p className="text-xs text-slate-500 mt-0.5">
+                        <p className="mt-0.5 text-xs text-[#8fa0c2]">
                           {meta.label}
                           {p.location ? ` · ${p.location}` : ''}
-                          {p.audience && audienceMeta ? ` · ${audienceMeta.emoji} ${audienceMeta.label}` : ''}
+                          {p.audience && audienceMeta ? ` · ${audienceMeta.label}` : ''}
                         </p>
                         {p.description && (
-                          <p className="text-xs text-slate-500 mt-1.5 leading-relaxed line-clamp-2">
+                          <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-[#8fa0c2]">
                             {p.description}
                           </p>
                         )}
-                        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
-                          <span className="inline-flex items-center gap-1">
-                            <MapPin className="h-3 w-3" aria-hidden="true" />
+                        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-[#8fa0c2]/80">
+                          <span>
                             {p.latitude?.toFixed(3)}, {p.longitude?.toFixed(3)} · rayon {p.serviceRadiusKm} km
                           </span>
                           {p.hourlyRate != null && <span>· {formatEur(p.hourlyRate)}/h</span>}
-                          {p.isUrgentAvailable && <span>· ⚡ urgences</span>}
-                          <span>· ⭐ {p.ratingAvg.toFixed(1).replace('.', ',')} ({p.totalReviews})</span>
+                          {p.isUrgentAvailable && <span>· urgences</span>}
+                          <span>· {p.ratingAvg.toFixed(1).replace('.', ',')} ({p.totalReviews})</span>
                           <span>· {p.totalJobsCompleted} missions</span>
                         </div>
                       </div>
@@ -615,38 +637,36 @@ export function AdminProvidersContent() {
                   </div>
 
                   {/* Actions */}
-                  <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-                    <label className="flex items-center gap-2 cursor-pointer" aria-label={`Statut actif de ${p.businessName}`}>
+                  <div className="mt-3 flex items-center justify-between gap-2 border-t border-white/8 pt-3">
+                    <label className="flex cursor-pointer items-center gap-2" aria-label={`Statut actif de ${p.businessName}`}>
                       <Switch
                         checked={p.isActive}
                         onCheckedChange={(v) => toggleActive(p, v)}
                         aria-label={`${p.businessName} actif`}
                       />
-                      <span className="text-xs font-semibold text-slate-600">
+                      <span className="text-xs font-semibold text-[#8fa0c2]">
                         {p.isActive ? 'Actif' : 'Inactif'}
                       </span>
                     </label>
                     <div className="flex items-center gap-1.5">
-                      <Button
-                        variant="outline"
-                        size="sm"
+                      <button
+                        type="button"
                         onClick={() => openEdit(p)}
-                        className="h-8 text-xs bg-white"
+                        className="inline-flex h-8 items-center rounded-full border border-white/10 bg-white/[0.04] px-3 text-xs font-semibold text-white transition-colors hover:bg-white/[0.08]"
                       >
-                        <Pencil className="h-3.5 w-3.5" /> Modifier
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
+                        Modifier
+                      </button>
+                      <button
+                        type="button"
                         onClick={() => setDeleteTarget(p)}
                         aria-label={`Supprimer ${p.businessName}`}
-                        className="h-8 text-xs bg-white text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                        className="inline-flex h-8 items-center rounded-full border border-[#f07d6a]/25 bg-[#f07d6a]/10 px-3 text-xs font-semibold text-[#f07d6a] transition-colors hover:bg-[#f07d6a]/20"
                       >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
+                        Supprimer
+                      </button>
                     </div>
                   </div>
-                </B2BCard>
+                </div>
               );
             })}
           </div>
@@ -657,7 +677,7 @@ export function AdminProvidersContent() {
       <Sheet open={dialogOpen} onOpenChange={(open) => !open && setDialogOpen(false)} modal={false}>
         <SheetContent
           side="right"
-          className="w-full sm:max-w-xl overflow-y-auto bg-white"
+          className="w-full overflow-y-auto border-white/10! bg-[#0b1226]! text-white! sm:max-w-xl"
           aria-describedby="provider-form-desc"
           // Le clic sur la carte (hors Sheet) ne doit pas fermer le formulaire :
           // on bloque la fermeture "extérieure" — Annuler / X / Échap restent actifs.
@@ -666,10 +686,10 @@ export function AdminProvidersContent() {
           onFocusOutside={(e) => e.preventDefault()}
         >
           <SheetHeader>
-            <SheetTitle className="text-lg font-bold text-slate-900 flex items-center gap-2">
-              {editingId ? '✏️ Modifier le prestataire' : '➕ Nouveau prestataire'}
+            <SheetTitle className="lux-display text-lg font-semibold text-white">
+              {editingId ? 'Modifier le prestataire' : 'Nouveau prestataire'}
             </SheetTitle>
-            <SheetDescription id="provider-form-desc" className="text-sm text-slate-600">
+            <SheetDescription id="provider-form-desc" className="text-sm text-[#8fa0c2]">
               {editingId
                 ? 'Ajustez la fiche : géolocalisation, rayon, audience ou statut.'
                 : 'Règle d’or : seul le Superadmin crée et géolocalise les prestataires. La carte reste cliquable à gauche.'}
@@ -679,8 +699,8 @@ export function AdminProvidersContent() {
           <form onSubmit={handleSubmit} className="space-y-5" noValidate>
             {/* ----- Identité ----- */}
             <fieldset className="space-y-3">
-              <legend className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Identité</legend>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <legend className="lux-eyebrow">Identité</legend>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <Label htmlFor="pf-name">Nom de l&apos;entreprise *</Label>
                   <Input
@@ -689,6 +709,7 @@ export function AdminProvidersContent() {
                     onChange={(e) => setForm((f) => ({ ...f, businessName: e.target.value }))}
                     placeholder="CleanSuite Paris"
                     required
+                    className={LUX_FIELD}
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -697,13 +718,13 @@ export function AdminProvidersContent() {
                     value={form.category}
                     onValueChange={(v) => setForm((f) => ({ ...f, category: v }))}
                   >
-                    <SelectTrigger id="pf-category" aria-label="Catégorie du prestataire">
+                    <SelectTrigger id="pf-category" aria-label="Catégorie du prestataire" className={LUX_SELECT_TRIGGER}>
                       <SelectValue placeholder="Choisir une catégorie" />
                     </SelectTrigger>
-                    <SelectContent className="max-h-72">
+                    <SelectContent className={`max-h-72 ${LUX_SELECT_CONTENT}`}>
                       {Object.entries(PROVIDER_CATEGORY_META).map(([key, meta]) => (
-                        <SelectItem key={key} value={key}>
-                          {meta.emoji} {meta.label}
+                        <SelectItem key={key} value={key} className={LUX_SELECT_ITEM}>
+                          {meta.label}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -719,10 +740,11 @@ export function AdminProvidersContent() {
                   onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
                   placeholder="Prestation proposée, zone couverte, points forts…"
                   rows={2}
+                  className={LUX_FIELD}
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <Label htmlFor="pf-location">Adresse / ville affichée</Label>
                   <Input
@@ -730,6 +752,7 @@ export function AdminProvidersContent() {
                     value={form.location}
                     onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))}
                     placeholder="Montmartre, Paris 18e"
+                    className={LUX_FIELD}
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -740,6 +763,7 @@ export function AdminProvidersContent() {
                     value={form.email}
                     onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
                     placeholder="auto-généré si vide"
+                    className={LUX_FIELD}
                   />
                 </div>
               </div>
@@ -752,17 +776,18 @@ export function AdminProvidersContent() {
                   onChange={(e) => setForm((f) => ({ ...f, portfolioText: e.target.value }))}
                   placeholder={'https://exemple.fr/photo1.jpg\nhttps://exemple.fr/photo2.jpg'}
                   rows={2}
+                  className={LUX_FIELD}
                 />
-                <p className="text-[11px] text-slate-400">6 URLs max — affichées dans la fiche prestataire.</p>
+                <p className="text-[11px] text-[#8fa0c2]/70">6 URLs max — affichées dans la fiche prestataire.</p>
               </div>
             </fieldset>
 
             {/* ----- Audience (2 choix stricts) ----- */}
             <fieldset className="space-y-3">
-              <legend className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+              <legend className="lux-eyebrow">
                 Audience — où ce prestataire apparaît-il ?
               </legend>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {(
                   ['OWNER_SERVICE', 'GUEST_EXPERIENCE'] as const
                 ).map((aud) => {
@@ -775,16 +800,14 @@ export function AdminProvidersContent() {
                       onClick={() => setForm((f) => ({ ...f, audience: aud }))}
                       aria-pressed={active}
                       className={cn(
-                        'text-left border rounded-xl p-3.5 transition-all',
+                        'rounded-xl border p-3.5 text-left transition-all',
                         active
-                          ? 'border-slate-900 bg-slate-900 text-white shadow-md'
-                          : 'border-slate-200 bg-white hover:border-slate-300',
+                          ? 'border-[#5c8af0]/60 bg-[#5c8af0]/15 text-white shadow-[0_10px_30px_-14px_rgba(61,111,224,0.6)]'
+                          : 'border-white/10 bg-white/[0.03] text-white hover:border-white/20 hover:bg-white/[0.05]',
                       )}
                     >
-                      <p className="text-sm font-bold">
-                        {meta.emoji} {meta.label}
-                      </p>
-                      <p className={cn('text-xs mt-1 leading-relaxed', active ? 'text-slate-300' : 'text-slate-500')}>
+                      <p className="text-sm font-bold">{meta.label}</p>
+                      <p className={cn('mt-1 text-xs leading-relaxed', active ? 'text-[#a9c4ff]' : 'text-[#8fa0c2]')}>
                         {meta.hint}
                       </p>
                     </button>
@@ -795,10 +818,10 @@ export function AdminProvidersContent() {
 
             {/* ----- Géolocalisation ----- */}
             <fieldset className="space-y-3">
-              <legend className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+              <legend className="lux-eyebrow">
                 Géolocalisation — cliquez sur la carte en arrière-plan
               </legend>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <div className="space-y-1.5">
                   <Label htmlFor="pf-lat">Latitude *</Label>
                   <Input
@@ -807,6 +830,7 @@ export function AdminProvidersContent() {
                     value={form.latitude}
                     onChange={(e) => setForm((f) => ({ ...f, latitude: e.target.value }))}
                     placeholder="48.886700"
+                    className={LUX_FIELD}
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -817,6 +841,7 @@ export function AdminProvidersContent() {
                     value={form.longitude}
                     onChange={(e) => setForm((f) => ({ ...f, longitude: e.target.value }))}
                     placeholder="2.343100"
+                    className={LUX_FIELD}
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -827,6 +852,7 @@ export function AdminProvidersContent() {
                     value={form.serviceRadiusKm}
                     onChange={(e) => setForm((f) => ({ ...f, serviceRadiusKm: e.target.value }))}
                     placeholder="10"
+                    className={LUX_FIELD}
                   />
                 </div>
               </div>
@@ -834,10 +860,10 @@ export function AdminProvidersContent() {
 
             {/* ----- Conditions ----- */}
             <fieldset className="space-y-3">
-              <legend className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
-                Conditions & statut
+              <legend className="lux-eyebrow">
+                Conditions &amp; statut
               </legend>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <Label htmlFor="pf-rate">Tarif horaire (€, optionnel)</Label>
                   <Input
@@ -846,27 +872,28 @@ export function AdminProvidersContent() {
                     value={form.hourlyRate}
                     onChange={(e) => setForm((f) => ({ ...f, hourlyRate: e.target.value }))}
                     placeholder="28"
+                    className={LUX_FIELD}
                   />
                 </div>
                 <div className="flex flex-col justify-center gap-2.5">
-                  <label className="flex items-center justify-between gap-3 cursor-pointer">
-                    <span className="text-sm font-semibold text-slate-700">⚡ Disponible en urgence</span>
+                  <label className="flex cursor-pointer items-center justify-between gap-3">
+                    <span className="text-sm font-semibold text-white/90">Disponible en urgence</span>
                     <Switch
                       checked={form.isUrgentAvailable}
                       onCheckedChange={(v) => setForm((f) => ({ ...f, isUrgentAvailable: v }))}
                       aria-label="Disponible en urgence"
                     />
                   </label>
-                  <label className="flex items-center justify-between gap-3 cursor-pointer">
-                    <span className="text-sm font-semibold text-slate-700">✓ Prestataire vérifié</span>
+                  <label className="flex cursor-pointer items-center justify-between gap-3">
+                    <span className="text-sm font-semibold text-white/90">✓ Prestataire vérifié</span>
                     <Switch
                       checked={form.isVerified}
                       onCheckedChange={(v) => setForm((f) => ({ ...f, isVerified: v }))}
                       aria-label="Prestataire vérifié"
                     />
                   </label>
-                  <label className="flex items-center justify-between gap-3 cursor-pointer">
-                    <span className="text-sm font-semibold text-slate-700">🟢 Actif</span>
+                  <label className="flex cursor-pointer items-center justify-between gap-3">
+                    <span className="text-sm font-semibold text-white/90">Actif</span>
                     <Switch
                       checked={form.isActive}
                       onCheckedChange={(v) => setForm((f) => ({ ...f, isActive: v }))}
@@ -881,40 +908,40 @@ export function AdminProvidersContent() {
             {editingId ? (
               <section
                 aria-label="Documents de vérification"
-                className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3"
+                className="space-y-3 rounded-xl border border-white/10 bg-white/[0.03] p-4"
               >
                 <div className="flex items-center justify-between gap-2">
-                  <h3 className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
-                    📄 Documents de vérification
-                  </h3>
+                  <h3 className="lux-eyebrow">Documents de vérification</h3>
                   <div className="flex items-center gap-2">
                     {/* FIX-11 — statut global cohérent avec les badges de la liste
                         (Vérifié / Rejeté / En revue / En attente) */}
-                    <Badge
-                      variant="outline"
-                      className={`${sheetStatusMeta.badgeCls} border font-semibold`}
-                    >
-                      {sheetStatusMeta.emoji} {sheetStatusMeta.label}
-                    </Badge>
+                    <span className="lux-chip px-2! py-0.5! text-[10px]!">
+                      <span
+                        className="lux-dot"
+                        style={{ backgroundColor: REVIEW_STATUS_DOT[sheetReviewStatus] }}
+                        aria-hidden="true"
+                      />
+                      {sheetStatusMeta.label}
+                    </span>
                     {documents && documents.length > 0 && (
-                      <span className="text-[11px] text-slate-400">
+                      <span className="text-[11px] text-[#8fa0c2]/70">
                         {documents.length}/5
                       </span>
                     )}
                   </div>
                 </div>
-                <p className="text-xs text-slate-500 leading-relaxed">
+                <p className="text-xs leading-relaxed text-[#8fa0c2]">
                   Uploadés par le prestataire depuis son portail. Validez ou rejetez chaque
                   document — le badge ✓ Vérifié est recalculé automatiquement.
                 </p>
 
                 {docsLoading && !documents ? (
                   <div className="space-y-2" aria-busy="true">
-                    <Skeleton className="h-12 rounded-lg" />
-                    <Skeleton className="h-12 rounded-lg" />
+                    <Skeleton className="h-12 rounded-lg bg-white/8" />
+                    <Skeleton className="h-12 rounded-lg bg-white/8" />
                   </div>
                 ) : !documents || documents.length === 0 ? (
-                  <p className="rounded-lg border border-dashed border-slate-300 bg-white px-3 py-4 text-center text-xs text-slate-500">
+                  <p className="lux-empty rounded-lg px-3 py-4 text-center text-xs text-[#8fa0c2]">
                     Aucun document fourni
                   </p>
                 ) : (
@@ -926,50 +953,52 @@ export function AdminProvidersContent() {
                       return (
                         <li
                           key={doc.id}
-                          className="rounded-lg border border-slate-200 bg-white p-3 flex flex-col gap-2"
+                          className="flex flex-col gap-2 rounded-lg border border-white/8 bg-white/[0.04] p-3"
                         >
-                          <div className="flex items-start justify-between gap-2 flex-wrap">
+                          <div className="flex flex-wrap items-start justify-between gap-2">
                             <div className="min-w-0">
-                              <p className="text-sm font-semibold text-slate-900 flex items-center gap-1.5">
-                                <span aria-hidden="true">{kindMeta.emoji}</span> {kindMeta.label}
+                              <p className="flex items-center gap-1.5 text-sm font-semibold text-white">
+                                {kindMeta.label}
                               </p>
-                              <p className="text-[11px] text-slate-500 mt-0.5 truncate max-w-full">
+                              <p className="mt-0.5 max-w-full truncate text-[11px] text-[#8fa0c2]">
                                 {doc.name} · {formatFrDate(doc.uploadedAt)}
                               </p>
                             </div>
-                            <Badge variant="outline" className={`${statusMeta.cls} border font-semibold shrink-0`}>
+                            <span className="lux-chip px-2! py-0.5! text-[10px]!">
+                              <span
+                                className="lux-dot"
+                                style={{ backgroundColor: DOC_STATUS_DOT[doc.status] ?? '#8fa0c2' }}
+                                aria-hidden="true"
+                              />
                               {statusMeta.label}
-                            </Badge>
+                            </span>
                           </div>
-                          <div className="flex items-center justify-between gap-2 flex-wrap">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
                             <a
                               href={doc.url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-xs font-semibold text-slate-600 underline underline-offset-2 hover:text-slate-900"
+                              className="text-xs font-semibold text-[#a9c4ff] underline underline-offset-2 hover:text-white"
                             >
                               Voir le document ↗
                             </a>
                             <div className="flex items-center gap-1.5">
-                              <Button
+                              <button
                                 type="button"
-                                size="sm"
                                 disabled={busy || doc.status === 'VERIFIED'}
                                 onClick={() => reviewDocument(doc, 'VERIFIED')}
-                                className="h-8 text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
+                                className="inline-flex h-8 items-center rounded-full bg-gradient-to-br from-[#3d6fe0] to-[#24479c] px-3 text-xs font-semibold text-white shadow-[0_8px_20px_-10px_rgba(61,111,224,0.6)] transition-[filter,transform] hover:brightness-110 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50"
                               >
                                 ✓ Valider
-                              </Button>
-                              <Button
+                              </button>
+                              <button
                                 type="button"
-                                size="sm"
-                                variant="outline"
                                 disabled={busy || doc.status === 'REJECTED'}
                                 onClick={() => reviewDocument(doc, 'REJECTED')}
-                                className="h-8 text-xs text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 bg-white"
+                                className="inline-flex h-8 items-center rounded-full border border-[#f07d6a]/25 bg-[#f07d6a]/10 px-3 text-xs font-semibold text-[#f07d6a] transition-colors hover:bg-[#f07d6a]/20 disabled:cursor-not-allowed disabled:opacity-50"
                               >
                                 ✕ Rejeter
-                              </Button>
+                              </button>
                             </div>
                           </div>
                         </li>
@@ -979,29 +1008,33 @@ export function AdminProvidersContent() {
                 )}
               </section>
             ) : (
-              <p className="rounded-lg bg-blue-50 border border-blue-200 px-3 py-2 text-xs text-blue-800">
-                💡 Les documents de vérification (Kbis, assurance…) sont envoyés par le
+              <p className="rounded-lg border border-[#5c8af0]/25 bg-[#5c8af0]/10 px-3 py-2 text-xs text-[#a9c4ff]">
+                Les documents de vérification (Kbis, assurance…) sont envoyés par le
                 prestataire depuis son portail, puis validés ici — d&apos;abord créez la fiche.
               </p>
             )}
 
             {formError && (
-              <p role="alert" className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+              <p role="alert" className="rounded-lg border border-[#f07d6a]/25 bg-[#f07d6a]/10 px-3 py-2 text-sm text-[#f07d6a]">
                 {formError}
               </p>
             )}
 
             <div className="flex items-center justify-end gap-2 pt-1">
-              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)} className="bg-white">
+              <button
+                type="button"
+                onClick={() => setDialogOpen(false)}
+                className="lux-btn-ghost"
+              >
                 Annuler
-              </Button>
-              <Button
+              </button>
+              <button
                 type="submit"
                 disabled={saving}
-                className="bg-slate-900 hover:bg-slate-800 text-white font-semibold min-w-40"
+                className="lux-btn min-w-40 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {saving ? 'Enregistrement…' : editingId ? 'Enregistrer' : 'Créer le prestataire'}
-              </Button>
+              </button>
             </div>
           </form>
         </SheetContent>
@@ -1009,25 +1042,27 @@ export function AdminProvidersContent() {
 
       {/* ================= Confirmation suppression ================= */}
       <AlertDialog open={deleteTarget !== null} onOpenChange={(open) => !open && setDeleteTarget(null)}>
-        <AlertDialogContent className="bg-white">
+        <AlertDialogContent className="border-white/10! bg-[#0b1226]! text-white!">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-slate-900">
+            <AlertDialogTitle className="lux-display text-xl font-semibold text-white">
               Supprimer « {deleteTarget?.businessName} » ?
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-slate-600">
+            <AlertDialogDescription className="text-sm text-[#8fa0c2]">
               Le prestataire et son compte technique seront définitivement supprimés
               (les demandes de service associées aussi). Cette action est irréversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="bg-white">Annuler</AlertDialogCancel>
+            <AlertDialogCancel className="rounded-full! border-white/10! bg-white/[0.04]! text-[#8fa0c2]! hover:bg-white/[0.08]! hover:text-white!">
+              Annuler
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={(e) => {
                 e.preventDefault();
                 handleDelete();
               }}
               disabled={deleting}
-              className="bg-red-600 hover:bg-red-700 text-white"
+              className="rounded-full! bg-[#f07d6a]! text-[#1a0d09]! hover:bg-[#f07d6a]/85!"
             >
               {deleting ? 'Suppression…' : 'Supprimer définitivement'}
             </AlertDialogAction>

@@ -270,7 +270,7 @@ export function AutomationsManager() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="h-8 w-8 border-2 border-emerald-300/30 border-t-emerald-500 rounded-full animate-spin" />
+        <div className="h-8 w-8 border-2 border-blue-300/30 border-t-blue-500 rounded-full animate-spin" />
       </div>
     );
   }
@@ -287,7 +287,7 @@ export function AutomationsManager() {
         </div>
         <Button
           onClick={() => setDialogOpen(true)}
-          className="bg-emerald-600 hover:bg-emerald-700"
+          className="bg-blue-600 hover:bg-blue-700"
           disabled={homes.length === 0}
         >
           <Plus className="h-4 w-4 mr-2" />
@@ -307,8 +307,8 @@ export function AutomationsManager() {
       {automations.length === 0 && homes.length > 0 && (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16 gap-4">
-          <div className="rounded-2xl bg-emerald-100 dark:bg-emerald-500/10 p-4">
-            <Plug className="h-8 w-8 text-emerald-600" />
+          <div className="rounded-2xl bg-blue-100 dark:bg-blue-500/10 p-4">
+            <Plug className="h-8 w-8 text-blue-600" />
           </div>
           <div className="text-center">
             <p className="font-medium">Aucune automatisation configurée</p>
@@ -448,7 +448,7 @@ export function AutomationsManager() {
                               className="flex items-center gap-2 rounded-lg border p-2.5 text-sm"
                             >
                               <div className={`h-2.5 w-2.5 rounded-full shrink-0 ${
-                                isOn ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-600'
+                                isOn ? 'bg-blue-500' : 'bg-gray-300 dark:bg-gray-600'
                               }`} />
                               <div className="flex-1 min-w-0">
                                 <p className="font-medium truncate">
@@ -630,7 +630,7 @@ export function AutomationsManager() {
             <Button
               onClick={handleCreate}
               disabled={saving || !newName || !newBaseUrl || !selectedHomeId}
-              className="bg-emerald-600 hover:bg-emerald-700"
+              className="bg-blue-600 hover:bg-blue-700"
             >
               {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Zap className="h-4 w-4 mr-2" />}
               Créer

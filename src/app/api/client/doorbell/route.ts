@@ -1,41 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { sendPushToHome } from '@/lib/push-sender';
 
-async function ensureDemoUser() {
-  let user = await db.user.findFirst({
-    where: { email: 'demo@qrdomotik.roomscan.pro' },
-  });
-
-  if (!user) {
-    user = await db.user.create({
-      data: {
-        email: 'demo@qrdomotik.roomscan.pro',
-        fullName: 'Utilisateur Démo',
-        role: 'user',
-      },
-    });
-
-    const home = await db.property.create({
-      data: {
-        ownerId: user.id,
-        name: 'Ma Maison',
-        address: 'Dakar, Sénégal',
-        isActive: true,
-      },
-    });
-
-    await db.propertyMember.create({
-      data: { propertyId: home.id, userId: user.id, role: 'owner' },
-    });
-  }
-
-  return user;
-}
-
-// POST: Handle doorbell actions (ring, message)
+// POST: Handle doorbell actions (ring, message) — session obligatoire
 export async function POST(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+    }
+
+    const userId = (session.user as { id?: string }).id;
+
     const body = await request.json();
     const { qrCodeId, action, text } = body as {
       qrCodeId: string;
@@ -63,7 +41,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const demoUser = await ensureDemoUser();
     const propertyId = qrCode.propertyId;
 
     // Log the action
@@ -80,7 +57,7 @@ export async function POST(request: NextRequest) {
       data: {
         propertyId,
         qrCodeId: qrCode.id,
-        userId: demoUser.id,
+        userId,
         actionType,
         detailsJson: JSON.stringify(details),
       },

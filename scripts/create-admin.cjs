@@ -1,37 +1,62 @@
 // =============================================================
 // ORDOMOTIK - Seed: create/update admin & demo users
-// Schema tables are created by sqlite3 CLI in Dockerfile CMD
+// Schema tables are created by `prisma db push` in Dockerfile CMD
 // This script ONLY handles user seeding
+//
+// AUDIT 24-e (P0-2) — SÉCURITÉ :
+//  • Le Super Admin est désormais CREATE-ONLY : le mot de passe d'un
+//    compte existant n'est JAMAIS réécrit au démarrage → la rotation
+//    du mot de passe depuis l'app survit enfin aux redéploiements
+//    (avant : upsert qui écrasait le hash à chaque boot).
+//  • Mot de passe initial : variable d'environnement
+//    ADMIN_INITIAL_PASSWORD (à définir dans Coolify). Si absente et
+//    compte absent → mot de passe ALÉATOIRE généré, affiché UNE FOIS
+//    dans les logs de démarrage.
+//  • Le client DÉMO garde son upsert volontaire : c'est un compte
+//    produit (bouton « Client Demo » du login = Demo2024!).
+//  • FINI : mot de passe superadmin en dur dans le repo.
 // =============================================================
 
 const { hash } = require('bcryptjs');
+const { randomBytes } = require('crypto');
 const { PrismaClient } = require('@prisma/client');
 
 const prisma = new PrismaClient();
 
 async function seedUsers() {
-  // Super Admin
-  const adminHash = await hash('QrDomotik2024!', 12);
-  const admin = await prisma.user.upsert({
-    where: { email: 'admin@qrdomotik.roomscan.pro' },
-    update: { passwordHash: adminHash, fullName: 'Administrateur ORDOMOTIK', role: 'superadmin' },
-    create: {
-      email: 'admin@qrdomotik.roomscan.pro',
-      fullName: 'Administrateur ORDOMOTIK',
-      passwordHash: adminHash,
-      role: 'superadmin',
-    },
+  // ── Super Admin — CREATE ONLY (rotation du mot de passe préservée) ──
+  const adminEmail = process.env.ADMIN_EMAIL || 'admin@qrdomotik.roomscan.pro';
+  const existingAdmin = await prisma.user.findUnique({
+    where: { email: adminEmail },
+    select: { id: true },
   });
-  console.log('[seed] Super Admin OK:', admin.email);
-
-  const adminHomeCount = await prisma.home.count({ where: { ownerId: admin.id } });
-  if (adminHomeCount === 0) {
-    await prisma.home.create({ data: { name: 'ORDOMOTIK HQ', ownerId: admin.id, address: 'Siege Social' } });
-    console.log('[seed] Home ORDOMOTIK HQ created');
+  if (existingAdmin) {
+    console.log('[seed] Super Admin déjà présent — AUCUN changement de mot de passe (rotation préservée):', adminEmail);
+  } else {
+    const generated = !process.env.ADMIN_INITIAL_PASSWORD;
+    const initialPassword = process.env.ADMIN_INITIAL_PASSWORD
+      || randomBytes(12).toString('base64url');
+    const adminHash = await hash(initialPassword, 12);
+    const admin = await prisma.user.create({
+      data: {
+        email: adminEmail,
+        fullName: 'Administrateur',
+        passwordHash: adminHash,
+        role: 'superadmin',
+      },
+    });
+    console.log('[seed] Super Admin créé:', admin.email);
+    if (generated) {
+      console.log('[seed] ⚠️  ADMIN_INITIAL_PASSWORD absent — mot de passe initial ALÉATOIRE, à changer immédiatement après connexion:');
+      console.log('[seed] ⚠️  Mot de passe initial:', initialPassword);
+      console.log('[seed] ⚠️  Ce message ne s\'affichera qu\'une seule fois.');
+    }
   }
 
-  // Demo Client
-  const demoHash = await hash('demo123', 12);
+  // Demo Client — upsert VOLONTAIRE : le mot de passe est aligné à chaque
+  // démarrage sur le bouton « Client Demo » du formulaire de connexion
+  // (src/components/auth/login-form.tsx → Demo2024!). Compte produit.
+  const demoHash = await hash('Demo2024!', 12);
   const demo = await prisma.user.upsert({
     where: { email: 'demo@qrdomotik.roomscan.pro' },
     update: { passwordHash: demoHash, fullName: 'Utilisateur Demo', role: 'user' },
@@ -43,12 +68,6 @@ async function seedUsers() {
     },
   });
   console.log('[seed] Demo Client OK:', demo.email);
-
-  const demoHomeCount = await prisma.home.count({ where: { ownerId: demo.id } });
-  if (demoHomeCount === 0) {
-    await prisma.home.create({ data: { name: 'Ma Maison Demo', ownerId: demo.id, address: '' } });
-    console.log('[seed] Home Ma Maison Demo created');
-  }
 }
 
 async function main() {

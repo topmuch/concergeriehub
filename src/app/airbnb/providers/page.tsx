@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { ProvidersContent } from '@/components/airbnb/host/providers-content';
 
 export const metadata: Metadata = {
-  title: 'Prestataires — Conciergerie Hub',
+  title: 'Prestataires — RoomScan',
   description:
     'Découvrez les prestataires vérifiés autour de votre bien : services propriétaire (ménage, plomberie…) et expériences invité (chef, sommelier, transferts).',
 };

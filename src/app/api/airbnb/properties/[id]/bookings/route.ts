@@ -24,6 +24,10 @@ import { db } from '@/lib/db';
 import { getUserRoleForProperty } from '@/lib/b2b-server';
 import { canManageTeam } from '@/lib/team';
 import { runAutomationTrigger } from '@/lib/automations-server';
+// v4.50 — génération automatique du code d'activation du hub par séjour.
+import { generateUniqueAccessCode } from '@/lib/hub-access';
+// v4.96 — chaque séjour créé génère son intervention de ménage planifiée.
+import { ensureHousekeepingTasksForProperty } from '@/lib/housekeeping-tasks';
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -65,6 +69,7 @@ export async function GET(req: NextRequest, ctx: Ctx) {
         id: true,
         guestName: true,
         guestEmail: true,
+        guestPhone: true,
         checkIn: true,
         checkOut: true,
         guests: true,
@@ -73,11 +78,30 @@ export async function GET(req: NextRequest, ctx: Ctx) {
         cleaningStatus: true,
         externalRef: true,
         notes: true,
+        // v4.50 — code d'activation hub + prolongation de séjour.
+        accessCode: true,
+        lateCheckOutUntil: true,
       },
     });
 
+    // v4.81 (AUDIT QA) — MINIMISATION DES DONNÉES (RGPD) : le CLEANER
+    // n'a besoin que du planning ménage — pas des coordonnées invités
+    // (email, téléphone) ni du code d'accès du hub ni des notes privées
+    // de l'hôte. Le champ est masqué (pas supprimé) pour garder le
+    // contrat de forme de la réponse.
+    const canSeeFullPii = canManageTeam(myRole);
+    const sanitized = canSeeFullPii
+      ? bookings
+      : bookings.map((b) => ({
+          ...b,
+          guestEmail: null,
+          guestPhone: null,
+          accessCode: null,
+          notes: null,
+        }));
+
     return NextResponse.json({
-      bookings: bookings.map((b) => ({
+      bookings: sanitized.map((b) => ({
         ...b,
         checkIn: b.checkIn.toISOString(),
         checkOut: b.checkOut.toISOString(),
@@ -114,6 +138,7 @@ export async function POST(req: NextRequest, ctx: Ctx) {
     const body = (await req.json()) as {
       guestName?: string;
       guestEmail?: string;
+      guestPhone?: string;
       checkIn?: string;
       checkOut?: string;
       guests?: number;
@@ -147,11 +172,31 @@ export async function POST(req: NextRequest, ctx: Ctx) {
       ? (body.status as string)
       : 'CONFIRMED';
 
+    // PREMIUM V5 — téléphone invité (SMS Bouclier d'avis). Validation
+    // tolérante (format international conseillé) — sendSms reste fail-closed
+    // sur E.164 au moment de l'envoi.
+    const guestPhoneRaw = (body.guestPhone ?? '').trim();
+    if (guestPhoneRaw) {
+      if (guestPhoneRaw.length > 20) {
+        return NextResponse.json(
+          { error: 'Numéro de téléphone trop long (20 caractères max).' },
+          { status: 400 },
+        );
+      }
+      if (!/^[+0-9][0-9 ().-]*$/.test(guestPhoneRaw)) {
+        return NextResponse.json(
+          { error: 'Numéro de téléphone invalide (format international conseillé : +33612345678).' },
+          { status: 400 },
+        );
+      }
+    }
+
     const booking = await db.booking.create({
       data: {
         propertyId,
         guestName,
         guestEmail: (body.guestEmail ?? '').trim() || null,
+        guestPhone: guestPhoneRaw || null,
         checkIn,
         checkOut,
         guests: Math.min(30, Math.max(1, Number(body.guests) || 2)),
@@ -159,8 +204,23 @@ export async function POST(req: NextRequest, ctx: Ctx) {
         status,
         externalRef: (body.externalRef ?? '').trim() || null,
         notes: (body.notes ?? '').trim() || null,
+        // v4.50 « VERROUILLAGE DU HUB PAR CODE » — à chaque réservation
+        // saisie dans le calendrier, le système associe un code PIN (4
+        // caractères) unique : 4 derniers chiffres du téléphone → 4
+        // derniers du code plateforme → aléatoire unique.
+        accessCode: await generateUniqueAccessCode(propertyId, guestPhoneRaw, body.externalRef),
       },
     });
+
+    // v4.96 — INTERVENTION DE MÉNAGE PLANIFIÉE : la création manuelle
+    // d'un séjour génère (au besoin) la tâche de ménage au créneau
+    // entre son check-out et le check-in suivant. Silencieux : jamais
+    // bloquant pour la création du séjour.
+    try {
+      await ensureHousekeepingTasksForProperty(propertyId);
+    } catch (error) {
+      console.error('[bookings POST] Génération housekeeping task échouée:', error);
+    }
 
     // ÉTAPE 13 : automatisations BOOKING_CREATED (équipe + ménage)
     await runAutomationTrigger(propertyId, 'BOOKING_CREATED', {
@@ -225,8 +285,14 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
       cleaningStatus?: string;
       status?: string;
       guestName?: string;
+      guestPhone?: string;
       guests?: number;
       notes?: string;
+      // v4.50 — verrouillage du hub : code personnalisé + prolongation
+      // de séjour (départ tardif validé par l'hôte → le verrouillage
+      // ET le compte à rebours de l'invité se rallongent).
+      accessCode?: string;
+      lateCheckOutUntil?: string | null;
     };
 
     // ----- CLEANER : uniquement le statut de ménage -----
@@ -285,11 +351,72 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
       }
       data.guestName = guestName;
     }
+    if (body.guestPhone !== undefined) {
+      // PREMIUM V5 — téléphone invité éditable ('' → efface le champ).
+      const guestPhone = body.guestPhone.trim();
+      if (guestPhone) {
+        if (guestPhone.length > 20) {
+          return NextResponse.json(
+            { error: 'Numéro de téléphone trop long (20 caractères max).' },
+            { status: 400 },
+          );
+        }
+        if (!/^[+0-9][0-9 ().-]*$/.test(guestPhone)) {
+          return NextResponse.json(
+            { error: 'Numéro de téléphone invalide (format international conseillé : +33612345678).' },
+            { status: 400 },
+          );
+        }
+      }
+      data.guestPhone = guestPhone || null;
+    }
     if (body.guests !== undefined) {
       data.guests = Math.min(30, Math.max(1, Number(body.guests) || 2));
     }
     if (body.notes !== undefined) {
       data.notes = body.notes.trim() || null;
+    }
+    // ── v4.50 — VERROUILLAGE DU HUB ──
+    if (body.accessCode !== undefined) {
+      const code = body.accessCode.trim().toUpperCase();
+      if (code && !/^[A-Z0-9]{4,8}$/.test(code)) {
+        return NextResponse.json(
+          { error: 'Code d’accès invalide : 4 à 8 lettres ou chiffres.' },
+          { status: 400 },
+        );
+      }
+      if (code) {
+        // Unicité parmi les séjours à venir / en cours du bien.
+        const now = new Date();
+        const clash = await db.booking.findFirst({
+          where: {
+            propertyId,
+            accessCode: code,
+            status: { notIn: ['CANCELLED'] },
+            checkOut: { gte: now },
+            id: { not: booking.id },
+          },
+          select: { id: true, guestName: true },
+        });
+        if (clash) {
+          return NextResponse.json(
+            { error: `Ce code est déjà utilisé pour le séjour de ${clash.guestName}.` },
+            { status: 409 },
+          );
+        }
+      }
+      data.accessCode = code || null;
+    }
+    if (body.lateCheckOutUntil !== undefined) {
+      if (body.lateCheckOutUntil === null || body.lateCheckOutUntil === '') {
+        data.lateCheckOutUntil = null;
+      } else {
+        const d = new Date(body.lateCheckOutUntil);
+        if (Number.isNaN(d.getTime())) {
+          return NextResponse.json({ error: 'Date de prolongation invalide.' }, { status: 400 });
+        }
+        data.lateCheckOutUntil = d;
+      }
     }
 
     if (Object.keys(data).length === 0) {
@@ -307,6 +434,8 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
         guests: true,
         checkIn: true,
         checkOut: true,
+        accessCode: true,
+        lateCheckOutUntil: true,
       },
     });
 

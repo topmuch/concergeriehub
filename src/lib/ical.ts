@@ -1,5 +1,5 @@
 // =============================================================
-// Parser iCal minimal (RFC 5545) — Conciergerie Hub
+// Parser iCal minimal (RFC 5545) — RoomScan
 // Supporte les formats exports par Airbnb / Booking.com / Abritel :
 //  - dépliage des lignes de continuation (espace/tab en tête)
 //  - VEVENT avec DTSTART / DTEND en DATE (VALUE=DATE) ou DATE-TIME

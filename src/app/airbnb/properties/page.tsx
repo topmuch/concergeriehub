@@ -11,7 +11,7 @@ import { PropertiesContent } from '@/components/airbnb/host/properties-content';
 // =============================================================
 
 export const metadata: Metadata = {
-  title: 'Mes Propriétés — Conciergerie Hub',
+  title: 'Mes Propriétés — RoomScan',
 };
 
 export default async function PropertiesPage({

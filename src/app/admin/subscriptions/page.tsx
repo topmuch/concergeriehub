@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { AdminSubscriptionsContent } from '@/components/admin/admin-subscriptions-content';
 
 export const metadata: Metadata = {
-  title: 'Abonnements — Superadmin Conciergerie Hub',
+  title: 'Abonnements — Superadmin RoomScan',
 };
 
 // Module 4 — Abonnements : MRR, abonnements, factures, coupons, packs.

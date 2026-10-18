@@ -1,5 +1,5 @@
 // =============================================================
-// Rôles d'équipe — ÉTAPE 12 V2 (Conciergerie Hub)
+// Rôles d'équipe — ÉTAPE 12 V2 (RoomScan)
 // Canonique : 'OWNER' | 'MANAGER' | 'CLEANER' | 'MAINTENANCE'
 // (Prisma/SQLite : champ String — valeurs documentées ici.)
 // Partagé client + serveur — aucune dépendance DB.

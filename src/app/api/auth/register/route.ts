@@ -57,8 +57,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Le nom doit contenir entre 2 et 80 caracteres' }, { status: 400 });
     }
 
-    if (typeof password !== 'string' || password.length < 6) {
-      return NextResponse.json({ error: 'Le mot de passe doit contenir au moins 6 caracteres' }, { status: 400 });
+    // AUDIT PRÉ-PROD — politique alignée sur /api/airbnb/security/password :
+    // 8 caractères minimum + au moins une lettre et un chiffre.
+    if (typeof password !== 'string' || password.length < 8 || !/[A-Za-z]/.test(password) || !/\d/.test(password)) {
+      return NextResponse.json(
+        { error: 'Le mot de passe doit contenir au moins 8 caracteres, avec des lettres et des chiffres' },
+        { status: 400 },
+      );
     }
 
     const existing = await db.user.findUnique({ where: { email: normalizedEmail } });

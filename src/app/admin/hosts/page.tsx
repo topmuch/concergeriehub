@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { AdminHostsContent } from '@/components/admin/admin-hosts-content';
 
 export const metadata: Metadata = {
-  title: 'Hôtes — Superadmin Conciergerie Hub',
+  title: 'Hôtes — Superadmin RoomScan',
 };
 
 // ÉTAPE 9.3 — Gestion des hôtes et propriétés.

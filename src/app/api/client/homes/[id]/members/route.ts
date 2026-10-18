@@ -1,9 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 
 const VALID_ROLES = ['owner', 'cohost', 'staff', 'cleaner', 'member'];
 
-// GET: List all members of a home
+/**
+ * Garde : l'utilisateur doit être propriétaire de la maison ou Superadmin.
+ * Retourne la maison si autorisé, sinon null (404/403 déjà envoyés).
+ */
+async function getAuthorizedHome(id: string): Promise<{ home: { id: string } | null; error?: NextResponse }> {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) {
+    return { home: null, error: NextResponse.json({ error: 'Non autorisé' }, { status: 401 }) };
+  }
+
+  const userId = (session.user as { id?: string }).id;
+  const role = (session.user as { role?: string }).role;
+
+  const home = await db.property.findUnique({ where: { id } });
+  if (!home) {
+    return { home: null, error: NextResponse.json({ error: 'Maison introuvable' }, { status: 404 }) };
+  }
+
+  if (home.ownerId !== userId && role !== 'superadmin') {
+    return { home: null, error: NextResponse.json({ error: 'Non autorisé' }, { status: 403 }) };
+  }
+
+  return { home };
+}
+
+// GET: List all members of a home (propriétaire ou Superadmin)
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -11,13 +38,8 @@ export async function GET(
   try {
     const { id } = await params;
 
-    const home = await db.property.findUnique({ where: { id } });
-    if (!home) {
-      return NextResponse.json(
-        { error: 'Maison introuvable' },
-        { status: 404 }
-      );
-    }
+    const { error } = await getAuthorizedHome(id);
+    if (error) return error;
 
     const members = await db.propertyMember.findMany({
       where: { propertyId: id },
@@ -39,7 +61,7 @@ export async function GET(
   }
 }
 
-// POST: Invite a new member to a home
+// POST: Invite a new member to a home (propriétaire ou Superadmin)
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -75,14 +97,9 @@ export async function POST(
       );
     }
 
-    // Verify the home exists
-    const home = await db.property.findUnique({ where: { id } });
-    if (!home) {
-      return NextResponse.json(
-        { error: 'Maison introuvable' },
-        { status: 404 }
-      );
-    }
+    // Garde d'accès : le propriétaire de la maison (ou Superadmin) seul peut inviter
+    const { error } = await getAuthorizedHome(id);
+    if (error) return error;
 
     // Find or create the invited user
     let invitedUser = await db.user.findUnique({ where: { email } });

@@ -197,6 +197,135 @@ export async function GET() {
       }),
     ]);
 
+    // ================= Bloc « lux » — les 6 KPI opérationnels plateforme =================
+    // v5.2 « SAPHIR LUXE » (demande client) : mêmes définitions que
+    // /api/airbnb/dashboard-kpis mais à l'échelle de TOUTE la plateforme.
+    const startOfMonthLux = new Date(now.getFullYear(), now.getMonth(), 1);
+    const hkStart = new Date(now.getTime() - 2 * 24 * 3600 * 1000);
+    const hkEnd = new Date(now.getTime() + 14 * 24 * 3600 * 1000);
+
+    const sumQtyLux = (raw: string): number => {
+      try {
+        const parsed: unknown = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return 0;
+        return parsed.reduce((acc: number, line) => {
+          const qty = (line as { qty?: number }).qty;
+          return acc + (typeof qty === 'number' && qty > 0 ? qty : 0);
+        }, 0);
+      } catch {
+        return 0;
+      }
+    };
+
+    const [
+      luxPaidOrders,
+      luxActiveStay,
+      luxNextStay,
+      luxInProgress,
+      luxUpcoming,
+      luxCleaningDone,
+      luxCleaningScheduled,
+      luxLateCheckouts,
+      luxRatingGroups,
+    ] = await Promise.all([
+      db.minibarOrder.findMany({
+        where: { status: 'PAID' },
+        select: { totalEur: true, itemsJson: true, createdAt: true },
+      }),
+      db.booking.findFirst({
+        where: { checkIn: { lte: now }, checkOut: { gt: now }, status: { not: 'CANCELLED' } },
+        orderBy: { checkOut: 'asc' },
+        select: { guestName: true, checkIn: true, checkOut: true, property: { select: { name: true } } },
+      }),
+      db.booking.findFirst({
+        where: { checkIn: { gt: now }, status: { not: 'CANCELLED' } },
+        orderBy: { checkIn: 'asc' },
+        select: { guestName: true, checkIn: true, checkOut: true, property: { select: { name: true } } },
+      }),
+      db.booking.count({ where: { checkIn: { lte: now }, checkOut: { gt: now }, status: { not: 'CANCELLED' } } }),
+      db.booking.count({ where: { checkIn: { gt: now }, status: { not: 'CANCELLED' } } }),
+      db.cleaningReport.count(),
+      db.booking.count({
+        where: {
+          cleaningStatus: 'PENDING',
+          status: { not: 'CANCELLED' },
+          checkOut: { gte: hkStart, lte: hkEnd },
+        },
+      }),
+      db.booking.findMany({
+        where: { lateCheckOutUntil: { gte: now }, status: { not: 'CANCELLED' } },
+        orderBy: { lateCheckOutUntil: 'asc' },
+        take: 5,
+        select: { guestName: true, lateCheckOutUntil: true, property: { select: { name: true } } },
+      }),
+      db.privateFeedback.groupBy({ by: ['rating'], _count: true }),
+    ]);
+
+    let luxItemsMonth = 0;
+    let luxRevenueMonth = 0;
+    let luxItemsTotal = 0;
+    let luxRevenueTotal = 0;
+    for (const o of luxPaidOrders) {
+      const qty = sumQtyLux(o.itemsJson);
+      luxItemsTotal += qty;
+      luxRevenueTotal += o.totalEur;
+      if (o.createdAt >= startOfMonthLux) {
+        luxItemsMonth += qty;
+        luxRevenueMonth += o.totalEur;
+      }
+    }
+
+    const luxReviews = { positive: 0, neutral: 0, negative: 0 };
+    for (const g of luxRatingGroups) {
+      if (g.rating >= 4) luxReviews.positive += g._count;
+      else if (g.rating === 3) luxReviews.neutral += g._count;
+      else luxReviews.negative += g._count;
+    }
+
+    const luxStay = luxActiveStay
+      ? {
+          kind: 'active' as const,
+          guestName: luxActiveStay.guestName,
+          propertyName: luxActiveStay.property?.name ?? 'Bien',
+          checkIn: luxActiveStay.checkIn.toISOString(),
+          checkOut: luxActiveStay.checkOut.toISOString(),
+        }
+      : luxNextStay
+        ? {
+            kind: 'upcoming' as const,
+            guestName: luxNextStay.guestName,
+            propertyName: luxNextStay.property?.name ?? 'Bien',
+            checkIn: luxNextStay.checkIn.toISOString(),
+            checkOut: luxNextStay.checkOut.toISOString(),
+          }
+        : null;
+
+    const lux = {
+      minibar: {
+        itemsMonth: luxItemsMonth,
+        revenueMonth: round2(luxRevenueMonth),
+        itemsTotal: luxItemsTotal,
+        revenueTotal: round2(luxRevenueTotal),
+        ordersTotal: luxPaidOrders.length,
+      },
+      stay: luxStay,
+      calendar: { inProgress: luxInProgress, upcoming: luxUpcoming },
+      housekeeping: { done: luxCleaningDone, scheduled: luxCleaningScheduled },
+      lateCheckouts: {
+        upcoming: luxLateCheckouts.length,
+        next: luxLateCheckouts[0]
+          ? {
+              guestName: luxLateCheckouts[0].guestName,
+              propertyName: luxLateCheckouts[0].property?.name ?? 'Bien',
+              until: luxLateCheckouts[0].lateCheckOutUntil
+                ? luxLateCheckouts[0].lateCheckOutUntil.toISOString()
+                : null,
+            }
+          : null,
+      },
+      reviews: luxReviews,
+    };
+
     // ================= Agrégations finance =================
     // Toutes les sommes se font en JS (volume démo faible + SQLite
     // sans fonctions d'agrégation sur dates pour la série journalière).
@@ -430,6 +559,7 @@ export async function GET() {
         userName: a.user?.fullName ?? a.user?.email ?? null,
         createdAt: a.createdAt.toISOString(),
       })),
+      lux,
     });
   } catch (error) {
     console.error('[GET /api/admin/kpis] Error:', error);

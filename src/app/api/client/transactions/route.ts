@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { requireSuperadmin, adminUnauthorized } from '@/lib/admin';
 import {
@@ -8,9 +10,18 @@ import {
   type TransactionStatus,
 } from '@/types/database';
 
-// GET: List transactions
+// GET: List transactions — chaque utilisateur ne voit que les siennes (payées ou reçues), Superadmin = tout
 export async function GET(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+    }
+
+    const userId = (session.user as { id?: string }).id;
+    const role = (session.user as { role?: string }).role;
+    const isSuperadmin = role === 'superadmin';
+
     const { searchParams } = new URL(request.url);
     const payerId = searchParams.get('payerId');
     const receiverId = searchParams.get('receiverId');
@@ -34,8 +45,16 @@ export async function GET(request: NextRequest) {
     }
 
     const where: Record<string, unknown> = {};
-    if (payerId) where.payerId = payerId;
-    if (receiverId) where.receiverId = receiverId;
+    if (isSuperadmin) {
+      // Superadmin : vue plateforme complète (filtres optionnels)
+      if (payerId) where.payerId = payerId;
+      if (receiverId) where.receiverId = receiverId;
+    } else {
+      // Scoping strict : payées OU reçues par l'utilisateur connecté
+      // (receiverId peut être un stripeAccountId 'acct_...' pour les commandes
+      // service — hors scope naturel de ce filtre, ce qui est attendu)
+      where.OR = [{ payerId: userId }, { receiverId: userId }];
+    }
     if (type) where.type = type;
     if (status) where.status = status;
 

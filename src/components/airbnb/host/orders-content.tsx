@@ -1,12 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import {
-  AlertCircle,
-  Download,
-  MoreHorizontal,
-  RotateCcw,
-} from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { KPICard } from '@/components/airbnb/host/kpi-card';
 import { StatusBadge } from '@/components/airbnb/host/status-badge';
@@ -18,6 +12,19 @@ import { providerCategoryMeta } from '@/lib/b2b';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+// v4.54 « PRESSING & BLANCHISSERIE EXPRESS » — panel hôte.
+import { laundryOrderSummary, pickupSlotLabel } from '@/lib/laundry';
+
+// v5.2 « SAPHIR LUXE » — pastilles de statut pressing (teintes sémantiques 10 %).
+const LAUNDRY_STATUS_HOST_META: Record<string, { label: string; className: string }> = {
+  PENDING_PAYMENT: { label: 'Paiement en cours', className: 'border-[#fbbf24]/25 bg-[#fbbf24]/10 text-[#fbbf24]' },
+  REQUESTED: { label: 'Demandée', className: 'border-white/12 bg-white/[0.04] text-[#8fa0c2]' },
+  PAID: { label: 'Réglée', className: 'border-[#34d399]/25 bg-[#34d399]/10 text-[#34d399]' },
+  IN_PROGRESS: { label: 'En cours', className: 'border-[#5c8af0]/25 bg-[#5c8af0]/10 text-[#a9c4ff]' },
+  READY: { label: 'Prête à livrer', className: 'border-[#2dd4bf]/25 bg-[#2dd4bf]/10 text-[#2dd4bf]' },
+  DELIVERED: { label: 'Livrée', className: 'border-[#34d399]/25 bg-[#34d399]/10 text-[#34d399]' },
+  CANCELLED: { label: 'Annulée', className: 'border-[#f07d6a]/25 bg-[#f07d6a]/10 text-[#f07d6a]' },
+};
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,10 +52,12 @@ import {
 
 // =============================================================
 // OrdersContent — page « Commandes & Revenus » du Dashboard Client
-// (spécification QRTags Pro, T4-b)
+// v5.2 « SAPHIR LUXE » — refonte design profonde (demande client) :
+// nuit bleutée, SANS ICÔNES ni emojis (typographie, points colorés,
+// glyphes purs). Données, handlers et textes métier intacts.
 //
-// • 4 KPIs réelles : 💰 Total encaissé · 🧾 Commissions Hub ·
-//   🤝 Revenus prestataires · ⏳ En attente de paiement
+// • 4 KPIs réelles : Total encaissé · Commissions Hub ·
+//   Revenus prestataires · En attente de paiement
 // • Filtres client-side : statut / paiement / période
 // • DataTable : tri Date desc au montage, actions de transition
 //   (canTransition) confirmées par AlertDialog
@@ -82,11 +91,11 @@ const TRANSITION_TARGETS: TransitionTarget[] = ['CONFIRMED', 'PREPARING', 'DELIV
 /** Options du filtre Statut (ordre du schéma). */
 const STATUS_OPTIONS: OrderStatus[] = ['PENDING', 'CONFIRMED', 'PREPARING', 'DELIVERED', 'CANCELLED'];
 
-const ACTION_META: Record<TransitionTarget, { label: string; emoji: string; destructive: boolean }> = {
-  CONFIRMED: { label: 'Confirmer', emoji: '✅', destructive: false },
-  PREPARING: { label: 'Passer en préparation', emoji: '📦', destructive: false },
-  DELIVERED: { label: 'Marquer livrée', emoji: '📬', destructive: false },
-  CANCELLED: { label: 'Annuler', emoji: '🚫', destructive: true },
+const ACTION_META: Record<TransitionTarget, { label: string; destructive: boolean }> = {
+  CONFIRMED: { label: 'Confirmer', destructive: false },
+  PREPARING: { label: 'Passer en préparation', destructive: false },
+  DELIVERED: { label: 'Marquer livrée', destructive: false },
+  CANCELLED: { label: 'Annuler', destructive: true },
 };
 
 /** Transitions légales pour un statut donné (jamais throw). */
@@ -252,6 +261,8 @@ export function OrdersContent() {
       'Email',
       'Prestataire',
       'Articles',
+      'Livraison demandée',
+      'Note invité',
       'Total (€)',
       'Commission (€)',
       'Part hôte (€)',
@@ -265,15 +276,20 @@ export function OrdersContent() {
       o.guestEmail ?? '',
       o.provider?.businessName ?? '—',
       itemsLabel(o.items),
+      // REFONTE SERVICES PREMIUM (V4.11) — créneau + note (audit compta/support)
+      o.deliveryDate && !Number.isNaN(new Date(o.deliveryDate).getTime())
+        ? csvDate(o.deliveryDate)
+        : '',
+      o.guestNote ?? '',
       csvNumber(o.totalAmount),
       csvNumber(o.commission),
       csvNumber(o.hostEarning),
       STATUS_LABELS[o.status] ?? o.status,
       PAYMENT_LABELS[o.paymentStatus] ?? o.paymentStatus,
     ]);
-    // BOM UTF-8 (\uFEFF) pour ouverture directe dans Excel.
+    // BOM UTF-8 (﻿) pour ouverture directe dans Excel.
     const csv =
-      '\uFEFF' +
+      '﻿' +
       [header, ...lines].map((row) => row.map(csvEscape).join(';')).join('\r\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -295,8 +311,8 @@ export function OrdersContent() {
       sortValue: (o) => new Date(o.createdAt).getTime(),
       cell: (o) => (
         <div className="min-w-0">
-          <p className="whitespace-nowrap font-medium text-slate-800">{shortDate(o.createdAt)}</p>
-          <p className="text-xs text-slate-400">{shortTime(o.createdAt)}</p>
+          <p className="whitespace-nowrap font-medium text-white">{shortDate(o.createdAt)}</p>
+          <p className="text-xs text-[#8fa0c2]">{shortTime(o.createdAt)}</p>
         </div>
       ),
     },
@@ -306,11 +322,11 @@ export function OrdersContent() {
       sortValue: (o) => o.guestName,
       cell: (o) => (
         <div className="min-w-0 max-w-[180px]">
-          <p className="truncate font-medium text-slate-800" title={o.guestName}>
+          <p className="truncate font-medium text-white" title={o.guestName}>
             {o.guestName || '—'}
           </p>
           {o.guestEmail && (
-            <p className="truncate text-xs text-slate-400" title={o.guestEmail}>
+            <p className="truncate text-xs text-[#8fa0c2]" title={o.guestEmail}>
               {o.guestEmail}
             </p>
           )}
@@ -323,12 +339,11 @@ export function OrdersContent() {
       sortValue: (o) => o.provider?.businessName ?? '',
       cell: (o) => (
         <div className="min-w-0 max-w-[180px]">
-          <p className="truncate font-medium text-slate-800" title={o.provider?.businessName}>
+          <p className="truncate font-medium text-white" title={o.provider?.businessName}>
             {o.provider?.businessName ?? '—'}
           </p>
           {o.provider && (
-            <p className="truncate text-xs text-slate-400">
-              {providerCategoryMeta(o.provider.category).emoji}{' '}
+            <p className="truncate text-xs text-[#8fa0c2]">
               {providerCategoryMeta(o.provider.category).label}
             </p>
           )}
@@ -340,30 +355,43 @@ export function OrdersContent() {
       header: 'Articles',
       hideBelow: 'md',
       cell: (o) => (
-        <p className="min-w-0 max-w-[240px] truncate text-slate-600" title={itemsLabel(o.items)}>
-          {itemsLabel(o.items)}
-        </p>
+        <div className="min-w-0 max-w-[240px]">
+          <p className="truncate text-[#8fa0c2]" title={itemsLabel(o.items)}>
+            {itemsLabel(o.items)}
+          </p>
+          {/* REFONTE SERVICES PREMIUM (V4.11) — créneau choisi + note invité */}
+          {o.deliveryDate && !Number.isNaN(new Date(o.deliveryDate).getTime()) && (
+            <p className="truncate text-[11px] font-semibold text-[#86e9cb]" title={`Livraison demandée : ${new Date(o.deliveryDate).toLocaleString('fr-FR')}`}>
+              {new Date(o.deliveryDate).toLocaleString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+            </p>
+          )}
+          {o.guestNote && (
+            <p className="truncate text-[11px] text-[#fbbf24]" title={`Note de l'invité : ${o.guestNote}`}>
+              {o.guestNote}
+            </p>
+          )}
+        </div>
       ),
     },
     {
       key: 'totalAmount',
       header: 'Montant',
       sortValue: (o) => o.totalAmount,
-      cell: (o) => <span className="font-bold text-slate-900">{formatEur(o.totalAmount)}</span>,
+      cell: (o) => <span className="lux-num font-semibold tabular-nums text-[#34d399]">{formatEur(o.totalAmount)}</span>,
     },
     {
       key: 'commission',
       header: 'Commission',
       hideBelow: 'lg',
       sortValue: (o) => o.commission,
-      cell: (o) => <span className="text-slate-500">{formatEur(o.commission)}</span>,
+      cell: (o) => <span className="text-[#8fa0c2]">{formatEur(o.commission)}</span>,
     },
     {
       key: 'hostEarning',
       header: 'Part hôte',
       hideBelow: 'lg',
       sortValue: (o) => o.hostEarning,
-      cell: (o) => <span className="text-slate-500">{formatEur(o.hostEarning)}</span>,
+      cell: (o) => <span className="text-[#8fa0c2]">{formatEur(o.hostEarning)}</span>,
     },
     {
       key: 'status',
@@ -385,7 +413,7 @@ export function OrdersContent() {
         const targets = legalTargets(o.status);
         if (targets.length === 0) {
           return (
-            <span className="text-xs text-slate-300" title="Statut terminal — aucune action">
+            <span className="text-xs text-[#8fa0c2]/60" title="Statut terminal — aucune action">
               —
             </span>
           );
@@ -396,14 +424,14 @@ export function OrdersContent() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-9 w-9 p-0 text-slate-500 hover:text-slate-900"
+                className="h-9 w-9 rounded-full p-0 text-[#8fa0c2] hover:bg-white/8 hover:text-white"
                 aria-label={`Actions pour la commande de ${o.guestName || 'un invité'}`}
               >
-                <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
+                <span aria-hidden="true" className="text-base leading-none">⋯</span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel className="text-xs text-slate-500">
+            <DropdownMenuContent align="end" className="w-56 border-white/10 bg-[#0d1530] text-white">
+              <DropdownMenuLabel className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8fa0c2]">
                 Transition de statut
               </DropdownMenuLabel>
               {targets.map((t) => (
@@ -411,11 +439,11 @@ export function OrdersContent() {
                   key={t}
                   onSelect={() => setPendingAction({ order: o, target: t })}
                   className={cn(
-                    'cursor-pointer gap-2',
-                    ACTION_META[t].destructive && 'text-rose-600 focus:text-rose-700',
+                    'cursor-pointer focus:bg-white/8 focus:text-white',
+                    ACTION_META[t].destructive && 'text-[#f07d6a] focus:bg-[#f07d6a]/10 focus:text-[#f07d6a]',
                   )}
                 >
-                  <span aria-hidden="true">{ACTION_META[t].emoji}</span>
+                  <span className="lux-dot shrink-0" style={{ backgroundColor: ACTION_META[t].destructive ? '#f07d6a' : '#5c8af0' }} aria-hidden="true" />
                   {ACTION_META[t].label}
                 </DropdownMenuItem>
               ))}
@@ -431,18 +459,19 @@ export function OrdersContent() {
       {/* ---------- En-tête ---------- */}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+          <p className="lux-eyebrow">Performance</p>
+          <h1 className="lux-display mt-1 text-2xl font-semibold text-white sm:text-3xl">
             Commandes &amp; Revenus
           </h1>
-          <p className="mt-1 text-sm text-slate-600">
+          <p className="mt-1.5 text-sm text-[#8fa0c2]">
             {loading && orders.length === 0 ? (
               'Chargement des commandes…'
             ) : (
               <>
                 {orders.length} commande{orders.length > 1 ? 's' : ''} —{' '}
-                <span className="font-semibold text-slate-900">{scopeLabel}</span>
+                <span className="font-semibold text-white">{scopeLabel}</span>
                 {hasActiveFilters && (
-                  <span className="text-slate-500">
+                  <span className="text-[#8fa0c2]/80">
                     {' '}
                     · {filtered.length} affichée{filtered.length > 1 ? 's' : ''}
                   </span>
@@ -454,52 +483,58 @@ export function OrdersContent() {
         <Button
           variant="outline"
           size="sm"
-          className="h-9 gap-2 border-slate-200 text-slate-700"
+          className="h-9 rounded-full border-white/12 bg-white/[0.04] px-4 text-xs font-semibold text-[#d5def0] hover:bg-white/8 hover:text-white"
           onClick={exportCsv}
           disabled={loading || filtered.length === 0}
           aria-label="Exporter les commandes filtrées au format CSV"
         >
-          <Download className="h-4 w-4" aria-hidden="true" />
           Exporter CSV
         </Button>
       </div>
 
       {/* ---------- Erreur API ---------- */}
       {error && (
-        <div
-          className="flex items-center gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800"
-          role="alert"
-        >
-          <AlertCircle className="h-5 w-5 shrink-0" aria-hidden="true" />
-          {error}
+        <div className="lux-empty flex flex-col items-center gap-3 p-6 text-center" role="alert">
+          <span className="lux-dot" style={{ backgroundColor: '#f07d6a' }} aria-hidden="true" />
+          <p className="text-sm font-semibold text-white">{error}</p>
+          <button
+            type="button"
+            onClick={() => {
+              void refetch();
+            }}
+            aria-label="Réessayer le chargement des commandes"
+            className="lux-btn h-9 px-4 text-xs"
+          >
+            Réessayer
+          </button>
         </div>
       )}
 
       {/* ---------- KPIs financières ---------- */}
       <section aria-label="Indicateurs financiers" className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <KPICard
-          icon="💰"
+          tone="emerald"
           label="Total encaissé"
           value={hasAllStats ? formatEur(stats.paidRevenue) : '—'}
           hint={hasAllStats ? `${stats.paidCount} commande${stats.paidCount > 1 ? 's' : ''} payée${stats.paidCount > 1 ? 's' : ''}` : undefined}
           loading={loading}
         />
         <KPICard
-          icon="🧾"
+          tone="rausch"
           label="Commissions Hub"
           value={hasAllStats ? formatEur(stats.commissionTotal) : '—'}
           hint={hasAllStats ? 'Part plateforme' : undefined}
           loading={loading}
         />
         <KPICard
-          icon="🤝"
+          tone="violet"
           label="Revenus prestataires"
           value={hasAllStats ? formatEur(stats.hostTotal) : '—'}
           hint={hasAllStats ? 'Part hôte — reversements' : undefined}
           loading={loading}
         />
         <KPICard
-          icon="⏳"
+          tone="amber"
           label="En attente de paiement"
           value={hasAllStats ? formatEur(awaitingPayment) : '—'}
           hint={
@@ -516,23 +551,23 @@ export function OrdersContent() {
       {/* ---------- Filtres ---------- */}
       <section
         aria-label="Filtres des commandes"
-        className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-white p-3 shadow-sm"
+        className="lux-card flex flex-wrap items-center gap-2 p-3"
       >
-        <span className="mr-1 hidden text-xs font-bold uppercase tracking-wide text-slate-500 sm:inline">
+        <span className="lux-eyebrow mr-1 hidden !text-[9.5px] sm:inline">
           Filtres
         </span>
 
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger
-            className="h-9 w-[168px] border-slate-200 text-sm"
+            className="h-9 w-[168px] rounded-full border-white/12 bg-white/[0.04] text-sm text-white"
             aria-label="Filtrer par statut de commande"
           >
             <SelectValue />
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Statut : Tous</SelectItem>
+          <SelectContent className="border-white/10 bg-[#0d1530] text-white">
+            <SelectItem value="all" className="focus:bg-white/8 focus:text-white">Statut : Tous</SelectItem>
             {STATUS_OPTIONS.map((s) => (
-              <SelectItem key={s} value={s}>
+              <SelectItem key={s} value={s} className="focus:bg-white/8 focus:text-white">
                 {STATUS_LABELS[s]}
               </SelectItem>
             ))}
@@ -541,31 +576,31 @@ export function OrdersContent() {
 
         <Select value={paymentFilter} onValueChange={setPaymentFilter}>
           <SelectTrigger
-            className="h-9 w-[178px] border-slate-200 text-sm"
+            className="h-9 w-[178px] rounded-full border-white/12 bg-white/[0.04] text-sm text-white"
             aria-label="Filtrer par statut de paiement"
           >
             <SelectValue />
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Paiement : Tous</SelectItem>
-            <SelectItem value="PAID">Payée</SelectItem>
-            <SelectItem value="UNPAID">Non payée</SelectItem>
-            <SelectItem value="REFUNDED">Remboursée</SelectItem>
+          <SelectContent className="border-white/10 bg-[#0d1530] text-white">
+            <SelectItem value="all" className="focus:bg-white/8 focus:text-white">Paiement : Tous</SelectItem>
+            <SelectItem value="PAID" className="focus:bg-white/8 focus:text-white">Payée</SelectItem>
+            <SelectItem value="UNPAID" className="focus:bg-white/8 focus:text-white">Non payée</SelectItem>
+            <SelectItem value="REFUNDED" className="focus:bg-white/8 focus:text-white">Remboursée</SelectItem>
           </SelectContent>
         </Select>
 
         <Select value={periodFilter} onValueChange={setPeriodFilter}>
           <SelectTrigger
-            className="h-9 w-[150px] border-slate-200 text-sm"
+            className="h-9 w-[150px] rounded-full border-white/12 bg-white/[0.04] text-sm text-white"
             aria-label="Filtrer par période"
           >
             <SelectValue />
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tout</SelectItem>
-            <SelectItem value="7">7 derniers jours</SelectItem>
-            <SelectItem value="30">30 derniers jours</SelectItem>
-            <SelectItem value="90">90 derniers jours</SelectItem>
+          <SelectContent className="border-white/10 bg-[#0d1530] text-white">
+            <SelectItem value="all" className="focus:bg-white/8 focus:text-white">Tout</SelectItem>
+            <SelectItem value="7" className="focus:bg-white/8 focus:text-white">7 derniers jours</SelectItem>
+            <SelectItem value="30" className="focus:bg-white/8 focus:text-white">30 derniers jours</SelectItem>
+            <SelectItem value="90" className="focus:bg-white/8 focus:text-white">90 derniers jours</SelectItem>
           </SelectContent>
         </Select>
 
@@ -573,7 +608,7 @@ export function OrdersContent() {
           <Button
             variant="ghost"
             size="sm"
-            className="h-9 gap-1.5 text-slate-600"
+            className="h-9 rounded-full text-[#8fa0c2] hover:bg-white/8 hover:text-white"
             onClick={() => {
               setStatusFilter('all');
               setPaymentFilter('all');
@@ -581,12 +616,11 @@ export function OrdersContent() {
             }}
             aria-label="Réinitialiser les filtres"
           >
-            <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
             Réinitialiser
           </Button>
         )}
 
-        <span className="ml-auto hidden text-xs text-slate-500 sm:inline">
+        <span className="ml-auto hidden text-xs text-[#8fa0c2] sm:inline">
           {filtered.length}/{rows.length} commande{rows.length > 1 ? 's' : ''}
         </span>
       </section>
@@ -594,15 +628,16 @@ export function OrdersContent() {
       {/* ---------- Tableau ---------- */}
       <section aria-label="Tableau des commandes">
         {loading && rows.length === 0 ? (
-          <Skeleton className="h-72 w-full rounded-xl" aria-hidden="true" />
+          <Skeleton className="h-72 w-full rounded-2xl bg-white/8" aria-hidden="true" />
         ) : (
           <DataTable
             columns={columns}
             rows={filtered}
             rowKey={(o) => o.id}
+            className="lux-card p-3 sm:p-4"
             pageSize={10}
             emptyMessage={
-              hasActiveFilters ? '💰 Aucune commande pour ce filtre' : '💰 Aucune commande pour le moment'
+              hasActiveFilters ? 'Aucune commande pour ce filtre' : 'Aucune commande pour le moment'
             }
           />
         )}
@@ -610,22 +645,28 @@ export function OrdersContent() {
 
       {/* ---------- AlertDialog de confirmation de transition ---------- */}
       <AlertDialog open={pendingAction !== null} onOpenChange={(open) => !open && setPendingAction(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-2xl border-white/10 bg-[#0b1226] text-white shadow-2xl">
           <AlertDialogHeader>
-            <AlertDialogTitle className="font-bold text-slate-900">
+            <AlertDialogTitle className="lux-display text-lg font-semibold text-white">
               {pendingAction ? confirmTitle(pendingAction.target) : ''}
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-slate-600">
+            <AlertDialogDescription className="text-sm text-[#8fa0c2]">
               {pendingAction ? confirmDescription(pendingAction.order, pendingAction.target) : ''}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={transitionBusy}>Retour</AlertDialogCancel>
+            <AlertDialogCancel
+              disabled={transitionBusy}
+              className="rounded-full border-white/12 bg-white/[0.04] text-[#d5def0] hover:bg-white/8 hover:text-white"
+            >
+              Retour
+            </AlertDialogCancel>
             <AlertDialogAction
               className={cn(
-                pendingAction?.target === 'CANCELLED' &&
-                  'bg-rose-600 text-white hover:bg-rose-700 focus:ring-rose-600',
-                pendingAction?.target === 'CONFIRMED' && 'bg-[#E23F2B] text-white hover:bg-[#c93522] focus:ring-[#E23F2B]',
+                'rounded-full font-semibold',
+                pendingAction?.target === 'CANCELLED'
+                  ? 'bg-[#f07d6a] text-[#2a100a] hover:brightness-105 focus:ring-[#f07d6a]/50'
+                  : 'bg-[#5c8af0] text-white hover:bg-[#4a79e0] focus:ring-[#5c8af0]/50',
               )}
               disabled={transitionBusy}
               onClick={(e) => {
@@ -638,6 +679,251 @@ export function OrdersContent() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* v4.54 « PRESSING & BLANCHISSERIE EXPRESS » — suivi des commandes */}
+      <LaundryOrdersPanel />
     </div>
+  );
+}
+
+// =============================================================
+// v4.54 « PRESSING & BLANCHISSERIE EXPRESS » (amélioration 1.5)
+// Panneau de suivi des commandes pressing du bien sélectionné :
+// statut du cycle de vie (demandée → payée → en cours → prête →
+// livrée) + règlement hors plateforme + annulation.
+// =============================================================
+interface LaundryOrderApi {
+  id: string;
+  bookingId: string | null;
+  guestName: string | null;
+  serviceType: string;
+  pieces: number;
+  pickupSlot: string;
+  notes: string | null;
+  amountEur: number;
+  payment: string;
+  status: string;
+  paidAt: string | null;
+  createdAt: string;
+}
+
+function LaundryOrdersPanel() {
+  const { selectedId, selectedProperty } = useHostContext();
+  const [orders, setOrders] = useState<LaundryOrderApi[] | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  const load = useCallback(async (pid: string) => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/airbnb/properties/${encodeURIComponent(pid)}/laundry-orders`, {
+        cache: 'no-store',
+      });
+      const json = (await res.json().catch(() => null)) as { orders?: LaundryOrderApi[] } | null;
+      if (res.ok && json) setOrders(json.orders ?? []);
+      else setOrders(null);
+    } catch {
+      setOrders(null);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (selectedId === 'all' || !selectedProperty?.id) {
+      setOrders(null);
+      return;
+    }
+    void load(selectedProperty.id);
+  }, [selectedId, selectedProperty, load]);
+
+  const patch = async (orderId: string, action: 'IN_PROGRESS' | 'READY' | 'DELIVERED' | 'CANCEL' | 'MARK_PAID') => {
+    if (!selectedProperty?.id || busyId) return;
+    setBusyId(orderId);
+    try {
+      const res = await fetch(`/api/airbnb/properties/${encodeURIComponent(selectedProperty.id)}/laundry-orders`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId, action }),
+      });
+      if (!res.ok) throw new Error('http');
+      setOrders((prev) =>
+        prev
+          ? prev.map((o) =>
+              o.id === orderId
+                ? {
+                    ...o,
+                    status:
+                      action === 'MARK_PAID' ? 'PAID' : action === 'CANCEL' ? 'CANCELLED' : action,
+                    paidAt: action === 'MARK_PAID' ? new Date().toISOString() : o.paidAt,
+                  }
+                : o,
+            )
+          : prev,
+      );
+      toast.success('Commande mise à jour ✅');
+    } catch {
+      toast.error('Mise à jour impossible. Réessayez.');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  if (selectedId === 'all') return null;
+
+  const active = (orders ?? []).filter((o) => o.status !== 'DELIVERED' && o.status !== 'CANCELLED');
+  const done = (orders ?? []).filter((o) => o.status === 'DELIVERED' || o.status === 'CANCELLED');
+
+  return (
+    <section className="lux-card p-5" aria-label="Commandes pressing">
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <p className="lux-eyebrow !text-[9.5px]">Services</p>
+          <h2 className="lux-display mt-1 text-lg font-semibold text-white">
+            Pressing &amp; Blanchisserie Express
+          </h2>
+          <p className="mt-0.5 text-xs text-[#8fa0c2]">
+            Commandes pressing de vos invités (repassage, lessive, pressing à sec) — {selectedProperty?.name ?? ''}.
+          </p>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="h-8 shrink-0 rounded-full border-white/12 bg-white/[0.04] text-xs text-[#d5def0] hover:bg-white/8 hover:text-white"
+          disabled={loading || !selectedProperty?.id}
+          onClick={() => selectedProperty?.id && void load(selectedProperty.id)}
+          aria-label="Rafraîchir les commandes pressing"
+        >
+          Actualiser
+        </Button>
+      </div>
+
+      {orders === null && !loading ? (
+        <div className="lux-empty mt-4 flex flex-col items-center gap-2 p-6 text-center">
+          <span className="lux-dot" style={{ backgroundColor: '#5c8af0' }} aria-hidden="true" />
+          <p className="text-sm font-semibold text-white">Aucune commande pressing</p>
+          <p className="text-xs text-[#8fa0c2]">
+            Vos invités commandent depuis l&apos;onglet Services de leur Hub.
+          </p>
+        </div>
+      ) : loading && orders === null ? (
+        <Skeleton className="mt-4 h-24 w-full rounded-2xl bg-white/8" />
+      ) : (
+        <div className="mt-4 space-y-3">
+          {active.length === 0 && done.length === 0 && (
+            <div className="lux-empty flex flex-col items-center gap-2 p-6 text-center">
+              <span className="lux-dot" style={{ backgroundColor: '#5c8af0' }} aria-hidden="true" />
+              <p className="text-sm font-semibold text-white">Aucune commande pressing</p>
+              <p className="text-xs text-[#8fa0c2]">
+                Vos invités commandent depuis l&apos;onglet Services de leur Hub.
+              </p>
+            </div>
+          )}
+          {active.map((o) => {
+            const meta = LAUNDRY_STATUS_HOST_META[o.status] ?? { label: o.status, className: 'border-white/12 bg-white/[0.04] text-[#8fa0c2]' };
+            return (
+              <div
+                key={o.id}
+                className="flex flex-col gap-2.5 rounded-2xl border border-white/8 bg-white/[0.03] p-4 transition-colors hover:bg-white/[0.05] sm:flex-row sm:items-start sm:justify-between"
+              >
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-white">
+                    {laundryOrderSummary(o.serviceType, o.pieces)}
+                    <span className={`ml-2 inline-block rounded-full border px-2 py-0.5 text-[11px] font-semibold ${meta.className}`}>
+                      {meta.label}
+                    </span>
+                  </p>
+                  <p className="mt-1 text-xs text-[#8fa0c2]">
+                    {o.guestName ?? 'Invité'} · récupération {pickupSlotLabel(o.pickupSlot)} ·{' '}
+                    {new Date(o.createdAt).toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })} ·{' '}
+                    <strong className="text-white">{o.amountEur.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}</strong>
+                    {o.payment === 'stripe' ? ' · carte' : ' · à régler avec l\u2019hôte'}
+                  </p>
+                  {o.notes && <p className="mt-1 text-xs italic text-[#8fa0c2]/80">« {o.notes.slice(0, 160)} »</p>}
+                </div>
+                <div className="flex shrink-0 flex-wrap gap-1.5">
+                  {o.status !== 'PAID' && o.payment !== 'stripe' && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-8 rounded-full border-[#34d399]/30 bg-[#34d399]/10 text-xs font-semibold text-[#34d399] hover:bg-[#34d399]/20 hover:text-[#34d399]"
+                      disabled={busyId === o.id}
+                      onClick={() => void patch(o.id, 'MARK_PAID')}
+                    >
+                      Encaissé
+                    </Button>
+                  )}
+                  {o.status === 'PAID' || o.status === 'REQUESTED' || o.status === 'PENDING_PAYMENT' ? (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-8 rounded-full border-white/12 bg-white/[0.04] text-xs font-semibold text-[#d5def0] hover:bg-white/8 hover:text-white"
+                      disabled={busyId === o.id}
+                      onClick={() => void patch(o.id, 'IN_PROGRESS')}
+                    >
+                      En cours
+                    </Button>
+                  ) : o.status === 'IN_PROGRESS' ? (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-8 rounded-full border-white/12 bg-white/[0.04] text-xs font-semibold text-[#d5def0] hover:bg-white/8 hover:text-white"
+                      disabled={busyId === o.id}
+                      onClick={() => void patch(o.id, 'READY')}
+                    >
+                      Prête
+                    </Button>
+                  ) : o.status === 'READY' ? (
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="lux-btn h-8 px-3 text-xs"
+                      disabled={busyId === o.id}
+                      onClick={() => void patch(o.id, 'DELIVERED')}
+                    >
+                      Livrée
+                    </Button>
+                  ) : null}
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-8 rounded-full border-[#f07d6a]/30 bg-transparent text-xs font-semibold text-[#f07d6a] hover:bg-[#f07d6a]/10 hover:text-[#f07d6a]"
+                    disabled={busyId === o.id}
+                    onClick={() => void patch(o.id, 'CANCEL')}
+                  >
+                    Annuler
+                  </Button>
+                </div>
+              </div>
+            );
+          })}
+          {done.length > 0 && (
+            <details className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+              <summary className="cursor-pointer text-sm font-semibold text-white">
+                Historique ({done.length})
+              </summary>
+              <ul className="mt-2.5 space-y-1.5">
+                {done.map((o) => {
+                  const meta = LAUNDRY_STATUS_HOST_META[o.status] ?? { label: o.status, className: 'border-white/12 bg-white/[0.04] text-[#8fa0c2]' };
+                  return (
+                    <li key={o.id} className="text-xs text-[#8fa0c2]">
+                      {laundryOrderSummary(o.serviceType, o.pieces)} — {o.guestName ?? 'Invité'} ·{' '}
+                      <span className={`rounded-full border px-1.5 py-0.5 text-[10px] font-semibold ${meta.className}`}>{meta.label}</span> ·{' '}
+                      {new Date(o.createdAt).toLocaleDateString('fr-FR')} ·{' '}
+                      {o.amountEur.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}
+                    </li>
+                  );
+                })}
+              </ul>
+            </details>
+          )}
+        </div>
+      )}
+    </section>
   );
 }

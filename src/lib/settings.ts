@@ -24,8 +24,8 @@ export interface PlatformSettings {
 }
 
 export const PLATFORM_SETTINGS_DEFAULTS: PlatformSettings = {
-  platformName: 'Conciergerie Hub',
-  supportEmail: 'support@conciergeriehub.fr',
+  platformName: 'RoomScan',
+  supportEmail: 'support@roomscan.pro',
   defaultCommissionPercent: 15,
   signupHourlyLimit: 20,
   payoutMinimumEur: 20,

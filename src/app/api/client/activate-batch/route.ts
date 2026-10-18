@@ -1,57 +1,47 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 import crypto from 'crypto';
 
-async function ensureDemoUser() {
-  let user = await db.user.findFirst({
-    where: { email: 'demo@qrdomotik.roomscan.pro' },
+/**
+ * Vérifie que l'utilisateur est owner de la propriété
+ * ou membre actif (invitation acceptée).
+ */
+async function canAccessProperty(userId: string, propertyId: string): Promise<boolean> {
+  const property = await db.property.findFirst({
+    where: {
+      id: propertyId,
+      OR: [
+        { ownerId: userId },
+        { members: { some: { userId, acceptedAt: { not: null } } } },
+      ],
+    },
+    select: { id: true },
   });
-
-  if (!user) {
-    user = await db.user.create({
-      data: {
-        email: 'demo@qrdomotik.roomscan.pro',
-        fullName: 'Utilisateur Démo',
-        role: 'user',
-      },
-    });
-
-    const home = await db.property.create({
-      data: {
-        ownerId: user.id,
-        name: 'Ma Maison',
-        address: 'Dakar, Sénégal',
-        isActive: true,
-      },
-    });
-
-    await db.propertyMember.create({
-      data: {
-        propertyId: home.id,
-        userId: user.id,
-        role: 'owner',
-      },
-    });
-  }
-
-  const member = await db.propertyMember.findFirst({
-    where: { userId: user.id },
-    include: { property: true },
-  });
-
-  return { user, home: member?.property };
+  return property !== null;
 }
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+    }
+
+    const userId = (session.user as { id?: string }).id;
+    if (!userId) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+    }
+    const user = { id: userId };
+
     const body = await request.json();
-    const { codes, moduleType, roomId, name, propertyId, userId } = body as {
+    const { codes, moduleType, roomId, name, propertyId } = body as {
       codes: string[];
       moduleType: string;
       roomId: string;
       name: string;
       propertyId: string;
-      userId?: string;
     };
 
     if (!Array.isArray(codes) || codes.length === 0 || !moduleType || !roomId || !name || !propertyId) {
@@ -61,16 +51,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Resolve user
-    let user;
-    if (userId) {
-      user = await db.user.findUnique({ where: { id: userId } });
-      if (!user) {
-        return NextResponse.json({ error: 'Utilisateur introuvable' }, { status: 404 });
-      }
-    } else {
-      const demo = await ensureDemoUser();
-      user = demo.user;
+    // Garde d'accès : activation uniquement dans une propriété autorisée
+    if (!(await canAccessProperty(userId, propertyId))) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
     }
 
     let activated = 0;

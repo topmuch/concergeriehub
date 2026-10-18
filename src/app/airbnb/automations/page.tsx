@@ -5,7 +5,7 @@ import { LoginGate } from '@/components/airbnb/login-gate';
 import { AutomationsContent } from '@/components/airbnb/automations-content';
 
 export const metadata: Metadata = {
-  title: 'Automatisations — Conciergerie Hub',
+  title: 'Automatisations — RoomScan',
   description:
     'Automatisez la gestion de vos locations : notifications de réservations, rappels arrivée/départ, ménages et réclamations techniques.',
 };

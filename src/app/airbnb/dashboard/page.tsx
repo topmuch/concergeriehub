@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { OverviewContent } from '@/components/airbnb/host/overview-content';
 
 export const metadata: Metadata = {
-  title: "Vue d'ensemble — Conciergerie Hub",
+  title: "Vue d'ensemble — RoomScan",
   description:
     "Tableau de bord de votre activité : scans de plaques, revenus upselling, note moyenne et propriétés actives.",
 };

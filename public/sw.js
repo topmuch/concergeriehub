@@ -1,5 +1,5 @@
 /* =============================================================
-   ÉTAPE 16 (V3) — Service Worker "App Invitée" Conciergerie Hub
+   ÉTAPE 16 (V3) — Service Worker "App Invitée" RoomScan
    =============================================================
    Objectif : le Guidebook, les règles de la maison et le Wi-Fi
    restent disponibles SANS RÉSEAU dans le logement.
@@ -15,10 +15,15 @@
    repli cache hors-ligne → pas de contenu périmé.
    ============================================================= */
 
-const VERSION = 'v3-guest-1';
+// v4.119 — bump : purge immédiate des caches legacy chez les clients
+// (l'ancien SW « qr-domotik-v2 » et ses caches ne sont plus filtrés par
+// préfixe : TOUT cache inconnu est supprimé à l'activation → un client
+// ne peut plus se retrouver sur l'ancien code servi depuis un vieux cache).
+const VERSION = 'v3-guest-3';
 const RUNTIME_CACHE = `ch-guest-runtime-${VERSION}`;
 const ASSET_CACHE = `ch-guest-assets-${VERSION}`;
 const OFFLINE_URL = '/offline.html';
+const RUNTIME_MAX_ENTRIES = 80;
 
 const APP_PREFIXES = ['/app/hub/', '/api/public/', '/_next/static/', '/icon-', '/favicon'];
 const ICON_PATHS = ['/api/public/app-icon', '/icon-', '/favicon'];
@@ -37,14 +42,39 @@ self.addEventListener('install', (event) => {
   );
 });
 
+/* PHASE FINALE — activation immédiate demandée par la bannière
+   « Nouvelle version disponible » (update-banner.tsx). */
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting();
+});
+
+/* PHASE FINALE — purge FIFO du cache runtime : taille maîtrisée
+   même après de nombreux hubs visités (80 entrées max). */
+async function trimRuntimeCache() {
+  try {
+    const cache = await caches.open(RUNTIME_CACHE);
+    const keys = await cache.keys();
+    if (keys.length <= RUNTIME_MAX_ENTRIES) return;
+    for (const key of keys.slice(0, keys.length - RUNTIME_MAX_ENTRIES)) {
+      await cache.delete(key);
+    }
+  } catch (_) {
+    /* silencieux — la purge ne doit jamais casser le service */
+  }
+}
+
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     (async () => {
+      // v4.119 — PURGE TOTALE : on ne conserve QUE les deux caches de la
+      // version courante. Avant : seuls les caches préfixés « ch-guest- »
+      // étaient purgés → les vieux caches d'itérations précédentes
+      // (ex. « qr-domotik-v2 ») survivaient chez les clients PWA et
+      // pouvaient resservir l'ANCIEN code après chaque déploiement.
+      const keep = new Set([RUNTIME_CACHE, ASSET_CACHE]);
       const keys = await caches.keys();
       await Promise.all(
-        keys
-          .filter((k) => k.startsWith('ch-guest-') && !k.endsWith(VERSION))
-          .map((k) => caches.delete(k)),
+        keys.filter((k) => !keep.has(k)).map((k) => caches.delete(k)),
       );
       await self.clients.claim();
     })(),
@@ -104,6 +134,7 @@ async function handle(request, url) {
     if (res.ok && cacheable) {
       const cache = await caches.open(RUNTIME_CACHE);
       cache.put(request, res.clone());
+      void trimRuntimeCache();
     }
     return res;
   } catch (_) {
@@ -143,7 +174,7 @@ self.addEventListener('fetch', (event) => {
    ───────────────────────────────────────────────────────────── */
 
 self.addEventListener('push', (event) => {
-  let data = { title: 'Conciergerie Hub', body: 'Nouvelle notification', icon: '/icon-512.png' };
+  let data = { title: 'RoomScan', body: 'Nouvelle notification', icon: '/icon-512.png' };
 
   if (event.data) {
     try {

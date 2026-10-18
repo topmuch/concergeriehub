@@ -6,7 +6,11 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  /* TYPOGRAPHIE — Tahoma en tête de stack (choix utilisateur v4.63).
+     Repli gracieux : Inter / Geist (variables next/font conservées) pour
+     les appareils sans Tahoma (iOS/Android/Linux), puis système. */
+  --font-sans: Tahoma, var(--font-inter), var(--font-geist-sans), 'Segoe UI', Verdana, ui-sans-serif, system-ui, sans-serif;
+  --font-serif: Tahoma, var(--font-playfair), ui-serif, Georgia, serif;
   --font-mono: var(--font-geist-mono);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -42,17 +46,17 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 
-  /* ── Conciergerie Hub — brand tokens (B2B) ──
-     Primary  #0F172A (Slate 900) — autorité, texte, CTA
-     Accent   #059669 (Emerald 600) — actions, succès, hospitalité
-     Surface  #F8FAFC (Slate 50) — fond de page
-     Card     #FFFFFF — cartes
-     Border   #E2E8F0 (Slate 200) */
-  --color-brand: #0F172A;
+  /* ── RoomScan — brand tokens (B2B) — couleurs du LOGO ──
+     Bleu vif  #0066EF (« Scan ») — accent, actions, liens, focus
+     Marine    #07235B (« Room ») — autorité, texte de marque, CTA secondaires
+     Surface   #F8FAFC (Slate 50) — fond de page
+     Card      #FFFFFF — cartes
+     Border    #E2E8F0 (Slate 200) */
+  --color-brand: #07235B;
   --color-brand-foreground: #F8FAFC;
-  --color-brand-accent: #059669;
-  --color-brand-accent-hover: #047857;
-  --color-brand-accent-soft: #ECFDF5;
+  --color-brand-accent: #0066EF;
+  --color-brand-accent-hover: #0052C4;
+  --color-brand-accent-soft: #EAF2FF;
   --color-brand-surface: #F8FAFC;
   --color-brand-line: #E2E8F0;
 }
@@ -71,22 +75,22 @@
   --secondary-foreground: #0F172A;
   --muted: #F1F5F9;
   --muted-foreground: #64748B;
-  --accent: #059669;
+  --accent: #0066EF;
   --accent-foreground: #FFFFFF;
   --destructive: #DC2626;
   --border: #E2E8F0;
   --input: #E2E8F0;
-  --ring: #059669;
-  --chart-1: #059669;
-  --chart-2: #0F172A;
+  --ring: #0066EF;
+  --chart-1: #0066EF;
+  --chart-2: #07235B;
   --chart-3: #F59E0B;
   --chart-4: #10B981;
   --chart-5: #64748B;
-  /* Thème sidebar « Travl » — coral plein, texte blanc (Espace Hôte + Console Superadmin) */
-  --sidebar: #EE4B35;
+  /* Thème sidebar « Travl » — marine du logo, texte blanc (Espace Hôte + Console Superadmin) */
+  --sidebar: #07235B;
   --sidebar-foreground: #FFFFFF;
   --sidebar-primary: #FFFFFF;
-  --sidebar-primary-foreground: #E23F2B;
+  --sidebar-primary-foreground: #0066EF;
   --sidebar-accent: #ffffff26;
   --sidebar-accent-foreground: #FFFFFF;
   --sidebar-border: #ffffff1f;
@@ -106,21 +110,21 @@
   --secondary-foreground: #F8FAFC;
   --muted: #1E293B;
   --muted-foreground: #94A3B8;
-  --accent: #059669;
+  --accent: #3B82F6;
   --accent-foreground: #FFFFFF;
   --destructive: #EF4444;
   --border: #334155;
   --input: #334155;
-  --ring: #10B981;
-  --chart-1: #10B981;
-  --chart-2: #E2E8F0;
+  --ring: #3B82F6;
+  --chart-1: #3B82F6;
+  --chart-2: #DBEAFE;
   --chart-3: #F59E0B;
   --chart-4: #34D399;
   --chart-5: #94A3B8;
-  --sidebar: #EE4B35;
+  --sidebar: #07235B;
   --sidebar-foreground: #FFFFFF;
   --sidebar-primary: #FFFFFF;
-  --sidebar-primary-foreground: #E23F2B;
+  --sidebar-primary-foreground: #4C9AFF;
   --sidebar-accent: #ffffff26;
   --sidebar-accent-foreground: #FFFFFF;
   --sidebar-border: #ffffff1f;
@@ -137,26 +141,28 @@
 }
 
 /* Élément ACTIF des sidebars « Travl » (Espace Hôte + Superadmin) :
-   pastille blanche + texte coral. Sélecteur d'attributs (0,2,0) qui
+   pastille blanche + texte bleu vif du logo. Sélecteur d'attributs (0,2,0) qui
    l'emporte sur les utilitaires data-[active=true] du composant. */
 [data-sidebar='menu-button'][data-active='true'] {
   background-color: #ffffff;
-  color: #e23f2b;
+  color: #0066ef;
 }
 [data-sidebar='menu-button'][data-active='true']:hover {
   background-color: #ffffff;
-  color: #e23f2b;
+  color: #0066ef;
 }
 
 /* Custom scrollbar for glassmorphism pages (hub, setup) */
 @layer utilities {
-  /* PIN shake animation */
+  /* PIN shake animation — v4.75 « LUXURY PIN PAD » (spécification :
+     secousse 10 étapes, rejouée à chaque erreur de code) */
   @keyframes shake {
     0%, 100% { transform: translateX(0); }
-    20% { transform: translateX(-8px); }
-    40% { transform: translateX(8px); }
-    60% { transform: translateX(-6px); }
-    80% { transform: translateX(6px); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+    20%, 40%, 60%, 80% { transform: translateX(4px); }
+  }
+  .animate-shake {
+    animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
   }
 
   .scrollbar-thin {
@@ -216,12 +222,12 @@
   --secondary-foreground: #0F172A;
   --muted: #F1F5F9;
   --muted-foreground: #64748B;
-  --accent: #059669;
+  --accent: #0066EF;
   --accent-foreground: #FFFFFF;
   --destructive: #DC2626;
   --border: #E2E8F0;
   --input: #E2E8F0;
-  --ring: #059669;
+  --ring: #0066EF;
   background: var(--background);
   color: var(--foreground);
   color-scheme: light;
@@ -240,13 +246,1178 @@
   --secondary-foreground: #F8FAFC;
   --muted: #1E293B;
   --muted-foreground: #94A3B8;
-  --accent: #10B981;
+  --accent: #3B82F6;
   --accent-foreground: #FFFFFF;
   --destructive: #EF4444;
   --border: #334155;
   --input: #334155;
-  --ring: #10B981;
+  --ring: #3B82F6;
   background: var(--background);
   color: var(--foreground);
   color-scheme: dark;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   DESIGN PREMIUM « LUXE TECH » (V4.10) — animations & utilitaires
+   Inspiration : Apple (minimalisme) + Airbnb (chaleur) + Linear/Vercel
+   (micro-interactions). Palette HARMONISÉE SUR LE LOGO : bleu vif #0066EF
+   × marine #07235B, glassmorphism, gradients signature.
+   ═══════════════════════════════════════════════════════════════ */
+
+@theme {
+  --animate-gradient: gradient 8s linear infinite;
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-shimmer: shimmer 2.4s linear infinite;
+  --animate-pulse-slow: pulse-slow 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-spin-slow: spin 14s linear infinite;
+
+  @keyframes gradient {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-20px); }
+  }
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  @keyframes pulse-slow {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.82; transform: scale(1.035); }
+  }
+}
+
+@layer utilities {
+  /* ── Glassmorphism premium ─────────────────────────────────── */
+  /* NB : le blur passe par une custom property — Lightning CSS
+     supprime sinon la propriété standard `backdrop-filter` littérale
+     (garde seulement -webkit- → blur mort sur Chrome/Firefox). */
+  .glass {
+    --glass-backdrop: blur(24px) saturate(1.4);
+    background: rgb(255 255 255 / 0.6);
+    -webkit-backdrop-filter: var(--glass-backdrop);
+    backdrop-filter: var(--glass-backdrop);
+    border: 1px solid rgb(255 255 255 / 0.45);
+    box-shadow: 0 8px 32px rgb(0 0 0 / 0.08);
+  }
+  .dark .glass {
+    background: rgb(255 255 255 / 0.05);
+    border-color: rgb(255 255 255 / 0.1);
+    box-shadow: 0 8px 32px rgb(0 0 0 / 0.35);
+  }
+  .glass-hover:hover {
+    box-shadow: 0 12px 48px rgb(0 0 0 / 0.12);
+  }
+  .dark .glass-hover:hover {
+    box-shadow: 0 12px 48px rgb(0 0 0 / 0.5);
+  }
+
+  /* ── Texte en dégradé signature (or → rose) ────────────────── */
+  .text-gradient-lux {
+    background-image: linear-gradient(110deg, #07235b 8%, #0066ef 48%, #07235b 92%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .dark .text-gradient-lux {
+    background-image: linear-gradient(110deg, #dbeafe 8%, #60a5fa 48%, #dbeafe 92%);
+    background-size: 200% auto;
+  }
+
+  /* ── Gradient signature du design system ──────────────────── */
+  .bg-gradient-signature {
+    background-image: linear-gradient(120deg, rgb(219 234 254 / 0.9), rgb(224 242 254 / 0.9), rgb(234 242 255 / 0.9));
+  }
+  .dark .bg-gradient-signature {
+    background-image: linear-gradient(120deg, rgb(0 102 238 / 0.16), rgb(7 35 91 / 0.24), rgb(59 130 246 / 0.16));
+  }
+
+  /* ── Ligne de shimmer (bordure lumineuse qui traverse) ─────── */
+  .shimmer-line {
+    position: relative;
+    overflow: hidden;
+  }
+  .shimmer-line::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      105deg,
+      transparent 38%,
+      rgb(255 255 255 / 0.55) 50%,
+      transparent 62%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2.8s linear infinite;
+    pointer-events: none;
+  }
+
+  /* ── Texture subtile « luxe » (trame de points SVG) ────────── */
+  .texture-dots {
+    background-image: radial-gradient(rgb(255 255 255 / 0.22) 1px, transparent 1px);
+    background-size: 14px 14px;
+  }
+
+  /* ── Spotlight (halo qui suit le curseur — variables --mx/--my) */
+  .spotlight-surface::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(
+      200px circle at var(--mx, 50%) var(--my, 50%),
+      rgb(255 255 255 / 0.35),
+      transparent 65%
+    );
+    opacity: 0;
+    transition: opacity 0.35s ease;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .spotlight-surface:hover::before {
+    opacity: 1;
+  }
+
+  /* ── Titre display (Apple-like : tracking serré) ───────────── */
+  .display-title {
+    font-family: var(--font-serif);
+    letter-spacing: -0.02em;
+    line-height: 0.98;
+  }
+
+  /* ── Respect des préférences d'accessibilité ───────────────── */
+  @media (prefers-reduced-motion: reduce) {
+    .shimmer-line::after,
+    .animate-gradient,
+    .animate-float,
+    .animate-shimmer,
+    .animate-pulse-slow,
+    .animate-spin-slow {
+      animation: none !important;
+    }
+  }
+}
+
+/* LUXE TECH — note d'empilement : couches theme > base > components > utilities (aucun effet) */
+
+/* build 1791510340 */
+
+/* ── App invitée : cartes premium à thème scopé ────────────────
+   L'app invitée gère SON propre thème (.guest-scope.dark selon le
+   téléphone de l'invité) — les variantes dark: globales réagissent
+   à html.dark (Espace Hôte, next-themes) et ne doivent pas fuir
+   ici. Ces cartes passent donc par des variables locales. */
+@layer utilities {
+  .card-amber-lux {
+    --amber-ink: #b45309;
+    --amber-ink-soft: rgb(180 83 9 / 0.72);
+    --amber-chip-bg: #fef3c7;
+    --amber-chip-ink: #92400e;
+    --amber-chip-border: rgb(252 211 77 / 0.6);
+    border: 1px solid #fde68a;
+    background-image: linear-gradient(135deg, #fffbeb, #fff7ed);
+  }
+  .guest-scope.dark .card-amber-lux {
+    --amber-ink: #fcd34d;
+    --amber-ink-soft: rgb(252 211 77 / 0.66);
+    --amber-chip-bg: rgb(251 191 36 / 0.15);
+    --amber-chip-ink: #fcd34d;
+    --amber-chip-border: rgb(251 191 36 / 0.25);
+    border-color: rgb(251 191 36 / 0.2);
+    background-image: linear-gradient(135deg, rgb(120 53 15 / 0.16), rgb(124 45 18 / 0.16));
+  }
+
+  .card-emerald-lux {
+    border: 1px solid rgb(16 185 129 / 0.3);
+    background-image: linear-gradient(135deg, #ecfdf5, #f0fdfa);
+  }
+  .guest-scope.dark .card-emerald-lux {
+    border-color: rgb(16 185 129 / 0.35);
+    background-image: linear-gradient(135deg, rgb(6 78 59 / 0.3), rgb(19 78 74 / 0.3));
+  }
+}
+
+/* =============================================================
+   v4.31 « POUR VOUS » — effet Ken Burns (zoom lent, micro-vie)
+   Appliqué aux photos pleine carte du hub (hero + cartes + bandeau
+   « Pour vous »). 18 s, alterné, très subtil (7 %). Désactivé pour
+   prefers-reduced-motion (accessibilité).
+   ============================================================= */
+@keyframes hub-kenburns {
+  0% {
+    transform: scale(1) translate3d(0, 0, 0);
+  }
+  100% {
+    transform: scale(1.07) translate3d(0, -1.5%, 0);
+  }
+}
+
+.hub-kenburns {
+  animation: hub-kenburns 18s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hub-kenburns {
+    animation: none !important;
+    will-change: auto;
+  }
+}
+
+/* =============================================================
+   v4.32 « SIGNAUX DU SÉJOUR » — clignotement rouge d'urgence
+   Demande client : la veille du départ, la carte « Départ tardif »
+   doit scintiller en rouge pour alerter l'invité ; tous les jours à
+   20 h, la carte « Bouclier d'avis » doit scintiller. Anneau rouge
+   pulsé (halo + glow), sans déplacement de contenu. Désactivé pour
+   prefers-reduced-motion (accessibilité).
+   ============================================================= */
+@keyframes hub-alert-blink {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 0 rgba(239, 68, 68, 0.55),
+      0 18px 44px -20px rgba(15, 23, 42, 0.45);
+  }
+  50% {
+    box-shadow:
+      0 0 0 9px rgba(239, 68, 68, 0.12),
+      0 0 30px 3px rgba(239, 68, 68, 0.4);
+  }
+}
+
+.hub-alert-blink {
+  animation: hub-alert-blink 1.7s ease-in-out infinite;
+  will-change: box-shadow;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hub-alert-blink {
+    animation: none !important;
+    will-change: auto;
+    /* Repli statique : l'alerte reste visible, sans clignoter. */
+    box-shadow:
+      0 0 0 3px rgba(239, 68, 68, 0.45),
+      0 18px 44px -20px rgba(15, 23, 42, 0.45) !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v4.59 — DESIGN SYSTEM « AIRBNB PRO » (dashboards hôte + superadmin)
+   Refonte complète : KPIs colorés, gradients signature, dark mode
+   soigné. v5.1 : palette harmonisée sur le LOGO RoomScan —
+   bleu vif #0066EF (« Scan »), marine #07235B (« Room »).
+   Les classes .kpi-* donnent à CHAQUE carte KPI son identité
+   chromatique (fond pastel + texte foncé assorti) et basculent
+   automatiquement en dark via .dark.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ----- Fond et surfaces dashboard (chaud Airbnb, pas terne) ----- */
+.dash-surface {
+  background:
+    radial-gradient(1200px 500px at 85% -10%, rgba(0, 102, 238, 0.06), transparent 60%),
+    radial-gradient(900px 420px at 0% 0%, rgba(7, 35, 91, 0.05), transparent 55%),
+    #F7F7F8;
+}
+.dark .dash-surface {
+  background:
+    radial-gradient(1200px 500px at 85% -10%, rgba(0, 102, 238, 0.10), transparent 60%),
+    radial-gradient(900px 420px at 0% 0%, rgba(7, 35, 91, 0.16), transparent 55%),
+    #0B1120;
+}
+
+/* ----- Gradient signature Airbnb (CTA, bandeaux, sidebar) ----- */
+.air-gradient {
+  background: linear-gradient(93deg, #0052C4 0%, #0066EF 45%, #0047B3 100%);
+}
+.air-gradient-deep {
+  background: linear-gradient(160deg, #07235B 0%, #0A3D8F 55%, #0066EF 100%);
+}
+.air-gradient-text {
+  background: linear-gradient(93deg, #0066EF, #0047B3);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* v5.7 — demande client : TOUS les KPI en fond #FF385C (rouge Airbnb).
+   Ancien système pastel 6 tons (v4.59, plus utilisé) unifié : */
+.kpi-rausch, .kpi-emerald, .kpi-amber,
+.kpi-violet, .kpi-teal, .kpi-orange {
+  background: linear-gradient(135deg, #ff385c 0%, #e22d4e 100%);
+  color: #ffffff;
+}
+.dark .kpi-rausch, .dark .kpi-emerald, .dark .kpi-amber,
+.dark .kpi-violet, .dark .kpi-teal, .dark .kpi-orange {
+  background: linear-gradient(135deg, #ff385c 0%, #c11f3e 100%);
+  color: #ffffff;
+}
+
+/* ----- Bulle d'icône KPI (dégradé plein, blanc par dessus) ----- */
+.kpi-bubble-rausch  { background: linear-gradient(135deg, #0066EF, #0047B3); }
+.kpi-bubble-emerald { background: linear-gradient(135deg, #00A699, #047857); }
+.kpi-bubble-amber   { background: linear-gradient(135deg, #F59E0B, #D97706); }
+.kpi-bubble-violet  { background: linear-gradient(135deg, #8B5CF6, #6D28D9); }
+.kpi-bubble-teal    { background: linear-gradient(135deg, #06B6D4, #0E7490); }
+.kpi-bubble-orange  { background: linear-gradient(135deg, #FB923C, #C2410C); }
+
+/* ----- Ombres Airbnb (douces, diffuses) ----- */
+.air-shadow   { box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04); }
+.air-shadow-lg { box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.06); }
+.dark .air-shadow { box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45), 0 1px 2px rgba(0, 0, 0, 0.3); }
+.dark .air-shadow-lg { box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.35); }
+
+/* ----- Sidebar gradient colorée (hôtes + superadmin, clair & dark) -----
+   v5.7 — demande client : sidebar en #FF385C (rouge Airbnb) */
+.air-sidebar { background: linear-gradient(180deg, #c81f3e 0%, #ff385c 45%, #d92b4b 100%); }
+.air-sidebar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(420px 260px at 20% 0%, rgba(255, 255, 255, 0.22), transparent 65%);
+}
+/* Élément actif des sidebars gradient : pastille blanche + texte rausch */
+.air-sidebar [data-sidebar='menu-button'][data-active='true'],
+.air-sidebar [data-sidebar='menu-button'][data-active='true']:hover {
+  background-color: #ffffff;
+  color: #ff385c;
+}
+
+/* ----- Header glass des dashboards ----- */
+.air-header {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(14px) saturate(1.4);
+}
+.dark .air-header {
+  background: rgba(16, 16, 20, 0.78);
+}
+
+/* ----- Placeholder / empty states vivants (plus grisâtres) ----- */
+.air-empty {
+  background: repeating-linear-gradient(-45deg, rgba(0, 102, 238, 0.04) 0 12px, transparent 12px 24px), #F7FAFF;
+  border: 1.5px dashed rgba(0, 102, 238, 0.35);
+}
+.dark .air-empty {
+  background: repeating-linear-gradient(-45deg, rgba(0, 102, 238, 0.07) 0 12px, transparent 12px 24px), #0C1428;
+  border-color: rgba(0, 102, 238, 0.30);
+}
+
+/* ----- Micro-animations d'engagement ----- */
+@keyframes airFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+.air-float { animation: airFloat 5s ease-in-out infinite; }
+@keyframes airShimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.air-hoverlift { transition: transform 0.18s ease, box-shadow 0.18s ease; }
+.air-hoverlift:hover { transform: translateY(-2px); }
+
+/* v5.0 dashboards — scope « light » forcé pour les dashboards hôte & admin
+   (wrapper className="light") : redéfinit les tokens shadcn/ui en valeurs
+   claires à l'intérieur du wrapper, indépendamment de html.dark
+   (ThemeProviders defaultTheme="dark"). Les dashboards utilisent sinon des
+   utilities Tailwind inline explicites (aucun dark: dedans). */
+.light {
+  color-scheme: light;
+  --background: #faf9f7;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --primary: #0f172a;
+  --primary-foreground: #faf9f7;
+  --secondary: #f4f2ee;
+  --secondary-foreground: #0f172a;
+  --muted: #f4f2ee;
+  --muted-foreground: #64748b;
+  --accent: #0066ef;
+  --accent-foreground: #ffffff;
+  --destructive: #dc2626;
+  --border: #eae7e1;
+  --input: #eae7e1;
+  --ring: #0066ef;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   v5.2 « SAPHIR LUXE » — design system des espaces Hôte + Superadmin
+   Demande client : design PLUS SIMPLE, LUXUEUX, PROFESSIONNEL,
+   ENGAGEANT · mode sombre BLEUTÉ · SANS ICÔNES (typographie, chiffres,
+   points colorés, filets — aucun lucide/emoji sur ces surfaces).
+   Portée : wrapper .lux sur /airbnb/* et /admin/*. Depuis v5.3, le
+   scope suit le bouton thème : html.dark (défaut) = nuit saphir ;
+   html:not(.dark) = déclinaison « Jour » (voir plus bas).
+   ═══════════════════════════════════════════════════════════════ */
+
+.lux {
+  color-scheme: dark;
+  --background: #060a17;
+  --foreground: #eef3fb;
+  --card: #0b1226;
+  --card-foreground: #eef3fb;
+  --popover: #0d1530;
+  --popover-foreground: #eef3fb;
+  --primary: #eef3fb;
+  --primary-foreground: #060a17;
+  --secondary: #121b36;
+  --secondary-foreground: #eef3fb;
+  --muted: #121b36;
+  --muted-foreground: #8fa0c2;
+  --accent: #3d6fe0;
+  --accent-foreground: #ffffff;
+  --destructive: #f07d6a;
+  --border: rgba(148, 170, 214, 0.14);
+  --input: rgba(148, 170, 214, 0.18);
+  --ring: #5c8af0;
+  --sidebar: #070d1d;
+  --sidebar-foreground: #eef3fb;
+  --sidebar-primary: #ffffff;
+  --sidebar-primary-foreground: #0b1226;
+  --sidebar-accent: rgba(255, 255, 255, 0.06);
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: rgba(148, 170, 214, 0.12);
+  --sidebar-ring: #5c8af0;
+  background-color: var(--background);
+  color: var(--foreground);
+}
+
+/* ----- Fond de page : nuit saphir + AURORES COLORÉES (v6.0) -----
+   v6.0 « LUXE AURA » — demande client : pages trop grises/ternes →
+   halos corail Airbnb + or + saphir + améthyste sur toute la nuit. */
+.lux-bg {
+  background:
+    radial-gradient(1100px 520px at 88% -14%, rgba(255, 56, 92, 0.16), transparent 60%),
+    radial-gradient(820px 440px at -8% 2%, rgba(233, 196, 124, 0.11), transparent 58%),
+    radial-gradient(900px 620px at 50% 118%, rgba(61, 111, 224, 0.22), transparent 60%),
+    radial-gradient(640px 420px at 28% 44%, rgba(139, 92, 246, 0.09), transparent 62%),
+    linear-gradient(180deg, #070a18 0%, #0a0d20 52%, #070a18 100%);
+}
+
+/* Sélection de texte aux couleurs de la marque */
+.lux ::selection { background: rgba(255, 56, 92, 0.32); color: #ffffff; }
+
+/* ----- Carte verre « luxe » + liseré LUMEN coloré (v6.0) -----
+   Chaque carte porte un filet supérieur dégradé corail → or → saphir :
+   signature colorée sur TOUTES les pages du dashboard. */
+.lux-card {
+  position: relative;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.022));
+  border: 1px solid rgba(148, 170, 214, 0.17);
+  border-radius: 1rem;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.07) inset,
+    0 18px 44px -24px rgba(2, 6, 18, 0.9);
+}
+.lux-card::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 16%;
+  right: 16%;
+  height: 2px;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, transparent, rgba(255, 56, 92, 0.6) 22%, rgba(233, 196, 124, 0.55) 52%, rgba(92, 138, 240, 0.5) 78%, transparent);
+  opacity: 0.75;
+  pointer-events: none;
+}
+/* Les KPI rouges reçoivent un liseré blanc scintillant (cohérence) */
+.lux-card.kpi-solid::before {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+}
+.lux-card-hover {
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+.lux-card-hover:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 56, 92, 0.36);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.08) inset,
+    0 26px 60px -26px rgba(196, 31, 62, 0.5);
+}
+
+/* ----- Typographie sans icônes -----
+   v6.0 — les intitulés de section passent du gris à l'OR : chaque
+   titre de carte gagne en couleur et en lisibilité (nuit). */
+.lux-eyebrow {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgba(233, 196, 124, 0.88);
+}
+.lux-display {
+  font-family: var(--font-playfair), Georgia, serif;
+  letter-spacing: -0.015em;
+}
+.lux-num {
+  font-family: var(--font-playfair), Georgia, serif;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+/* ----- Boutons (aucune icône) -----
+   v6.0 — bouton principal en ROUGE AIRBNB : cohérence totale avec la
+   sidebar et les KPI (identité #FF385C sur toute l'interface). */
+.lux-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 2.5rem;
+  padding: 0 1.15rem;
+  border-radius: 9999px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #ffffff;
+  background: linear-gradient(135deg, #ff385c, #d92b4b);
+  border: 1px solid rgba(255, 138, 158, 0.4);
+  box-shadow: 0 10px 28px -12px rgba(255, 56, 92, 0.6);
+  transition: filter 0.16s ease, transform 0.16s ease;
+}
+.lux-btn:hover { filter: brightness(1.12); }
+.lux-btn:active { transform: translateY(1px); }
+.lux-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 2.5rem;
+  padding: 0 1.15rem;
+  border-radius: 9999px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: rgba(238, 243, 251, 0.82);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(148, 170, 214, 0.22);
+  transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+}
+.lux-btn-ghost:hover {
+  background: rgba(255, 56, 92, 0.12);
+  border-color: rgba(255, 56, 92, 0.42);
+  color: #ffffff;
+}
+.lux-btn-gold {
+  background: linear-gradient(135deg, #e9c47c, #b78a3d);
+  border-color: rgba(233, 196, 124, 0.5);
+  color: #1a1206;
+  box-shadow: 0 10px 28px -12px rgba(212, 175, 106, 0.45);
+}
+.lux-btn-gold:hover { filter: brightness(1.06); }
+
+/* ----- Filets & séparateurs ----- */
+.lux-hairline { border-color: rgba(148, 170, 214, 0.14); }
+.lux-rule {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(148, 170, 214, 0.28), transparent);
+}
+
+/* ----- Pastille point colorée (remplace les icônes de statut) ----- */
+.lux-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 9999px;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.06);
+}
+
+/* ── KPI « joyaux » — 6 fonds colorés (demande : multicolores, fond coloré) ──
+   Chaque KPI a son identité : fond dégradé profond teinté + encre claire
+   assortie + liseré lumineux. SANS icône : le chiffre est le héros. */
+.luxkpi {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.1rem;
+  padding: 1.15rem 1.2rem 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.12) inset,
+    0 22px 48px -26px rgba(2, 6, 18, 0.95);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+}
+.luxkpi::after {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.38), transparent);
+}
+.luxkpi::before {
+  content: '';
+  position: absolute;
+  right: -46px;
+  bottom: -66px;
+  width: 190px;
+  height: 190px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.07);
+  filter: blur(2px);
+  pointer-events: none;
+}
+.luxkpi:hover {
+  transform: translateY(-3px);
+  filter: brightness(1.07);
+}
+/* Encre du texte par tonalité */
+.luxkpi .luxkpi-label {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  opacity: 0.78;
+}
+.luxkpi .luxkpi-value {
+  font-family: var(--font-playfair), Georgia, serif;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  font-weight: 600;
+}
+.luxkpi .luxkpi-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  padding: 0.15rem 0.6rem;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+/* v5.7 — demande client : identité unique #FF385C (rouge Airbnb).
+   Les 6 anciennes tonalités (or/saphir/améthyste/émeraude/corail/rose)
+   pointent désormais toutes sur le même fond rouge, encre blanche. */
+.luxkpi-gold,
+.luxkpi-sapphire,
+.luxkpi-violet,
+.luxkpi-emerald,
+.luxkpi-coral,
+.luxkpi-rose {
+  background:
+    radial-gradient(300px 140px at 92% -10%, rgba(255, 255, 255, 0.24), transparent 60%),
+    linear-gradient(150deg, #ff385c 0%, #e22d4e 58%, #c11f3e 100%);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.30);
+}
+
+/* ----- Sidebar luxueuse (nav typographique sans icônes) -----
+   v6.0 — gradient rouge plus profond + éclat supérieur ; l'onglet
+   ACTIF devient une PILULE BLANCHE à encre rouge : contraste max et
+   navigation vive, lisible dans les deux modes. */
+.lux-sidebar {
+  background:
+    radial-gradient(420px 240px at 88% -8%, rgba(255, 255, 255, 0.16), transparent 62%),
+    radial-gradient(360px 300px at -12% 106%, rgba(94, 8, 26, 0.5), transparent 62%),
+    linear-gradient(180deg, #ff4d68 0%, #f03055 44%, #c81e42 100%);
+  border-right: 1px solid rgba(255, 255, 255, 0.18);
+}
+.lux-sidebar [data-sidebar='menu-button'] {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.82);
+  border-radius: 0.6rem;
+  transition: color 0.16s ease, background 0.16s ease;
+}
+.lux-sidebar [data-sidebar='menu-button']:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.14);
+}
+.lux-sidebar [data-sidebar='menu-button'][data-active='true'],
+.lux-sidebar [data-sidebar='menu-button'][data-active='true']:hover {
+  background: #ffffff;
+  color: #c81e42;
+  box-shadow: 0 12px 26px -12px rgba(20, 2, 8, 0.55);
+}
+.lux-sidebar [data-sidebar='menu-label'] {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.6);
+}
+/* Scrollbar blanche à l'intérieur de la sidebar rouge */
+.lux-sidebar .lux-scroll { scrollbar-color: rgba(255, 255, 255, 0.4) transparent; }
+.lux-sidebar .lux-scroll::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.35); }
+.lux-sidebar .lux-scroll::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.55); }
+/* Drawer mobile de la Console Superadmin : le Sheet portail ne reçoit
+   pas la classe .lux-sidebar (shadcn) et --sidebar=transparent le rend
+   translucide → fond rouge Airbnb plein + mêmes styles de navigation
+   que le desktop (pilule blanche sur l'onglet actif). */
+[data-slot='sidebar'][data-mobile='true'] {
+  background:
+    radial-gradient(420px 240px at 88% -8%, rgba(255, 255, 255, 0.16), transparent 62%),
+    linear-gradient(180deg, #ff4d68 0%, #f03055 44%, #c81e42 100%) !important;
+}
+[data-slot='sidebar'][data-mobile='true'] [data-sidebar='menu-button'] {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.85);
+}
+[data-slot='sidebar'][data-mobile='true'] [data-sidebar='menu-button']:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.14);
+}
+[data-slot='sidebar'][data-mobile='true'] [data-sidebar='menu-button'][data-active='true'],
+[data-slot='sidebar'][data-mobile='true'] [data-sidebar='menu-button'][data-active='true']:hover {
+  background: #ffffff;
+  color: #c81e42;
+  box-shadow: 0 12px 26px -12px rgba(20, 2, 8, 0.55);
+}
+[data-slot='sidebar'][data-mobile='true'] [data-sidebar='menu-label'] {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* ----- KPICard (cartes « verre ») en fond plein #FF385C -----
+   v5.7 — demande client : TOUTES les cartes KPI en rouge Airbnb.
+   .kpi-solid surcharge le verre .lux-card (jour ET nuit — spécificité
+   0-3-1 qui bat html:not(.dark) .lux-card 0-2-1) ; .lux-keep-dark
+   conserve l'encre blanche des textes internes en mode Jour. */
+.lux-card.kpi-solid,
+html:not(.dark) .lux-card.kpi-solid {
+  background:
+    radial-gradient(220px 130px at 92% -12%, rgba(255, 255, 255, 0.24), transparent 60%),
+    linear-gradient(150deg, #ff385c 0%, #e22d4e 58%, #c11f3e 100%);
+  border-color: rgba(255, 255, 255, 0.30);
+  color: #ffffff;
+}
+.lux-card.kpi-solid.lux-card-hover:hover {
+  border-color: rgba(255, 255, 255, 0.48);
+}
+html:not(.dark) .lux .lux-keep-dark .lux-eyebrow { color: rgba(255, 255, 255, 0.82) !important; }
+html:not(.dark) .lux .lux-keep-dark .lux-chip {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.30);
+  color: #ffffff;
+}
+html:not(.dark) .lux .lux-keep-dark [class*='text-[#8fa0c2]'] { color: rgba(255, 255, 255, 0.80) !important; }
+html:not(.dark) .lux .lux-keep-dark [class*='bg-white/'] { background-color: rgba(255, 255, 255, 0.14) !important; }
+
+/* ----- Header glass luxueux + ACCENT COLORÉ sous le header (v6.0) -----
+   Un filet dégradé corail → or → saphir → teal souligne le header de
+   toutes les pages : la navigation gagne sa signature colorée. */
+.lux-header {
+  position: relative;
+  background: rgba(6, 10, 23, 0.72);
+  -webkit-backdrop-filter: blur(16px) saturate(1.3);
+  backdrop-filter: blur(16px) saturate(1.3);
+  border-bottom: 1px solid rgba(148, 170, 214, 0.12);
+}
+.lux-header::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(255, 56, 92, 0) 2%, rgba(255, 56, 92, 0.7) 18%, rgba(233, 196, 124, 0.65) 45%, rgba(92, 138, 240, 0.6) 72%, rgba(45, 212, 191, 0) 98%);
+  pointer-events: none;
+}
+
+/* ----- Tableaux teintés (v6.0) : en-têtes corail + survol doux ----- */
+.lux [data-slot='table-header'] { background: rgba(255, 56, 92, 0.07); }
+.lux [data-slot='table-row']:hover { background: rgba(255, 56, 92, 0.05); }
+
+/* ----- Chips de statut (remplacent les badges à icônes) -----
+   v6.0 — teinte corail très légère pour rester vivant sans altérer
+   la lecture des dots de statut colorés qu'elles contiennent. */
+.lux-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border-radius: 9999px;
+  padding: 0.2rem 0.7rem;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  border: 1px solid rgba(255, 138, 158, 0.22);
+  background: rgba(255, 56, 92, 0.06);
+  color: rgba(255, 226, 232, 0.9);
+}
+
+/* ----- Empty state luxueux (tinted corail v6.0) ----- */
+.lux-empty {
+  border: 1px dashed rgba(255, 138, 158, 0.32);
+  background:
+    radial-gradient(320px 160px at 50% 0%, rgba(255, 56, 92, 0.08), transparent 65%),
+    rgba(255, 255, 255, 0.015);
+}
+
+/* ----- Scrollbar corail (v6.0) ----- */
+.lux-scroll { scrollbar-width: thin; scrollbar-color: rgba(255, 120, 145, 0.4) transparent; }
+.lux-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
+.lux-scroll::-webkit-scrollbar-track { background: transparent; }
+.lux-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 120, 145, 0.4);
+  border-radius: 9999px;
+}
+.lux-scroll::-webkit-scrollbar-thumb:hover { background: rgba(255, 120, 145, 0.6); }
+
+/* ═══════════════════════════════════════════════════════════════
+   v5.3 « SAPHIR LUXE · JOUR » — le scope .lux suit désormais le
+   bouton thème : html.dark (défaut) = nuit saphir ci-dessus ;
+   html:not(.dark) = jour ivoire ci-dessous. Deux couches :
+   1) tokens & composants .lux réinterprétés en clair ;
+   2) correspondance des utilitaires blanchâtres codés en dur par
+      la refonte v5.2 (bg-white/[0.04] → encre saphir translucide,
+      text-white → encre marine, #8fa0c2 → ardoise…).
+   Volontairement NAVY dans les deux modes (signature luxe) :
+   la sidebar (.lux-sidebar) et les portails Radix (Dialog/Sheet/
+   Select/Popover explicitement #0b1226) — ils ne sont pas touchés
+   par ces règles. Aucune donnée ni logique : design uniquement.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ----- 1 · Tokens & composants en clair ----- */
+html:not(.dark) .lux {
+  color-scheme: light;
+  --background: #f7f6f3;
+  --foreground: #101b36;
+  --card: #ffffff;
+  --card-foreground: #101b36;
+  --popover: #ffffff;
+  --popover-foreground: #101b36;
+  --primary: #101b36;
+  --primary-foreground: #f7f6f3;
+  --secondary: #eef0f5;
+  --secondary-foreground: #101b36;
+  --muted: #eef0f5;
+  --muted-foreground: #5d6b8a;
+  --accent: #e9eefb;
+  --accent-foreground: #101b36;
+  --destructive: #c2410c;
+  --border: rgba(16, 27, 54, 0.12);
+  --input: rgba(16, 27, 54, 0.16);
+  --ring: #2f5fd0;
+  --chart-1: #2f5fd0;
+  --chart-2: #8a6215;
+  --chart-3: #0c7a5e;
+  --chart-4: #6d28d9;
+  --chart-5: #5d6b8a;
+}
+
+html:not(.dark) .lux-bg {
+  background:
+    radial-gradient(1100px 520px at 88% -12%, rgba(255, 56, 92, 0.11), transparent 60%),
+    radial-gradient(900px 460px at -8% 2%, rgba(233, 176, 90, 0.15), transparent 58%),
+    radial-gradient(760px 430px at 50% 116%, rgba(61, 111, 224, 0.11), transparent 60%),
+    radial-gradient(620px 380px at 24% 38%, rgba(52, 211, 153, 0.06), transparent 62%),
+    linear-gradient(180deg, #fdf9f5 0%, #faf5f0 50%, #fbf7f4 100%);
+}
+
+html:not(.dark) .lux-card {
+  background: #ffffff;
+  border: 1px solid rgba(16, 27, 54, 0.08);
+  box-shadow:
+    0 1px 2px rgba(16, 27, 54, 0.05),
+    0 16px 36px -24px rgba(16, 27, 54, 0.22);
+}
+/* Liseré lumen en jour : corail → or → saphir plus visibles sur blanc */
+html:not(.dark) .lux-card::before {
+  background: linear-gradient(90deg, transparent, rgba(255, 56, 92, 0.5) 22%, rgba(224, 164, 70, 0.48) 52%, rgba(61, 111, 224, 0.42) 78%, transparent);
+}
+html:not(.dark) .lux-card-hover:hover {
+  border-color: rgba(255, 56, 92, 0.38);
+  box-shadow:
+    0 2px 4px rgba(16, 27, 54, 0.06),
+    0 22px 48px -24px rgba(196, 31, 62, 0.32);
+}
+
+html:not(.dark) .lux-eyebrow { color: #b01635; }
+
+html:not(.dark) .lux-header {
+  background: rgba(255, 255, 255, 0.85);
+  border-bottom: 1px solid rgba(16, 27, 54, 0.08);
+}
+
+html:not(.dark) .lux-btn-ghost {
+  color: rgba(16, 27, 54, 0.8);
+  background: rgba(16, 27, 54, 0.03);
+  border: 1px solid rgba(16, 27, 54, 0.16);
+}
+html:not(.dark) .lux-btn-ghost:hover {
+  background: rgba(255, 56, 92, 0.07);
+  border-color: rgba(193, 31, 62, 0.35);
+  color: #b01635;
+}
+
+html:not(.dark) .lux-rule { background: linear-gradient(90deg, transparent, rgba(16, 27, 54, 0.22), transparent); }
+html:not(.dark) .lux-hairline { border-color: rgba(16, 27, 54, 0.12); }
+html:not(.dark) .lux-dot { box-shadow: 0 0 0 3px rgba(16, 27, 54, 0.06); }
+html:not(.dark) .lux-chip {
+  border: 1px solid rgba(193, 31, 62, 0.2);
+  background: rgba(255, 56, 92, 0.045);
+  color: #8f1233;
+}
+html:not(.dark) .lux-empty {
+  border: 1px dashed rgba(193, 31, 62, 0.32);
+  background:
+    radial-gradient(320px 160px at 50% 0%, rgba(255, 56, 92, 0.055), transparent 65%),
+    rgba(255, 56, 92, 0.015);
+}
+html:not(.dark) .lux-scroll { scrollbar-color: rgba(193, 31, 62, 0.3) transparent; }
+html:not(.dark) .lux-scroll::-webkit-scrollbar-thumb { background: rgba(193, 31, 62, 0.3); }
+html:not(.dark) .lux-scroll::-webkit-scrollbar-thumb:hover { background: rgba(193, 31, 62, 0.45); }
+
+/* Tableaux en jour : en-tête corail pâle + survol doux */
+html:not(.dark) .lux [data-slot='table-header'] { background: rgba(255, 56, 92, 0.055); }
+html:not(.dark) .lux [data-slot='table-row']:hover { background: rgba(255, 56, 92, 0.04); }
+
+/* ═══════════════════════════════════════════════════════════════
+   v6.0 « LUXE AURA » — HERO COLORÉ (host + admin dashboards)
+   Nuit : indigo → prune avec halos corail/or/saphir. Jour : blanc
+   chaud avec les mêmes halos en transparence. SANS icône.
+   ═══════════════════════════════════════════════════════════════ */
+.lux-hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background:
+    radial-gradient(640px 280px at 88% -20%, rgba(255, 56, 92, 0.48), transparent 62%),
+    radial-gradient(520px 260px at -8% 118%, rgba(233, 196, 124, 0.28), transparent 58%),
+    radial-gradient(460px 260px at 55% 130%, rgba(61, 111, 224, 0.3), transparent 58%),
+    linear-gradient(135deg, #141b3d 0%, #1c1240 54%, #2a1030 100%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.14) inset,
+    0 30px 70px -30px rgba(2, 6, 18, 1);
+}
+.lux-hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 12%;
+  right: 12%;
+  height: 2px;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.75), transparent);
+  pointer-events: none;
+}
+html:not(.dark) .lux .lux-hero {
+  border-color: rgba(255, 56, 92, 0.2);
+  background:
+    radial-gradient(640px 280px at 88% -20%, rgba(255, 56, 92, 0.14), transparent 62%),
+    radial-gradient(520px 260px at -8% 118%, rgba(233, 176, 90, 0.17), transparent 58%),
+    radial-gradient(460px 260px at 55% 130%, rgba(61, 111, 224, 0.12), transparent 58%),
+    linear-gradient(135deg, #ffffff 0%, #fff7f2 55%, #fff3f5 100%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 26px 60px -28px rgba(196, 31, 62, 0.28);
+}
+html:not(.dark) .lux .lux-hero::before {
+  background: linear-gradient(90deg, transparent, rgba(255, 56, 92, 0.45), rgba(224, 164, 70, 0.4), transparent);
+}
+
+/* ----- KPI « joyaux » en jour : identité unique #FF385C (v5.7) ----- */
+html:not(.dark) .luxkpi {
+  border: 1px solid rgba(16, 27, 54, 0.1);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.85) inset,
+    0 18px 40px -26px rgba(16, 27, 54, 0.3);
+}
+html:not(.dark) .luxkpi::after {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.95), transparent);
+}
+html:not(.dark) .luxkpi::before { background: rgba(255, 255, 255, 0.55); }
+html:not(.dark) .luxkpi .luxkpi-chip {
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(16, 27, 54, 0.1);
+}
+/* v5.7 — même fond #FF385C en mode Jour (demande client : rouge partout) */
+html:not(.dark) .luxkpi-gold,
+html:not(.dark) .luxkpi-sapphire,
+html:not(.dark) .luxkpi-violet,
+html:not(.dark) .luxkpi-emerald,
+html:not(.dark) .luxkpi-coral,
+html:not(.dark) .luxkpi-rose {
+  background:
+    radial-gradient(300px 140px at 92% -10%, rgba(255, 255, 255, 0.30), transparent 60%),
+    linear-gradient(135deg, #ff385c 0%, #e22d4e 100%);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.34);
+}
+html:not(.dark) .luxkpi .luxkpi-chip {
+  background: rgba(255, 255, 255, 0.20);
+  border: 1px solid rgba(255, 255, 255, 0.30);
+  color: #ffffff;
+}
+
+/* ----- 2 · Correspondance des utilitaires codés en dur (v5.2) ----- */
+/* Remplissages blancs translucides → encre saphir */
+html:not(.dark) .lux [class*="bg-white/[0.015]"],
+html:not(.dark) .lux [class*="bg-white/[0.02]"],
+html:not(.dark) .lux [class*="bg-white/[0.03]"] { background-color: rgba(16, 27, 54, 0.03) !important; }
+html:not(.dark) .lux [class*="bg-white/[0.04]"],
+html:not(.dark) .lux [class*="bg-white/[0.05]"] { background-color: rgba(16, 27, 54, 0.045) !important; }
+html:not(.dark) .lux [class*="bg-white/[0.06]"],
+html:not(.dark) .lux [class*="bg-white/[0.07]"],
+html:not(.dark) .lux [class*="bg-white/[0.08]"],
+html:not(.dark) .lux [class*="bg-white/[0.09]"] { background-color: rgba(16, 27, 54, 0.06) !important; }
+html:not(.dark) .lux [class*="bg-white/5"],
+html:not(.dark) .lux [class*="bg-white/6"] { background-color: rgba(16, 27, 54, 0.05) !important; }
+html:not(.dark) .lux [class*="bg-white/8"] { background-color: rgba(16, 27, 54, 0.06) !important; }
+html:not(.dark) .lux [class*="bg-white/10"],
+html:not(.dark) .lux [class*="bg-white/12"] { background-color: rgba(16, 27, 54, 0.08) !important; }
+html:not(.dark) .lux [class*="bg-white/15"],
+html:not(.dark) .lux [class*="bg-white/20"] { background-color: rgba(16, 27, 54, 0.12) !important; }
+
+/* Texte blanc → encre marine (par paliers d'opacité) */
+html:not(.dark) .lux [class*="text-white/85"],
+html:not(.dark) .lux [class*="text-white/90"],
+html:not(.dark) .lux [class*="text-white/80"] { color: rgba(16, 27, 54, 0.88) !important; }
+html:not(.dark) .lux [class*="text-white/70"],
+html:not(.dark) .lux [class*="text-white/60"] { color: rgba(16, 27, 54, 0.64) !important; }
+html:not(.dark) .lux [class*="text-white/50"],
+html:not(.dark) .lux [class*="text-white/55"] { color: rgba(16, 27, 54, 0.52) !important; }
+html:not(.dark) .lux [class*="text-white/25"],
+html:not(.dark) .lux [class*="text-white/30"] { color: rgba(16, 27, 54, 0.42) !important; }
+html:not(.dark) .lux [class*="text-white"]:not([class*="text-white/"]) { color: #101b36 !important; }
+
+/* Bordures / séparateurs / anneaux blancs → encre saphir */
+html:not(.dark) .lux [class*="border-white/8"],
+html:not(.dark) .lux [class*="border-white/10"],
+html:not(.dark) .lux [class*="border-white/12"],
+html:not(.dark) .lux [class*="border-white/14"] { border-color: rgba(16, 27, 54, 0.1) !important; }
+html:not(.dark) .lux [class*="border-white/15"],
+html:not(.dark) .lux [class*="border-white/20"],
+html:not(.dark) .lux [class*="border-white/25"],
+html:not(.dark) .lux [class*="border-white/40"] { border-color: rgba(16, 27, 54, 0.18) !important; }
+html:not(.dark) .lux [class*="divide-white/"] > * { border-color: rgba(16, 27, 54, 0.09) !important; }
+html:not(.dark) .lux [class*="ring-white/"] { --tw-ring-color: rgba(16, 27, 54, 0.14) !important; }
+
+/* Ardoise bleutée #8fa0c2 → gris-ardoise lisible sur blanc */
+html:not(.dark) .lux [class*="text-[#8fa0c2]"] { color: #5d6b8a !important; }
+html:not(.dark) .lux [class*="bg-[#8fa0c2]"] { background-color: rgba(93, 107, 138, 0.4) !important; }
+
+/* Tons clairs pensés pour la nuit → encres profondes sur blanc */
+html:not(.dark) .lux [class*="text-[#a9c4ff]"] { color: #274b9f !important; }
+html:not(.dark) .lux [class*="text-[#e9c47c]"] { color: #8a6215 !important; }
+html:not(.dark) .lux [class*="text-[#f07d6a]"] { color: #b8452f !important; }
+html:not(.dark) .lux [class*="text-[#34d399]"] { color: #0c7a5e !important; }
+html:not(.dark) .lux [class*="text-[#2dd4bf]"] { color: #0e7490 !important; }
+html:not(.dark) .lux [class*="text-[#fbbf24]"] { color: #a16207 !important; }
+html:not(.dark) .lux [class*="text-[#5c8af0]"] { color: #2f5fd0 !important; }
+
+/* Encres pastel des joyaux (utilitaires et styles inline) → encres
+   profondes équivalentes. NB : React sérialise les couleurs inline
+   en rgb() — les deux formes sont ciblées ; [style*=…] vise aussi des
+   dots (backgroundColor inline) — y poser `color` est sans effet. */
+html:not(.dark) .lux [class*="text-[#f3d795]"],
+html:not(.dark) .lux [style*="#f3d795"],
+html:not(.dark) .lux [style*="rgb(243, 215, 149)"] { color: #7c570e !important; }
+html:not(.dark) .lux [class*="text-[#86e9cb]"],
+html:not(.dark) .lux [style*="#86e9cb"],
+html:not(.dark) .lux [style*="rgb(134, 233, 203)"] { color: #0b6b51 !important; }
+html:not(.dark) .lux [class*="text-[#cdb6ff]"],
+html:not(.dark) .lux [style*="#cdb6ff"],
+html:not(.dark) .lux [style*="rgb(205, 182, 255)"] { color: #5b32b4 !important; }
+html:not(.dark) .lux [class*="text-[#ffab92]"],
+html:not(.dark) .lux [style*="#ffab92"],
+html:not(.dark) .lux [style*="rgb(255, 171, 146)"] { color: #a03d24 !important; }
+html:not(.dark) .lux [class*="text-[#ffa1c8]"],
+html:not(.dark) .lux [style*="#ffa1c8"],
+html:not(.dark) .lux [style*="rgb(255, 161, 200)"] { color: #a63a6e !important; }
+html:not(.dark) .lux [style*="#a9c4ff"],
+html:not(.dark) .lux [style*="rgb(169, 196, 255)"] { color: #274b9f !important; }
+
+/* Pastilles à fond PLEIN (saphir/corail/émeraude/teal) : le texte
+   redevient blanc par-dessus la couleur saturée (après la règle
+   générale text-white ci-dessus, même spécificité — ordre gagne). */
+html:not(.dark) .lux [class*="bg-[#3d6fe0]"]:not([class*="bg-[#3d6fe0]/"]),
+html:not(.dark) .lux [class*="bg-[#f07d6a]"]:not([class*="bg-[#f07d6a]/"]),
+html:not(.dark) .lux [class*="bg-[#34d399]"]:not([class*="bg-[#34d399]/"]),
+html:not(.dark) .lux [class*="bg-[#2dd4bf]"]:not([class*="bg-[#2dd4bf]/"]),
+html:not(.dark) .lux .air-gradient { color: #ffffff !important; }
+
+/* Panneaux « nuit » restés DANS la page (barres collantes, en-têtes
+   de tableaux) → blanc / blanc bleuté. Les portails Radix, hors du
+   scope .lux dans le DOM, restent navy. */
+html:not(.dark) .lux [class*="bg-[#0b1226]"] { background-color: #ffffff !important; }
+html:not(.dark) .lux [class*="bg-[#0d1530]"] { background-color: #f1f3f9 !important; }
+html:not(.dark) .lux [class*="bg-[#060a17]"] { background-color: rgba(16, 27, 54, 0.05) !important; }
+
+/* Placeholders des champs sombres → encre saphir */
+html:not(.dark) .lux input::placeholder,
+html:not(.dark) .lux textarea::placeholder { color: rgba(16, 27, 54, 0.38) !important; opacity: 1; }
+
+/* Graphiques recharts (attributs SVG #8fa0c2 / halos nuit) → jour */
+html:not(.dark) .lux .recharts-cartesian-axis-tick text { fill: #5d6b8a !important; }
+html:not(.dark) .lux .recharts-cartesian-axis-line,
+html:not(.dark) .lux .recharts-cartesian-axis-tick line { stroke: rgba(16, 27, 54, 0.14) !important; }
+html:not(.dark) .lux .recharts-cartesian-grid line { stroke: rgba(16, 27, 54, 0.08) !important; }
+html:not(.dark) .lux .recharts-legend-item-text { color: #5d6b8a !important; }
+
+/* Aperçu invité (miroir fidèle de la carte téléphone) : reste tel
+   que rendu côté invité — texte blanc re-reservé à l'intérieur. */
+html:not(.dark) .lux .lux-keep-dark [class*="text-white"] { color: #ffffff !important; }
+html:not(.dark) .lux .lux-keep-dark [class*="ring-white/"] { --tw-ring-color: rgba(255, 255, 255, 0.16) !important; }
+
+/* =============================================================
+   TIMELINE CALENDRIER (Task 8 — refonte « Central Calendar »)
+   Grille Gantt horizontal : 1 colonne / jour, colonne des biens
+   sticky à gauche (position: sticky; left: 0 dans un conteneur
+   overflow-x-auto unique), barres de séjour arrondies.
+   Variables responsives (mobile 44 px → desktop 64 px / jour).
+   ============================================================= */
+.tl-scope {
+  /* Largeur d'une colonne jour + largeur de la colonne biens sticky */
+  --tl-day: 44px;
+  --tl-left: 124px;
+  /* Hauteur d'une barre de séjour (≥ 36 px partout — cahier des charges) */
+  --tl-bar: 36px;
+  /* Pas vertical entre deux barres empilées (chevauchement) */
+  --tl-stride: 44px;
+}
+@media (min-width: 640px) {
+  .tl-scope {
+    --tl-day: 64px;
+    --tl-left: 190px;
+    --tl-bar: 36px;
+    --tl-stride: 44px;
+  }
+}
+/* Weekend : hachures très subtiles + assombrissement léger */
+.tl-weekend {
+  background-image: repeating-linear-gradient(
+    135deg,
+    rgba(233, 196, 124, 0.045) 0 5px,
+    transparent 5px 11px
+  );
+}
+html:not(.dark) .tl-weekend {
+  background-image: repeating-linear-gradient(
+    135deg,
+    rgba(16, 27, 54, 0.05) 0 5px,
+    transparent 5px 11px
+  );
+}
+/* Défilement horizontal discret de la timeline */
+.tl-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 170, 214, 0.35) transparent;
+}
+.tl-scroll::-webkit-scrollbar { height: 7px; }
+.tl-scroll::-webkit-scrollbar-track { background: transparent; }
+.tl-scroll::-webkit-scrollbar-thumb {
+  background: rgba(148, 170, 214, 0.28);
+  border-radius: 9999px;
+}
+/* Colonne sticky des biens : filet de séparation + masque du défilement */
+.tl-sticky-left {
+  position: sticky;
+  left: 0;
+  z-index: 30;
+  background: #0d1530;
+}
+html:not(.dark) .tl-sticky-left { background: #ffffff; }
+/* Barre de séjour : hover lumineux (aucune transformation de layout) */
+.tl-bar { transition: filter 0.15s ease, box-shadow 0.15s ease; }
+.tl-bar:hover { filter: brightness(1.08); }

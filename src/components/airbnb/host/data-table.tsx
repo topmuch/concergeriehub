@@ -1,7 +1,6 @@
 'use client';
 
 import { useMemo, useState, type ReactNode } from 'react';
-import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -16,6 +15,8 @@ import { cn } from '@/lib/utils';
 
 // =============================================================
 // DataTable — tableau réutilisable du Dashboard Client
+// v5.2 « SAPHIR LUXE » : nuit bleutée, SANS icônes (tri/pagination
+// par glyphes typographiques ↑ ↓ ↕ ‹ ›).
 // Tri par clic sur en-tête + pagination + rendu de cellules
 // personnalisé. Construit sur les primitives shadcn/ui Table.
 // =============================================================
@@ -99,26 +100,20 @@ export function DataTable<T>({
 
   return (
     <div className={cn('flex flex-col gap-3', className)}>
-      <div className="overflow-x-auto rounded-lg border border-slate-200">
+      <div className="overflow-x-auto rounded-xl border border-white/10">
         <Table>
           <TableHeader>
-            <TableRow className="bg-slate-50 hover:bg-slate-50">
+            <TableRow className="border-white/8 hover:border-white/8">
               {columns.map((col) => {
                 const isActive = sort?.key === col.key;
-                const SortIcon = !col.sortValue
-                  ? null
-                  : isActive
-                    ? sort?.dir === 'asc'
-                      ? ArrowUp
-                      : ArrowDown
-                    : ArrowUpDown;
+                const sortGlyph = !col.sortValue ? null : isActive ? (sort?.dir === 'asc' ? '↑' : '↓') : '↕';
                 return (
                   <TableHead
                     key={col.key}
                     className={cn(
-                      'h-10 px-3 text-xs font-bold uppercase tracking-wide text-slate-500',
+                      'h-10 px-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8fa0c2]',
                       col.hideBelow && HIDE_CLASS[col.hideBelow],
-                      col.sortValue && 'cursor-pointer select-none hover:text-slate-900',
+                      col.sortValue && 'cursor-pointer select-none hover:text-white',
                       col.className,
                     )}
                     onClick={() => toggleSort(col)}
@@ -126,8 +121,10 @@ export function DataTable<T>({
                   >
                     <span className="inline-flex items-center gap-1">
                       {col.header}
-                      {SortIcon && (
-                        <SortIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                      {sortGlyph && (
+                        <span className={cn('text-[11px]', isActive && 'text-[#e9c47c]')} aria-hidden="true">
+                          {sortGlyph}
+                        </span>
                       )}
                     </span>
                   </TableHead>
@@ -138,7 +135,7 @@ export function DataTable<T>({
           <TableBody>
             {paged.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-28 text-center text-sm text-slate-500">
+                <TableCell colSpan={columns.length} className="h-28 text-center text-sm text-[#8fa0c2]">
                   {emptyMessage}
                 </TableCell>
               </TableRow>
@@ -148,14 +145,14 @@ export function DataTable<T>({
                   key={rowKey(row)}
                   onClick={onRowClick ? () => onRowClick(row) : undefined}
                   className={cn(
-                    'transition-colors',
-                    onRowClick && 'cursor-pointer hover:bg-slate-50',
+                    'border-white/8 transition-colors',
+                    onRowClick && 'cursor-pointer hover:bg-white/[0.04]',
                   )}
                 >
                   {columns.map((col) => (
                     <TableCell
                       key={col.key}
-                      className={cn('px-3 py-2.5 text-sm text-slate-700', col.hideBelow && HIDE_CLASS[col.hideBelow], col.className)}
+                      className={cn('px-3 py-2.5 text-sm text-[#d5def0]', col.hideBelow && HIDE_CLASS[col.hideBelow], col.className)}
                     >
                       {col.cell ? col.cell(row) : String((row as Record<string, unknown>)[col.key] ?? '')}
                     </TableCell>
@@ -170,31 +167,31 @@ export function DataTable<T>({
       {/* ----- Pagination ----- */}
       {pageSize > 0 && total > effectivePageSize && (
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-[#8fa0c2]">
             {(safePage - 1) * pageSize + 1}–{Math.min(safePage * pageSize, total)} sur{' '}
-            <span className="font-semibold text-slate-700">{total}</span>
+            <span className="font-semibold text-white">{total}</span>
           </p>
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
-              className="h-8"
+              className="h-8 rounded-full border-white/12 bg-white/[0.04] text-[#d5def0] hover:bg-white/8 hover:text-white"
               disabled={safePage <= 1}
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               aria-label="Page précédente"
             >
-              <ChevronLeft className="h-4 w-4" />
+              <span aria-hidden="true">‹</span>
             </Button>
             <Select
               value={String(safePage)}
               onValueChange={(v) => setPage(Number(v))}
             >
-              <SelectTrigger className="h-8 w-[90px] text-xs" aria-label="Page courante">
+              <SelectTrigger className="h-8 w-[90px] rounded-full border-white/12 bg-white/[0.04] text-xs text-[#d5def0]" aria-label="Page courante">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="border-white/10 bg-[#0d1530] text-white">
                 {Array.from({ length: pageCount }, (_, i) => i + 1).map((p) => (
-                  <SelectItem key={p} value={String(p)}>
+                  <SelectItem key={p} value={String(p)} className="focus:bg-white/8 focus:text-white">
                     Page {p}/{pageCount}
                   </SelectItem>
                 ))}
@@ -203,12 +200,12 @@ export function DataTable<T>({
             <Button
               variant="outline"
               size="sm"
-              className="h-8"
+              className="h-8 rounded-full border-white/12 bg-white/[0.04] text-[#d5def0] hover:bg-white/8 hover:text-white"
               disabled={safePage >= pageCount}
               onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
               aria-label="Page suivante"
             >
-              <ChevronRight className="h-4 w-4" />
+              <span aria-hidden="true">›</span>
             </Button>
           </div>
         </div>

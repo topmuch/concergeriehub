@@ -15,7 +15,7 @@ import sharp from 'sharp';
 const DEMO_SLUG = 'demo-hub';
 
 const PALETTES: { from: string; to: string }[] = [
-  { from: '#059669', to: '#047857' }, // Émeraude (marque)
+  { from: '#07235B', to: '#0066EF' }, // Duo du logo : marine -> bleu vif
   { from: '#0D9488', to: '#0F766E' }, // Teal
   { from: '#D97706', to: '#B45309' }, // Ambre profond
   { from: '#E11D48', to: '#BE123C' }, // Rose profond
@@ -48,7 +48,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'not_found' }, { status: 400 });
   }
 
-  let propertyName = 'Conciergerie Hub';
+  let propertyName = 'RoomScan';
   if (slug !== DEMO_SLUG) {
     const plaque = await db.physicalQrCode.findUnique({
       where: { hubSlug: slug },

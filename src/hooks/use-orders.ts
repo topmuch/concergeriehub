@@ -23,6 +23,8 @@ export interface HostOrder {
   guestName: string;
   guestEmail: string | null;
   items: OrderItem[];
+  // REFONTE SERVICES PREMIUM (V4.11) — instructions de livraison invité
+  guestNote?: string | null;
   totalAmount: number;
   commission: number;
   hostEarning: number;

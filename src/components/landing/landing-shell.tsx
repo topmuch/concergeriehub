@@ -15,9 +15,24 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import { AuthForm } from '@/components/auth/login-form';
+import { LandingLangProvider, dirFor, useLandingLang } from '@/lib/landing-i18n';
 import { LandingPage, type AuthViewMode } from './landing-page';
 
 type View = 'landing' | 'auth';
+
+// Vue LANDING encapsulée dans le provider i18n (8 langues) : le div
+// interne porte dir="rtl" pour l'arabe et lang={lang} pour les lecteurs
+// d'écran. L'AuthForm reste en dehors (toujours FR). En cas de langue
+// mémorisée ≠ fr, useSyncExternalStore re-rend SANS erreur
+// d'hydratation (le premier rendu client = FR, identique au serveur).
+function LandingView({ onGoToAuth }: { onGoToAuth: (mode: AuthViewMode) => void }) {
+  const { lang } = useLandingLang();
+  return (
+    <div dir={dirFor(lang)} lang={lang}>
+      <LandingPage onGoToAuth={onGoToAuth} />
+    </div>
+  );
+}
 
 export function LandingShell() {
   const router = useRouter();
@@ -54,7 +69,9 @@ export function LandingShell() {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.25 }}
         >
-          <LandingPage onGoToAuth={handleGoToAuth} />
+          <LandingLangProvider>
+            <LandingView onGoToAuth={handleGoToAuth} />
+          </LandingLangProvider>
         </motion.div>
       ) : (
         <motion.div

@@ -17,6 +17,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { getHostPlan, planPrice, type BillingCycle, type HostPlanId } from '@/lib/billing';
+import { resolveOrigin, siteUrl } from '@/lib/site';
 
 const isStripeMode = Boolean(process.env.STRIPE_SECRET_KEY);
 
@@ -56,8 +57,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Compte introuvable ou désactivé' }, { status: 403 });
     }
 
-    const origin = req.headers.get('origin') || process.env.NEXTAUTH_URL || 'http://localhost:3000';
-    const successUrl = `${origin}/airbnb/billing?success=1`;
+    const origin = resolveOrigin(req);
+    // Post-paiement → page de réassurance + action immédiate (wizard
+    // d'onboarding dynamique) — parcours critique après paiement Stripe.
+    const successUrl = `${origin}/payment/success`;
     const cancelUrl = `${origin}/airbnb/billing?canceled=1`;
 
     // ---------------- STRIPE RÉEL ----------------
@@ -77,7 +80,7 @@ export async function POST(req: NextRequest) {
               unit_amount: Math.round(price * 100),
               recurring: { interval: cycle === 'annual' ? 'year' : 'month' },
               product_data: {
-                name: `Conciergerie Hub — ${plan.name}`,
+                name: `RoomScan — ${plan.name}`,
                 description: plan.description,
               },
             },

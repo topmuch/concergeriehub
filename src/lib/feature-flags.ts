@@ -19,7 +19,7 @@ export interface FeatureFlagDef {
 export const FEATURE_FLAG_DEFAULTS: FeatureFlagDef[] = [
   {
     key: 'signups_enabled',
-    description: 'Autoriser les nouvelles inscriptions d\u2019hôtes depuis la landing page.',
+    description: 'Autoriser les nouvelles inscriptions d’hôtes depuis la landing page.',
     enabled: true,
   },
   {

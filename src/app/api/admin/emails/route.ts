@@ -13,6 +13,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireSuperadmin, adminUnauthorized } from '@/lib/admin';
 import { db } from '@/lib/db';
+import {
+  emailFromAddress,
+  emailProviderConfigured,
+} from '@/lib/email';
 
 function round2(n: number): number {
   return Math.round(n * 100) / 100;
@@ -82,6 +86,11 @@ export async function GET(request: NextRequest) {
     const processed24h = sent24h + failed24h;
 
     return NextResponse.json({
+      // v4.55 — Configuration e-mail effective (visibilité superadmin)
+      config: {
+        from: await emailFromAddress(),
+        providerConfigured: await emailProviderConfigured(),
+      },
       stats: {
         total,
         sent,

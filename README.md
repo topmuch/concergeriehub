@@ -1,4 +1,4 @@
-# Conciergerie Hub
+# RoomScan
 
 **B2B SaaS platform for Airbnb hosts & short-term rental managers** — turn every rental into a connected, monetized space with physical QR codes, guest services and host tools.
 

@@ -42,6 +42,15 @@ const CACHE_TTL_MS = 5 * 60 * 1000;
 //   - style 'unsafe-inline' → <style> injectés par Next.
 //   - media/blob + img data: → QR en data-URL, messages vocaux
 //     MediaRecorder (blob), previews photos.
+//   - PREMIUM V5 (2.2 Vidéo de bienvenue) : frame-src limité aux
+//     lecteurs YouTube-nocookie / Vimeo / Loom (click-to-load,
+//     jamais auto-charge) + img-src i.ytimg.com (miniature de
+//     couverture avant lecture). Aucun autre tier autorisé.
+//   - v4.23 « HUB RÉEL » : img-src https: → les vraies photos des
+//     services (seed démo CDN z-cdn.chatglm.cn, photos hôtes/prestataires
+//     collées depuis n'importe quel hébergeur) s'affichent dans le hub.
+//     Les images sont du contenu PASSIF (pas d'exécution de code) —
+//     scripts/frames/connect restent stricts.
 //   - dev uniquement : 'unsafe-eval' (React Refresh/Turbopack HMR)
 //     + ws: (websocket HMR).
 // =============================================================
@@ -54,9 +63,13 @@ function buildCsp(nonce: string): string {
       isDev ? " 'unsafe-eval'" : ''
     }`,
     `style-src 'self' 'unsafe-inline'`,
-    `img-src 'self' blob: data: https://*.tile.openstreetmap.org`,
+    `img-src 'self' blob: data: https:`,
     `font-src 'self' data:`,
-    `media-src 'self' blob:`,
+    // v4.33 — data: ajouté : la lecture durable des vocaux (v4.32)
+    // privilégie la copie dataURL EN BASE (audioData) ; sans data: la
+    // CSP bloquait silencieusement le play des lecteurs <audio>.
+    `media-src 'self' blob: data:`,
+    `frame-src 'self' https://www.youtube-nocookie.com https://player.vimeo.com https://www.loom.com`,
     `connect-src 'self'${isDev ? ' ws: wss:' : ''}`,
     `worker-src 'self' blob:`,
     `object-src 'none'`,
@@ -123,13 +136,41 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
+  // ── 2. ANTI-CACHE PÉRIMÉ (v4.119) — le HTML de navigation ne doit
+  // JAMAIS être servi depuis le cache disque du navigateur. Problème
+  // remonté : « commits déployés mais ancien code affiché » — cause :
+  // les pages prerender partent avec s-maxage=31536000 (cache CDN) et
+  // certains navigateurs/CDN intermédiaires conservaient l'ANCIEN
+  // document HTML après un déploiement. Fix : toute navigation HTML
+  // hors app invitée reçoit Cache-Control: no-store → le document est
+  // toujours revalidé ; les chunks /_next/static restent immutable
+  // (URLs hashées) → aucune perte de performance. L'app invitée
+  // /app/hub/** reste exclue : son mode hors-ligne repose sur le
+  // Service Worker (Cache API, indépendant des en-têtes HTTP) et un
+  // network-first qui sert déjà du contenu frais en ligne.
+  const acceptHeader = req.headers.get('accept') || '';
+  const isHtmlNavigation = req.method === 'GET' && acceptHeader.includes('text/html');
+  const isGuestAppNavigation = pathname.startsWith('/app/hub/');
+
   const withCsp = (res: NextResponse): NextResponse => {
     if (csp) res.headers.set('Content-Security-Policy', csp);
+    if (isHtmlNavigation && !isGuestAppNavigation) {
+      res.headers.set('Cache-Control', 'no-store, max-age=0, must-revalidate');
+    }
     return res;
   };
 
   // ── 2. White-label : pages servies depuis un domaine custom ──
-  if (!pathname.startsWith('/api/')) {
+  // v5.0 — /public/inspection/** (preuves d'état des lieux) reste servie
+  // par la plateforme même sur un domaine custom (URL légale, hors hub).
+  // v4.68 — FIX CRITIQUE : les ASSETS STATIQUES de public/ (brand/, demo/,
+  // universal/, sounds/, hub-*.jpg…) étaient interceptés par le rewrite sur
+  // un domaine custom → le navigateur recevait du HTML au lieu de l'image
+  // → logo RoomScan invisible dans le hub, photos du guide d'arrivée
+  // absentes, sons muets. Toute URL « fichier » (extension finale) est
+  // désormais servie telle quelle, jamais réécrite.
+  const isStaticAsset = /\.[a-zA-Z0-9]{1,8}$/.test(pathname) && !pathname.endsWith('/');
+  if (!pathname.startsWith('/api/') && !pathname.startsWith('/public/') && !isStaticAsset) {
     const host = (req.headers.get('host') || '').split(':')[0].toLowerCase();
     // Host sans point (localhost) ou = domaine de la plateforme → flux normal.
     if (host && !appHostnames().has(host) && host.includes('.')) {
@@ -148,5 +189,11 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   // Pages + /api/client/**. Exclut les assets Next et fichiers statiques.
-  matcher: ['/api/client/:path*', '/((?!_next|favicon\\.ico|manifest\\.json|sw\\.js|uploads).*)'],
+  // v4.68 — ajoute brand/ demo/ universal/ sounds/ + fichiers racine
+  // (hub-*.jpg, logo.svg, icon-512.png, offline.html…) à l'exclusion :
+  // ce sont des assets publics servis par la plateforme, jamais réécrits.
+  matcher: [
+    '/api/client/:path*',
+    '/((?!_next|favicon\\.ico|manifest\\.json|sw\\.js|uploads|brand|demo|universal|sounds|offline\\.html|icon-512\\.png|logo\\.svg|hub-|robots\\.txt|sitemap\\.xml).*)',
+  ],
 };

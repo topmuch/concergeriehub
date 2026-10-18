@@ -118,6 +118,39 @@ export async function getUserRoleForProperty(
   return member ? normalizeMemberRole(member.role) : null;
 }
 
+// =============================================================
+// AUDIT PRÉ-PROD — Séparation financière par rôle d'équipe :
+//   CLEANER / MAINTENANCE n'ont accès à AUCUNE donnée financière
+//   (commandes, CA, commission, tarifs) — uniquement leur planning.
+//   OWNER / MANAGER ont accès aux commandes et revenus (la
+//   « facturation » Stripe du COMPTE reste owner-only côté page).
+// =============================================================
+
+/** L'utilisateur peut-il voir/gérer le financier de CE bien ? (OWNER ou MANAGER) */
+export async function canManageFinance(userId: string, propertyId: string): Promise<boolean> {
+  const role = await getUserRoleForProperty(userId, propertyId);
+  return role === 'OWNER' || role === 'MANAGER';
+}
+
+/**
+ * Ids des biens où l'utilisateur a un rôle financier (OWNER/MANAGER).
+ * Utilisé pour scoper 'all' : les biens CLEANER/MAINTENANCE sont exclus.
+ */
+export async function resolveManagedPropertyIds(userId: string): Promise<string[]> {
+  const [owned, memberships] = await Promise.all([
+    db.property.findMany({ where: { ownerId: userId }, select: { id: true } }),
+    db.propertyMember.findMany({
+      where: {
+        userId,
+        acceptedAt: { not: null },
+        role: { in: ['OWNER', 'MANAGER', 'owner', 'cohost', 'member'] },
+      },
+      select: { propertyId: true },
+    }),
+  ]);
+  return Array.from(new Set([...owned.map((p) => p.id), ...memberships.map((m) => m.propertyId)]));
+}
+
 export interface HostPlanLimits {
   planId: string | null; // 'airbnb_solo' | 'airbnb_pro' | null (découverte)
   planName: string;
@@ -162,7 +195,7 @@ export async function countOwnedProperties(userId: string): Promise<number> {
 export function slugifyPropertyName(name: string): string {
   return name
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[̀-ͯ]/g, '')
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')

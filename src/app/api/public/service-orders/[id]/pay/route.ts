@@ -6,6 +6,7 @@ import { computeApplicationFeeCents } from '@/lib/stripe-connect';
 import { markServiceOrderPaid, orderStripeDescription } from '@/lib/payments-server';
 // FIX-14 — monitoring d'erreurs : trace AuditLog (action='runtime.error').
 import { captureError } from '@/lib/error-monitor';
+import { resolveOrigin, siteUrl } from '@/lib/site';
 
 // =============================================================
 // ÉTAPE 17.6 (V3) — PAIEMENT IN-APP d'une commande service
@@ -131,7 +132,7 @@ export async function POST(
       return NextResponse.json({ ok: false, message: 'Montant de commande invalide.' }, { status: 400 });
     }
 
-    const origin = req.headers.get('origin') || process.env.NEXTAUTH_URL || 'http://localhost:3000';
+    const origin = resolveOrigin(req);
     const guestParams = order.bookingId ? `b=${encodeURIComponent(order.bookingId)}&` : '';
     const successUrl = `${origin}/app/hub/${encodeURIComponent(slug)}/guest?${guestParams}paid=${order.id}`;
     const cancelUrl = `${origin}/app/hub/${encodeURIComponent(slug)}/guest?${guestParams}paycancel=${order.id}`;
@@ -163,7 +164,7 @@ export async function POST(
               // Montant SERVEUR — jamais fourni par le client
               unit_amount: Math.round(order.totalAmount * 100),
               product_data: {
-                name: `${order.provider.businessName} — Conciergerie Hub`,
+                name: `${order.provider.businessName} — RoomScan`,
                 description: orderStripeDescription(order.items),
               },
             },

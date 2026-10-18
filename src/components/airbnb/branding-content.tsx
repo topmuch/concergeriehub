@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -15,19 +15,20 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { DEFAULT_PRIMARY_COLOR, isValidHexColor, normalizeCustomDomain, type PropertyBranding } from '@/lib/branding';
+import type { KPITone } from '@/components/airbnb/host/kpi-card';
+import { cn } from '@/lib/utils';
 
 // =============================================================
 // ÉTAPE 19 (V3) — WHITE-LABEL : configuration de marque par bien.
-// • Logo (upload → PNG normalisé 512px côté serveur)
-// • Couleur principale (picker + hex + presets) → thème de l'app
-//   invitée via variables CSS --primary/--accent
-// • Nom commercial + message d'accueil (onglet Accueil invité)
-// • Domaine personnalisé : saisie + instructions DNS (CNAME) +
-//   vérification serveur (resolveCname) + statut
-// • Aperçu live (en-tête app invitée) avant enregistrement
+// v4.60 « AIRBNB PRO » — refonte visuelle (logique intacte) :
+// • Chaque bloc = carte air-shadow rounded-2xl avec bulle d'icône
+//   dégradée kpi-bubble-{tone} (rausch / violet / teal)
+// • Empty state .air-empty, erreur ⚠️ + CTA air-gradient
+// • Aperçu live (en-tête app invitée) en carte glass token-based
+// • Tokens sémantiques partout — lisible en clair ET en sombre
 // =============================================================
 
-const COLOR_PRESETS = ['#059669', '#0d9488', '#d97706', '#dc2626', '#7c3aed', '#db2777'];
+const COLOR_PRESETS = ['#0066EF', '#0d9488', '#d97706', '#dc2626', '#7c3aed', '#db2777'];
 
 interface BrandingResponse {
   properties: { id: string; name: string }[];
@@ -37,6 +38,51 @@ interface BrandingResponse {
   customDomainVerified: boolean;
   dnsTarget: string;
   error?: string;
+}
+
+/* ----- Carte de section locale « AIRBNB PRO » (bulle tonée + titre) ----- */
+function BrandingCard({
+  tone,
+  emoji,
+  title,
+  description,
+  headerRight,
+  children,
+  ariaLabel,
+}: {
+  tone: KPITone;
+  emoji: string;
+  title: ReactNode;
+  description?: ReactNode;
+  headerRight?: ReactNode;
+  children: ReactNode;
+  ariaLabel: string;
+}) {
+  return (
+    <section aria-label={ariaLabel} className="air-shadow rounded-2xl border border-border bg-card">
+      <div className="flex flex-col gap-4 p-5">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-start gap-3">
+            <span
+              aria-hidden="true"
+              className={cn(
+                'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg text-white shadow',
+                `kpi-bubble-${tone}`,
+              )}
+            >
+              {emoji}
+            </span>
+            <div className="min-w-0">
+              <h2 className="text-sm font-bold text-foreground sm:text-base">{title}</h2>
+              {description ? <p className="mt-0.5 text-xs text-muted-foreground">{description}</p> : null}
+            </div>
+          </div>
+          {headerRight}
+        </div>
+        {children}
+      </div>
+    </section>
+  );
 }
 
 export function BrandingContent() {
@@ -224,18 +270,18 @@ export function BrandingContent() {
   const domainIsNew = domainChanged !== null && domainChanged !== savedDomain;
 
   return (
-    <div className="max-w-4xl mx-auto w-full px-4 py-8 space-y-6">
+    <div className="mx-auto w-full max-w-4xl space-y-6 px-4 py-8">
       {/* ----- En-tête + switch propriété ----- */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">🎨 Branding &amp; domaine</h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <h1 className="text-2xl font-bold text-foreground">🎨 Branding &amp; domaine</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             Votre marque dans l&apos;app de vos invités : logo, couleurs, message — et votre propre domaine.
           </p>
         </div>
         {data && data.properties.length > 0 && (
           <Select value={data.property?.id ?? ''} onValueChange={changeProperty}>
-            <SelectTrigger className="w-full sm:w-64 bg-white" aria-label="Choisir le bien">
+            <SelectTrigger className="w-full bg-card sm:w-64" aria-label="Choisir le bien">
               <SelectValue placeholder="Choisir un bien" />
             </SelectTrigger>
             <SelectContent>
@@ -252,35 +298,46 @@ export function BrandingContent() {
       {loading && !data && <LoadingSkeleton />}
 
       {!loading && error && (
-        <div className="bg-white border border-slate-200 rounded-xl p-8 text-center" role="alert">
-          <p className="text-3xl" aria-hidden="true">🔌</p>
-          <p className="mt-2 text-sm text-slate-600">{error}</p>
-          <Button className="mt-4" onClick={() => load(propertyId || undefined)}>
+        <div className="air-empty flex flex-col items-center gap-3 rounded-2xl p-8 text-center" role="alert">
+          <span aria-hidden="true" className="air-float text-3xl">⚠️</span>
+          <p className="text-sm font-semibold text-foreground">{error}</p>
+          <Button
+            className="air-gradient h-9 rounded-full px-4 text-xs font-bold text-white shadow transition-transform hover:scale-[1.03]"
+            onClick={() => load(propertyId || undefined)}
+          >
             Réessayer
           </Button>
         </div>
       )}
 
       {!loading && data && data.property && (
-        <div className="grid lg:grid-cols-[1fr_300px] gap-6 items-start">
+        <div className="grid items-start gap-6 lg:grid-cols-[1fr_300px]">
           {/* ──────── Colonne principale ──────── */}
-          <div className="space-y-4 min-w-0">
+          <div className="min-w-0 space-y-4">
             {/* Logo */}
-            <section className="bg-white border border-slate-200 rounded-xl p-5" aria-label="Logo">
-              <h2 className="text-sm font-bold text-slate-900">🖼️ Logo</h2>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Affiché dans l&apos;en-tête de l&apos;app invitée. PNG, JPEG, WebP ou GIF — 2 Mo max
-                (normalisé en 512&nbsp;px par le serveur).
-              </p>
-              <div className="mt-3 flex items-center gap-4 flex-wrap">
+            <BrandingCard
+              tone="rausch"
+              emoji="🖼️"
+              ariaLabel="Logo"
+              title="Logo"
+              description={
+                <>
+                  Affiché dans l&apos;en-tête de l&apos;app invitée. PNG, JPEG, WebP ou GIF — 2 Mo max
+                  (normalisé en 512&nbsp;px par le serveur).
+                </>
+              }
+            >
+              <div className="flex flex-wrap items-center gap-4">
                 {draft.logoUrl ? (
                   <img
                     src={draft.logoUrl}
                     alt="Logo actuel"
-                    className="h-16 w-16 rounded-xl object-contain border border-slate-200 bg-slate-50"
+                    className="h-16 w-16 rounded-xl border border-border bg-muted object-contain"
+                    loading="lazy"
+                    decoding="async"
                   />
                 ) : (
-                  <div className="h-16 w-16 rounded-xl border-2 border-dashed border-slate-300 grid place-items-center text-xl text-slate-400">
+                  <div className="grid h-16 w-16 place-items-center rounded-xl border-2 border-dashed border-border bg-muted/40 text-xl text-muted-foreground">
                     🗝️
                   </div>
                 )}
@@ -294,206 +351,223 @@ export function BrandingContent() {
                 <Button
                   variant="outline"
                   size="sm"
+                  className="rounded-full"
                   disabled={uploading}
                   onClick={() => fileRef.current?.click()}
                 >
                   {uploading ? '…' : draft.logoUrl ? 'Remplacer' : 'Choisir un fichier'}
                 </Button>
                 {draft.logoUrl && (
-                  <Button variant="ghost" size="sm" disabled={uploading} onClick={removeLogo} className="text-rose-600">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="rounded-full text-rose-600 dark:text-rose-400"
+                    disabled={uploading}
+                    onClick={removeLogo}
+                  >
                     Retirer
                   </Button>
                 )}
               </div>
-            </section>
+            </BrandingCard>
 
             {/* Couleur + nom + message */}
-            <section className="bg-white border border-slate-200 rounded-xl p-5 space-y-5" aria-label="Identité visuelle">
-              <h2 className="text-sm font-bold text-slate-900">🎨 Identité visuelle &amp; messages</h2>
-
-              <div>
-                <label htmlFor="brand-color" className="text-xs font-semibold text-slate-600">
-                  Couleur principale (boutons, onglets, accents de l&apos;app invitée)
-                </label>
-                <div className="mt-2 flex items-center gap-3 flex-wrap">
-                  <input
-                    id="brand-color"
-                    type="color"
-                    value={isValidHexColor(colorInput) ? colorInput : DEFAULT_PRIMARY_COLOR}
-                    onChange={(e) => {
-                      setColorInput(e.target.value);
-                      setDraft((d) => ({ ...d, primaryColor: e.target.value }));
-                      markDirty();
-                    }}
-                    className="h-10 w-14 rounded-lg border border-slate-300 cursor-pointer bg-white p-1"
-                    aria-label="Choisir la couleur principale"
-                  />
-                  <Input
-                    value={colorInput}
-                    onChange={(e) => {
-                      const v = e.target.value;
-                      setColorInput(v);
-                      if (isValidHexColor(v)) {
-                        setDraft((d) => ({ ...d, primaryColor: v.toLowerCase() }));
+            <BrandingCard
+              tone="violet"
+              emoji="🎨"
+              ariaLabel="Identité visuelle"
+              title="Identité visuelle & messages"
+            >
+              <div className="space-y-5">
+                <div>
+                  <label htmlFor="brand-color" className="text-xs font-semibold text-muted-foreground">
+                    Couleur principale (boutons, onglets, accents de l&apos;app invitée)
+                  </label>
+                  <div className="mt-2 flex flex-wrap items-center gap-3">
+                    <input
+                      id="brand-color"
+                      type="color"
+                      value={isValidHexColor(colorInput) ? colorInput : DEFAULT_PRIMARY_COLOR}
+                      onChange={(e) => {
+                        setColorInput(e.target.value);
+                        setDraft((d) => ({ ...d, primaryColor: e.target.value }));
                         markDirty();
-                      }
-                    }}
-                    className="w-28 font-mono"
-                    placeholder="#059669"
-                    aria-label="Couleur en hexadécimal"
-                  />
-                  <div className="flex gap-1.5" role="group" aria-label="Couleurs suggérées">
-                    {COLOR_PRESETS.map((c) => (
-                      <button
-                        key={c}
-                        type="button"
-                        aria-label={`Couleur ${c}`}
-                        onClick={() => {
-                          setColorInput(c);
-                          setDraft((d) => ({ ...d, primaryColor: c }));
+                      }}
+                      className="h-10 w-14 cursor-pointer rounded-lg border border-border bg-card p-1"
+                      aria-label="Choisir la couleur principale"
+                    />
+                    <Input
+                      value={colorInput}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setColorInput(v);
+                        if (isValidHexColor(v)) {
+                          setDraft((d) => ({ ...d, primaryColor: v.toLowerCase() }));
                           markDirty();
-                        }}
-                        className={`h-8 w-8 rounded-full border-2 cursor-pointer transition-transform hover:scale-110 ${
-                          draft.primaryColor === c ? 'border-slate-900' : 'border-transparent'
-                        }`}
-                        style={{ backgroundColor: c }}
-                      />
-                    ))}
+                        }
+                      }}
+                      className="w-28 font-mono"
+                      placeholder="#0066EF"
+                      aria-label="Couleur en hexadécimal"
+                    />
+                    <div className="flex gap-1.5" role="group" aria-label="Couleurs suggérées">
+                      {COLOR_PRESETS.map((c) => (
+                        <button
+                          key={c}
+                          type="button"
+                          aria-label={`Couleur ${c}`}
+                          onClick={() => {
+                            setColorInput(c);
+                            setDraft((d) => ({ ...d, primaryColor: c }));
+                            markDirty();
+                          }}
+                          className={cn(
+                            'h-8 w-8 cursor-pointer rounded-full border-2 transition-transform hover:scale-110',
+                            draft.primaryColor === c ? 'border-foreground' : 'border-transparent',
+                          )}
+                          style={{ backgroundColor: c }}
+                        />
+                      ))}
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div>
-                <label htmlFor="brand-company" className="text-xs font-semibold text-slate-600">
-                  Nom commercial (remplace « Conciergerie Hub » dans l&apos;app)
-                </label>
-                <Input
-                  id="brand-company"
-                  value={companyInput}
-                  maxLength={60}
-                  onChange={(e) => {
-                    setCompanyInput(e.target.value);
-                    markDirty();
-                  }}
-                  className="mt-1.5"
-                  placeholder="ex : Les Clés du Marais"
-                />
-              </div>
+                <div>
+                  <label htmlFor="brand-company" className="text-xs font-semibold text-muted-foreground">
+                    Nom commercial (remplace « RoomScan » dans l&apos;app)
+                  </label>
+                  <Input
+                    id="brand-company"
+                    value={companyInput}
+                    maxLength={60}
+                    onChange={(e) => {
+                      setCompanyInput(e.target.value);
+                      markDirty();
+                    }}
+                    className="mt-1.5"
+                    placeholder="ex : Les Clés du Marais"
+                  />
+                </div>
 
-              <div>
-                <label htmlFor="brand-message" className="text-xs font-semibold text-slate-600">
-                  Message d&apos;accueil ({messageInput.length}/280)
-                </label>
-                <Textarea
-                  id="brand-message"
-                  value={messageInput}
-                  maxLength={280}
-                  rows={3}
-                  onChange={(e) => {
-                    setMessageInput(e.target.value);
-                    markDirty();
-                  }}
-                  className="mt-1.5"
-                  placeholder="ex : Bienvenue chez Les Clés du Marais — votre séjour commence ici ✨"
-                />
+                <div>
+                  <label htmlFor="brand-message" className="text-xs font-semibold text-muted-foreground">
+                    Message d&apos;accueil ({messageInput.length}/280)
+                  </label>
+                  <Textarea
+                    id="brand-message"
+                    value={messageInput}
+                    maxLength={280}
+                    rows={3}
+                    onChange={(e) => {
+                      setMessageInput(e.target.value);
+                      markDirty();
+                    }}
+                    className="mt-1.5"
+                    placeholder="ex : Bienvenue chez Les Clés du Marais — votre séjour commence ici ✨"
+                  />
+                </div>
               </div>
-            </section>
+            </BrandingCard>
 
             {/* Domaine personnalisé */}
-            <section className="bg-white border border-slate-200 rounded-xl p-5" aria-label="Domaine personnalisé">
-              <div className="flex items-center justify-between gap-2 flex-wrap">
-                <h2 className="text-sm font-bold text-slate-900">🌍 Domaine personnalisé</h2>
+            <BrandingCard
+              tone="teal"
+              emoji="🌍"
+              ariaLabel="Domaine personnalisé"
+              title="Domaine personnalisé"
+              description="Vos invités ouvrent l'app directement sur VOTRE domaine (white-label total)."
+              headerRight={
                 <DomainStatusBadge
                   domain={domainChanged ?? savedDomain}
                   verified={domainIsNew ? false : domainVerified}
                   isNew={domainIsNew}
                 />
-              </div>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Vos invités ouvrent l&apos;app directement sur VOTRE domaine (white-label total).
-              </p>
+              }
+            >
+              <div>
+                <Input
+                  value={domainInput}
+                  onChange={(e) => {
+                    setDomainInput(e.target.value);
+                    markDirty();
+                  }}
+                  className="font-mono"
+                  placeholder="guests.ma-conciergerie.com"
+                  aria-label="Nom de domaine personnalisé"
+                />
 
-              <Input
-                value={domainInput}
-                onChange={(e) => {
-                  setDomainInput(e.target.value);
-                  markDirty();
-                }}
-                className="mt-3 font-mono"
-                placeholder="guests.ma-conciergerie.com"
-                aria-label="Nom de domaine personnalisé"
-              />
-
-              {/* Instructions DNS */}
-              <div className="mt-3 rounded-lg bg-slate-50 border border-slate-200 p-3.5 text-xs">
-                <p className="font-semibold text-slate-700">📋 Enregistrement DNS à créer (type CNAME)</p>
-                <div className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 font-mono text-[11px] text-slate-600">
-                  <span className="font-sans font-semibold text-slate-500">Hôte :</span>
-                  <span>{domainChanged || (savedDomain ?? 'guests.votre-domaine.com')}</span>
-                  <span className="font-sans font-semibold text-slate-500">Valeur :</span>
-                  <span className="break-all">{data.dnsTarget}</span>
+                {/* Instructions DNS */}
+                <div className="mt-3 rounded-xl border border-border bg-muted p-3.5 text-xs">
+                  <p className="font-semibold text-foreground">📋 Enregistrement DNS à créer (type CNAME)</p>
+                  <div className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 font-mono text-[11px] text-foreground">
+                    <span className="font-sans font-semibold text-muted-foreground">Hôte :</span>
+                    <span>{domainChanged || (savedDomain ?? 'guests.votre-domaine.com')}</span>
+                    <span className="font-sans font-semibold text-muted-foreground">Valeur :</span>
+                    <span className="break-all">{data.dnsTarget}</span>
+                  </div>
+                  <p className="mt-2 leading-snug text-muted-foreground">
+                    Enregistrez puis cliquez sur « Vérifier le DNS » — la propagation peut prendre
+                    quelques heures selon votre registrar.
+                  </p>
                 </div>
-                <p className="mt-2 text-slate-500 leading-snug">
-                  Enregistrez puis cliquez sur « Vérifier le DNS » — la propagation peut prendre
-                  quelques heures selon votre registrar.
-                </p>
-              </div>
 
-              <div className="mt-3 flex items-center gap-2 flex-wrap">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={verifying || !domainChanged || domainIsNew || domainVerified}
-                  onClick={verifyDomain}
-                >
-                  {verifying ? '…' : domainVerified ? '✓ CNAME vérifié' : 'Vérifier le DNS'}
-                </Button>
-                {domainVerified && !domainIsNew && (
-                  <span className="text-[11px] text-emerald-700 font-medium">
-                    Votre domaine diffuse l&apos;app invitée.
-                  </span>
-                )}
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="rounded-full"
+                    disabled={verifying || !domainChanged || domainIsNew || domainVerified}
+                    onClick={verifyDomain}
+                  >
+                    {verifying ? '…' : domainVerified ? '✓ CNAME vérifié' : 'Vérifier le DNS'}
+                  </Button>
+                  {domainVerified && !domainIsNew && (
+                    <span className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400">
+                      Votre domaine diffuse l&apos;app invitée.
+                    </span>
+                  )}
+                </div>
               </div>
-            </section>
+            </BrandingCard>
           </div>
 
           {/* ──────── Aperçu live ──────── */}
           <aside className="lg:sticky lg:top-6" aria-label="Aperçu de l'app invitée">
-            <div className="bg-slate-100 border border-slate-200 rounded-2xl p-4">
-              <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400 mb-3">
+            <div className="air-shadow rounded-2xl border border-border bg-muted p-4">
+              <p className="mb-3 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
                 Aperçu app invitée
               </p>
               {/* En-tête simulé */}
-              <div className="rounded-xl bg-white border border-slate-200 overflow-hidden shadow-sm">
-                <div className="px-3 py-2.5 border-b border-slate-100 flex items-center gap-2.5">
+              <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+                <div className="flex items-center gap-2.5 border-b border-border px-3 py-2.5">
                   {draft.logoUrl ? (
-                    <img src={draft.logoUrl} alt="" className="h-7 w-7 rounded-lg object-contain" />
+                    <img src={draft.logoUrl} alt="" className="h-7 w-7 rounded-lg object-contain" loading="lazy" decoding="async" />
                   ) : (
-                    <span className="text-base" aria-hidden="true">🗝️</span>
+                    <span aria-hidden="true" className="text-base">🗝️</span>
                   )}
                   <div className="min-w-0">
                     <p
-                      className="text-[9px] font-bold uppercase tracking-widest leading-none truncate"
+                      className="truncate text-[9px] font-bold uppercase leading-none tracking-widest"
                       style={{ color: draft.primaryColor }}
                     >
-                      {companyInput.trim() || 'Conciergerie Hub'}
+                      {companyInput.trim() || 'RoomScan'}
                     </p>
-                    <p className="text-[11px] font-bold text-slate-900 truncate">
+                    <p className="truncate text-[11px] font-bold text-foreground">
                       {data.property.name}
                     </p>
                   </div>
                 </div>
-                <div className="p-3 space-y-2">
-                  <p className="text-[12px] font-bold text-slate-900">Bienvenue 👋</p>
-                  <p className="text-[10px] text-slate-500 leading-snug line-clamp-3">
+                <div className="space-y-2 p-3">
+                  <p className="text-[12px] font-bold text-foreground">Bienvenue 👋</p>
+                  <p className="line-clamp-3 text-[10px] leading-snug text-muted-foreground">
                     {messageInput.trim() ||
                       'Tout ce dont vous avez besoin pendant votre séjour est ici : Wi-Fi, guide, services et assistance.'}
                   </p>
-                  <div className="rounded-lg px-2.5 py-1.5 text-[10px] font-semibold text-white text-center" style={{ backgroundColor: draft.primaryColor }}>
+                  <div className="rounded-lg px-2.5 py-1.5 text-center text-[10px] font-semibold text-white" style={{ backgroundColor: draft.primaryColor }}>
                     Se connecter au Wi-Fi
                   </div>
                   {/* Nav simulée */}
-                  <div className="pt-1.5 border-t border-slate-100 grid grid-cols-4 text-center text-[8px] text-slate-400">
+                  <div className="grid grid-cols-4 border-t border-border pt-1.5 text-center text-[8px] text-muted-foreground">
                     <span className="font-bold" style={{ color: draft.primaryColor }}>🏠 Accueil</span>
                     <span>📖 Guide</span>
                     <span>🥐 Services</span>
@@ -504,12 +578,12 @@ export function BrandingContent() {
               <Button
                 onClick={save}
                 disabled={saving || uploading || !dirty}
-                className="w-full mt-4 bg-emerald-600 hover:bg-emerald-700 text-white"
+                className="air-gradient mt-4 w-full rounded-full text-xs font-bold text-white shadow transition-transform hover:scale-[1.03]"
                 aria-label="Enregistrer le branding"
               >
                 {saving ? 'Enregistrement…' : dirty ? '💾 Enregistrer' : '✓ À jour'}
               </Button>
-              <p className="text-[10px] text-slate-400 mt-2 text-center leading-snug">
+              <p className="mt-2 text-center text-[10px] leading-snug text-muted-foreground">
                 Le logo s&apos;applique immédiatement — la couleur, le nom, le message et le domaine à l&apos;enregistrement.
               </p>
             </div>
@@ -518,10 +592,10 @@ export function BrandingContent() {
       )}
 
       {!loading && data && !data.property && (
-        <div className="bg-white border border-slate-200 rounded-xl p-10 text-center">
-          <p className="text-4xl" aria-hidden="true">🎨</p>
-          <h2 className="mt-3 text-lg font-bold text-slate-900">Aucun bien</h2>
-          <p className="mt-1 text-sm text-slate-500">Ajoutez d&apos;abord un bien pour personnaliser son branding.</p>
+        <div className="air-empty flex flex-col items-center gap-2 rounded-2xl p-10 text-center">
+          <span aria-hidden="true" className="air-float text-3xl">🎨</span>
+          <h2 className="mt-1 text-base font-semibold text-foreground">Aucun bien</h2>
+          <p className="text-sm text-muted-foreground">Ajoutez d&apos;abord un bien pour personnaliser son branding.</p>
         </div>
       )}
     </div>
@@ -530,24 +604,36 @@ export function BrandingContent() {
 
 function DomainStatusBadge({ domain, verified, isNew }: { domain: string | null; verified: boolean; isNew: boolean }) {
   if (!domain) {
-    return <Badge className="bg-slate-100 text-slate-600 border-slate-300 border text-[10px]">Aucun domaine</Badge>;
+    return (
+      <Badge className="rounded-full border border-border bg-muted text-[10px] text-muted-foreground">
+        Aucun domaine
+      </Badge>
+    );
   }
   if (isNew || !verified) {
-    return <Badge className="bg-amber-100 text-amber-800 border-amber-300 border text-[10px]">⏳ En attente de vérification</Badge>;
+    return (
+      <Badge className="rounded-full border border-amber-200 bg-amber-50 text-[10px] text-amber-700 dark:border-amber-500/30 dark:bg-amber-950/40 dark:text-amber-300">
+        ⏳ En attente de vérification
+      </Badge>
+    );
   }
-  return <Badge className="bg-emerald-100 text-emerald-800 border-emerald-300 border text-[10px]">✓ Vérifié</Badge>;
+  return (
+    <Badge className="rounded-full border border-emerald-200 bg-emerald-50 text-[10px] text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-950/40 dark:text-emerald-300">
+      ✓ Vérifié
+    </Badge>
+  );
 }
 
 function LoadingSkeleton() {
   return (
     <div className="space-y-4" aria-busy="true" aria-label="Chargement du branding">
-      <div className="grid lg:grid-cols-[1fr_300px] gap-6">
+      <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
         <div className="space-y-4">
           {[0, 1, 2].map((i) => (
-            <Skeleton key={i} className="h-40 rounded-xl" />
+            <Skeleton key={i} className="h-40 rounded-2xl" aria-hidden="true" />
           ))}
         </div>
-        <Skeleton className="h-80 rounded-xl" />
+        <Skeleton className="h-80 rounded-2xl" aria-hidden="true" />
       </div>
     </div>
   );

@@ -27,7 +27,7 @@ export function RestrictedAccess({ feature }: { feature: string }) {
         </p>
         <Link
           href="/airbnb/dashboard"
-          className="mt-5 inline-flex h-10 items-center justify-center rounded-lg bg-[#E23F2B] px-4 text-sm font-bold text-white shadow-sm transition-colors hover:bg-[#c93725]"
+          className="mt-5 inline-flex h-10 items-center justify-center rounded-lg bg-[#0066EF] px-4 text-sm font-bold text-white shadow-sm transition-colors hover:bg-[#0052C4]"
         >
           ← Retour à la vue d&apos;ensemble
         </Link>

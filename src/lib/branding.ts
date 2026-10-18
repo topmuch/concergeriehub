@@ -6,15 +6,15 @@
 // N'utilise AUCUN accès DB → importable partout (client inclus).
 // =============================================================
 
-/** Couleur de repli = identité Conciergerie Hub (émeraude manifest). */
-export const DEFAULT_PRIMARY_COLOR = '#059669';
+/** Couleur de repli = identité RoomScan (émeraude manifest). */
+export const DEFAULT_PRIMARY_COLOR = '#0066EF';
 
 export interface PropertyBranding {
   /** Chemin public du logo (ex: /uploads/branding/xxx.png) — null = aucun. */
   logoUrl: string | null;
   /** Couleur d'accent principale (hex #RRGGBB). */
   primaryColor: string;
-  /** Nom commercial affiché à la place de "Conciergerie Hub". */
+  /** Nom commercial affiché à la place de "RoomScan". */
   companyName: string | null;
   /** Message d'accueil personnalisé (affiché sur l'onglet Accueil). */
   welcomeMessage: string | null;

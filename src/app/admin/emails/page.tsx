@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { AdminEmailsContent } from '@/components/admin/admin-emails-content';
 
 export const metadata: Metadata = {
-  title: 'Emails — Superadmin Conciergerie Hub',
+  title: 'Emails — Superadmin RoomScan',
 };
 
 // ÉTAPE 22 — Console des emails transactionnels (outbox).

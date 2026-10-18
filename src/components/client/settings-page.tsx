@@ -17,6 +17,8 @@ import {
   Lock, Trash2, Download, ChevronRight,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { usePushNotifications } from '@/hooks/use-push-notifications';
+import { cn } from '@/lib/utils';
 
 export function SettingsPage() {
   const { theme, setTheme } = useTheme();
@@ -31,7 +33,17 @@ export function SettingsPage() {
   const [guestMode, setGuestMode] = useState(false);
 
   // Notifications
-  const [pushEnabled, setPushEnabled] = useState(true);
+  // v4.76 — push VAPID RÉEL sur cet appareil (remplace le toggle cosmétique) :
+  // permission navigateur + PushManager + POST/DELETE /api/client/push.
+  const push = usePushNotifications();
+  const pushActive = push.subscribed && push.permission === 'granted';
+  const pushStatus = !push.supported
+    ? 'Non supporté par ce navigateur'
+    : push.permission === 'denied'
+      ? 'Non autorisé ❌'
+      : pushActive
+        ? 'Activé ✅'
+        : 'Non activé';
   const [dlcAlerts, setDlcAlerts] = useState(true);
   const [lowStockAlerts, setLowStockAlerts] = useState(true);
   const [chatMessages, setChatMessages] = useState(true);
@@ -87,7 +99,7 @@ export function SettingsPage() {
     </div>
   );
 
-  const cardClass = 'border-l-4 border-l-emerald-500';
+  const cardClass = 'border-l-4 border-l-blue-500';
 
   return (
     <div className="space-y-6">
@@ -134,7 +146,7 @@ export function SettingsPage() {
             </div>
 
             <Button
-              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
               onClick={() => toast.success('Profil mis à jour')}
             >
               <Save className="mr-2 h-4 w-4" />
@@ -189,7 +201,7 @@ export function SettingsPage() {
             </div>
 
             <Button
-              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
               onClick={() => toast.success('Préférences du Hub sauvegardées')}
             >
               <Save className="mr-2 h-4 w-4" />
@@ -205,18 +217,34 @@ export function SettingsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium">Activer les notifications push</p>
-                  <p className="text-xs text-muted-foreground">Recevez les alertes sur votre appareil</p>
+              {/* v4.76 — PUSH VAPID RÉEL : permission + abonnement serveur. */}
+              <div
+                className={cn(
+                  'rounded-2xl border p-4',
+                  pushActive
+                    ? 'border-emerald-300/70 bg-emerald-50/60 dark:border-emerald-500/30 dark:bg-emerald-950/30'
+                    : 'border-border bg-muted/40',
+                )}
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium">Notifications push sur cet appareil</p>
+                    <p className="text-xs text-muted-foreground">Recevez les alertes en temps réel — {pushStatus}</p>
+                    {push.error && <p className="mt-1 text-xs font-semibold text-red-500">{push.error}</p>}
+                  </div>
+                  <Switch
+                    checked={pushActive}
+                    disabled={push.busy || !push.supported || push.permission === 'denied'}
+                    onCheckedChange={(checked) => {
+                      if (checked) void push.enable();
+                      else void push.disable();
+                    }}
+                    aria-label="Activer les notifications push sur cet appareil"
+                  />
                 </div>
-                <Switch
-                  checked={pushEnabled}
-                  onCheckedChange={(checked) => {
-                    setPushEnabled(checked);
-                    toast.info(checked ? 'Notifications push activées' : 'Notifications push désactivées');
-                  }}
-                />
+                <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
+                  📱 Sur iOS : ajoutez d&apos;abord le site à l&apos;écran d&apos;accueil (Partager → « Sur l&apos;écran d&apos;accueil ») pour que les notifications push fonctionnent.
+                </p>
               </div>
 
               <Separator />
@@ -364,7 +392,7 @@ export function SettingsPage() {
                     Annuler
                   </Button>
                   <Button
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
                     onClick={() => {
                       setPasswordDialogOpen(false);
                       setCurrentPassword('');
@@ -444,14 +472,14 @@ export function SettingsPage() {
             <div className="space-y-3">
               <p className="text-sm font-medium">Statistiques</p>
               <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-lg bg-gradient-to-br from-emerald-500/10 to-teal-500/10 p-4 text-center">
-                  <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+                <div className="rounded-lg bg-gradient-to-br from-blue-500/10 to-blue-700/10 p-4 text-center">
+                  <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                     {statsLoading ? '…' : stats.qrCount}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">QR codes actifs</p>
                 </div>
-                <div className="rounded-lg bg-gradient-to-br from-emerald-500/10 to-teal-500/10 p-4 text-center">
-                  <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+                <div className="rounded-lg bg-gradient-to-br from-blue-500/10 to-blue-700/10 p-4 text-center">
+                  <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                     {statsLoading ? '…' : stats.homeCount}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">Maisons</p>

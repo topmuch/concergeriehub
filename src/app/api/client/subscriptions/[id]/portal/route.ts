@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { resolveOrigin, siteUrl } from '@/lib/site';
 
 const isSimulation = !process.env.STRIPE_SECRET_KEY;
 
@@ -9,6 +12,12 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const authSession = await getServerSession(authOptions);
+    if (!authSession?.user) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+    }
+
+    const userId = (authSession.user as { id?: string }).id;
     const { id } = await params;
 
     const subscription = await db.subscription.findUnique({ where: { id } });
@@ -17,6 +26,17 @@ export async function POST(
         { error: 'Abonnement introuvable' },
         { status: 404 }
       );
+    }
+
+    // Ownership : uniquement l'abonné lui-même (abonnement HÔTE stocké via
+    // subscriberType 'user' — champ userId dédié, subscriberId restant réservé
+    // aux marchands/prestataires selon le schéma)
+    const isOwner =
+      subscription.subscriberType === 'user' &&
+      (subscription.userId === userId || subscription.subscriberId === userId);
+
+    if (!isOwner) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
     }
 
     // Simulation mode: no real portal
@@ -55,7 +75,7 @@ export async function POST(
       );
     }
 
-    const origin = _request.headers.get('origin') || 'http://localhost:3000';
+    const origin = resolveOrigin(_request);
 
     const session = await stripe.billingPortal.sessions.create({
       customer: customerId,

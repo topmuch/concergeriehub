@@ -5,7 +5,10 @@ import { db } from '@/lib/db';
 import crypto from 'crypto';
 import { rateLimit } from '@/lib/rate-limit';
 
-const UPLOAD_DIR = join(process.cwd(), 'public', 'uploads', 'voice');
+const UPLOAD_DIR = join(process.cwd(), 'data', 'uploads', 'voice');
+// Répertoire historique (public/uploads/voice) : non utilisé en écriture
+// (non servi en standalone + non persistant en Docker) mais conservé en
+// lecture par la route /api/uploads/voice/[file] pour les anciens fichiers.
 const MAX_DURATION_SEC = 30;
 const MAX_FILE_SIZE_KB = 500;
 
@@ -25,7 +28,7 @@ export async function POST(
     }
     const formData = await req.formData();
     const audio = formData.get('audio') as File | null;
-    const senderName = (formData.get('senderName') as string) || 'Invit\u00e9';
+    const senderName = (formData.get('senderName') as string) || 'Invité';
     const durationSec = parseInt(formData.get('durationSec') as string) || 0;
 
     if (!audio) {
@@ -48,7 +51,7 @@ export async function POST(
       select: { propertyId: true },
     });
     if (!qrCode?.propertyId) {
-      return NextResponse.json({ error: 'Module non li\u00e9 \u00e0 une maison' }, { status: 404 });
+      return NextResponse.json({ error: 'Module non lié à une maison' }, { status: 404 });
     }
 
     // Ensure upload dir exists
@@ -64,6 +67,12 @@ export async function POST(
     const bytes = new Uint8Array(await audio.arrayBuffer());
     await writeFile(filePath, bytes);
 
+    // v4.32 « AUDIO DURABLE » — copie dataURL en base sous plafond 500 Ko.
+    const audioData =
+      fileSizeKb <= 500
+        ? `data:${(audio.type || 'audio/webm').split(';')[0].trim()};base64,${Buffer.from(bytes).toString('base64')}`
+        : null;
+
     // Create DB record
     const voiceMsg = await db.voiceMessage.create({
       data: {
@@ -71,6 +80,7 @@ export async function POST(
         senderName: senderName.trim().slice(0, 50),
         senderType: 'guest',
         audioUrl: `/uploads/voice/${filename}`,
+        audioData,
         durationSec: Math.min(durationSec, MAX_DURATION_SEC),
         fileSizeKb,
       },
@@ -106,7 +116,7 @@ export async function GET(
       select: { propertyId: true },
     });
     if (!qrCode?.propertyId) {
-      return NextResponse.json({ error: 'Module non li\u00e9 \u00e0 une maison' }, { status: 404 });
+      return NextResponse.json({ error: 'Module non lié à une maison' }, { status: 404 });
     }
 
     const messages = await db.voiceMessage.findMany({
@@ -118,6 +128,7 @@ export async function GET(
         senderName: true,
         senderType: true,
         audioUrl: true,
+        audioData: true,
         durationSec: true,
         isRead: true,
         createdAt: true,

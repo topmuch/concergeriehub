@@ -3,40 +3,23 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 
-// GET: List homes for the logged-in user
+// GET: List homes for the logged-in user (owner ou membre accepté)
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
-    const userId = session?.user?.id;
+    const userId = (session?.user as { id?: string } | undefined)?.id;
 
-    // Fallback to demo user if no session (development / public demo)
-    let effectiveUserId = userId;
     if (!userId) {
-      const demoUser = await db.user.findFirst({
-        where: { email: 'demo@qrdomotik.roomscan.pro' },
-        select: { id: true },
-      });
-      effectiveUserId = demoUser?.id;
-    }
-
-    if (!effectiveUserId) {
-      return NextResponse.json({ homes: [] });
-    }
-
-    // Get all home IDs the user belongs to
-    const memberships = await db.propertyMember.findMany({
-      where: { userId: effectiveUserId },
-      select: { propertyId: true },
-    });
-
-    const propertyIds = memberships.map((m) => m.propertyId);
-
-    if (propertyIds.length === 0) {
-      return NextResponse.json({ homes: [] });
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
     const homes = await db.property.findMany({
-      where: { id: { in: propertyIds } },
+      where: {
+        OR: [
+          { ownerId: userId },
+          { members: { some: { userId, acceptedAt: { not: null } } } },
+        ],
+      },
       include: {
         _count: {
           select: {
@@ -59,7 +42,7 @@ export async function GET() {
   }
 }
 
-// POST: Create a new home
+// POST: Create a new home (session obligatoire)
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -75,20 +58,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Resolve user from session, fallback to demo
     const session = await getServerSession(authOptions);
-    let userId = session?.user?.id;
+    const userId = (session?.user as { id?: string } | undefined)?.id;
 
     if (!userId) {
-      const demoUser = await db.user.findFirst({
-        where: { email: 'demo@qrdomotik.roomscan.pro' },
-        select: { id: true },
-      });
-      userId = demoUser?.id;
-    }
-
-    if (!userId) {
-      return NextResponse.json({ error: 'Utilisateur non identifié' }, { status: 401 });
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
     const home = await db.property.create({
@@ -100,12 +74,13 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Auto-add user as owner
+    // Auto-add user as owner (invitation déjà acceptée)
     await db.propertyMember.create({
       data: {
         propertyId: home.id,
         userId,
         role: 'owner',
+        acceptedAt: new Date(),
       },
     });
 
@@ -119,7 +94,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// DELETE: Delete a home and all its data (cascade)
+// DELETE: Delete a home and all its data (cascade) — propriétaire ou Superadmin
 export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -132,12 +107,24 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
+    const session = await getServerSession(authOptions);
+    const userId = (session?.user as { id?: string } | undefined)?.id;
+    const role = (session?.user as { role?: string } | undefined)?.role;
+
+    if (!userId) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+    }
+
     const home = await db.property.findUnique({ where: { id: propertyId } });
     if (!home) {
       return NextResponse.json(
         { error: 'Maison introuvable' },
         { status: 404 }
       );
+    }
+
+    if (home.ownerId !== userId && role !== 'superadmin') {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
     }
 
     await db.property.delete({ where: { id: propertyId } });

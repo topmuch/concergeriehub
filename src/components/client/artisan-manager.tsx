@@ -534,7 +534,7 @@ export function ArtisanManager() {
       {/* Section 1 - Header + Stats */}
       <div>
         <div className="flex items-center gap-3 mb-1">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-700">
             <Briefcase className="h-5 w-5 text-white" />
           </div>
           <div>
@@ -548,7 +548,7 @@ export function ArtisanManager() {
 
       {/* Stat cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-400 via-emerald-500 to-teal-600 p-5 text-white shadow-lg">
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 p-5 text-white shadow-lg">
           <div className="flex items-center justify-between">
             <div className="space-y-1">
               <p className="text-sm font-medium text-white/80">Artisans</p>
@@ -607,7 +607,7 @@ export function ArtisanManager() {
               onClick={() => setActiveTab(key)}
               className={
                 activeTab === key
-                  ? 'bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-sm'
+                  ? 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-sm'
                   : ''
               }
             >
@@ -622,7 +622,7 @@ export function ArtisanManager() {
           {activeTab === 'demandes' && (
             <Dialog open={newRequestOpen} onOpenChange={(open) => { setNewRequestOpen(open); }}>
               <DialogTrigger asChild>
-                <Button className="gap-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-md">
+                <Button className="gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-md">
                   <Plus className="h-4 w-4" />
                   Nouvelle demande
                 </Button>
@@ -630,7 +630,7 @@ export function ArtisanManager() {
               <DialogContent className="sm:max-w-[520px]">
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2">
-                    <FileText className="h-5 w-5 text-emerald-500" />
+                    <FileText className="h-5 w-5 text-blue-500" />
                     Nouvelle demande de service
                   </DialogTitle>
                 </DialogHeader>
@@ -690,7 +690,7 @@ export function ArtisanManager() {
                   <Button
                     onClick={handleCreateRequest}
                     disabled={!reqFormProId || !reqFormServiceId || reqSubmitting}
-                    className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white"
+                    className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white"
                   >
                     {reqSubmitting ? 'Envoi...' : 'Envoyer la demande'}
                   </Button>
@@ -754,7 +754,7 @@ export function ArtisanManager() {
                       <CardContent className="p-4">
                         <div className="flex items-start gap-3">
                           <Avatar className="h-10 w-10">
-                            <AvatarFallback className="bg-emerald-100 text-emerald-700 text-sm font-semibold">
+                            <AvatarFallback className="bg-blue-100 text-blue-700 text-sm font-semibold">
                               {pro.businessName.charAt(0).toUpperCase()}
                             </AvatarFallback>
                           </Avatar>
@@ -948,7 +948,7 @@ export function ArtisanManager() {
                     <>
                       <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
-                          <FileText className="h-5 w-5 text-emerald-500" />
+                          <FileText className="h-5 w-5 text-blue-500" />
                           Détail de la demande
                         </DialogTitle>
                       </DialogHeader>
@@ -1069,7 +1069,7 @@ export function ArtisanManager() {
               {/* Reviews I wrote */}
               <div>
                 <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-                  <HeartHandshake className="h-4 w-4 text-emerald-500" />
+                  <HeartHandshake className="h-4 w-4 text-blue-500" />
                   Avis laissés ({reviewsWritten.length})
                 </h3>
                 {reviewsWritten.length === 0 ? (
@@ -1237,7 +1237,7 @@ export function ArtisanManager() {
                       >
                         <CardContent className="p-4 flex items-center gap-3">
                           <Avatar className="h-10 w-10 shrink-0">
-                            <AvatarFallback className="bg-emerald-100 text-emerald-700 text-sm font-semibold">
+                            <AvatarFallback className="bg-blue-100 text-blue-700 text-sm font-semibold">
                               {conv.provider?.businessName.charAt(0).toUpperCase() || '?'}
                             </AvatarFallback>
                           </Avatar>
@@ -1276,7 +1276,7 @@ export function ArtisanManager() {
                 <DialogContent className="sm:max-w-[520px] p-0 gap-0">
                   <DialogHeader className="px-6 pt-6 pb-2">
                     <DialogTitle className="flex items-center gap-2">
-                      <MessageCircle className="h-5 w-5 text-emerald-500" />
+                      <MessageCircle className="h-5 w-5 text-blue-500" />
                       {chatConversations.find((c) => c.id === chatRequestId)?.provider?.businessName || 'Conversation'}
                     </DialogTitle>
                   </DialogHeader>
@@ -1335,7 +1335,7 @@ export function ArtisanManager() {
                       size="icon"
                       onClick={handleSendMessage}
                       disabled={!chatInput.trim() || chatSending}
-                      className="shrink-0 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white"
+                      className="shrink-0 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white"
                     >
                       {chatSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                     </Button>

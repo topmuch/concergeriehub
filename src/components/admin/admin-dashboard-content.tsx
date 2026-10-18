@@ -1,6 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import Link from 'next/link';
+import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import {
   Area,
@@ -19,16 +21,9 @@ import {
 import {
   type ChartConfig,
   ChartContainer,
-  ChartLegend,
-  ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
-import { B2BCard } from '@/components/ui/b2b-card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -41,14 +36,51 @@ import { cn } from '@/lib/utils';
 import { formatEur } from '@/lib/b2b';
 
 // =============================================================
-// AdminDashboardContent — V2 : Dashboard Superadmin sidebar + KPIs.
-//  - 8 cartes KPI (GMV, commission plateforme, MRR, hôtes, biens,
-//    prestataires, séjours, commandes 30 j)
-//  - 3 graphiques (tendance 30 j GMV + commission, donut statuts de
-//    paiement, GMV par catégorie)
-//  - Top prestataires, dernières commandes, activité, derniers hôtes
+// AdminDashboardContent — v5.2 « SAPHIR LUXE » : Dashboard Superadmin.
+// Refonte design PROFONDE (demande client) : design simple, luxueux,
+// professionnel, engageant · mode sombre BLEUTÉ · SANS ICÔNES.
+//  - Les 6 KPI opérationnels plateforme (bloc lux de /api/admin/kpis)
+//    en cartes « joyaux » multicolores : minibar, séjour & compte à
+//    rebours, calendrier, ménage, départs tardifs, avis
+//  - KPIs plateforme conservés (Utilisateurs, Hôtes actifs,
+//    Propriétés, MRR + GMV, commission, plaques, prestataires,
+//    séjours, commandes 30 j) — mêmes définitions métier
+//  - 3 graphiques + GMV par catégorie + top prestataires conservés
+//  - « Santé plateforme » + « Transactions récentes » + « Dernières
+//    inscriptions » + « Règle d'or » conservés — redesignés uniquement.
 // Source : /api/admin/kpis (définitions métier inchangées).
 // =============================================================
+
+// ---------- Palette graphique (saphir / teal sur nuit bleutée) ----------
+const SAPPHIRE = '#5c8af0';
+const TEAL = '#2dd4bf';
+
+const revenueConfig = {
+  gmv: { label: 'GMV (achats invités)', color: SAPPHIRE },
+  commission: { label: 'Commission plateforme', color: TEAL },
+} satisfies ChartConfig;
+
+const paymentConfig = {
+  PAID: { label: 'Payées', color: '#34d399' },
+  UNPAID: { label: 'Impayées', color: '#fbbf24' },
+  REFUNDED: { label: 'Remboursées', color: SAPPHIRE },
+  FAILED: { label: 'Échecs', color: '#64748b' },
+} satisfies ChartConfig;
+
+const categoryConfig = {
+  gmv: { label: 'GMV', color: SAPPHIRE },
+} satisfies ChartConfig;
+
+const signupConfig = {
+  count: { label: 'Inscriptions', color: SAPPHIRE },
+} satisfies ChartConfig;
+
+const planConfig = {
+  airbnb_solo: { label: 'Solo', color: '#2dd4bf' },
+  airbnb_pro: { label: 'Pro', color: SAPPHIRE },
+  agency: { label: 'Agence', color: '#e9c47c' },
+  free: { label: 'Free', color: '#64748b' },
+} satisfies ChartConfig;
 
 interface KpisData {
   stats: {
@@ -125,86 +157,94 @@ interface KpisData {
     userName: string | null;
     createdAt: string;
   }[];
+  lux?: LuxBlock;
 }
 
-// ---------- Configs de charts (palette « Travl » : vert foncé + coral) ----------
-const revenueConfig = {
-  gmv: { label: 'GMV (achats invités)', color: '#165949' },
-  commission: { label: 'Commission plateforme', color: '#EE4B35' },
-} satisfies ChartConfig;
+// ---------- Bloc « lux » : les 6 KPI opérationnels plateforme ----------
+interface LuxBlock {
+  minibar: { itemsMonth: number; revenueMonth: number; itemsTotal: number; revenueTotal: number; ordersTotal: number };
+  stay: { kind: 'active' | 'upcoming'; guestName: string; propertyName: string; checkIn: string; checkOut: string } | null;
+  calendar: { inProgress: number; upcoming: number };
+  housekeeping: { done: number; scheduled: number };
+  lateCheckouts: { upcoming: number; next: { guestName: string; propertyName: string; until: string | null } | null };
+  reviews: { positive: number; neutral: number; negative: number };
+}
 
-const paymentConfig = {
-  PAID: { label: 'Payées', color: '#165949' },
-  UNPAID: { label: 'Impayées', color: '#f59e0b' },
-  REFUNDED: { label: 'Remboursées', color: '#EE4B35' },
-  FAILED: { label: 'Échecs', color: '#94a3b8' },
-} satisfies ChartConfig;
+// ---------- « Santé plateforme » : incidents réels (/api/admin/notifications) ----------
+interface HealthItem {
+  kind: string;
+  emoji: string;
+  title: string;
+  detail: string;
+  href: string;
+  at: string;
+}
 
-const categoryConfig = {
-  gmv: { label: 'GMV', color: '#165949' },
-} satisfies ChartConfig;
-
-const signupConfig = {
-  count: { label: 'Inscriptions', color: '#165949' },
-} satisfies ChartConfig;
-
-const planConfig = {
-  airbnb_solo: { label: 'Solo', color: '#165949' },
-  airbnb_pro: { label: 'Pro', color: '#EE4B35' },
-  agency: { label: 'Agence', color: '#f59e0b' },
-  free: { label: 'Free', color: '#94a3b8' },
-} satisfies ChartConfig;
-
-// ---------- Libellés / formats ----------
-const PAYMENT_META: Record<string, { label: string; className: string }> = {
-  PAID: { label: 'Payée', className: 'bg-emerald-50 border-emerald-200 text-emerald-700' },
-  UNPAID: { label: 'Impayée', className: 'bg-amber-50 border-amber-200 text-amber-700' },
-  REFUNDED: { label: 'Remboursée', className: 'bg-rose-50 border-rose-200 text-rose-700' },
-  FAILED: { label: 'Échec', className: 'bg-slate-100 border-slate-200 text-slate-500' },
+/** Pastille colorée par type d'incident (remplace les emojis). */
+const HEALTH_KIND_DOT: Record<string, string> = {
+  email_failed: '#f07d6a',
+  order_unpaid: '#fbbf24',
+  sub_past_due: '#cdb6ff',
+  plaque_lost: '#8fa0c2',
+};
+const HEALTH_KIND_LABEL: Record<string, string> = {
+  email_failed: 'Emails',
+  order_unpaid: 'Commandes',
+  sub_past_due: 'Abonnements',
+  plaque_lost: 'Plaques',
 };
 
-const ORDER_STATUS_META: Record<string, { label: string; className: string }> = {
-  PENDING: { label: 'En attente', className: 'bg-slate-100 border-slate-200 text-slate-600' },
-  CONFIRMED: { label: 'Confirmée', className: 'bg-teal-50 border-teal-200 text-teal-700' },
-  PREPARING: { label: 'En préparation', className: 'bg-amber-50 border-amber-200 text-amber-700' },
-  DELIVERED: { label: 'Livrée', className: 'bg-emerald-50 border-emerald-200 text-emerald-700' },
-  CANCELLED: { label: 'Annulée', className: 'bg-rose-50 border-rose-200 text-rose-700' },
+// ---------- Libellés (pastilles typographiques, sans icône) ----------
+const PAYMENT_META: Record<string, { label: string; dot: string }> = {
+  PAID: { label: 'Payée', dot: '#34d399' },
+  UNPAID: { label: 'Impayée', dot: '#fbbf24' },
+  REFUNDED: { label: 'Remboursée', dot: SAPPHIRE },
+  FAILED: { label: 'Échec', dot: '#64748b' },
 };
 
-function planLabel(plan: string | null): { label: string; className: string } {
+function planLabel(plan: string | null): string {
   switch (plan) {
-    case 'airbnb_solo':
-      return { label: 'Solo', className: 'bg-emerald-50 border-emerald-200 text-emerald-700' };
-    case 'airbnb_pro':
-      return { label: 'Pro', className: 'bg-slate-900 border-slate-900 text-white' };
-    case 'agency':
-      return { label: 'Agence', className: 'bg-amber-50 border-amber-200 text-amber-700' };
-    default:
-      return { label: 'Free', className: 'bg-slate-100 border-slate-200 text-slate-500' };
+    case 'airbnb_solo': return 'Solo';
+    case 'airbnb_pro': return 'Pro';
+    case 'agency': return 'Agence';
+    default: return 'Free';
   }
 }
 
-const ACTION_META: Record<string, { emoji: string; label: string }> = {
-  qr_created: { emoji: '➕', label: 'QR code créé' },
-  qr_updated: { emoji: '✏️', label: 'QR code modifié' },
-  wifi_updated: { emoji: '📶', label: 'Wi-Fi mis à jour' },
-  guidebook_updated: { emoji: '📖', label: 'Guidebook mis à jour' },
-  scan: { emoji: '📡', label: 'Scan de la plaque' },
-  voice_received: { emoji: '🎙️', label: 'Message vocal reçu' },
-  complaint: { emoji: '🚨', label: 'Réclamation voyageur' },
-  service_ordered: { emoji: '🥐', label: 'Service commandé' },
-  property_created: { emoji: '🏠', label: 'Bien ajouté' },
-  host_login: { emoji: '🔑', label: 'Connexion hôte' },
+/** Point coloré par type d'action du flux (remplace les emojis). */
+const ACTION_DOT: Record<string, string> = {
+  qr_created: SAPPHIRE,
+  qr_updated: SAPPHIRE,
+  wifi_updated: TEAL,
+  guidebook_updated: '#e9c47c',
+  scan: SAPPHIRE,
+  voice_received: '#cdb6ff',
+  complaint: '#f07d6a',
+  service_ordered: '#86e9cb',
+  property_created: '#5eead4',
+  host_login: '#e9c47c',
 };
 
-function actionMeta(type: string) {
-  return ACTION_META[type] ?? { emoji: '•', label: type };
+function actionLabel(type: string): string {
+  switch (type) {
+    case 'qr_created': return 'QR code créé';
+    case 'qr_updated': return 'QR code modifié';
+    case 'wifi_updated': return 'Wi-Fi mis à jour';
+    case 'guidebook_updated': return 'Guidebook mis à jour';
+    case 'scan': return 'Scan de la plaque';
+    case 'voice_received': return 'Message vocal reçu';
+    case 'complaint': return 'Réclamation voyageur';
+    case 'service_ordered': return 'Service commandé';
+    case 'property_created': return 'Bien ajouté';
+    case 'host_login': return 'Connexion hôte';
+    default: return type;
+  }
 }
 
 // ---------- Flux temps réel fusionné (activités + activations plaques) ----------
 interface FeedItem {
   id: string;
-  emoji: string;
+  dot: string;
   label: string;
   who: string;
   detail: string | null;
@@ -212,20 +252,17 @@ interface FeedItem {
 }
 
 function buildFeed(data: KpisData): FeedItem[] {
-  const activities: FeedItem[] = data.recentActivity.map((a) => {
-    const meta = actionMeta(a.actionType);
-    return {
-      id: a.id,
-      emoji: meta.emoji,
-      label: meta.label,
-      who: a.userName ?? 'Système',
-      detail: a.propertyName,
-      createdAt: a.createdAt,
-    };
-  });
+  const activities: FeedItem[] = data.recentActivity.map((a) => ({
+    id: a.id,
+    dot: ACTION_DOT[a.actionType] ?? '#8fa0c2',
+    label: actionLabel(a.actionType),
+    who: a.userName ?? 'Système',
+    detail: a.propertyName,
+    createdAt: a.createdAt,
+  }));
   const activations: FeedItem[] = data.recentActivations.map((a) => ({
     id: a.id,
-    emoji: '🏷️',
+    dot: '#e9c47c',
     label: 'Plaque activée',
     who: a.userName ?? 'Système',
     detail: `${a.activationCode}${a.hubSlug ? ` · /${a.hubSlug}` : ''}`,
@@ -238,11 +275,18 @@ function buildFeed(data: KpisData): FeedItem[] {
 
 const fmtDay = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short' });
 const fmtFullDate = new Intl.DateTimeFormat('fr-FR', {
+  weekday: 'long',
   day: 'numeric',
   month: 'long',
   year: 'numeric',
 });
 const fmtDateTime = new Intl.DateTimeFormat('fr-FR', {
+  day: 'numeric',
+  month: 'short',
+  hour: '2-digit',
+  minute: '2-digit',
+});
+const fmtDayHour = new Intl.DateTimeFormat('fr-FR', {
   day: 'numeric',
   month: 'short',
   hour: '2-digit',
@@ -259,60 +303,105 @@ function metaOf<T>(map: Record<string, T>, key: string, fallback: T): T {
   return map[key] ?? fallback;
 }
 
-// ---------- Carte KPI ----------
-type ChipTone = 'emerald' | 'amber' | 'rose' | 'slate' | 'teal';
+/** Compte à rebours lisible jusqu'à l'échéance (horloge locale). */
+function countdownLabel(target: Date, now: Date): string {
+  const ms = target.getTime() - now.getTime();
+  if (ms <= 0) return 'Échéance atteinte';
+  const min = Math.floor(ms / 60_000);
+  if (min < 60) return `${min} min`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return `${h} h ${String(min % 60).padStart(2, '0')}`;
+  const j = Math.floor(h / 24);
+  return `${j} j ${String(h % 24).padStart(2, '0')} h`;
+}
 
-const CHIP_TONES: Record<ChipTone, string> = {
-  emerald: 'bg-emerald-50 border-emerald-200 text-emerald-700',
-  amber: 'bg-amber-50 border-amber-200 text-amber-700',
-  rose: 'bg-rose-50 border-rose-200 text-rose-700',
-  slate: 'bg-slate-100 border-slate-200 text-slate-600',
-  teal: 'bg-teal-50 border-teal-200 text-teal-700',
-};
+// ---------- Actions rapides (routes console superadmin) ----------
+const QUICK_ACTIONS: { href: string; label: string; dot: string }[] = [
+  { href: '/admin/users', label: 'Clients', dot: SAPPHIRE },
+  { href: '/admin/qr', label: 'Générer des QR', dot: '#2dd4bf' },
+  { href: '/admin/emails', label: 'Emails', dot: '#cdb6ff' },
+  { href: '/admin/providers', label: 'Prestataires', dot: '#e9c47c' },
+];
 
-function KpiCard({
+// ---------- Carte KPI « joyau » (sans icône — le chiffre est le héros) ----------
+function LuxKpiCard({
+  tone,
   label,
   value,
-  emoji,
   chip,
   hint,
+  loading,
+  index = 0,
+  children,
 }: {
+  tone: 'gold' | 'sapphire' | 'violet' | 'emerald' | 'coral' | 'rose';
   label: string;
   value: string;
-  emoji: string;
-  chip?: { text: string; tone: ChipTone };
+  chip?: string;
   hint?: string;
+  loading?: boolean;
+  index?: number;
+  children?: ReactNode;
 }) {
-  // Style « Travl » : tuile icône coral à gauche, valeur + libellé à droite.
   return (
-    <Card
-      className="flex items-center gap-4 rounded-2xl border-slate-200/80 bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
-      title={hint}
+    <motion.article
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.05 * index, duration: 0.35, ease: 'easeOut' }}
+      className={cn('luxkpi', `luxkpi-${tone}`)}
+      aria-label={label}
     >
-      <span
-        aria-hidden="true"
-        className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#FDECE8] text-2xl leading-none select-none"
-      >
-        {emoji}
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block truncate text-2xl font-extrabold tabular-nums text-slate-900 sm:text-3xl">
-          {value}
-        </span>
-        <span className="block truncate text-sm text-slate-500">{label}</span>
-        {chip && (
-          <span
-            className={cn(
-              'mt-1.5 inline-flex text-[11px] font-semibold px-2 py-0.5 rounded-full border',
-              CHIP_TONES[chip.tone],
-            )}
-          >
-            {chip.text}
-          </span>
-        )}
-      </span>
-    </Card>
+      <div className="relative flex items-center justify-between gap-2">
+        <span className="luxkpi-label">{label}</span>
+        {chip && !loading && <span className="luxkpi-chip">{chip}</span>}
+      </div>
+      {loading ? (
+        <div className="mt-3 h-9 w-28 animate-pulse rounded-lg bg-white/10" aria-hidden="true" />
+      ) : (
+        <p className="luxkpi-value mt-2.5 truncate text-[28px] leading-none sm:text-[32px]">{value}</p>
+      )}
+      {children}
+      {hint && !loading && <p className="relative mt-2.5 truncate text-[12px] leading-snug opacity-80">{hint}</p>}
+    </motion.article>
   );
+}
+
+/** Carte statistique typographique (KPIs plateforme — sobre, sans icône). */
+function LuxStat({
+  label,
+  value,
+  chip,
+  hint,
+  dot = SAPPHIRE,
+  index = 0,
+}: {
+  label: string;
+  value: ReactNode;
+  chip?: string;
+  hint?: string;
+  dot?: string;
+  index?: number;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.03 * index, duration: 0.3, ease: 'easeOut' }}
+      className="lux-card lux-card-hover relative p-4 sm:p-5"
+    >
+      <div className="flex items-start justify-between gap-2">
+        <span className="lux-eyebrow">{label}</span>
+        {chip && <span className="lux-chip !px-2 !py-0.5 !text-[10px]">{chip}</span>}
+      </div>
+      <p className="lux-num mt-2 truncate text-3xl leading-none text-white">{value}</p>
+      {hint && <p className="mt-2 truncate text-[11.5px] text-[#8fa0c2]">{hint}</p>}
+      <span className="lux-dot absolute right-4 top-4 opacity-70" style={{ backgroundColor: dot }} aria-hidden="true" />
+    </motion.div>
+  );
+}
+
+function LuxSkeleton({ className }: { className?: string }) {
+  return <div aria-hidden="true" className={cn('animate-pulse rounded-2xl bg-white/8', className)} />;
 }
 
 // ---------- Composant principal ----------
@@ -321,10 +410,18 @@ export function AdminDashboardContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [today, setToday] = useState('');
+  // « Santé plateforme » — incidents réels agrégés
+  const [health, setHealth] = useState<HealthItem[] | null>(null);
+  const [healthState, setHealthState] = useState<'loading' | 'ok' | 'error'>('loading');
+  // Horloge locale pour le compte à rebours du séjour (anti-hydratation)
+  const [tick, setTick] = useState<Date | null>(null);
 
   useEffect(() => {
     // Après montage uniquement (évite tout écart d'hydratation)
     setToday(fmtFullDate.format(new Date()));
+    setTick(new Date());
+    const id = setInterval(() => setTick(new Date()), 60_000);
+    return () => clearInterval(id);
   }, []);
 
   const load = useCallback(async () => {
@@ -341,28 +438,50 @@ export function AdminDashboardContent() {
     }
   }, []);
 
+  const loadHealth = useCallback(async () => {
+    setHealthState('loading');
+    try {
+      const res = await fetch('/api/admin/notifications', { cache: 'no-store' });
+      if (!res.ok) throw new Error('http');
+      const json = (await res.json()) as { count: number; items: HealthItem[] };
+      setHealth(Array.isArray(json.items) ? json.items : []);
+      setHealthState('ok');
+    } catch {
+      setHealthState('error');
+    }
+  }, []);
+
   useEffect(() => {
     load();
-  }, [load]);
+    loadHealth();
+  }, [load, loadHealth]);
+
+  function refreshAll() {
+    load();
+    loadHealth();
+    toast.success('Statistiques actualisées');
+  }
 
   // ----- Loading -----
   if (loading && !data) {
     return (
-      <div className="max-w-7xl mx-auto w-full px-4 py-8 space-y-6" aria-busy="true" aria-label="Chargement">
-        <Skeleton className="h-14 w-full rounded-xl" />
-        <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-          {[0, 1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-36 rounded-xl" />
-          ))}
-        </div>
-        <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-          {[0, 1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-24 rounded-xl" />
-          ))}
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <Skeleton className="h-80 rounded-xl lg:col-span-2" />
-          <Skeleton className="h-80 rounded-xl" />
+      <div className="lux lux-bg min-h-full p-4 pb-10 sm:p-6">
+        <div className="mx-auto w-full max-w-7xl space-y-6" aria-busy="true" aria-label="Chargement">
+          <LuxSkeleton className="h-40 w-full rounded-3xl" />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <LuxSkeleton key={i} className="h-40 rounded-2xl" />
+            ))}
+          </div>
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            {[0, 1, 2, 3].map((i) => (
+              <LuxSkeleton key={i} className="h-32 rounded-2xl" />
+            ))}
+          </div>
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <LuxSkeleton className="h-80 rounded-2xl lg:col-span-2" />
+            <LuxSkeleton className="h-80 rounded-2xl" />
+          </div>
         </div>
       </div>
     );
@@ -371,20 +490,23 @@ export function AdminDashboardContent() {
   // ----- Erreur -----
   if (error || !data) {
     return (
-      <div className="max-w-7xl mx-auto w-full px-4 py-16 flex justify-center">
-        <B2BCard className="max-w-md w-full text-center">
-          <p className="text-3xl" aria-hidden="true">😵</p>
-          <p className="mt-2 font-semibold text-slate-900">Erreur de chargement</p>
-          <p className="text-sm text-slate-600 mt-1">{error || 'Données indisponibles'}</p>
-          <Button onClick={load} className="mt-4 bg-slate-900 hover:bg-slate-800 text-white">
-            Réessayer
-          </Button>
-        </B2BCard>
+      <div className="lux lux-bg min-h-full p-4 pb-10 sm:p-6">
+        <div className="mx-auto flex w-full max-w-7xl justify-center px-0 py-16">
+          <div className="lux-card w-full max-w-md p-8 text-center" role="alert">
+            <span className="lux-dot mx-auto" style={{ backgroundColor: '#f07d6a' }} aria-hidden="true" />
+            <p className="lux-display mt-3 text-xl text-white">Erreur de chargement</p>
+            <p className="mt-1 text-sm text-[#8fa0c2]">{error || 'Données indisponibles'}</p>
+            <button type="button" onClick={load} className="lux-btn mt-5">
+              Réessayer
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
 
   const { stats, series, paymentDistribution, categoryRevenue, providerRevenue } = data;
+  const lux = data.lux ?? null;
   const refundRate =
     stats.ordersPaid + stats.ordersRefunded > 0
       ? Math.round((stats.ordersRefunded / (stats.ordersPaid + stats.ordersRefunded)) * 100)
@@ -392,568 +514,790 @@ export function AdminDashboardContent() {
   const maxProviderGmv = Math.max(...providerRevenue.map((p) => p.gmv), 1);
   const totalOrdersForDonut = paymentDistribution.reduce((acc, d) => acc + d.count, 0);
   const feed = buildFeed(data);
+  const activeHostsPct = stats.totalHosts > 0 ? Math.round((stats.activeHosts / stats.totalHosts) * 100) : 0;
+  const totalLuxReviews = lux ? lux.reviews.positive + lux.reviews.neutral + lux.reviews.negative : 0;
+
+  // Séjour + compte à rebours (KPI 2 plateforme)
+  const stayCard = lux?.stay
+    ? (() => {
+        const s = lux.stay;
+        const isActive = s.kind === 'active';
+        const target = isActive ? new Date(s.checkOut) : new Date(s.checkIn);
+        const cd = tick ? countdownLabel(target, tick) : null;
+        return {
+          chip: cd ? (isActive ? `Départ dans ${cd}` : `Entrée dans ${cd}`) : undefined,
+          hint: `${isActive ? 'Séjour en cours' : 'Prochain séjour'} — ${s.guestName} · ${s.propertyName}`,
+        };
+      })()
+    : null;
 
   return (
-    <div className="max-w-7xl mx-auto w-full px-4 py-8 space-y-6">
-      {/* ================= En-tête ================= */}
-      <section aria-labelledby="admin-greeting" className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h2 id="admin-greeting" className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
-            Vue d&apos;ensemble 🛡️
-          </h2>
-          <p className="text-sm text-slate-600 mt-1">
-            Santé de la plateforme Conciergerie Hub{today ? ` — ${today}` : ''}.
-          </p>
-        </div>
-        <Button
-          variant="outline"
-          onClick={() => {
-            load();
-            toast.success('Statistiques actualisées');
-          }}
-          className="border-slate-300 text-slate-700 hover:bg-slate-100"
+    <div className="lux lux-bg min-h-full p-4 pb-10 sm:p-6">
+      <div className="mx-auto w-full max-w-7xl space-y-7">
+        {/* ================= Hero « LUXE AURA » coloré (v6.0) ================= */}
+        <motion.section
+          aria-labelledby="admin-greeting"
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, ease: 'easeOut' }}
+          className="lux-hero p-6 sm:p-8"
         >
-          Actualiser
-        </Button>
-      </section>
-
-      {/* ================= KPIs principaux ================= */}
-      <section aria-label="KPIs financiers" className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-        <KpiCard
-          label="GMV encaissée"
-          value={formatEur(stats.gmvPaidEur)}
-          emoji="💳"
-          chip={{ text: `${formatEur(stats.gmv30dEur)} sur 30 j`, tone: 'teal' }}
-          hint={`${stats.ordersPaid} commande${stats.ordersPaid > 1 ? 's' : ''} payée${stats.ordersPaid > 1 ? 's' : ''} · panier moyen ${formatEur(stats.avgOrderEur)}`}
-        />
-        <KpiCard
-          label="Revenus plateforme"
-          value={formatEur(stats.platformRevenueEur)}
-          emoji="🏦"
-          chip={{ text: 'Commission 15 %', tone: 'emerald' }}
-          hint={`Part reversée aux hôtes : ${formatEur(stats.hostEarningsEur)}`}
-        />
-        <KpiCard
-          label="MRR abonnements"
-          value={formatEur(stats.mrrEur)}
-          emoji="💰"
-          chip={
-            stats.subscriptionsActive > 0
-              ? { text: `${stats.subscriptionsActive} abonnement${stats.subscriptionsActive > 1 ? 's' : ''} actif${stats.subscriptionsActive > 1 ? 's' : ''}`, tone: 'emerald' }
-              : { text: 'Aucun abonnement', tone: 'amber' }
-          }
-          hint="Revenu mensuel récurrent normalisé"
-        />
-        <KpiCard
-          label="Hôtes actifs"
-          value={String(stats.activeHosts)}
-          emoji="👩‍💻"
-          chip={{ text: `${stats.totalHosts} inscrit${stats.totalHosts > 1 ? 's' : ''}`, tone: 'slate' }}
-          hint={stats.newHosts30d > 0 ? `+${stats.newHosts30d} nouveau${stats.newHosts30d > 1 ? 'x' : ''} sur 30 jours` : 'Aucun nouveau hôte sur 30 jours'}
-        />
-      </section>
-
-      {/* ================= KPIs secondaires ================= */}
-      <section aria-label="KPIs opérationnels" className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-        <Card className="p-4 border-slate-200 bg-white shadow-sm">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">🏠 Biens actifs</p>
-          <p className="mt-1.5 text-2xl font-bold text-slate-900 tabular-nums">
-            {stats.activePropertiesCount}
-            <span className="text-sm font-semibold text-slate-400"> / {stats.propertiesCount}</span>
-          </p>
-          <p className="mt-1 text-[11px] text-slate-500">Biens équipés d&apos;une plaque QR</p>
-        </Card>
-        <Card className="p-4 border-slate-200 bg-white shadow-sm">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">🏷️ Plaques activées</p>
-          <p className="mt-1.5 text-2xl font-bold text-slate-900 tabular-nums">
-            {stats.plaquesActive}
-            <span className="text-sm font-semibold text-slate-400"> / {stats.plaquesTotal}</span>
-          </p>
-          <p className="mt-1 text-[11px] text-slate-500">
-            {stats.plaquesInactive} inactive{stats.plaquesInactive > 1 ? 's' : ''} · {stats.plaquesLost} perdue{stats.plaquesLost > 1 ? 's' : ''}
-          </p>
-        </Card>
-        <Card className="p-4 border-slate-200 bg-white shadow-sm">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">🧹 Prestataires actifs</p>
-          <p className="mt-1.5 text-2xl font-bold text-slate-900 tabular-nums">
-            {stats.providersActive}
-            <span className="text-sm font-semibold text-slate-400"> / {stats.providersTotal}</span>
-          </p>
-          <p className="mt-1 text-[11px] text-slate-500">
-            🔧 {stats.providersOwner} owner · 🥂 {stats.providersGuest} guest
-          </p>
-        </Card>
-        <Card className="p-4 border-slate-200 bg-white shadow-sm">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">📅 Séjours en cours</p>
-          <p className="mt-1.5 text-2xl font-bold text-slate-900 tabular-nums">
-            {stats.bookingsActive}
-            <span className="text-sm font-semibold text-slate-400"> + {stats.bookingsUpcoming} à venir</span>
-          </p>
-          <p className="mt-1 text-[11px] text-slate-500">Check-ins en cours et confirmés</p>
-        </Card>
-        <Card className="p-4 border-slate-200 bg-white shadow-sm">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">🛒 Commandes 30 j</p>
-          <p className="mt-1.5 text-2xl font-bold text-slate-900 tabular-nums">
-            {stats.orders30d}
-            <span className="text-sm font-semibold text-slate-400"> / {stats.ordersTotal}</span>
-          </p>
-          <p className="mt-1 text-[11px] text-slate-500">
-            {stats.ordersRefunded} remboursée{stats.ordersRefunded > 1 ? 's' : ''} ({refundRate} %)
-          </p>
-        </Card>
-      </section>
-
-      {/* ================= Graphiques ================= */}
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* ----- Tendance 30 j : GMV + commission ----- */}
-        <Card className="p-6 border-slate-200 bg-white shadow-sm lg:col-span-2">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <p className="font-semibold text-slate-900">Revenus des 30 derniers jours</p>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Volume acheté par les invités (GMV) et commission retenue par la plateforme
+          <div className="relative flex flex-wrap items-start justify-between gap-4">
+            <div className="min-w-0">
+              <p className="lux-eyebrow" suppressHydrationWarning>
+                Console superadmin
+              </p>
+              <h2 id="admin-greeting" className="lux-display mt-2 text-3xl font-semibold text-white sm:text-[38px]">
+                Vue d&apos;ensemble
+              </h2>
+              <p className="mt-2 text-sm text-[#8fa0c2]" suppressHydrationWarning>
+                Santé de la plateforme RoomScan{today ? ` — ${today}` : ''}.
               </p>
             </div>
-          </div>
-          <ChartContainer config={revenueConfig} className="mt-4 h-72 w-full">
-            <ComposedChart data={series} margin={{ left: 4, right: 8, top: 8 }}>
-              <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#e2e8f0" />
-              <XAxis
-                dataKey="date"
-                tickLine={false}
-                axisLine={false}
-                tickMargin={8}
-                minTickGap={28}
-                tick={{ fontSize: 11, fill: '#64748b' }}
-                tickFormatter={(v: string) => fmtDay.format(new Date(`${v}T12:00:00`))}
-              />
-              <YAxis
-                tickLine={false}
-                axisLine={false}
-                width={44}
-                tick={{ fontSize: 11, fill: '#64748b' }}
-                tickFormatter={(v: number) => `${Math.round(v)}€`}
-              />
-              <ChartTooltip
-                content={
-                  <ChartTooltipContent
-                    labelFormatter={(_p, payload) => {
-                      const raw = payload?.[0]?.payload as { date?: string } | undefined;
-                      return raw?.date ? fmtFullDate.format(new Date(`${raw.date}T12:00:00`)) : '';
-                    }}
-                  />
-                }
-              />
-              <Bar dataKey="gmv" fill="var(--color-gmv)" radius={[4, 4, 0, 0]} maxBarSize={28} />
-              <Line
-                dataKey="commission"
-                type="monotone"
-                stroke="var(--color-commission)"
-                strokeWidth={2.5}
-                dot={false}
-              />
-            </ComposedChart>
-          </ChartContainer>
-        </Card>
-
-        {/* ----- Donut statuts de paiement ----- */}
-        <Card className="p-6 border-slate-200 bg-white shadow-sm">
-          <p className="font-semibold text-slate-900">Statuts de paiement</p>
-          <p className="text-xs text-slate-500 mt-0.5">Répartition des {totalOrdersForDonut} commandes</p>
-          <div className="relative mt-4">
-            <ChartContainer config={paymentConfig} className="h-56 w-full">
-              <PieChart>
-                <ChartTooltip content={<ChartTooltipContent nameKey="key" />} />
-                <Pie
-                  data={paymentDistribution}
-                  dataKey="count"
-                  nameKey="key"
-                  innerRadius={58}
-                  outerRadius={88}
-                  strokeWidth={3}
-                  paddingAngle={2}
-                >
-                  {paymentDistribution.map((entry) => (
-                    <Cell key={entry.key} fill={`var(--color-${entry.key})`} />
-                  ))}
-                </Pie>
-              </PieChart>
-            </ChartContainer>
-            <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-slate-900 tabular-nums">{totalOrdersForDonut}</p>
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">commandes</p>
-              </div>
+            <div className="flex shrink-0 items-center gap-3" aria-hidden="true">
+              <div className="lux-rule hidden w-10 sm:block" />
+              <span className="lux-display hidden text-2xl text-[#e9c47c] sm:block">R</span>
             </div>
           </div>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {paymentDistribution.map((d) => {
-              const meta = metaOf(PAYMENT_META, d.key, { label: d.key, className: '' });
-              if (d.count === 0) return null;
-              return (
-                <span
-                  key={d.key}
-                  className={cn(
-                    'inline-flex text-[11px] font-semibold px-2 py-0.5 rounded-full border',
-                    meta.className,
-                  )}
-                >
-                  {meta.label} : {d.count}
-                </span>
-              );
-            })}
-          </div>
-        </Card>
-      </section>
-
-      {/* ================= Croissance & abonnements ================= */}
-      <section aria-label="Croissance et abonnements" className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* ----- Courbe d'inscriptions hôtes 30 j ----- */}
-        <Card className="p-6 border-slate-200 bg-white shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <p className="font-semibold text-slate-900">Inscriptions des hôtes</p>
-              <p className="text-xs text-slate-500 mt-0.5">Nouveaux comptes créés sur les 30 derniers jours</p>
-            </div>
-            <span className="inline-flex text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-emerald-50 border-emerald-200 text-emerald-700">
-              +{stats.newHosts30d} sur 30 j
+          <div className="relative mt-5 flex flex-wrap items-center gap-2.5">
+            <span className="lux-chip">
+              <span className="lux-dot" style={{ backgroundColor: '#34d399' }} aria-hidden="true" />
+              {stats.ordersPaid} commande{stats.ordersPaid > 1 ? 's' : ''} payée{stats.ordersPaid > 1 ? 's' : ''}
             </span>
+            <span className="lux-chip">
+              <span className="lux-dot" style={{ backgroundColor: SAPPHIRE }} aria-hidden="true" />
+              {stats.activeHosts} hôte{stats.activeHosts > 1 ? 's' : ''} actif{stats.activeHosts > 1 ? 's' : ''}
+            </span>
+            <span className="lux-chip">
+              <span className="lux-dot" style={{ backgroundColor: '#2dd4bf' }} aria-hidden="true" />
+              {stats.activePropertiesCount} bien{stats.activePropertiesCount > 1 ? 's' : ''} actif
+              {stats.activePropertiesCount > 1 ? 's' : ''}
+            </span>
+            <button type="button" onClick={refreshAll} className="lux-btn-ghost ml-auto">
+              Actualiser
+            </button>
           </div>
-          <ChartContainer config={signupConfig} className="mt-4 h-64 w-full">
-            <AreaChart data={data.hostSignupTrend} margin={{ left: 4, right: 8, top: 8 }}>
-              <defs>
-                <linearGradient id="fillSignups" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="var(--color-count)" stopOpacity={0.35} />
-                  <stop offset="95%" stopColor="var(--color-count)" stopOpacity={0.03} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#e2e8f0" />
-              <XAxis
-                dataKey="date"
-                tickLine={false}
-                axisLine={false}
-                tickMargin={8}
-                minTickGap={28}
-                tick={{ fontSize: 11, fill: '#64748b' }}
-                tickFormatter={(v: string) => fmtDay.format(new Date(`${v}T12:00:00`))}
-              />
-              <YAxis
-                tickLine={false}
-                axisLine={false}
-                width={32}
-                allowDecimals={false}
-                tick={{ fontSize: 11, fill: '#64748b' }}
-              />
-              <ChartTooltip
-                content={
-                  <ChartTooltipContent
-                    labelFormatter={(_p, payload) => {
-                      const raw = payload?.[0]?.payload as { date?: string } | undefined;
-                      return raw?.date ? fmtFullDate.format(new Date(`${raw.date}T12:00:00`)) : '';
-                    }}
-                  />
-                }
-              />
-              <Area
-                dataKey="count"
-                type="monotone"
-                stroke="var(--color-count)"
-                strokeWidth={2.5}
-                fill="url(#fillSignups)"
-                dot={false}
-              />
-            </AreaChart>
-          </ChartContainer>
-        </Card>
+        </motion.section>
 
-        {/* ----- Répartition des abonnements (Solo vs Pro) ----- */}
-        <Card className="p-6 border-slate-200 bg-white shadow-sm">
-          <p className="font-semibold text-slate-900">Répartition des abonnements</p>
-          <p className="text-xs text-slate-500 mt-0.5">Comptes hôtes par plan sélectionné</p>
-          {data.planDistribution.length === 0 ? (
-            <p className="text-sm text-slate-500 text-center py-16">Aucun hôte inscrit pour le moment.</p>
-          ) : (
-            <>
-              <div className="relative mt-4">
-                <ChartContainer config={planConfig} className="h-56 w-full">
-                  <PieChart>
-                    <ChartTooltip content={<ChartTooltipContent nameKey="plan" />} />
-                    <Pie
-                      data={data.planDistribution}
-                      dataKey="count"
-                      nameKey="plan"
-                      innerRadius={58}
-                      outerRadius={88}
-                      strokeWidth={3}
-                      paddingAngle={2}
-                    >
-                      {data.planDistribution.map((entry) => (
-                        <Cell key={entry.plan} fill={`var(--color-${entry.plan})`} />
-                      ))}
-                    </Pie>
-                  </PieChart>
-                </ChartContainer>
-                <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                  <div className="text-center">
-                    <p className="text-2xl font-bold text-slate-900 tabular-nums">{stats.totalHosts}</p>
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">hôtes</p>
-                  </div>
+        {/* ================= LES 6 KPI opérationnels — fonds colorés ================= */}
+        <section aria-label="Indicateurs opérationnels" className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {/* KPI 1 · MINIBAR */}
+          <LuxKpiCard
+            index={0}
+            tone="gold"
+            label="Minibar"
+            loading={loading}
+            value={lux ? formatEur(lux.minibar.revenueMonth) : '—'}
+            chip={lux && lux.minibar.revenueTotal > 0 ? `Total ${formatEur(lux.minibar.revenueTotal)}` : undefined}
+            hint={
+              lux
+                ? `${lux.minibar.itemsMonth} produit${lux.minibar.itemsMonth > 1 ? 's' : ''} consommé${lux.minibar.itemsMonth > 1 ? 's' : ''} ce mois · ${lux.minibar.ordersTotal} commande${lux.minibar.ordersTotal > 1 ? 's' : ''} au total`
+                : undefined
+            }
+          />
+
+          {/* KPI 2 · CHECK-IN / CHECK-OUT + compte à rebours */}
+          <LuxKpiCard
+            index={1}
+            tone="sapphire"
+            label="Check-in — Check-out"
+            loading={loading}
+            value={stayCard ? 'Séjour' : '—'}
+            chip={stayCard?.chip}
+            hint={stayCard?.hint ?? 'Aucun séjour programmé sur la plateforme'}
+          >
+            {lux?.stay && (
+              <div className="relative mt-3 grid grid-cols-2 gap-2 text-[12px] leading-tight">
+                <div className="rounded-lg border border-white/12 bg-white/6 px-2.5 py-2">
+                  <p className="luxkpi-label text-[9px]">Entrée</p>
+                  <p className="mt-0.5 font-semibold tabular-nums" suppressHydrationWarning>
+                    {fmtDayHour.format(new Date(lux.stay.checkIn))}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-white/12 bg-white/6 px-2.5 py-2">
+                  <p className="luxkpi-label text-[9px]">Départ</p>
+                  <p className="mt-0.5 font-semibold tabular-nums" suppressHydrationWarning>
+                    {fmtDayHour.format(new Date(lux.stay.checkOut))}
+                  </p>
                 </div>
               </div>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {data.planDistribution.map((p) => {
-                  const meta = planLabel(p.plan === 'airbnb_solo' || p.plan === 'airbnb_pro' || p.plan === 'agency' ? p.plan : 'free');
-                  return (
-                    <span
-                      key={p.plan}
-                      className="inline-flex text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-slate-50 border-slate-200 text-slate-600"
-                    >
-                      {meta.label} : {p.count}
-                    </span>
-                  );
-                })}
-              </div>
-            </>
-          )}
-        </Card>
-      </section>
+            )}
+          </LuxKpiCard>
 
-      <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* ----- GMV par catégorie ----- */}
-        <Card className="p-6 border-slate-200 bg-white shadow-sm">
-          <p className="font-semibold text-slate-900">GMV par catégorie</p>
-          <p className="text-xs text-slate-500 mt-0.5">Chiffre d&apos;affaires invités par type de prestation</p>
-          {categoryRevenue.length === 0 ? (
-            <p className="text-sm text-slate-500 text-center py-12">
-              Aucune commande payée pour le moment.
-            </p>
-          ) : (
-            <ChartContainer config={categoryConfig} className="mt-4 h-64 w-full">
-              <BarChart layout="vertical" data={categoryRevenue} margin={{ left: 8, right: 16, top: 4 }}>
-                <CartesianGrid horizontal={false} strokeDasharray="3 3" stroke="#e2e8f0" />
+          {/* KPI 3 · CALENDRIER */}
+          <LuxKpiCard
+            index={2}
+            tone="violet"
+            label="Calendrier"
+            loading={loading}
+            value={lux ? `${lux.calendar.inProgress}` : '—'}
+            chip={lux ? `${lux.calendar.upcoming} à venir` : undefined}
+            hint="Clients en cours sur l'ensemble des biens"
+          />
+
+          {/* KPI 4 · MÉNAGE */}
+          <LuxKpiCard
+            index={3}
+            tone="emerald"
+            label="Ménage"
+            loading={loading}
+            value={lux ? `${lux.housekeeping.done}` : '—'}
+            chip={lux ? `${lux.housekeeping.scheduled} programmé${lux.housekeeping.scheduled > 1 ? 's' : ''}` : undefined}
+            hint="Rapports de ménage validés avec preuves — plateforme entière"
+          />
+
+          {/* KPI 5 · DÉPART TARDIF */}
+          <LuxKpiCard
+            index={4}
+            tone="coral"
+            label="Départ tardif"
+            loading={loading}
+            value={lux ? `${lux.lateCheckouts.upcoming}` : '—'}
+            chip={lux && lux.lateCheckouts.upcoming > 0 ? 'à venir' : undefined}
+            hint={
+              lux?.lateCheckouts.next
+                ? `Prochain : ${lux.lateCheckouts.next.guestName}${lux.lateCheckouts.next.until ? ` — jusqu'à ${fmtDayHour.format(new Date(lux.lateCheckouts.next.until))}` : ''}`
+                : 'Aucun départ tardif programmé'
+            }
+          />
+
+          {/* KPI 6 · AVIS */}
+          <LuxKpiCard
+            index={5}
+            tone="rose"
+            label="Avis"
+            loading={loading}
+            value={lux ? `${lux.reviews.positive}` : '—'}
+            chip={lux ? `${lux.reviews.negative} négatif${lux.reviews.negative > 1 ? 's' : ''}` : undefined}
+            hint={
+              lux && totalLuxReviews > 0
+                ? `Avis positifs · ${lux.reviews.neutral} neutre${lux.reviews.neutral > 1 ? 's' : ''} sur ${totalLuxReviews} au total`
+                : 'Les retours des voyageurs apparaîtront ici'
+            }
+          />
+        </section>
+
+        {/* ================= Actions rapides ================= */}
+        <section aria-label="Actions rapides" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {QUICK_ACTIONS.map((action, i) => (
+            <motion.div
+              key={action.href}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05 * i, duration: 0.25 }}
+            >
+              <Link href={action.href} className="lux-card lux-card-hover group flex items-center gap-3 p-4">
+                <span className="lux-dot shrink-0" style={{ backgroundColor: action.dot }} aria-hidden="true" />
+                <span className="min-w-0 flex-1 truncate text-sm font-medium text-white">{action.label}</span>
+                <span aria-hidden="true" className="shrink-0 text-[#8fa0c2] transition-transform group-hover:translate-x-0.5">
+                  →
+                </span>
+              </Link>
+            </motion.div>
+          ))}
+        </section>
+
+        {/* ================= KPIs plateforme (définitions métier inchangées) ================= */}
+        <section aria-label="Indicateurs plateforme" className="grid grid-cols-2 gap-4 xl:grid-cols-4">
+          <LuxStat
+            index={0}
+            label="Utilisateurs totaux"
+            value={String(stats.totalHosts)}
+            chip={stats.newHosts30d > 0 ? `+${stats.newHosts30d} sur 30 j` : '0 sur 30 j'}
+            hint="Comptes hôtes inscrits sur la plateforme"
+          />
+          <LuxStat
+            index={1}
+            label="Hôtes actifs"
+            value={String(stats.activeHosts)}
+            chip={`${activeHostsPct} % du total`}
+            hint="Comptes hôtes actuellement actifs"
+            dot="#2dd4bf"
+          />
+          <LuxStat
+            index={2}
+            label="Propriétés"
+            value={<>{stats.activePropertiesCount} <span className="text-lg text-[#8fa0c2]">/ {stats.propertiesCount}</span></>}
+            hint="Biens actifs équipés d'une plaque QR"
+            dot="#cdb6ff"
+          />
+          <LuxStat
+            index={3}
+            label="MRR estimé"
+            value={formatEur(stats.mrrEur)}
+            chip={
+              stats.subscriptionsActive > 0
+                ? `${stats.subscriptionsActive} abonnement${stats.subscriptionsActive > 1 ? 's' : ''} actif${stats.subscriptionsActive > 1 ? 's' : ''}`
+                : 'Aucun abonnement'
+            }
+            hint="Revenu mensuel récurrent normalisé"
+            dot="#e9c47c"
+          />
+        </section>
+
+        <section aria-label="Indicateurs opérationnels secondaires" className="grid grid-cols-2 gap-4 lg:grid-cols-3">
+          <LuxStat
+            index={0}
+            label="GMV encaissée"
+            value={formatEur(stats.gmvPaidEur)}
+            chip={`${formatEur(stats.gmv30dEur)} sur 30 j`}
+            hint={`${stats.ordersPaid} commande${stats.ordersPaid > 1 ? 's' : ''} payée${stats.ordersPaid > 1 ? 's' : ''} · panier moyen ${formatEur(stats.avgOrderEur)}`}
+          />
+          <LuxStat
+            index={1}
+            label="Revenus plateforme"
+            value={formatEur(stats.platformRevenueEur)}
+            chip="Commission 15 %"
+            hint={`Part reversée aux hôtes : ${formatEur(stats.hostEarningsEur)}`}
+            dot="#2dd4bf"
+          />
+          <LuxStat
+            index={2}
+            label="Plaques activées"
+            value={<>{stats.plaquesActive} <span className="text-lg text-[#8fa0c2]">/ {stats.plaquesTotal}</span></>}
+            hint={`${stats.plaquesInactive} inactive${stats.plaquesInactive > 1 ? 's' : ''} · ${stats.plaquesLost} perdue${stats.plaquesLost > 1 ? 's' : ''}`}
+            dot="#e9c47c"
+          />
+          <LuxStat
+            index={3}
+            label="Prestataires actifs"
+            value={<>{stats.providersActive} <span className="text-lg text-[#8fa0c2]">/ {stats.providersTotal}</span></>}
+            hint={`${stats.providersOwner} owner · ${stats.providersGuest} guest`}
+            dot="#5eead4"
+          />
+          <LuxStat
+            index={4}
+            label="Séjours en cours"
+            value={<>{stats.bookingsActive} <span className="text-lg text-[#8fa0c2]">+ {stats.bookingsUpcoming} à venir</span></>}
+            hint="Check-ins en cours et confirmés"
+            dot={SAPPHIRE}
+          />
+          <LuxStat
+            index={5}
+            label="Commandes 30 j"
+            value={<>{stats.orders30d} <span className="text-lg text-[#8fa0c2]">/ {stats.ordersTotal}</span></>}
+            hint={`${stats.ordersRefunded} remboursée${stats.ordersRefunded > 1 ? 's' : ''} (${refundRate} %)`}
+            dot="#fbbf24"
+          />
+        </section>
+
+        {/* ================= Graphiques ================= */}
+        <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          {/* ----- Tendance 30 j : GMV + commission ----- */}
+          <div className="lux-card p-5 sm:p-6 lg:col-span-2">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <p className="lux-eyebrow">Finance</p>
+                <p className="lux-display mt-1 text-xl text-white">Revenus des 30 derniers jours</p>
+                <p className="mt-0.5 text-xs text-[#8fa0c2]">
+                  Volume acheté par les invités (GMV) et commission retenue par la plateforme
+                </p>
+              </div>
+            </div>
+            <ChartContainer config={revenueConfig} className="mt-4 h-72 w-full">
+              <ComposedChart data={series} margin={{ left: 4, right: 8, top: 8 }}>
+                <CartesianGrid vertical={false} strokeDasharray="3 6" stroke="rgba(148,170,214,0.14)" />
                 <XAxis
-                  type="number"
+                  dataKey="date"
                   tickLine={false}
-                  axisLine={false}
-                  tick={{ fontSize: 11, fill: '#64748b' }}
-                  tickFormatter={(v: number) => `${Math.round(v)}€`}
+                  axisLine={{ stroke: 'rgba(148,170,214,0.18)' }}
+                  tickMargin={8}
+                  minTickGap={28}
+                  tick={{ fontSize: 11, fill: '#8fa0c2' }}
+                  tickFormatter={(v: string) => fmtDay.format(new Date(`${v}T12:00:00`))}
                 />
                 <YAxis
-                  type="category"
-                  dataKey="label"
-                  width={150}
                   tickLine={false}
                   axisLine={false}
-                  tick={{ fontSize: 11, fill: '#475569' }}
+                  width={44}
+                  tick={{ fontSize: 11, fill: '#8fa0c2' }}
+                  tickFormatter={(v: number) => `${Math.round(v)}€`}
                 />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Bar dataKey="gmv" fill="var(--color-gmv)" radius={[0, 6, 6, 0]} maxBarSize={22} />
-              </BarChart>
-            </ChartContainer>
-          )}
-        </Card>
-
-        {/* ----- Top prestataires ----- */}
-        <Card className="p-6 border-slate-200 bg-white shadow-sm">
-          <p className="font-semibold text-slate-900">Top prestataires</p>
-          <p className="text-xs text-slate-500 mt-0.5">Classement par GMV encaissée (commandes payées)</p>
-          {providerRevenue.length === 0 ? (
-            <p className="text-sm text-slate-500 text-center py-12">
-              Aucune commande payée pour le moment.
-            </p>
-          ) : (
-            <ul className="mt-4 space-y-3.5">
-              {providerRevenue.map((p, i) => (
-                <li key={p.name} className="group">
-                  <div className="flex items-center justify-between gap-3 text-sm">
-                    <span className="flex items-center gap-2 min-w-0 font-medium text-slate-900">
-                      <span
-                        aria-hidden="true"
-                        className={cn(
-                          'flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold',
-                          i === 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500',
-                        )}
-                      >
-                        {i + 1}
-                      </span>
-                      <span className="truncate">{p.name}</span>
-                    </span>
-                    <span className="shrink-0 text-right">
-                      <span className="font-bold text-slate-900 tabular-nums">{formatEur(p.gmv)}</span>
-                      <span className="ml-1.5 text-[11px] text-slate-400">{p.orders} cmd</span>
-                    </span>
-                  </div>
-                  <div className="mt-1.5 h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                    <div
-                      className={cn('h-full rounded-full', i === 0 ? 'bg-emerald-500' : 'bg-slate-300')}
-                      style={{ width: `${Math.max((p.gmv / maxProviderGmv) * 100, 6)}%` }}
+                <ChartTooltip
+                  content={
+                    <ChartTooltipContent
+                      labelFormatter={(_p, payload) => {
+                        const raw = payload?.[0]?.payload as { date?: string } | undefined;
+                        return raw?.date ? fmtFullDate.format(new Date(`${raw.date}T12:00:00`)) : '';
+                      }}
                     />
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-      </section>
+                  }
+                />
+                <Bar dataKey="gmv" fill="var(--color-gmv)" radius={[4, 4, 0, 0]} maxBarSize={28} />
+                <Line
+                  dataKey="commission"
+                  type="monotone"
+                  stroke="var(--color-commission)"
+                  strokeWidth={2}
+                  dot={false}
+                />
+              </ComposedChart>
+            </ChartContainer>
+          </div>
 
-      {/* ================= Commandes + activité ================= */}
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* ----- Dernières commandes ----- */}
-        <Card className="p-6 border-slate-200 bg-white shadow-sm lg:col-span-2">
-          <p className="font-semibold text-slate-900">Dernières commandes</p>
-          <p className="text-xs text-slate-500 mt-0.5">Les 8 dernières commandes passées depuis les QR Hubs</p>
-          {data.recentOrders.length === 0 ? (
-            <p className="text-sm text-slate-500 text-center py-12">
-              Aucune commande pour le moment.
-            </p>
-          ) : (
-            <div className="mt-4 max-h-96 overflow-y-auto rounded-xl border border-slate-100">
-              <Table>
-                <TableHeader className="sticky top-0 bg-slate-50 z-10">
-                  <TableRow>
-                    <TableHead className="text-xs uppercase tracking-wide text-slate-400">Invité</TableHead>
-                    <TableHead className="text-xs uppercase tracking-wide text-slate-400">Prestation</TableHead>
-                    <TableHead className="text-right text-xs uppercase tracking-wide text-slate-400">Montant</TableHead>
-                    <TableHead className="text-right text-xs uppercase tracking-wide text-slate-400">Commission</TableHead>
-                    <TableHead className="text-xs uppercase tracking-wide text-slate-400">Paiement</TableHead>
-                    <TableHead className="text-right text-xs uppercase tracking-wide text-slate-400">Date</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {data.recentOrders.map((o) => {
-                    const pay = metaOf(PAYMENT_META, o.paymentStatus, {
-                      label: o.paymentStatus,
-                      className: 'bg-slate-100 border-slate-200 text-slate-500',
-                    });
-                    return (
-                      <TableRow key={o.id} className="hover:bg-slate-50/60">
-                        <TableCell className="font-medium text-slate-900 whitespace-nowrap">
-                          {o.guestName}
-                        </TableCell>
-                        <TableCell className="max-w-[180px]">
-                          <p className="truncate text-slate-800">{o.itemName}</p>
-                          <p className="truncate text-[11px] text-slate-400">{o.providerName}</p>
-                        </TableCell>
-                        <TableCell className="text-right font-semibold text-slate-900 tabular-nums whitespace-nowrap">
-                          {formatEur(o.totalAmount)}
-                        </TableCell>
-                        <TableCell className="text-right text-emerald-700 font-medium tabular-nums whitespace-nowrap">
-                          {formatEur(o.commission)}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className={cn('font-semibold', pay.className)}>
-                            {pay.label}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right text-[11px] text-slate-400 whitespace-nowrap">
-                          {fmtDateTime.format(new Date(o.createdAt))}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+          {/* ----- Donut statuts de paiement ----- */}
+          <div className="lux-card p-5 sm:p-6">
+            <p className="lux-eyebrow">Paiements</p>
+            <p className="lux-display mt-1 text-xl text-white">Statuts de paiement</p>
+            <p className="mt-0.5 text-xs text-[#8fa0c2]">Répartition des {totalOrdersForDonut} commandes</p>
+            <div className="relative mt-4">
+              <ChartContainer config={paymentConfig} className="h-56 w-full">
+                <PieChart>
+                  <ChartTooltip content={<ChartTooltipContent nameKey="key" />} />
+                  <Pie
+                    data={paymentDistribution}
+                    dataKey="count"
+                    nameKey="key"
+                    innerRadius={58}
+                    outerRadius={88}
+                    strokeWidth={3}
+                    paddingAngle={2}
+                  >
+                    {paymentDistribution.map((entry) => (
+                      <Cell key={entry.key} fill={`var(--color-${entry.key})`} />
+                    ))}
+                  </Pie>
+                </PieChart>
+              </ChartContainer>
+              <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                <div className="text-center">
+                  <p className="lux-num text-2xl text-white">{totalOrdersForDonut}</p>
+                  <p className="lux-eyebrow !text-[9px]">commandes</p>
+                </div>
+              </div>
             </div>
-          )}
-        </Card>
-
-        {/* ----- Flux temps réel fusionné ----- */}
-        <Card className="p-6 border-slate-200 bg-white shadow-sm">
-          <p className="font-semibold text-slate-900">Dernières activités</p>
-          <p className="text-xs text-slate-500 mt-0.5">Activations de plaques, scans &amp; actions hôtes — temps réel</p>
-          {feed.length === 0 ? (
-            <p className="text-sm text-slate-500 text-center py-12">
-              Aucune activité enregistrée pour le moment.
-            </p>
-          ) : (
-            <ul className="mt-2 divide-y divide-slate-100 -mx-2 max-h-96 overflow-y-auto">
-              {feed.map((a) => (
-                <li key={a.id} className="flex items-start gap-3 px-2 py-3 hover:bg-slate-50/60 transition-colors rounded-lg">
-                  <span className="text-lg leading-none mt-0.5 select-none" aria-hidden="true">
-                    {a.emoji}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-slate-900">{a.label}</p>
-                    <p className="text-xs text-slate-500 truncate">
-                      {a.who}
-                      {a.detail ? ` · ${a.detail}` : ''}
-                    </p>
-                  </div>
-                  <span className="text-[11px] text-slate-400 shrink-0">
-                    {fmtDateTime.format(new Date(a.createdAt))}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-      </section>
-
-      {/* ================= Derniers hôtes ================= */}
-      <section aria-label="Derniers hôtes inscrits">
-        <B2BCard
-          header={{
-            emoji: '🆕',
-            title: 'Derniers hôtes inscrits',
-            subtitle: 'Les 6 comptes hôtes les plus récents',
-          }}
-          className="overflow-hidden"
-        >
-          {data.recentHosts.length === 0 ? (
-            <p className="text-sm text-slate-500 text-center py-8">Aucun hôte inscrit pour le moment.</p>
-          ) : (
-            <ul className="divide-y divide-slate-100 -mx-5 -mb-5 max-h-96 overflow-y-auto">
-              {data.recentHosts.map((h) => {
-                const plan = planLabel(h.selectedPlan);
+            <div className="mt-3 flex flex-wrap gap-2">
+              {paymentDistribution.map((d) => {
+                const meta = metaOf(PAYMENT_META, d.key, { label: d.key, dot: '#8fa0c2' });
+                if (d.count === 0) return null;
                 return (
-                  <li key={h.id} className="flex items-center gap-3 px-5 py-3 hover:bg-slate-50/60 transition-colors">
+                  <span key={d.key} className="lux-chip">
+                    <span className="lux-dot" style={{ backgroundColor: meta.dot }} aria-hidden="true" />
+                    {meta.label} : {d.count}
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        {/* ================= Croissance & abonnements ================= */}
+        <section aria-label="Croissance et abonnements" className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          {/* ----- Courbe d'inscriptions hôtes 30 j ----- */}
+          <div className="lux-card p-5 sm:p-6">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <p className="lux-eyebrow">Croissance</p>
+                <p className="lux-display mt-1 text-xl text-white">Inscriptions des hôtes</p>
+                <p className="mt-0.5 text-xs text-[#8fa0c2]">Nouveaux comptes créés sur les 30 derniers jours</p>
+              </div>
+              <span className="lux-chip">
+                <span className="lux-dot" style={{ backgroundColor: '#34d399' }} aria-hidden="true" />
+                +{stats.newHosts30d} sur 30 j
+              </span>
+            </div>
+            <ChartContainer config={signupConfig} className="mt-4 h-64 w-full">
+              <AreaChart data={data.hostSignupTrend} margin={{ left: 4, right: 8, top: 8 }}>
+                <defs>
+                  <linearGradient id="fillSignupsLux" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="var(--color-count)" stopOpacity={0.35} />
+                    <stop offset="95%" stopColor="var(--color-count)" stopOpacity={0.03} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid vertical={false} strokeDasharray="3 6" stroke="rgba(148,170,214,0.14)" />
+                <XAxis
+                  dataKey="date"
+                  tickLine={false}
+                  axisLine={{ stroke: 'rgba(148,170,214,0.18)' }}
+                  tickMargin={8}
+                  minTickGap={28}
+                  tick={{ fontSize: 11, fill: '#8fa0c2' }}
+                  tickFormatter={(v: string) => fmtDay.format(new Date(`${v}T12:00:00`))}
+                />
+                <YAxis
+                  tickLine={false}
+                  axisLine={false}
+                  width={32}
+                  allowDecimals={false}
+                  tick={{ fontSize: 11, fill: '#8fa0c2' }}
+                />
+                <ChartTooltip
+                  content={
+                    <ChartTooltipContent
+                      labelFormatter={(_p, payload) => {
+                        const raw = payload?.[0]?.payload as { date?: string } | undefined;
+                        return raw?.date ? fmtFullDate.format(new Date(`${raw.date}T12:00:00`)) : '';
+                      }}
+                    />
+                  }
+                />
+                <Area
+                  dataKey="count"
+                  type="monotone"
+                  stroke="var(--color-count)"
+                  strokeWidth={2}
+                  fill="url(#fillSignupsLux)"
+                  dot={false}
+                />
+              </AreaChart>
+            </ChartContainer>
+          </div>
+
+          {/* ----- Répartition des abonnements (Solo vs Pro) ----- */}
+          <div className="lux-card p-5 sm:p-6">
+            <p className="lux-eyebrow">Abonnements</p>
+            <p className="lux-display mt-1 text-xl text-white">Répartition des abonnements</p>
+            <p className="mt-0.5 text-xs text-[#8fa0c2]">Comptes hôtes par plan sélectionné</p>
+            {data.planDistribution.length === 0 ? (
+              <div className="lux-empty mt-4 rounded-2xl px-4 py-10 text-center">
+                <p className="text-sm text-[#8fa0c2]">Aucun hôte inscrit pour le moment.</p>
+              </div>
+            ) : (
+              <>
+                <div className="relative mt-4">
+                  <ChartContainer config={planConfig} className="h-56 w-full">
+                    <PieChart>
+                      <ChartTooltip content={<ChartTooltipContent nameKey="plan" />} />
+                      <Pie
+                        data={data.planDistribution}
+                        dataKey="count"
+                        nameKey="plan"
+                        innerRadius={58}
+                        outerRadius={88}
+                        strokeWidth={3}
+                        paddingAngle={2}
+                      >
+                        {data.planDistribution.map((entry) => (
+                          <Cell key={entry.plan} fill={`var(--color-${entry.plan})`} />
+                        ))}
+                      </Pie>
+                    </PieChart>
+                  </ChartContainer>
+                  <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                    <div className="text-center">
+                      <p className="lux-num text-2xl text-white">{stats.totalHosts}</p>
+                      <p className="lux-eyebrow !text-[9px]">hôtes</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {data.planDistribution.map((p) => (
+                    <span key={p.plan} className="lux-chip">
+                      {planLabel(p.plan === 'airbnb_solo' || p.plan === 'airbnb_pro' || p.plan === 'agency' ? p.plan : 'free')} : {p.count}
+                    </span>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        </section>
+
+        <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          {/* ----- GMV par catégorie ----- */}
+          <div className="lux-card p-5 sm:p-6">
+            <p className="lux-eyebrow">Prestations</p>
+            <p className="lux-display mt-1 text-xl text-white">GMV par catégorie</p>
+            <p className="mt-0.5 text-xs text-[#8fa0c2]">Chiffre d&apos;affaires invités par type de prestation</p>
+            {categoryRevenue.length === 0 ? (
+              <div className="lux-empty mt-4 rounded-2xl px-4 py-10 text-center">
+                <p className="text-sm text-[#8fa0c2]">Aucune commande payée pour le moment.</p>
+              </div>
+            ) : (
+              <ChartContainer config={categoryConfig} className="mt-4 h-64 w-full">
+                <BarChart layout="vertical" data={categoryRevenue} margin={{ left: 8, right: 16, top: 4 }}>
+                  <CartesianGrid horizontal={false} strokeDasharray="3 6" stroke="rgba(148,170,214,0.14)" />
+                  <XAxis
+                    type="number"
+                    tickLine={false}
+                    axisLine={false}
+                    tick={{ fontSize: 11, fill: '#8fa0c2' }}
+                    tickFormatter={(v: number) => `${Math.round(v)}€`}
+                  />
+                  <YAxis
+                    type="category"
+                    dataKey="label"
+                    width={150}
+                    tickLine={false}
+                    axisLine={false}
+                    tick={{ fontSize: 11, fill: '#8fa0c2' }}
+                  />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Bar dataKey="gmv" fill="var(--color-gmv)" radius={[0, 6, 6, 0]} maxBarSize={22} />
+                </BarChart>
+              </ChartContainer>
+            )}
+          </div>
+
+          {/* ----- Top prestataires ----- */}
+          <div className="lux-card p-5 sm:p-6">
+            <p className="lux-eyebrow">Classement</p>
+            <p className="lux-display mt-1 text-xl text-white">Top prestataires</p>
+            <p className="mt-0.5 text-xs text-[#8fa0c2]">Classement par GMV encaissée (commandes payées)</p>
+            {providerRevenue.length === 0 ? (
+              <div className="lux-empty mt-4 rounded-2xl px-4 py-10 text-center">
+                <p className="text-sm text-[#8fa0c2]">Aucune commande payée pour le moment.</p>
+              </div>
+            ) : (
+              <ul className="mt-4 space-y-3.5">
+                {providerRevenue.map((p, i) => (
+                  <li key={p.name} className="group">
+                    <div className="flex items-center justify-between gap-3 text-sm">
+                      <span className="flex min-w-0 items-center gap-2.5 font-medium text-white">
+                        <span
+                          aria-hidden="true"
+                          className={cn(
+                            'lux-num flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px]',
+                            i === 0
+                              ? 'bg-[#e9c47c] text-[#1a1206]'
+                              : 'bg-white/6 text-[#8fa0c2] ring-1 ring-white/10',
+                          )}
+                        >
+                          {i + 1}
+                        </span>
+                        <span className="truncate">{p.name}</span>
+                      </span>
+                      <span className="shrink-0 text-right">
+                        <span className="lux-num font-semibold text-white">{formatEur(p.gmv)}</span>
+                        <span className="ml-1.5 text-[11px] text-[#8fa0c2]">{p.orders} cmd</span>
+                      </span>
+                    </div>
+                    <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/6">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-[#5c8af0] to-[#2dd4bf]"
+                        style={{ width: `${Math.max((p.gmv / maxProviderGmv) * 100, 6)}%` }}
+                      />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </section>
+
+        {/* ================= Transactions récentes + activité ================= */}
+        <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          {/* ----- Transactions récentes ----- */}
+          <div className="lux-card p-5 sm:p-6 lg:col-span-2">
+            <p className="lux-eyebrow">Finance</p>
+            <p className="lux-display mt-1 text-xl text-white">Transactions récentes</p>
+            <p className="mt-0.5 text-xs text-[#8fa0c2]">Les 8 dernières transactions passées depuis les QR Hubs</p>
+            {data.recentOrders.length === 0 ? (
+              <div className="lux-empty mt-4 rounded-2xl px-4 py-10 text-center">
+                <p className="text-sm text-[#8fa0c2]">Aucune commande pour le moment.</p>
+              </div>
+            ) : (
+              <div className="lux-scroll mt-4 max-h-96 overflow-y-auto rounded-2xl border border-white/8">
+                <Table>
+                  <TableHeader className="sticky top-0 z-10 bg-[#0d1530]">
+                    <TableRow className="hover:bg-transparent border-white/8">
+                      <TableHead className="lux-eyebrow !text-[9.5px]">Invité</TableHead>
+                      <TableHead className="lux-eyebrow !text-[9.5px]">Prestation</TableHead>
+                      <TableHead className="lux-eyebrow !text-[9.5px] text-right">Montant</TableHead>
+                      <TableHead className="lux-eyebrow !text-[9.5px] text-right">Commission</TableHead>
+                      <TableHead className="lux-eyebrow !text-[9.5px]">Paiement</TableHead>
+                      <TableHead className="lux-eyebrow !text-[9.5px] text-right">Date</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {data.recentOrders.map((o) => {
+                      const pay = metaOf(PAYMENT_META, o.paymentStatus, { label: o.paymentStatus, dot: '#8fa0c2' });
+                      return (
+                        <TableRow key={o.id} className="border-white/8 hover:bg-white/[0.04]">
+                          <TableCell className="whitespace-nowrap font-medium text-white">
+                            {o.guestName}
+                          </TableCell>
+                          <TableCell className="max-w-[180px]">
+                            <p className="truncate text-white">{o.itemName}</p>
+                            <p className="truncate text-[11px] text-[#8fa0c2]">{o.providerName}</p>
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap text-right font-semibold tabular-nums text-white">
+                            {formatEur(o.totalAmount)}
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap text-right font-medium tabular-nums" style={{ color: '#86e9cb' }}>
+                            {formatEur(o.commission)}
+                          </TableCell>
+                          <TableCell>
+                            <span className="lux-chip">
+                              <span className="lux-dot" style={{ backgroundColor: pay.dot }} aria-hidden="true" />
+                              {pay.label}
+                            </span>
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap text-right text-[11px] text-[#8fa0c2]">
+                            {fmtDateTime.format(new Date(o.createdAt))}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </div>
+
+          {/* ----- Flux temps réel fusionné ----- */}
+          <div className="lux-card p-5 sm:p-6">
+            <p className="lux-eyebrow">Temps réel</p>
+            <p className="lux-display mt-1 text-xl text-white">Dernières activités</p>
+            <p className="mt-0.5 text-xs text-[#8fa0c2]">Activations de plaques, scans &amp; actions hôtes</p>
+            {feed.length === 0 ? (
+              <div className="lux-empty mt-4 rounded-2xl px-4 py-10 text-center">
+                <p className="text-sm text-[#8fa0c2]">Aucune activité enregistrée pour le moment.</p>
+              </div>
+            ) : (
+              <ul className="lux-scroll -mx-2 mt-2 max-h-96 divide-y divide-white/6 overflow-y-auto">
+                {feed.map((a) => (
+                  <li key={a.id} className="flex items-start gap-3 rounded-lg px-2 py-3 transition-colors hover:bg-white/[0.04]">
+                    <span className="lux-dot mt-2 shrink-0" style={{ backgroundColor: a.dot }} aria-hidden="true" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-white">{a.label}</p>
+                      <p className="truncate text-xs text-[#8fa0c2]">
+                        {a.who}
+                        {a.detail ? ` · ${a.detail}` : ''}
+                      </p>
+                    </div>
+                    <span className="shrink-0 text-[11px] text-[#8fa0c2]">
+                      {fmtDateTime.format(new Date(a.createdAt))}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </section>
+
+        {/* ================= Santé plateforme (real data /api/admin/notifications) ================= */}
+        <section aria-label="Santé plateforme">
+          <div className="lux-card p-5 sm:p-6">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="lux-eyebrow">Monitoring</p>
+                <p className="lux-display mt-1 text-xl text-white">Santé plateforme</p>
+                <p className="mt-0.5 text-xs text-[#8fa0c2]">
+                  Incidents réels détectés : emails en échec, commandes impayées &gt; 48 h, abonnements en impayé,
+                  plaques perdues
+                </p>
+              </div>
+              {healthState === 'ok' && health && (
+                <span className="lux-chip">
+                  <span
+                    className={cn('lux-dot', health.length > 0 && 'animate-pulse')}
+                    style={{ backgroundColor: health.length === 0 ? '#34d399' : '#fbbf24' }}
+                    aria-hidden="true"
+                  />
+                  {health.length === 0 ? 'Tout est opérationnel' : `${health.length} point${health.length > 1 ? 's' : ''} d'attention`}
+                </span>
+              )}
+            </div>
+
+            {healthState === 'loading' ? (
+              <div className="mt-4 flex flex-col gap-2">
+                {Array.from({ length: 2 }).map((_, i) => (
+                  <LuxSkeleton key={i} className="h-12 w-full" />
+                ))}
+              </div>
+            ) : healthState === 'error' ? (
+              <p className="lux-empty mt-4 rounded-2xl px-4 py-6 text-center text-sm text-[#8fa0c2]">
+                Monitoring momentanément indisponible.
+              </p>
+            ) : !health || health.length === 0 ? (
+              <div className="lux-empty mt-4 rounded-2xl px-4 py-8 text-center">
+                <p className="lux-display text-lg text-white">Aucun incident — la plateforme est saine.</p>
+                <p className="mt-1 text-xs text-[#8fa0c2]">
+                  Emails, paiements, abonnements et plaques : tout roule.
+                </p>
+              </div>
+            ) : (
+              <ul className="mt-4 divide-y divide-white/6">
+                {health.map((n, i) => {
+                  const dot = HEALTH_KIND_DOT[n.kind] ?? '#8fa0c2';
+                  const label = HEALTH_KIND_LABEL[n.kind] ?? n.kind;
+                  return (
+                    <li key={`${n.kind}-${i}`}>
+                      <Link
+                        href={n.href}
+                        className="-mx-2 flex items-start gap-3 rounded-xl px-2 py-3 transition-colors hover:bg-white/[0.04]"
+                      >
+                        <span className="lux-dot mt-2 shrink-0" style={{ backgroundColor: dot }} aria-hidden="true" />
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-sm font-medium text-white">{n.title}</span>
+                          <span className="block truncate text-xs text-[#8fa0c2]">{n.detail}</span>
+                        </span>
+                        <span className="flex shrink-0 flex-col items-end gap-1">
+                          <span className="lux-chip">{label}</span>
+                          <span className="text-[11px] text-[#8fa0c2]">{fmtDateTime.format(new Date(n.at))}</span>
+                        </span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+        </section>
+
+        {/* ================= Dernières inscriptions ================= */}
+        <section aria-label="Dernières inscriptions">
+          <div className="lux-card overflow-hidden p-0">
+            <div className="px-5 pb-3 pt-5 sm:px-6">
+              <p className="lux-eyebrow">Croissance</p>
+              <p className="lux-display mt-1 text-xl text-white">Dernières inscriptions</p>
+              <p className="mt-0.5 text-xs text-[#8fa0c2]">Les 6 comptes hôtes les plus récents</p>
+            </div>
+            {data.recentHosts.length === 0 ? (
+              <div className="lux-empty mx-5 mb-5 rounded-2xl px-4 py-8 text-center sm:mx-6">
+                <p className="text-sm text-[#8fa0c2]">Aucun hôte inscrit pour le moment.</p>
+              </div>
+            ) : (
+              <ul className="lux-scroll max-h-96 divide-y divide-white/6 overflow-y-auto">
+                {data.recentHosts.map((h) => (
+                  <li key={h.id} className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-white/[0.04] sm:px-6">
                     <span
                       aria-hidden="true"
-                      className="h-9 w-9 rounded-full bg-slate-100 border border-slate-200 text-xs font-bold text-slate-600 inline-flex items-center justify-center shrink-0"
+                      className="lux-num inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#3d6fe0]/15 text-xs font-semibold text-[#a9c4ff] ring-1 ring-[#5c8af0]/25"
                     >
                       {(h.fullName ?? h.email).slice(0, 2).toUpperCase()}
                     </span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-slate-900 truncate">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-white">
                         {h.fullName ?? 'Sans nom'}
                         {!h.isActive && (
-                          <span className="ml-2 text-[11px] font-semibold text-red-600">· désactivé</span>
+                          <span className="ml-2 text-[11px] font-semibold" style={{ color: '#f07d6a' }}>
+                            · désactivé
+                          </span>
                         )}
                       </p>
-                      <p className="text-xs text-slate-500 truncate">{h.email}</p>
+                      <p className="truncate text-xs text-[#8fa0c2]">{h.email}</p>
                     </div>
-                    <div className="flex flex-col items-end gap-1 shrink-0">
-                      <Badge className={cn('font-semibold', plan.className)} variant="outline">
-                        {plan.label}
-                      </Badge>
-                      <span className="text-[11px] text-slate-400">
+                    <div className="flex shrink-0 flex-col items-end gap-1">
+                      <span className="lux-chip">{planLabel(h.selectedPlan)}</span>
+                      <span className="text-[11px] text-[#8fa0c2]">
                         {h.propertyCount} bien{h.propertyCount > 1 ? 's' : ''} · {formatDay(h.createdAt)}
                       </span>
                     </div>
                   </li>
-                );
-              })}
-            </ul>
-          )}
-        </B2BCard>
-      </section>
+                ))}
+              </ul>
+            )}
+          </div>
+        </section>
 
-      {/* ================= Rappel règle d'or ================= */}
-      <section aria-label="Règle de gestion des prestataires" className="pb-4">
-        <B2BCard className="bg-emerald-50/60 border-emerald-200">
-          <div className="flex items-start gap-3">
-            <span aria-hidden="true" className="text-xl leading-none select-none">🛡️</span>
-            <div>
-              <p className="text-sm font-semibold text-emerald-900">Règle d&apos;or — Prestataires</p>
-              <p className="text-xs text-emerald-800 mt-0.5 leading-relaxed">
-                Seul le Superadmin (vous) ajoute et géolocalise les prestataires. Les hôtes les consultent
-                depuis leur dashboard, et les voyageurs découvrent les expériences via le QR Hub.
-                Gestion complète : <span className="font-semibold">menu Prestataires</span> dans la barre latérale.
-              </p>
+        {/* ================= Rappel règle d'or ================= */}
+        <section aria-label="Règle de gestion des prestataires" className="pb-4">
+          <div className="rounded-2xl border border-[#2dd4bf]/25 bg-[#2dd4bf]/8 p-5">
+            <div className="flex items-start gap-3">
+              <span className="lux-dot mt-2 shrink-0" style={{ backgroundColor: '#2dd4bf' }} aria-hidden="true" />
+              <div>
+                <p className="text-sm font-semibold text-[#86e9cb]">Règle d&apos;or — Prestataires</p>
+                <p className="mt-1 text-xs leading-relaxed text-[#9fc4b8]">
+                  Seul le Superadmin (vous) ajoute et géolocalise les prestataires. Les hôtes les consultent
+                  depuis leur dashboard, et les voyageurs découvrent les expériences via le QR Hub.
+                  Gestion complète : <span className="font-semibold">menu Prestataires</span> dans la barre latérale.
+                </p>
+              </div>
             </div>
           </div>
-        </B2BCard>
-      </section>
+        </section>
+      </div>
     </div>
   );
 }

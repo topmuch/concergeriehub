@@ -17,10 +17,13 @@ import { Label } from '@/components/ui/label';
 // différent (ex. Portail Prestataire ÉTAPE 17.4) sans dupliquer.
 // =============================================================
 
-const DEMO_CREDENTIALS = {
-  email: 'demo@qrdomotik.roomscan.pro',
-  password: 'Demo2024!',
-};
+// v4.81 (AUDIT QA) — identifiants démo PRÉ-REMPLIS uniquement en dev :
+// en production, plus aucune credential affichée/insérée dans le DOM
+// (NODE_ENV est inliné par Next.js côté client).
+const DEMO_CREDENTIALS =
+  process.env.NODE_ENV !== 'production'
+    ? { email: 'demo@qrdomotik.roomscan.pro', password: 'Demo2024!' }
+    : { email: '', password: '' };
 
 interface LoginGateProps {
   title?: string;
@@ -37,7 +40,7 @@ export function LoginGate({
   buttonLabel = 'Accéder à mon dashboard',
   demoEmail = DEMO_CREDENTIALS.email,
   demoPassword = DEMO_CREDENTIALS.password,
-  demoLabel = 'Compte démo',
+  demoLabel = process.env.NODE_ENV !== 'production' ? 'Compte démo' : undefined,
 }: LoginGateProps) {
   const router = useRouter();
   const [email, setEmail] = useState(demoEmail);
@@ -116,9 +119,9 @@ export function LoginGate({
           </form>
         </B2BCard>
 
-        <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-center">
-          <p className="text-[11px] font-semibold text-emerald-800 uppercase tracking-wide">{demoLabel}</p>
-          <p className="text-xs text-emerald-900 font-mono mt-0.5">
+        <div className="mt-4 rounded-xl border border-[#DBE8FF] bg-[#EAF2FF] p-3 text-center">
+          <p className="text-[11px] font-semibold text-[#0052C4] uppercase tracking-wide">{demoLabel}</p>
+          <p className="text-xs text-[#0047B3] font-mono mt-0.5">
             {demoEmail} · {demoPassword}
           </p>
         </div>

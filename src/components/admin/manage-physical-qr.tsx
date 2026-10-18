@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { QrCode, Search, RotateCcw, Ban, AlertTriangle } from 'lucide-react';
 
 import {
   Card,
@@ -74,11 +73,12 @@ interface PaginationMeta {
   totalPages: number;
 }
 
+// Badges de statut « lux » — teintes sémantiques 8-10 % sur fond nuit.
 const STATUS_MAP: Record<string, { label: string; variant: 'secondary' | 'default' | 'destructive' | 'outline'; className?: string }> = {
-  inactive: { label: 'Inactif', variant: 'secondary' },
-  active: { label: 'Actif', variant: 'default', className: 'bg-emerald-600 hover:bg-emerald-700' },
-  lost: { label: 'Perdu', variant: 'destructive' },
-  cancelled: { label: 'Annulé', variant: 'outline' },
+  inactive: { label: 'Inactif', variant: 'secondary', className: 'border border-white/10 bg-white/[0.05] text-[#8fa0c2]' },
+  active: { label: 'Actif', variant: 'default', className: 'border border-[#34d399]/25 bg-[#34d399]/10 text-[#86e9cb] hover:bg-[#34d399]/15' },
+  lost: { label: 'Perdu', variant: 'destructive', className: 'border border-[#f07d6a]/25 bg-[#f07d6a]/10 text-[#f07d6a]' },
+  cancelled: { label: 'Annulé', variant: 'outline', className: 'border border-[#fbbf24]/25 bg-[#fbbf24]/10 text-[#fbbf24]' },
 };
 
 const FILTER_OPTIONS: { value: FilterStatus; label: string }[] = [
@@ -101,12 +101,12 @@ function TableSkeleton() {
     <div className="space-y-3 p-4">
       {Array.from({ length: 6 }).map((_, i) => (
         <div key={i} className="flex items-center gap-4">
-          <Skeleton className="h-4 w-32" />
-          <Skeleton className="h-4 w-20" />
-          <Skeleton className="h-5 w-20" />
-          <Skeleton className="h-4 w-32" />
-          <Skeleton className="h-4 w-24" />
-          <Skeleton className="h-8 w-20" />
+          <Skeleton className="h-4 w-32 bg-white/8" />
+          <Skeleton className="h-4 w-20 bg-white/8" />
+          <Skeleton className="h-5 w-20 rounded-full bg-white/8" />
+          <Skeleton className="h-4 w-32 bg-white/8" />
+          <Skeleton className="h-4 w-24 bg-white/8" />
+          <Skeleton className="h-8 w-20 bg-white/8" />
         </div>
       ))}
     </div>
@@ -213,36 +213,33 @@ export function ManagePhysicalQr() {
   };
 
   const getStatusInfo = (status: string) => {
-    return STATUS_MAP[status] || { label: status, variant: 'outline' as const };
+    return STATUS_MAP[status] || { label: status, variant: 'outline' as const, className: 'border-white/12 text-[#8fa0c2]' };
   };
 
   return (
-    <Card>
+    <Card className="lux-card">
       <CardHeader>
-        <CardTitle>QR codes physiques</CardTitle>
-        <CardDescription>
+        <CardTitle className="lux-display text-xl text-white">QR codes physiques</CardTitle>
+        <CardDescription className="text-sm text-[#8fa0c2]">
           Gérez et suivez l&apos;état de tous les QR codes physiques
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Filters */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <div className="relative flex-1 sm:max-w-xs">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Rechercher un code d'activation..."
-              value={search}
-              onChange={handleSearchChange}
-              className="pl-9"
-            />
-          </div>
+          <Input
+            placeholder="Rechercher un code d'activation..."
+            value={search}
+            onChange={handleSearchChange}
+            className="h-10 rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50 sm:max-w-xs"
+          />
           <Select value={statusFilter} onValueChange={handleStatusChange}>
-            <SelectTrigger className="w-full sm:w-44">
+            <SelectTrigger className="h-10 w-full rounded-xl border-white/12 bg-white/[0.04] text-white sm:w-44">
               <SelectValue placeholder="Statut" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="border-white/10 bg-[#0d1530] text-white">
               {FILTER_OPTIONS.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>
+                <SelectItem key={opt.value} value={opt.value} className="focus:bg-white/8 focus:text-white">
                   {opt.label}
                 </SelectItem>
               ))}
@@ -255,10 +252,10 @@ export function ManagePhysicalQr() {
 
         {/* Error */}
         {error && !loading && (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <AlertTriangle className="mb-4 h-12 w-12 text-destructive" />
-            <p className="text-sm text-destructive">{error}</p>
-            <Button variant="outline" size="sm" className="mt-3" onClick={fetchQrs}>
+          <div className="lux-empty flex flex-col items-center justify-center rounded-2xl px-4 py-12 text-center">
+            <span className="lux-dot mb-4" style={{ backgroundColor: '#f07d6a' }} aria-hidden="true" />
+            <p className="text-sm text-[#f07d6a]">{error}</p>
+            <Button variant="outline" size="sm" className="lux-btn-ghost mt-3 h-8 rounded-full px-4 text-xs" onClick={fetchQrs}>
               Réessayer
             </Button>
           </div>
@@ -266,10 +263,10 @@ export function ManagePhysicalQr() {
 
         {/* Empty */}
         {!loading && !error && qrs.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <QrCode className="mb-4 h-12 w-12 text-muted-foreground" />
-            <h3 className="text-lg font-medium">Aucun QR code</h3>
-            <p className="mt-1 text-sm text-muted-foreground">
+          <div className="lux-empty flex flex-col items-center justify-center rounded-2xl px-4 py-12 text-center">
+            <span className="lux-dot mb-4 opacity-70" style={{ backgroundColor: '#8fa0c2' }} aria-hidden="true" />
+            <h3 className="lux-display text-lg text-white">Aucun QR code</h3>
+            <p className="mt-1 text-sm text-[#8fa0c2]">
               Aucun QR code ne correspond à vos critères de recherche.
             </p>
           </div>
@@ -278,29 +275,29 @@ export function ManagePhysicalQr() {
         {/* Table */}
         {!loading && !error && qrs.length > 0 && (
           <>
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto rounded-xl border border-white/10">
               <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Code d&apos;activation</TableHead>
-                    <TableHead>Lot</TableHead>
+                <TableHeader className="sticky top-0 z-10 bg-[#0d1530]">
+                  <TableRow className="border-white/8 hover:bg-transparent">
+                    <TableHead className="lux-eyebrow !text-[9.5px]">Code d&apos;activation</TableHead>
+                    <TableHead className="lux-eyebrow !text-[9.5px]">Lot</TableHead>
                     {/* FIX-11 — matériau de la plaque (designConfig du lot) */}
-                    <TableHead>Matériau</TableHead>
-                    <TableHead>Statut</TableHead>
-                    <TableHead>Activé par</TableHead>
-                    <TableHead>Date d&apos;activation</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead className="lux-eyebrow !text-[9.5px]">Matériau</TableHead>
+                    <TableHead className="lux-eyebrow !text-[9.5px]">Statut</TableHead>
+                    <TableHead className="lux-eyebrow !text-[9.5px]">Activé par</TableHead>
+                    <TableHead className="lux-eyebrow !text-[9.5px]">Date d&apos;activation</TableHead>
+                    <TableHead className="lux-eyebrow !text-[9.5px] text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {qrs.map((qr) => {
                     const statusInfo = getStatusInfo(qr.status);
                     return (
-                      <TableRow key={qr.id}>
-                        <TableCell className="font-mono text-sm font-medium">
+                      <TableRow key={qr.id} className="border-white/8 hover:bg-white/[0.04]">
+                        <TableCell className="font-mono text-sm font-medium text-white">
                           {qr.activationCode}
                         </TableCell>
-                        <TableCell className="font-mono text-xs text-muted-foreground">
+                        <TableCell className="font-mono text-xs text-[#8fa0c2]">
                           {qr.batchId.slice(0, 8)}…
                         </TableCell>
                         <TableCell>
@@ -310,10 +307,10 @@ export function ManagePhysicalQr() {
                             return (
                               <Badge
                                 variant="outline"
-                                className="text-xs whitespace-nowrap"
+                                className="whitespace-nowrap border-white/12 bg-white/[0.03] text-xs text-[#8fa0c2]"
                                 title={`Matériau : ${meta.label}`}
                               >
-                                {meta.emoji} {meta.label}
+                                {meta.label}
                               </Badge>
                             );
                           })()}
@@ -326,7 +323,7 @@ export function ManagePhysicalQr() {
                             {statusInfo.label}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
+                        <TableCell className="text-sm text-[#8fa0c2]">
                           {qr.activatedBy?.email ? (
                             <span className="text-xs">{qr.activatedBy.email}</span>
                           ) : qr.activatedByUserId ? (
@@ -334,16 +331,16 @@ export function ManagePhysicalQr() {
                               {qr.activatedByUserId.slice(0, 8)}…
                             </span>
                           ) : (
-                            <span className="text-muted-foreground/50">—</span>
+                            <span className="text-[#8fa0c2]/50">—</span>
                           )}
                         </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
+                        <TableCell className="text-sm text-[#8fa0c2]">
                           {qr.activatedAt
                             ? format(new Date(qr.activatedAt), 'dd MMM yyyy', {
                                 locale: fr,
                               })
                             : (
-                                <span className="text-muted-foreground/50">—</span>
+                                <span className="text-[#8fa0c2]/50">—</span>
                               )}
                         </TableCell>
                         <TableCell className="text-right">
@@ -352,33 +349,33 @@ export function ManagePhysicalQr() {
                               <Button
                                 variant="ghost"
                                 size="sm"
+                                className="text-xs text-[#f07d6a] hover:bg-[#f07d6a]/10 hover:text-[#f07d6a]"
                                 onClick={() => handleStatusAction(qr, 'lost')}
                                 title="Marquer perdu"
                               >
-                                <AlertTriangle className="h-4 w-4 text-destructive" />
-                                <span className="sr-only">Marquer perdu</span>
+                                Perdu
                               </Button>
                             )}
                             {(qr.status === 'lost' || qr.status === 'cancelled') && (
                               <Button
                                 variant="ghost"
                                 size="sm"
+                                className="text-xs text-[#8fa0c2] hover:bg-white/[0.06] hover:text-white"
                                 onClick={() => handleStatusAction(qr, 'inactive')}
                                 title="Réinitialiser"
                               >
-                                <RotateCcw className="h-4 w-4" />
-                                <span className="sr-only">Réinitialiser</span>
+                                Réinit.
                               </Button>
                             )}
                             {(qr.status === 'active' || qr.status === 'inactive') && (
                               <Button
                                 variant="ghost"
                                 size="sm"
+                                className="text-xs text-[#fbbf24] hover:bg-[#fbbf24]/10 hover:text-[#fbbf24]"
                                 onClick={() => handleStatusAction(qr, 'cancelled')}
                                 title="Annuler"
                               >
-                                <Ban className="h-4 w-4" />
-                                <span className="sr-only">Annuler</span>
+                                Annuler
                               </Button>
                             )}
                           </div>
@@ -393,7 +390,7 @@ export function ManagePhysicalQr() {
             {/* Pagination */}
             {pagination && pagination.totalPages > 1 && (
               <div className="flex items-center justify-between pt-4">
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-[#8fa0c2]">
                   Page {pagination.page} sur {pagination.totalPages} —{' '}
                   {pagination.total} résultat{pagination.total > 1 ? 's' : ''}
                 </p>
@@ -401,6 +398,7 @@ export function ManagePhysicalQr() {
                   <Button
                     variant="outline"
                     size="sm"
+                    className="lux-btn-ghost h-8 rounded-full px-4 text-xs"
                     disabled={pagination.page <= 1}
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
                   >
@@ -409,6 +407,7 @@ export function ManagePhysicalQr() {
                   <Button
                     variant="outline"
                     size="sm"
+                    className="lux-btn-ghost h-8 rounded-full px-4 text-xs"
                     disabled={pagination.page >= pagination.totalPages}
                     onClick={() => setPage((p) => p + 1)}
                   >
@@ -427,29 +426,23 @@ export function ManagePhysicalQr() {
             if (!open) setPendingAction(null);
           }}
         >
-          <AlertDialogContent>
+          <AlertDialogContent className="border-white/10 bg-[#0b1226] text-white">
             <AlertDialogHeader>
-              <AlertDialogTitle>{pendingAction?.label}</AlertDialogTitle>
-              <AlertDialogDescription>
+              <AlertDialogTitle className="lux-display text-lg text-white">{pendingAction?.label}</AlertDialogTitle>
+              <AlertDialogDescription className="text-sm text-[#8fa0c2]">
                 {pendingAction?.description}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel disabled={updating}>
+              <AlertDialogCancel disabled={updating} className="lux-btn-ghost rounded-full border-white/10 bg-transparent px-4 text-xs text-[#c7d3ec]">
                 Annuler
               </AlertDialogCancel>
               <AlertDialogAction
                 onClick={confirmAction}
                 disabled={updating}
+                className="lux-btn rounded-full text-xs"
               >
-                {updating ? (
-                  <span className="flex items-center gap-2">
-                    <RotateCcw className="h-4 w-4 animate-spin" />
-                    Mise à jour…
-                  </span>
-                ) : (
-                  'Confirmer'
-                )}
+                {updating ? 'Mise à jour…' : 'Confirmer'}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

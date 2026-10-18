@@ -54,16 +54,26 @@ async function getRedis(): Promise<RedisLike | null> {
 // ── Store mémoire (fallback) ──
 const memoryBuckets = new Map<string, number[]>();
 
-/** true = autorisé, false = limite atteinte (max requêtes / 60 s). */
-export async function rateLimit(key: string, maxPerMinute = 10): Promise<boolean> {
+/**
+ * true = autorisé, false = limite atteinte.
+ * AUDIT PRÉ-PROD : `windowMs` paramétrable (défaut 60 s) pour les
+ * gardes renforcées type PIN hub (5 tentatives / 15 min). Redis :
+ * fenêtre incluse dans la clé ; mémoire : fenêtre glissante.
+ */
+export async function rateLimit(
+  key: string,
+  maxPerMinute = 10,
+  windowMs: number = WINDOW_MS,
+): Promise<boolean> {
   const max = Math.max(1, maxPerMinute);
+  const window = Math.max(1_000, windowMs);
 
   const redis = await getRedis();
   if (redis) {
     try {
-      const redisKey = `rl:${key}:${Math.floor(Date.now() / WINDOW_MS)}`;
+      const redisKey = `rl:${key}:${Math.floor(Date.now() / window)}`;
       const count = await redis.incr(redisKey);
-      if (count === 1) await redis.pexpire(redisKey, WINDOW_MS + 1000);
+      if (count === 1) await redis.pexpire(redisKey, window + 1000);
       return count <= max;
     } catch {
       // Redis indisponible → fallback mémoire (fail-open, jamais throw)
@@ -71,7 +81,7 @@ export async function rateLimit(key: string, maxPerMinute = 10): Promise<boolean
   }
 
   const now = Date.now();
-  const windowStart = now - WINDOW_MS;
+  const windowStart = now - window;
   const arr = (memoryBuckets.get(key) || []).filter((t) => t > windowStart);
   if (arr.length >= max) {
     memoryBuckets.set(key, arr);

@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 import {
   SUBSCRIPTION_TIERS,
@@ -8,18 +10,28 @@ import {
   type SubscriberType,
   type SubscriptionStatus,
 } from '@/types/database';
+import { resolveOrigin, siteUrl } from '@/lib/site';
 
 const isSimulation = !process.env.STRIPE_SECRET_KEY;
 
-// GET: List subscriptions
+// GET: List subscriptions — scopées sur l'utilisateur connecté (Superadmin : tout via subscriberId)
 export async function GET(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+    }
+
+    const userId = (session.user as { id?: string }).id;
+    const role = (session.user as { role?: string }).role;
+    const isSuperadmin = role === 'superadmin';
+
     const { searchParams } = new URL(request.url);
     const subscriberId = searchParams.get('subscriberId');
     const subscriberType = searchParams.get('subscriberType');
     const status = searchParams.get('status');
 
-    if (!subscriberId) {
+    if (isSuperadmin && !subscriberId) {
       return NextResponse.json(
         { error: 'Le paramètre subscriberId est requis' },
         { status: 400 }
@@ -40,7 +52,13 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const where: Record<string, unknown> = { subscriberId };
+    const where: Record<string, unknown> = isSuperadmin
+      ? { subscriberId }
+      : {
+          // Scoping strict : uniquement les abonnements de l'utilisateur connecté
+          // (abonnements HÔTE via userId, marchand/prestataire via subscriberId)
+          OR: [{ userId }, { subscriberId: userId }],
+        };
     if (subscriberType) where.subscriberType = subscriberType;
     if (status) where.status = status;
 
@@ -77,34 +95,28 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST: Create a subscription
+// POST: Create a subscription — toujours rattachée à l'utilisateur connecté
+// (subscriberId/subscriberType du body IGNORÉS : un utilisateur ne peut
+// créer un abonnement que pour lui-même, en tant que 'user')
 export async function POST(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+    }
+
+    const userId = (session.user as { id?: string }).id;
+
     const body = await request.json();
-    const {
-      subscriberId,
-      subscriberType,
-      plan,
-      amount,
-      currency,
-    } = body as {
-      subscriberId: string;
-      subscriberType: string;
+    const { plan, amount, currency } = body as {
       plan: string;
       amount: number;
       currency?: string;
     };
 
-    if (!subscriberId || !subscriberType || !plan || amount === undefined) {
+    if (!plan || amount === undefined) {
       return NextResponse.json(
-        { error: 'Les champs subscriberId, subscriberType, plan et amount sont requis' },
-        { status: 400 }
-      );
-    }
-
-    if (!SUBSCRIBER_TYPES.includes(subscriberType as SubscriberType)) {
-      return NextResponse.json(
-        { error: 'Type de souscripteur invalide. Valeurs autorisées : merchant, provider' },
+        { error: 'Les champs plan et amount sont requis' },
         { status: 400 }
       );
     }
@@ -116,23 +128,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Rattachement forcé à la session — jamais au body
+    // (convention schéma : abonnement HÔTE = subscriberType 'user' + userId,
+    // subscriberId restant null car réservé aux marchands/prestataires)
+    const subscriberType = 'user';
+
     // Verify subscriber exists
-    if (subscriberType === 'merchant') {
-      const merchant = await db.merchant.findUnique({ where: { id: subscriberId } });
-      if (!merchant) {
-        return NextResponse.json(
-          { error: 'Commerçant introuvable' },
-          { status: 404 }
-        );
-      }
-    } else {
-      const provider = await db.provider.findUnique({ where: { id: subscriberId } });
-      if (!provider) {
-        return NextResponse.json(
-          { error: 'Professionnel introuvable' },
-          { status: 404 }
-        );
-      }
+    const user = await db.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Utilisateur introuvable' },
+        { status: 404 }
+      );
     }
 
     // --- Simulation mode ---
@@ -143,8 +150,8 @@ export async function POST(request: NextRequest) {
 
       const subscription = await db.subscription.create({
         data: {
-          subscriberId,
           subscriberType,
+          userId,
           plan,
           amount,
           currency: currency || 'EUR',
@@ -159,7 +166,7 @@ export async function POST(request: NextRequest) {
         await db.transaction.create({
           data: {
             type: 'subscription',
-            payerId: subscriberId,
+            payerId: userId,
             amount,
             currency: currency || 'EUR',
             status: 'completed',
@@ -174,28 +181,14 @@ export async function POST(request: NextRequest) {
     // --- Stripe mode ---
     const Stripe = (await import('stripe')).default;
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-      
+
     });
 
-    // Look up customer email
-    let customerEmail: string | null = null;
-    if (subscriberType === 'merchant') {
-      const merchant = await db.merchant.findUnique({
-        where: { id: subscriberId },
-        include: { user: { select: { email: true } } },
-      });
-      customerEmail = merchant?.user?.email ?? null;
-    } else {
-      const provider = await db.provider.findUnique({
-        where: { id: subscriberId },
-        include: { user: { select: { email: true } } },
-      });
-      customerEmail = provider?.user?.email ?? null;
-    }
+    const customerEmail = user.email;
 
-    const origin = request.headers.get('origin') || 'http://localhost:3000';
+    const origin = resolveOrigin(request);
 
-    const session = await stripe.checkout.sessions.create({
+    const checkoutSession = await stripe.checkout.sessions.create({
       mode: 'subscription',
       payment_method_types: ['card'],
       customer_email: customerEmail || undefined,
@@ -206,7 +199,7 @@ export async function POST(request: NextRequest) {
             unit_amount: Math.round(amount * 100),
             recurring: { interval: 'month' },
             product_data: {
-              name: `Plan ${plan.charAt(0).toUpperCase() + plan.slice(1)} - ${subscriberType === 'merchant' ? 'Commerçant' : 'Professionnel'}`,
+              name: `Plan ${plan.charAt(0).toUpperCase() + plan.slice(1)} - Hôte`,
             },
           },
           quantity: 1,
@@ -215,13 +208,13 @@ export async function POST(request: NextRequest) {
       success_url: `${origin}/billing?success=true&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/billing?canceled=true`,
       metadata: {
-        subscriberId,
+        userId: userId ?? '',
         subscriberType,
         plan,
       },
     });
 
-    return NextResponse.json({ checkoutUrl: session.url }, { status: 201 });
+    return NextResponse.json({ checkoutUrl: checkoutSession.url }, { status: 201 });
   } catch (error) {
     console.error('[subscriptions POST] Error:', error);
     return NextResponse.json(

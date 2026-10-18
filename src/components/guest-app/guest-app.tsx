@@ -6,23 +6,54 @@ import { TabHome } from './tab-home';
 import { TabGuide } from './tab-guide';
 import { TabServices } from './tab-services';
 import { TabHelp } from './tab-help';
-import { GUEST_TABS, type GuestPayload, type GuestTab } from './types';
+import { TabLocal } from './tab-local';
+import { TabSos } from './tab-sos';
+import { AccessView } from './view-access';
+import { OrderConfirmation } from './cart-checkout';
+import { CheckOutInspection } from './checkout-inspection';
+import { useWeather } from './use-weather';
+import { UpdateBanner } from './update-banner';
+import { flushGuestPings, queueGuestPing } from './offline-outbox';
+import {
+  GUEST_TABS,
+  activeTabOf,
+  viewDirection,
+  type GuestPayload,
+  type GuestView,
+} from './types';
 
 // =============================================================
 // ÉTAPE 16 (V3) — App Invitée "app-like" (PWA sans téléchargement)
-// • Bottom navigation bar (🏠 📖 🥐 🚨) style iOS/Android
+// • Bottom navigation bar style iOS/Android
 // • Transitions horizontales Framer Motion (direction-aware)
 // • Dark mode automatique (via GuestScope + prefers-color-scheme)
 // • Bannière hors-ligne + données en cache (Service Worker)
 // • Personnalisation via ?b=<bookingId> (mémorisée localement)
 // ÉTAPE 17.6 — payFlash (retour Stripe ?paid= / ?paycancel=)
 // ÉTAPE 19 — WHITE-LABEL : branding{} du payload (logo, couleur,
-//   nom commercial) appliqué via variables CSS --primary/--accent
-//   → TOUS les composants thémés basculent sur la marque sans
-//   réécrire les classes (bg-primary, text-accent, indicateurs…).
+//   nom commercial) appliqué via variables CSS --primary/--accent.
+// DIGITAL CONCIERGE (V4.1) — SOUS-ÉTAPE A :
+//   • Header enrichi : « Bonjour <Prénom> ! 👋 » + météo temps réel
+//     du bien (Open-Meteo, fetch client, cache session, repli élégant)
+//   • Bottom nav 4 onglets : 🏠 Accueil · 📖 Guide · 🗺️ Quartier · 🆘 Urgence
+//   • Sous-vues : 🔑 Coffre-fort (access) · 🥐 Services (upselling)
+//     · 💬 Aide — ouvertes depuis les cartes de l'Accueil, avec barre « ← Retour »
+// ÉTAPE 3 (V4.1) — modules complets : Coffre-fort numérique,
+// Guide des appareils (accordéons), Carte secrète de l'hôte
+// (filtres + Y aller), SOS (appels directs + pannes courantes).
+// PREMIUM V5 (ÉTAPE 3.5) — ping de session invité : deviceId anonyme
+// (localStorage) → POST /api/public/hub/[slug]/guest-session. La 1re
+// visite crée une GuestSession → notification hôte « 👋 [Nom] vient
+// d'arriver et a scanné votre Hub ! » (fire-and-forget, jamais
+// bloquant, silencieux hors-ligne).
+// PHASE FINALE (V4.9) — PWA & HORS-LIGNE RENFORCÉS :
+//   • ping invité mis en file (outbox) hors-ligne / échec réseau,
+//     puis rejeté automatiquement au retour de la connexion →
+//     « 👋 … a scanné votre Hub » fiabilité 100 % même sans Wi-Fi ;
+//   • bannière « Nouvelle version disponible » (update-banner) —
+//     le SW annonce la mise à jour, l'invité active en 1 clic ;
+//   • purge FIFO du cache runtime (sw.js v3-guest-2).
 // =============================================================
-
-const TAB_ORDER: GuestTab[] = ['home', 'guide', 'services', 'help'];
 
 /** Retour de paiement Stripe Checkout (ÉTAPE 17.6). */
 export interface PayFlash {
@@ -35,11 +66,16 @@ export function GuestApp({ slug, initialBookingId, payFlash }: { slug: string; i
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
   const [retryTick, setRetryTick] = useState(0);
-  const [tab, setTab] = useState<GuestTab>('home');
+  const [view, setView] = useState<GuestView>('home');
   const [direction, setDirection] = useState(1);
   const [online, setOnline] = useState(true);
   const [bookingId, setBookingId] = useState<string | undefined>(initialBookingId);
   const bookingIdRef = useRef<string | undefined>(initialBookingId);
+  // REFONTE SERVICES PREMIUM (V4.11) — retour Stripe ?paid= : la
+  // confirmation pleine (confettis) s'affiche QUELLE QUE SOIT la vue
+  // active (l'invité atterrit souvent sur l'Accueil), jusqu'au clic
+  // « Retour au Hub ». Un refresh ne rejoue PAS le flash (URL nettoyée).
+  const [payFlashDismissed, setPayFlashDismissed] = useState(false);
 
   const storageKey = `ch-guest-booking-${slug}`;
 
@@ -92,6 +128,8 @@ export function GuestApp({ slug, initialBookingId, payFlash }: { slug: string; i
         }
         setPayload(json as GuestPayload);
         setLoading(false);
+        // PREMIUM V5 (ÉTAPE 3.5) — ping « premier scan » (fire-and-forget)
+        void pingGuestSession(slug, b ?? null);
       } catch {
         if (cancelled) return;
         setError('Impossible de charger l’app. Vérifiez votre connexion.');
@@ -104,34 +142,38 @@ export function GuestApp({ slug, initialBookingId, payFlash }: { slug: string; i
     };
   }, [slug, storageKey, retryTick]);
 
-  // ── Statut réseau (bannière hors-ligne) ──
+  // ── Statut réseau (bannière hors-ligne + outbox) ──
   useEffect(() => {
     const update = () => setOnline(navigator.onLine);
     update();
-    window.addEventListener('online', update);
+    // PHASE FINALE — retour du réseau : rejoue les pings mis en
+    // file hors-ligne (offline-outbox.ts) → « 👋 … a scanné » fiabilisé.
+    const onOnline = () => {
+      update();
+      void flushGuestPings(slug);
+    };
+    window.addEventListener('online', onOnline);
     window.addEventListener('offline', update);
     return () => {
-      window.removeEventListener('online', update);
+      window.removeEventListener('online', onOnline);
       window.removeEventListener('offline', update);
     };
-  }, []);
+  }, [slug]);
 
-  const navigate = useCallback(
-    (next: GuestTab) => {
-      setTab((current) => {
-        if (current === next) return current;
-        setDirection(TAB_ORDER.indexOf(next) > TAB_ORDER.indexOf(current) ? 1 : -1);
-        try {
-          navigator.vibrate?.(8); // feedback haptique léger (mobiles)
-        } catch {
-          /* silencieux */
-        }
-        return next;
-      });
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    },
-    [],
-  );
+  // ── Navigation (onglets + sous-vues) — transitions directionnelles ──
+  const navigate = useCallback((next: GuestView) => {
+    setView((current) => {
+      if (current === next) return current;
+      setDirection(viewDirection(current, next));
+      try {
+        navigator.vibrate?.(8); // feedback haptique léger (mobiles)
+      } catch {
+        /* silencieux */
+      }
+      return next;
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
 
   const retry = () => {
     setLoading(true);
@@ -145,46 +187,62 @@ export function GuestApp({ slug, initialBookingId, payFlash }: { slug: string; i
     ? ({ '--primary': branding.primaryColor, '--accent': branding.primaryColor } as React.CSSProperties)
     : undefined;
 
+  // DIGITAL CONCIERGE — onglet actif de la bottom nav
+  // (les sous-vues services/help éclairent « Accueil »)
+  const activeTab = activeTabOf(view);
+
   return (
     <div
       className="min-h-screen flex flex-col bg-background text-foreground"
       style={brandVars}
     >
-      {/* ── En-tête compact ── */}
+      {/* ── En-tête : marque + bienvenue personnalisé + météo ── */}
       <header
-        className="sticky top-0 z-40 bg-background/85 backdrop-blur border-b border-border pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 px-4"
+        className="sticky top-0 z-40 bg-background/85 backdrop-blur border-b border-border pt-[max(0.75rem,env(safe-area-inset-top))] pb-3.5 px-4"
         role="banner"
       >
-        <div className="max-w-lg mx-auto flex items-center gap-3">
-          {branding?.logoUrl ? (
-            <img
-              src={branding.logoUrl}
-              alt="Logo de la conciergerie"
-              className="h-9 w-9 rounded-lg object-contain bg-card border border-border shrink-0"
-            />
-          ) : (
-            <span className="text-xl select-none" aria-hidden="true">🗝️</span>
-          )}
-          <div className="min-w-0 flex-1">
-            <p
-              className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground leading-none"
-              style={branding ? { color: branding.primaryColor } : undefined}
-            >
-              {branding?.companyName ?? 'Conciergerie Hub'}
-            </p>
-            <p className="text-sm font-bold text-card-foreground truncate mt-0.5">
-              {payload?.property.name ?? 'Votre séjour'}
-            </p>
+        <div className="max-w-lg mx-auto">
+          <div className="flex items-center gap-3">
+            {branding?.logoUrl ? (
+              <img
+                src={branding.logoUrl}
+                alt="Logo de la conciergerie"
+                className="h-9 w-9 rounded-lg object-contain bg-card border border-border shrink-0"
+              />
+            ) : (
+              /* v4.68 — fallback : logo officiel RoomScan (icône) au lieu de 🗝️ */
+              <img
+                src="/brand/roomscan-icon.png"
+                alt="RoomScan"
+                width={124}
+                height={121}
+                className="h-9 w-9 rounded-lg object-contain bg-card border border-border shrink-0"
+              />
+            )}
+            <div className="min-w-0 flex-1">
+              <p
+                className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground leading-none"
+                style={branding ? { color: branding.primaryColor } : undefined}
+              >
+                {branding?.companyName ?? 'RoomScan'}
+              </p>
+              <p className="text-sm font-bold text-card-foreground truncate mt-0.5">
+                {payload?.property.name ?? 'Votre séjour'}
+              </p>
+            </div>
+            {!online && (
+              <span
+                className="shrink-0 text-[10px] font-bold px-2 py-1 rounded-full bg-secondary text-muted-foreground border border-border"
+                role="status"
+                title="Contenu consultable grâce au cache hors-ligne"
+              >
+                📴 Hors-ligne
+              </span>
+            )}
           </div>
-          {!online && (
-            <span
-              className="shrink-0 text-[10px] font-bold px-2 py-1 rounded-full bg-secondary text-muted-foreground border border-border"
-              role="status"
-              title="Contenu consultable grâce au cache hors-ligne"
-            >
-              📴 Hors-ligne
-            </span>
-          )}
+
+          {/* DIGITAL CONCIERGE (V4.1) — « Bonjour <Prénom> ! 👋 » + météo */}
+          {payload && !loading && !error && <GreetingBlock payload={payload} />}
         </div>
       </header>
 
@@ -210,18 +268,49 @@ export function GuestApp({ slug, initialBookingId, payFlash }: { slug: string; i
         {!loading && payload && (
           <AnimatePresence mode="wait" custom={direction} initial={false}>
             <motion.div
-              key={tab}
+              key={view}
               custom={direction}
               initial={{ opacity: 0, x: 32 * direction }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -32 * direction }}
               transition={{ duration: 0.22, ease: [0.32, 0.72, 0, 1] }}
             >
-              {tab === 'home' && <TabHome payload={payload} onNavigate={navigate} />}
-              {tab === 'guide' && (
-                <TabGuide guidebook={payload.guest.guidebook} houseRules={payload.guest.houseRules} />
+              {/* Barre retour des sous-vues (coffre-fort / services / aide / état des lieux) */}
+              {(view === 'access' || view === 'services' || view === 'help' || view === 'checkout-inspection') && (
+                <button
+                  type="button"
+                  onClick={() => navigate('home')}
+                  aria-label="Retour à l'accueil"
+                  className="mb-3 inline-flex items-center gap-1.5 h-9 px-3 rounded-xl bg-card border border-border text-sm font-semibold text-muted-foreground hover:text-card-foreground hover:border-accent transition-colors cursor-pointer"
+                >
+                  ← Retour
+                </button>
               )}
-              {tab === 'services' && (
+
+              {view === 'home' && <TabHome slug={slug} payload={payload} onNavigate={navigate} bookingId={bookingId ?? null} />}
+              {view === 'guide' && (
+                <TabGuide
+                  slug={slug}
+                  guidebookVoice={payload.property.guidebookVoice}
+                  guidebook={payload.guest.guidebook}
+                  houseRules={payload.guest.houseRules}
+                  appliances={payload.property.appliances}
+                  survivalItems={payload.property.survivalKitItems}
+                />
+              )}
+              {view === 'local' && <TabLocal spots={payload.property.localSpots} slug={slug} />}
+              {view === 'sos' && (
+                <TabSos
+                  slug={slug}
+                  contact={payload.guest.contact}
+                  emergencyInfo={payload.property.emergencyInfo}
+                  propertyLat={payload.property.latitude}
+                  propertyLng={payload.property.longitude}
+                  onNavigate={navigate}
+                />
+              )}
+              {view === 'access' && <AccessView accessCodes={payload.property.accessCodes} />}
+              {view === 'services' && (
                 <TabServices
                   slug={slug}
                   services={payload.guest.services}
@@ -231,13 +320,23 @@ export function GuestApp({ slug, initialBookingId, payFlash }: { slug: string; i
                   bookingId={payload.guest.booking ? bookingId ?? null : null}
                   online={online}
                   payFlash={payFlash}
+                  onNavigate={navigate}
+                  paymentEnabled={payload.property.premiumFeatures?.paymentEnabled === true}
                 />
               )}
-              {tab === 'help' && (
+              {view === 'help' && (
                 <TabHelp
                   slug={slug}
                   contact={payload.guest.contact}
                   propertyName={payload.property.name}
+                />
+              )}
+              {/* v5.0 — État des lieux de sortie (sous-vue depuis l'Accueil) */}
+              {view === 'checkout-inspection' && (
+                <CheckOutInspection
+                  slug={slug}
+                  bookingId={bookingId ?? null}
+                  onDone={() => navigate('home')}
                 />
               )}
             </motion.div>
@@ -245,7 +344,26 @@ export function GuestApp({ slug, initialBookingId, payFlash }: { slug: string; i
         )}
       </main>
 
-      {/* ── Bottom navigation bar ── */}
+      {/* PHASE FINALE — bannière « Nouvelle version disponible » */}
+      <UpdateBanner />
+
+      {/* REFONTE SERVICES PREMIUM (V4.11) — confirmation du retour Stripe
+          Checkout (?paid=), au-dessus de toutes les vues. */}
+      <AnimatePresence>
+        {payFlash?.type === 'paid' && !payFlashDismissed && (
+          <OrderConfirmation
+            result={{
+              orderIds: payFlash.orderId ? [payFlash.orderId] : [],
+              grandTotal: 0, // montant résolu côté serveur/webhook — ligne masquée
+              deliveryDate: null,
+              demoPaid: true,
+            }}
+            onClose={() => setPayFlashDismissed(true)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* ── Bottom navigation bar (DIGITAL CONCIERGE — 4 onglets) ── */}
       <nav
         className="fixed bottom-0 inset-x-0 z-40 bg-card/95 backdrop-blur border-t border-border pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-1.5 px-2"
         role="navigation"
@@ -253,7 +371,7 @@ export function GuestApp({ slug, initialBookingId, payFlash }: { slug: string; i
       >
         <div className="max-w-lg mx-auto grid grid-cols-4">
           {GUEST_TABS.map((t) => {
-            const active = tab === t.id;
+            const active = activeTab === t.id;
             return (
               <button
                 key={t.id}
@@ -284,6 +402,31 @@ export function GuestApp({ slug, initialBookingId, payFlash }: { slug: string; i
   );
 }
 
+// =============================================================
+// DIGITAL CONCIERGE (V4.1) — Bloc de bienvenue du header :
+// « Bonjour <Prénom> ! 👋 » (nom du booking ?b= mémorisé) puis
+// « ☀️ Il fait 22°C à Paris aujourd'hui » (Open-Meteo + Nominatim).
+// Repli : « ✨ Passez un excellent séjour » si météo indisponible.
+// =============================================================
+function GreetingBlock({ payload }: { payload: GuestPayload }) {
+  const booking = payload.guest.booking;
+  const firstName = booking ? booking.guestName.trim().split(/\s+/)[0] : null;
+  const weather = useWeather(payload.property.latitude, payload.property.longitude);
+
+  return (
+    <div className="mt-2.5">
+      <p className="text-[17px] font-bold text-card-foreground leading-snug">
+        {firstName ? `Bonjour ${firstName} ! 👋` : 'Bienvenue ! 👋'}
+      </p>
+      <p className="text-xs text-muted-foreground mt-0.5" aria-live="polite">
+        {weather
+          ? `${weather.emoji} Il fait ${weather.temp}°C${weather.city ? ` à ${weather.city}` : ''} aujourd'hui`
+          : '✨ Passez un excellent séjour'}
+      </p>
+    </div>
+  );
+}
+
 function LoadingState() {
   return (
     <div className="space-y-4 mt-2" aria-busy="true" aria-label="Chargement de l'app">
@@ -297,4 +440,55 @@ function LoadingState() {
       <p className="text-center text-xs text-muted-foreground">Chargement de votre séjour…</p>
     </div>
   );
+}
+
+// =============================================================
+// PREMIUM V5 (ÉTAPE 3.5 + PHASE FINALE V4.9) — Ping « premier
+// scan » du Hub : deviceId UUID anonyme (persisté en localStorage
+// par slug) → POST guest-session. La première visite notifie
+// l'hôte (« 👋 … »), les suivantes rafraîchissent lastSeenAt.
+// PHASE FINALE — fiabilisation hors-ligne : si l'invité scanne
+// sans réseau (ou si l'envoi échoue), le ping est mis en file
+// (offline-outbox.ts) puis rejeté au retour de la connexion.
+// Fire-and-forget : JAMAIS bloquant, silencieux en erreur,
+// jamais en mode démo (le serveur gère le slug demo-hub).
+// =============================================================
+async function pingGuestSession(slug: string, bookingId: string | null): Promise<void> {
+  try {
+    if (typeof window === 'undefined') return;
+    if (slug === 'demo-hub') return;
+
+    const key = `ch-guest-device-${slug}`;
+    let deviceId = window.localStorage.getItem(key);
+    if (!deviceId) {
+      deviceId =
+        typeof crypto !== 'undefined' && 'randomUUID' in crypto
+          ? crypto.randomUUID()
+          : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
+      try {
+        window.localStorage.setItem(key, deviceId);
+      } catch {
+        /* stockage indisponible — ping quand même (deviceId volatil) */
+      }
+    }
+
+    // Hors-ligne → file d'attente, rejeu au retour du réseau.
+    if (!navigator.onLine) {
+      queueGuestPing(slug, deviceId, bookingId);
+      return;
+    }
+
+    const res = await fetch(`/api/public/hub/${encodeURIComponent(slug)}/guest-session`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ deviceId, bookingId }),
+      // keepalive : le ping survit à une fermeture immédiate d'onglet
+      keepalive: true,
+    }).catch(() => null);
+
+    // Échec réseau inattendu (Wi-Fi coupé entre-temps…) → file.
+    if (!res || !res.ok) queueGuestPing(slug, deviceId, bookingId);
+  } catch {
+    /* silencieux — le ping ne doit jamais perturber l'app */
+  }
 }

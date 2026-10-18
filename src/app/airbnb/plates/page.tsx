@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { PlatesContent } from '@/components/airbnb/host/plates-content';
 
 export const metadata: Metadata = {
-  title: 'Plaques QR — Conciergerie Hub',
+  title: 'Plaques QR — RoomScan',
   description:
     'Commandez, imprimez et gérez vos plaques QR physiques : chaque plaque relie le logement à son Hub public (Wi-Fi, guide, services, contact hôte).',
 };

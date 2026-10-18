@@ -9,6 +9,8 @@ import {
 } from '@/lib/email-template-render';
 // FIX-14 — monitoring d'erreurs : trace AuditLog (action='runtime.error').
 import { captureError } from '@/lib/error-monitor';
+// AUDIT PRÉ-PROD (Module 5.2) — notification hôte à l'encaissement
+import { sendNotificationToMany, propertyOwnerAndManagers } from '@/lib/notifications';
 
 // =============================================================
 // ÉTAPE 17.6 + 20 (V3) — Paiement des commandes service (serveur UNIQUEMENT)
@@ -156,6 +158,23 @@ export async function markServiceOrderPaid(
       // FIX-14 — l'email ne fait jamais échouer le paiement ; l'erreur reste traçée.
       await captureError('payments.receipt.email', error, { serviceOrderId });
     }
+  }
+
+  // AUDIT PRÉ-PROD (Module 5.2) — l'HÔTE est notifié de l'encaissement
+  // (in-app + email/push selon préférences). Fire-and-forget : jamais
+  // d'échec de notification dans le flux de paiement.
+  if (order.propertyId) {
+    const propLite = await db.property
+      .findUnique({ where: { id: order.propertyId }, select: { name: true } })
+      .catch(() => null);
+    sendNotificationToMany(await propertyOwnerAndManagers(order.propertyId), 'host_order', {
+      title: `💳 Commande payée — ${propLite?.name ?? 'votre bien'}`,
+      body: `${order.guestName || 'Un invité'} a réglé sa commande « ${orderStripeDescription(order.items)} » (${order.totalAmount.toFixed(2).replace('.', ',')} €).`,
+      propertyId: order.propertyId,
+      propertyName: propLite?.name ?? undefined,
+      url: '/airbnb/orders',
+      meta: { source: 'payment', serviceOrderId: order.id, amount: order.totalAmount },
+    }).catch(() => undefined);
   }
 
   return { marked: true, alreadyPaid: false, totalAmount: order.totalAmount };

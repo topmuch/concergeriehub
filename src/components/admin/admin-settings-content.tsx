@@ -2,17 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import {
-  Check,
-  Copy,
-  KeyRound,
-  Loader2,
-  Plus,
-  Save,
-  ShieldAlert,
-  ShieldCheck,
-  Trash2,
-} from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -47,6 +37,7 @@ import {
 //  - Domaines : white-label customDomain + vérification DNS réelle (TXT/CNAME)
 //  - Flags : feature flags consommés par les routes métier
 //  - Sécurité : clés d'API (hashées), blacklist IP, état rate limiting
+// Refonte « SAPHIR LUXE » : sombre bleuté, sans icônes.
 // =============================================================
 
 interface Settings {
@@ -87,6 +78,10 @@ interface BlacklistRow {
   reason: string | null;
   createdAt: string;
 }
+
+// Champs de formulaire « lux » (sombre bleuté).
+const LUX_INPUT =
+  'h-10 rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50';
 
 export function AdminSettingsContent() {
   const [settings, setSettings] = useState<Settings | null>(null);
@@ -266,8 +261,8 @@ export function AdminSettingsContent() {
   if (loading || !settings) {
     return (
       <div className="space-y-4 p-4 sm:p-6">
-        <Skeleton className="h-10 w-72" />
-        <Skeleton className="h-64 w-full" />
+        <Skeleton className="h-10 w-72 bg-white/8" />
+        <Skeleton className="h-64 w-full rounded-2xl bg-white/8" />
       </div>
     );
   }
@@ -275,54 +270,74 @@ export function AdminSettingsContent() {
   return (
     <div className="p-4 sm:p-6">
       <Tabs defaultValue="general" className="gap-4">
-        <TabsList className="h-auto flex-wrap justify-start gap-1 bg-slate-100 p-1">
-          <TabsTrigger value="general">⚙️ Général</TabsTrigger>
-          <TabsTrigger value="domains">🌐 Domaines & White-label</TabsTrigger>
-          <TabsTrigger value="flags">🚩 Feature flags</TabsTrigger>
-          <TabsTrigger value="security">🔒 Sécurité</TabsTrigger>
+        <TabsList className="h-auto flex-wrap justify-start gap-1 rounded-full border border-white/10 bg-white/[0.04] p-1">
+          <TabsTrigger
+            value="general"
+            className="rounded-full text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fa0c2] transition-colors data-[state=active]:bg-white/10 data-[state=active]:text-white"
+          >
+            Général
+          </TabsTrigger>
+          <TabsTrigger
+            value="domains"
+            className="rounded-full text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fa0c2] transition-colors data-[state=active]:bg-white/10 data-[state=active]:text-white"
+          >
+            Domaines &amp; White-label
+          </TabsTrigger>
+          <TabsTrigger
+            value="flags"
+            className="rounded-full text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fa0c2] transition-colors data-[state=active]:bg-white/10 data-[state=active]:text-white"
+          >
+            Feature flags
+          </TabsTrigger>
+          <TabsTrigger
+            value="security"
+            className="rounded-full text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fa0c2] transition-colors data-[state=active]:bg-white/10 data-[state=active]:text-white"
+          >
+            Sécurité
+          </TabsTrigger>
         </TabsList>
 
         {/* ----- Général ----- */}
         <TabsContent value="general">
-          <Card className="border-slate-200 bg-white">
+          <Card className="lux-card">
             <CardHeader>
-              <CardTitle>Paramètres généraux</CardTitle>
-              <CardDescription>
+              <CardTitle className="lux-display text-lg text-white">Paramètres généraux</CardTitle>
+              <CardDescription className="text-sm text-[#8fa0c2]">
                 Configuration persistée en base et consommée par les routes métier (inscriptions, commandes, reversements).
               </CardDescription>
             </CardHeader>
             <CardContent className="grid max-w-2xl gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="set-name">Nom de la plateforme</Label>
-                <Input id="set-name" value={settings.platformName}
+                <Label htmlFor="set-name" className="text-xs font-semibold text-[#c7d3ec]">Nom de la plateforme</Label>
+                <Input id="set-name" value={settings.platformName} className={LUX_INPUT}
                   onChange={(e) => setSettings({ ...settings, platformName: e.target.value })} />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="set-email">Email de support</Label>
-                <Input id="set-email" type="email" value={settings.supportEmail}
+                <Label htmlFor="set-email" className="text-xs font-semibold text-[#c7d3ec]">Email de support</Label>
+                <Input id="set-email" type="email" value={settings.supportEmail} className={LUX_INPUT}
                   onChange={(e) => setSettings({ ...settings, supportEmail: e.target.value })} />
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div className="grid gap-2">
-                  <Label htmlFor="set-commission">Commission par défaut (%)</Label>
-                  <Input id="set-commission" type="number" min="0" max="50" value={settings.defaultCommissionPercent}
+                  <Label htmlFor="set-commission" className="text-xs font-semibold text-[#c7d3ec]">Commission par défaut (%)</Label>
+                  <Input id="set-commission" type="number" min="0" max="50" value={settings.defaultCommissionPercent} className={LUX_INPUT}
                     onChange={(e) => setSettings({ ...settings, defaultCommissionPercent: Number(e.target.value) })} />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="set-signup">Inscriptions / heure / IP</Label>
-                  <Input id="set-signup" type="number" min="1" max="500" value={settings.signupHourlyLimit}
+                  <Label htmlFor="set-signup" className="text-xs font-semibold text-[#c7d3ec]">Inscriptions / heure / IP</Label>
+                  <Input id="set-signup" type="number" min="1" max="500" value={settings.signupHourlyLimit} className={LUX_INPUT}
                     onChange={(e) => setSettings({ ...settings, signupHourlyLimit: Number(e.target.value) })} />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="set-payout">Reversement min. (€)</Label>
-                  <Input id="set-payout" type="number" min="0" value={settings.payoutMinimumEur}
+                  <Label htmlFor="set-payout" className="text-xs font-semibold text-[#c7d3ec]">Reversement min. (€)</Label>
+                  <Input id="set-payout" type="number" min="0" value={settings.payoutMinimumEur} className={LUX_INPUT}
                     onChange={(e) => setSettings({ ...settings, payoutMinimumEur: Number(e.target.value) })} />
                 </div>
               </div>
-              <div className="flex items-center justify-between rounded-lg border p-4">
+              <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.03] p-4">
                 <div>
-                  <p className="text-sm font-semibold">🚧 Mode maintenance</p>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-sm font-semibold text-white">Mode maintenance</p>
+                  <p className="text-xs text-[#8fa0c2]">
                     Bloque les nouvelles commandes de service (contrôle réel dans l'API marketplace).
                   </p>
                 </div>
@@ -331,9 +346,8 @@ export function AdminSettingsContent() {
                   aria-label="Mode maintenance" />
               </div>
               <div>
-                <Button onClick={saveSettings} disabled={saving}>
-                  {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                  Enregistrer les paramètres
+                <Button onClick={saveSettings} disabled={saving} className="lux-btn h-9 rounded-full px-4 text-xs">
+                  {saving ? 'Enregistrement…' : 'Enregistrer les paramètres'}
                 </Button>
               </div>
             </CardContent>
@@ -342,54 +356,52 @@ export function AdminSettingsContent() {
 
         {/* ----- Domaines & White-label ----- */}
         <TabsContent value="domains">
-          <Card className="border-slate-200 bg-white">
+          <Card className="lux-card">
             <CardHeader>
-              <CardTitle>🌐 Domaines personnalisés (white-label)</CardTitle>
-              <CardDescription>
+              <CardTitle className="lux-display text-lg text-white">Domaines personnalisés (white-label)</CardTitle>
+              <CardDescription className="text-sm text-[#8fa0c2]">
                 L'app invitée est servie sous le domaine de la conciergerie (CNAME) une fois la possession
                 du domaine prouvée par l'enregistrement TXT ci-dessous.
               </CardDescription>
             </CardHeader>
             <CardContent>
               {domains.length === 0 ? (
-                <p className="rounded-lg border border-dashed py-10 text-center text-sm text-slate-500">
+                <p className="lux-empty rounded-2xl px-4 py-10 text-center text-sm text-[#8fa0c2]">
                   Aucun bien n'a de domaine personnalisé configuré. Les conciergeries définissent leur domaine
                   dans les réglages de leur bien (white-label).
                 </p>
               ) : (
-                <div className="overflow-x-auto rounded-lg border">
+                <div className="overflow-x-auto rounded-xl border border-white/10">
                   <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Bien</TableHead>
-                        <TableHead>Domaine</TableHead>
-                        <TableHead className="hidden lg:table-cell">Enregistrement TXT attendu</TableHead>
-                        <TableHead>Statut</TableHead>
+                    <TableHeader className="sticky top-0 z-10 bg-[#0d1530]">
+                      <TableRow className="border-white/8 hover:bg-transparent">
+                        <TableHead className="lux-eyebrow !text-[9.5px]">Bien</TableHead>
+                        <TableHead className="lux-eyebrow !text-[9.5px]">Domaine</TableHead>
+                        <TableHead className="lux-eyebrow !text-[9.5px] hidden lg:table-cell">Enregistrement TXT attendu</TableHead>
+                        <TableHead className="lux-eyebrow !text-[9.5px]">Statut</TableHead>
                         <TableHead className="w-32"><span className="sr-only">Action</span></TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {domains.map((d) => (
-                        <TableRow key={d.propertyId}>
-                          <TableCell className="font-semibold">{d.propertyName}</TableCell>
-                          <TableCell className="font-mono text-xs">{d.domain}</TableCell>
-                          <TableCell className="hidden font-mono text-[11px] text-slate-500 lg:table-cell">
+                        <TableRow key={d.propertyId} className="border-white/8 hover:bg-white/[0.04]">
+                          <TableCell className="font-semibold text-white">{d.propertyName}</TableCell>
+                          <TableCell className="font-mono text-xs text-[#c7d3ec]">{d.domain}</TableCell>
+                          <TableCell className="hidden font-mono text-[11px] text-[#8fa0c2] lg:table-cell">
                             {d.txtRecord.host} → {d.txtRecord.value}
                           </TableCell>
                           <TableCell>
                             {d.verified ? (
-                              <Badge className="bg-emerald-100 text-emerald-800">Vérifié</Badge>
+                              <Badge className="border border-[#34d399]/25 bg-[#34d399]/10 text-[#86e9cb]">Vérifié</Badge>
                             ) : (
-                              <Badge className="bg-amber-100 text-amber-800">En attente</Badge>
+                              <Badge className="border border-[#fbbf24]/25 bg-[#fbbf24]/10 text-[#fbbf24]">En attente</Badge>
                             )}
                           </TableCell>
                           <TableCell>
                             <Button size="sm" variant="outline" disabled={verifyingId === d.propertyId}
+                              className="lux-btn-ghost h-8 rounded-full px-3.5 text-xs"
                               onClick={() => verifyDomain(d)}>
-                              {verifyingId === d.propertyId
-                                ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
-                                : <ShieldCheck className="mr-1.5 h-4 w-4" />}
-                              Vérifier le DNS
+                              {verifyingId === d.propertyId ? 'Vérification…' : 'Vérifier le DNS'}
                             </Button>
                           </TableCell>
                         </TableRow>
@@ -404,19 +416,19 @@ export function AdminSettingsContent() {
 
         {/* ----- Feature flags ----- */}
         <TabsContent value="flags">
-          <Card className="border-slate-200 bg-white">
+          <Card className="lux-card">
             <CardHeader>
-              <CardTitle>🚩 Feature flags</CardTitle>
-              <CardDescription>
+              <CardTitle className="lux-display text-lg text-white">Feature flags</CardTitle>
+              <CardDescription className="text-sm text-[#8fa0c2]">
                 Interrupteurs réels : chaque bascule est appliquée immédiatement par les routes métier.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               {flags.map((flag) => (
-                <div key={flag.key} className="flex items-center justify-between rounded-lg border p-4">
+                <div key={flag.key} className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.03] p-4">
                   <div className="min-w-0 pr-4">
-                    <p className="font-mono text-sm font-bold text-slate-900">{flag.key}</p>
-                    <p className="text-xs text-slate-500">{flag.description}</p>
+                    <p className="font-mono text-sm font-bold text-white">{flag.key}</p>
+                    <p className="text-xs text-[#8fa0c2]">{flag.description}</p>
                   </div>
                   <Switch checked={flag.enabled} onCheckedChange={() => toggleFlag(flag)}
                     aria-label={`Basculer ${flag.key}`} />
@@ -429,18 +441,20 @@ export function AdminSettingsContent() {
         {/* ----- Sécurité ----- */}
         <TabsContent value="security" className="space-y-4">
           {/* État rate limiting */}
-          <Card className="border-slate-200 bg-white">
+          <Card className="lux-card">
             <CardHeader>
-              <CardTitle>🛡️ Rate limiting</CardTitle>
-              <CardDescription>
+              <CardTitle className="lux-display text-lg text-white">Rate limiting</CardTitle>
+              <CardDescription className="text-sm text-[#8fa0c2]">
                 Actif sur : connexion, inscription, création/paiement de commandes, hub.
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-wrap items-center gap-3">
-              <Badge className={rateInfo?.redisConfigured ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-slate-700 hover:bg-slate-800'}>
+              <Badge className={rateInfo?.redisConfigured
+                ? 'border border-[#34d399]/25 bg-[#34d399]/10 text-[#86e9cb]'
+                : 'border border-white/10 bg-white/[0.05] text-[#8fa0c2]'}>
                 Backend : {rateInfo?.backend ?? '…'}
               </Badge>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-[#8fa0c2]">
                 Connexion : 10/min/IP · Inscriptions : quota configurable (onglet Général) · Paiement : 6/min/commande
                 {rateInfo?.redisConfigured ? ' — partagé entre instances via Redis.' : ' — store mémoire (mono-instance).'}
               </p>
@@ -448,80 +462,83 @@ export function AdminSettingsContent() {
           </Card>
 
           {/* Clés d'API */}
-          <Card className="border-slate-200 bg-white">
+          <Card className="lux-card">
             <CardHeader>
-              <CardTitle>🔑 Clés d'API externes</CardTitle>
-              <CardDescription>
-                Consommation réelle : <code className="rounded bg-slate-100 px-1">GET /api/external/v1/stats</code> avec
-                l'en-tête <code className="rounded bg-slate-100 px-1">x-api-key</code> (30 req/min/clé).
+              <CardTitle className="lux-display text-lg text-white">Clés d'API externes</CardTitle>
+              <CardDescription className="text-sm text-[#8fa0c2]">
+                Consommation réelle : <code className="rounded bg-white/10 px-1 text-[#a9c4ff]">GET /api/external/v1/stats</code> avec
+                l'en-tête <code className="rounded bg-white/10 px-1 text-[#a9c4ff]">x-api-key</code> (30 req/min/clé).
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex flex-col gap-2 sm:flex-row">
                 <Input placeholder="Nom de la clé (ex: Dashboard partenaire)" value={keyName}
-                  onChange={(e) => setKeyName(e.target.value)} aria-label="Nom de la clé" className="flex-1" />
-                <Button onClick={createApiKey} disabled={keyCreating || keyName.trim().length < 2}>
-                  {keyCreating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
-                  Créer une clé
+                  onChange={(e) => setKeyName(e.target.value)} aria-label="Nom de la clé" className={cn(LUX_INPUT, 'flex-1')} />
+                <Button onClick={createApiKey} disabled={keyCreating || keyName.trim().length < 2}
+                  className="lux-btn h-9 rounded-full px-4 text-xs">
+                  {keyCreating ? 'Création…' : 'Créer une clé'}
                 </Button>
               </div>
 
               {plaintextKey && (
-                <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
-                  <p className="mb-2 flex items-center gap-2 text-sm font-bold text-emerald-800">
-                    <KeyRound className="h-4 w-4" /> Clé affichée une seule fois — copiez-la maintenant :
+                <div className="rounded-xl border border-[#34d399]/25 bg-[#34d399]/[0.08] p-4">
+                  <p className="mb-2 flex items-center gap-2 text-sm font-bold text-[#86e9cb]">
+                    <span className="lux-dot" style={{ backgroundColor: '#34d399' }} aria-hidden="true" />
+                    Clé affichée une seule fois — copiez-la maintenant :
                   </p>
                   <div className="flex items-center gap-2">
-                    <code className="flex-1 select-all overflow-x-auto rounded bg-slate-900 px-3 py-2 text-xs text-emerald-400">
+                    <code className="flex-1 select-all overflow-x-auto rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-xs text-[#86e9cb]">
                       {plaintextKey}
                     </code>
                     <Button size="sm" variant="outline"
+                      className="lux-btn-ghost h-8 shrink-0 rounded-full px-3.5 text-[11px]"
                       onClick={() => {
                         navigator.clipboard?.writeText(plaintextKey).then(() => {
                           setCopied(true);
                           toast.success('Clé copiée');
                         });
                       }}>
-                      {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                      {copied ? 'Copié ✓' : 'Copier'}
                     </Button>
                   </div>
                 </div>
               )}
 
               {apiKeys.length === 0 ? (
-                <p className="text-sm text-slate-500">Aucune clé créée.</p>
+                <p className="text-sm text-[#8fa0c2]">Aucune clé créée.</p>
               ) : (
-                <div className="overflow-x-auto rounded-lg border">
+                <div className="overflow-x-auto rounded-xl border border-white/10">
                   <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Nom</TableHead>
-                        <TableHead>Préfixe</TableHead>
-                        <TableHead className="hidden md:table-cell">Dernière utilisation</TableHead>
-                        <TableHead>Statut</TableHead>
+                    <TableHeader className="sticky top-0 z-10 bg-[#0d1530]">
+                      <TableRow className="border-white/8 hover:bg-transparent">
+                        <TableHead className="lux-eyebrow !text-[9.5px]">Nom</TableHead>
+                        <TableHead className="lux-eyebrow !text-[9.5px]">Préfixe</TableHead>
+                        <TableHead className="lux-eyebrow !text-[9.5px] hidden md:table-cell">Dernière utilisation</TableHead>
+                        <TableHead className="lux-eyebrow !text-[9.5px]">Statut</TableHead>
                         <TableHead className="w-12"><span className="sr-only">Actions</span></TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {apiKeys.map((k) => (
-                        <TableRow key={k.id}>
-                          <TableCell className="font-semibold">{k.name}</TableCell>
-                          <TableCell className="font-mono text-xs">{k.prefix}</TableCell>
-                          <TableCell className="hidden text-xs text-slate-500 md:table-cell">
+                        <TableRow key={k.id} className="border-white/8 hover:bg-white/[0.04]">
+                          <TableCell className="font-semibold text-white">{k.name}</TableCell>
+                          <TableCell className="font-mono text-xs text-[#c7d3ec]">{k.prefix}</TableCell>
+                          <TableCell className="hidden text-xs text-[#8fa0c2] md:table-cell">
                             {k.lastUsedAt ? new Date(k.lastUsedAt).toLocaleString('fr-FR') : 'jamais'}
                           </TableCell>
                           <TableCell>
                             {k.revoked ? (
-                              <Badge variant="outline">Révoquée</Badge>
+                              <Badge variant="outline" className="border-white/12 text-[#8fa0c2]">Révoquée</Badge>
                             ) : (
-                              <Badge className="bg-emerald-600 hover:bg-emerald-700">Active</Badge>
+                              <Badge className="border border-[#34d399]/25 bg-[#34d399]/10 text-[#86e9cb]">Active</Badge>
                             )}
                           </TableCell>
                           <TableCell>
                             {!k.revoked && (
-                              <Button size="sm" variant="ghost" className="text-red-600 hover:text-red-700"
+                              <Button size="sm" variant="ghost"
+                                className="text-xs text-[#f07d6a] hover:bg-[#f07d6a]/10 hover:text-[#f07d6a]"
                                 onClick={() => setRevokeTarget(k)} aria-label={`Révoquer ${k.name}`}>
-                                <Trash2 className="h-4 w-4" />
+                                Révoquer
                               </Button>
                             )}
                           </TableCell>
@@ -535,49 +552,50 @@ export function AdminSettingsContent() {
           </Card>
 
           {/* Blacklist IP */}
-          <Card className="border-slate-200 bg-white">
+          <Card className="lux-card">
             <CardHeader>
-              <CardTitle>🚫 Blacklist IP</CardTitle>
-              <CardDescription>
+              <CardTitle className="lux-display text-lg text-white">Blacklist IP</CardTitle>
+              <CardDescription className="text-sm text-[#8fa0c2]">
                 Une IP bannie est refusée sur la connexion, l'inscription et le paiement (contrôle réel).
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex flex-col gap-2 sm:flex-row">
                 <Input placeholder="Ex: 203.0.113.42" value={newIp} onChange={(e) => setNewIp(e.target.value)}
-                  aria-label="IP à bannir" className="flex-1" />
+                  aria-label="IP à bannir" className={cn(LUX_INPUT, 'flex-1')} />
                 <Input placeholder="Raison (optionnel)" value={newIpReason} onChange={(e) => setNewIpReason(e.target.value)}
-                  aria-label="Raison" className="flex-1" />
-                <Button onClick={addBlacklist} disabled={ipBusy || !newIp.trim()}>
-                  {ipBusy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldAlert className="mr-2 h-4 w-4" />}
-                  Bannir
+                  aria-label="Raison" className={cn(LUX_INPUT, 'flex-1')} />
+                <Button onClick={addBlacklist} disabled={ipBusy || !newIp.trim()}
+                  className="lux-btn h-9 rounded-full px-4 text-xs">
+                  {ipBusy ? 'Bannissement…' : 'Bannir'}
                 </Button>
               </div>
               {blacklist.length === 0 ? (
-                <p className="text-sm text-slate-500">Aucune IP bannie.</p>
+                <p className="text-sm text-[#8fa0c2]">Aucune IP bannie.</p>
               ) : (
-                <div className="overflow-x-auto rounded-lg border">
+                <div className="overflow-x-auto rounded-xl border border-white/10">
                   <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>IP</TableHead>
-                        <TableHead>Raison</TableHead>
-                        <TableHead>Ajoutée le</TableHead>
+                    <TableHeader className="sticky top-0 z-10 bg-[#0d1530]">
+                      <TableRow className="border-white/8 hover:bg-transparent">
+                        <TableHead className="lux-eyebrow !text-[9.5px]">IP</TableHead>
+                        <TableHead className="lux-eyebrow !text-[9.5px]">Raison</TableHead>
+                        <TableHead className="lux-eyebrow !text-[9.5px]">Ajoutée le</TableHead>
                         <TableHead className="w-12"><span className="sr-only">Actions</span></TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {blacklist.map((b) => (
-                        <TableRow key={b.ip}>
-                          <TableCell className="font-mono text-sm font-bold">{b.ip}</TableCell>
-                          <TableCell className="text-sm text-slate-500">{b.reason ?? '—'}</TableCell>
-                          <TableCell className="text-sm text-slate-500">
+                        <TableRow key={b.ip} className="border-white/8 hover:bg-white/[0.04]">
+                          <TableCell className="font-mono text-sm font-bold text-white">{b.ip}</TableCell>
+                          <TableCell className="text-sm text-[#8fa0c2]">{b.reason ?? '—'}</TableCell>
+                          <TableCell className="text-sm text-[#8fa0c2]">
                             {new Date(b.createdAt).toLocaleDateString('fr-FR')}
                           </TableCell>
                           <TableCell>
-                            <Button size="sm" variant="ghost" className="text-red-600 hover:text-red-700"
+                            <Button size="sm" variant="ghost"
+                              className="text-xs text-[#f07d6a] hover:bg-[#f07d6a]/10 hover:text-[#f07d6a]"
                               onClick={() => removeBlacklist(b)} aria-label={`Retirer ${b.ip}`}>
-                              <Trash2 className="h-4 w-4" />
+                              Retirer
                             </Button>
                           </TableCell>
                         </TableRow>
@@ -593,17 +611,19 @@ export function AdminSettingsContent() {
 
       {/* Confirmation révocation clé */}
       <AlertDialog open={revokeTarget !== null} onOpenChange={(o) => !o && setRevokeTarget(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="border-white/10 bg-[#0b1226] text-white">
           <AlertDialogHeader>
-            <AlertDialogTitle>Révoquer cette clé d'API ?</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="lux-display text-lg text-white">Révoquer cette clé d'API ?</AlertDialogTitle>
+            <AlertDialogDescription className="text-sm text-[#8fa0c2]">
               La clé « <strong>{revokeTarget?.name}</strong> » ({revokeTarget?.prefix}) cessera de fonctionner
               immédiatement. Action irréversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction className="bg-red-600 hover:bg-red-700"
+            <AlertDialogCancel className="lux-btn-ghost rounded-full border-white/10 bg-transparent px-4 text-xs text-[#c7d3ec]">
+              Annuler
+            </AlertDialogCancel>
+            <AlertDialogAction className="rounded-full bg-[#f07d6a] text-[#2a0e08] hover:bg-[#f07d6a]/90"
               onClick={(e) => {
                 e.preventDefault();
                 if (revokeTarget) revokeKey(revokeTarget);

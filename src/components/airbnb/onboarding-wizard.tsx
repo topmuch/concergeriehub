@@ -61,7 +61,7 @@ const STEPS = [
 function slugifyName(name: string): string {
   return name
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[̀-ͯ]/g, '')
     .toLowerCase()
     .replace(/[^a-z0-9-]+/g, '-')
     .replace(/^-+|-+$/g, '')
@@ -159,8 +159,8 @@ export function OnboardingWizard({
         <div className="border-b border-slate-100 px-6 pb-5 pt-6 sm:px-8">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-600">
-                Conciergerie Hub
+              <p className="text-[11px] font-bold uppercase tracking-wider text-[#0066EF]">
+                RoomScan
               </p>
               <h2 className="mt-0.5 text-lg font-bold text-slate-900">
                 {result ? 'Votre Hub est prêt !' : 'Configurez votre logement'}
@@ -168,7 +168,7 @@ export function OnboardingWizard({
             </div>
             <span
               aria-hidden="true"
-              className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600"
+              className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#EAF2FF] text-[#0066EF]"
             >
               {(() => {
                 const StepIcon = STEPS[Math.min(step, 2)].icon;
@@ -185,7 +185,7 @@ export function OnboardingWizard({
                     className={cn(
                       'flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold transition-colors',
                       i < step
-                        ? 'bg-emerald-500 text-white'
+                        ? 'bg-[#0066EF] text-white'
                         : i === step
                           ? 'bg-slate-900 text-white'
                           : 'bg-slate-100 text-slate-400',
@@ -205,7 +205,7 @@ export function OnboardingWizard({
                     <div
                       className={cn(
                         'h-0.5 flex-1 rounded-full',
-                        i < step ? 'bg-emerald-500' : 'bg-slate-100',
+                        i < step ? 'bg-[#0066EF]' : 'bg-slate-100',
                       )}
                     />
                   )}
@@ -337,7 +337,7 @@ export function OnboardingWizard({
                   <Label htmlFor="onb-slug" className="text-sm font-medium text-slate-700">
                     Lien de votre Hub <span className="font-normal text-slate-400">(déduit du nom)</span>
                   </Label>
-                  <div className="mt-1.5 flex items-center overflow-hidden rounded-xl border border-slate-200 focus-within:ring-2 focus-within:ring-emerald-500/20">
+                  <div className="mt-1.5 flex items-center overflow-hidden rounded-xl border border-slate-200 focus-within:ring-2 focus-within:ring-[#0066EF]/20">
                     <span className="shrink-0 border-r border-slate-100 bg-slate-50 px-3 py-2.5 text-xs text-slate-500">
                       /hub/
                     </span>
@@ -479,7 +479,7 @@ export function OnboardingWizard({
                 <Button
                   onClick={submit}
                   disabled={!canNext || loading}
-                  className="h-11 rounded-xl bg-emerald-600 px-5 text-white hover:bg-emerald-500"
+                  className="h-11 rounded-xl bg-[#0066EF] px-5 text-white hover:bg-[#0052C4]"
                 >
                   {loading ? (
                     <>

@@ -1,11 +1,11 @@
 {
-  "name": "Conciergerie Hub",
-  "short_name": "Conciergerie Hub",
+  "name": "RoomScan",
+  "short_name": "RoomScan",
   "description": "La conciergerie Airbnb augmentée : hubs QR, app invitée et services premium",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#F8FAFC",
-  "theme_color": "#059669",
+  "background_color": "#FFFFFF",
+  "theme_color": "#07235B",
   "orientation": "portrait-primary",
   "icons": [
     {
@@ -27,7 +27,11 @@
       "purpose": "apple-touch-icon"
     }
   ],
-  "categories": ["travel", "business", "utilities"],
+  "categories": [
+    "travel",
+    "business",
+    "utilities"
+  ],
   "lang": "fr",
   "dir": "ltr"
 }

@@ -3,6 +3,10 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { canTransition, isOrderStatus, type OrderStatus } from '@/lib/orders';
+// AUDIT PRÉ-PROD (Module 5.2) — hôte notifié quand le prestataire
+// change le statut d'une commande (l'invité voit la mise à jour au
+// prochain rafraîchissement de « Mes commandes »).
+import { sendNotificationToMany, propertyOwnerAndManagers } from '@/lib/notifications';
 
 // =============================================================
 // ÉTAPE 17.4 (V3) — API du PORTAIL PRESTATAIRE
@@ -15,7 +19,7 @@ import { canTransition, isOrderStatus, type OrderStatus } from '@/lib/orders';
 //       commandes (where id + providerId).
 //
 // ⚠️ La part hôte (hostEarning) n'est JAMAIS retournée au
-// prestataire — contrat entre Conciergerie Hub et l'hôte.
+// prestataire — contrat entre RoomScan et l'hôte.
 // ÉTAPE 17.6 — paymentStatus/paidAt exposés au prestataire
 //   + stat « encaissé » (somme des commandes PAID hors annulées).
 // Never-throw : try/catch global → { error } 500.
@@ -226,15 +230,41 @@ export async function PATCH(req: Request) {
       );
     }
 
-    await db.serviceOrder.update({
+    const updated = await db.serviceOrder.update({
       where: { id: order.id },
       data: {
         status: nextStatus,
         // Horodatage unique à la livraison
         ...(nextStatus === 'DELIVERED' ? { deliveryDate: new Date() } : {}),
       },
-      select: { id: true },
+      select: { id: true, status: true, propertyId: true, guestName: true },
     });
+
+    // AUDIT PRÉ-PROD (Module 5.2) — notification HÔTE du changement
+    // de statut fait par le prestataire (fire-and-forget).
+    const STATUS_META: Record<string, { emoji: string; label: string }> = {
+      CONFIRMED: { emoji: '✅', label: 'confirmée' },
+      PREPARING: { emoji: '🍳', label: 'en préparation' },
+      DELIVERED: { emoji: '📦', label: 'livrée' },
+      CANCELLED: { emoji: '❌', label: 'annulée' },
+    };
+    const meta = STATUS_META[nextStatus] ?? { emoji: '🔔', label: nextStatus.toLowerCase() };
+    const propLite = await db.property.findUnique({
+      where: { id: updated.propertyId },
+      select: { name: true },
+    });
+    sendNotificationToMany(
+      await propertyOwnerAndManagers(updated.propertyId),
+      'host_order',
+      {
+        title: `${meta.emoji} Commande ${meta.label} — ${propLite?.name ?? 'votre bien'}`,
+        body: `${provider.businessName} a marqué la commande de ${updated.guestName} « ${meta.label} ».`,
+        propertyId: updated.propertyId,
+        propertyName: propLite?.name ?? undefined,
+        url: '/airbnb/orders',
+        meta: { source: 'provider_update', orderId: order.id, status: nextStatus },
+      },
+    ).catch(() => undefined);
 
     return NextResponse.json({ ok: true, status: nextStatus });
   } catch (error) {

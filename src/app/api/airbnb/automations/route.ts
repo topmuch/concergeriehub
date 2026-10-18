@@ -21,7 +21,7 @@ import {
   getUserRoleForProperty,
 } from '@/lib/b2b-server';
 import { canManageTeam } from '@/lib/team';
-import { ensureDefaultRules, runDailyAutomations } from '@/lib/automations-server';
+import { ensureDefaultRules, runDailyAutomations, syncDueIcalFeeds } from '@/lib/automations-server';
 
 export async function GET() {
   try {
@@ -53,6 +53,14 @@ export async function GET() {
     // Déploiement du catalogue + tick lazy des rappels du jour
     await Promise.all(manageableIds.map((id) => ensureDefaultRules(id)));
     await runDailyAutomations(manageableIds);
+
+    // AUDIT 24-c (P1) — tick lazy iCal : sans cron externe configuré,
+    // les calendriers Airbnb/Booking ne se resynchronisaient JAMAIS
+    // (checkDailyAutomations n'est atteignable que via CRON_SECRET).
+    // Fire-and-forget, throttlé 1 h par feed côté syncDueIcalFeeds.
+    void syncDueIcalFeeds().catch((error) =>
+      console.error('[airbnb/automations GET] lazy ical sync failed:', error),
+    );
 
     const rules = await db.automationRule.findMany({
       where: { propertyId: { in: manageableIds } },

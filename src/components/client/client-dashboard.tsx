@@ -187,7 +187,7 @@ export function ClientDashboard() {
               <h3 className="text-sm font-semibold">Activité des 14 derniers jours</h3>
               <button
                 onClick={() => window.dispatchEvent(new CustomEvent('navigate', { detail: 'client-analytics' }))}
-                className="text-xs text-emerald-600 hover:text-emerald-700 font-medium flex items-center gap-0.5 transition-colors cursor-pointer"
+                className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-0.5 transition-colors cursor-pointer"
               >
                 Voir les statistiques <ArrowUpRight className="h-3 w-3" />
               </button>
@@ -236,8 +236,8 @@ export function ClientDashboard() {
       {!hasAnyData && (
         <Card className="rounded-2xl border-dashed">
           <CardContent className="py-16 flex flex-col items-center text-center">
-            <div className="h-16 w-16 rounded-2xl bg-emerald-50 flex items-center justify-center mb-4">
-              <Zap className="h-8 w-8 text-emerald-500" />
+            <div className="h-16 w-16 rounded-2xl bg-blue-50 flex items-center justify-center mb-4">
+              <Zap className="h-8 w-8 text-blue-600" />
             </div>
             <h3 className="font-semibold text-lg">Scannez votre plaque QR pour commencer</h3>
             <p className="text-sm text-muted-foreground mt-2 max-w-sm">

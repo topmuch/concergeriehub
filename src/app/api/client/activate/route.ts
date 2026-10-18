@@ -4,6 +4,24 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import crypto from 'crypto';
 
+/**
+ * Vérifie que l'utilisateur est owner de la propriété
+ * ou membre actif (invitation acceptée).
+ */
+async function canAccessProperty(userId: string, propertyId: string): Promise<boolean> {
+  const property = await db.property.findFirst({
+    where: {
+      id: propertyId,
+      OR: [
+        { ownerId: userId },
+        { members: { some: { userId, acceptedAt: { not: null } } } },
+      ],
+    },
+    select: { id: true },
+  });
+  return property !== null;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -32,10 +50,15 @@ export async function POST(request: NextRequest) {
     if (session?.user?.id) {
       userId = session.user.id;
 
+      // Vérifier que la propriété fournie est bien accessible
+      if (resolvedHomeId && !(await canAccessProperty(userId, resolvedHomeId))) {
+        return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
+      }
+
       // Auto-resolve home if not provided
       if (!resolvedHomeId) {
         const membership = await db.propertyMember.findFirst({
-          where: { userId },
+          where: { userId, acceptedAt: { not: null } },
           include: { property: true },
         });
         if (membership?.property) {

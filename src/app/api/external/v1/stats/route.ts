@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
   const plaintext = req.headers.get('x-api-key');
   const key = await verifyApiKey(plaintext);
   if (!key) {
-    return NextResponse.json({ error: 'Clé d\u2019API invalide ou révoquée' }, { status: 401 });
+    return NextResponse.json({ error: 'Clé d’API invalide ou révoquée' }, { status: 401 });
   }
 
   const allowed = await rateLimit(`apikey:${key.id}`, 30);

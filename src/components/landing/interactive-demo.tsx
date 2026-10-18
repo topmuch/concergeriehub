@@ -1,7 +1,7 @@
 'use client';
 
 // =============================================================
-// InteractiveDemo — Landing "Conciergerie Hub" (ÉTAPE 22bis / V4)
+// InteractiveDemo — Landing "RoomScan" (ÉTAPE 22bis / V4)
 //
 // DÉMO INTERACTIVE CYCLIQUE — la pièce maîtresse de la landing.
 //   Gauche  : plaque QR physique stylisée (qrcode.react) avec ligne
@@ -17,6 +17,13 @@
 //   3. Le dashboard hôte       → multi-propriétés temps réel
 //
 // Transitions : AnimatePresence (slide + fade) — jamais de saut.
+//
+// v4.61 — écrans réels inchangés (app guest + dashboard) ; seuls les
+// accents DÉCORATIFS de la landing changent d'accent.
+// v5.1 (COLOR-A) — accents décoratifs passés au bleu logo #0066EF :
+// voiles pastels bleus, dot actif, marque des mockups (chip 🏠,
+// scan-line, onglet actif). Les états sémantiques (émeraude succès,
+// ambre ménage, rouge notification) sont conservés à l'identique.
 // =============================================================
 
 import { useEffect, useState } from 'react';
@@ -38,6 +45,7 @@ import {
   Wifi,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useLandingLang } from '@/lib/landing-i18n';
 
 const CYCLE_MS = 4000;
 
@@ -73,6 +81,7 @@ export interface InteractiveDemoProps {
 }
 
 export function InteractiveDemo({ className }: InteractiveDemoProps) {
+  const { t } = useLandingLang();
   const [step, setStep] = useState(0);
   const [playing, setPlaying] = useState(true);
 
@@ -92,15 +101,18 @@ export function InteractiveDemo({ className }: InteractiveDemoProps) {
   const goToNext = () => setStep((s) => (s + 1) % DEMO_STEPS.length);
 
   return (
-    <div className={cn('relative mx-auto w-full max-w-4xl', className)}>
+    // dir="ltr" : maquettes téléphone/plaque = matériel visuel — reste
+    // en LTR même sur une page RTL (l'arabe n'en miroite que la mise
+    // en page, pas les captures d'écran).
+    <div dir="ltr" className={cn('relative mx-auto w-full max-w-4xl', className)}>
       {/* ----- Formes d'ambiance (dégradés flous) ----- */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -left-12 -top-12 h-72 w-72 rounded-full bg-blue-100/50 blur-3xl"
+        className="pointer-events-none absolute -left-12 -top-12 h-72 w-72 rounded-full bg-[#DBE8FF]/70 blur-3xl"
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -bottom-12 -right-12 h-72 w-72 rounded-full bg-emerald-100/60 blur-3xl"
+        className="pointer-events-none absolute -bottom-12 -right-12 h-72 w-72 rounded-full bg-sky-100/60 blur-3xl"
       />
 
       <div className="relative flex flex-col items-center gap-10 lg:flex-row lg:items-center lg:justify-center lg:gap-16">
@@ -121,8 +133,8 @@ export function InteractiveDemo({ className }: InteractiveDemoProps) {
               transition={{ duration: 0.35, ease: EASE }}
               className="text-center"
             >
-              <h4 className="text-base font-bold text-slate-900">{DEMO_STEPS[step].title}</h4>
-              <p className="mt-0.5 text-sm text-slate-600">{DEMO_STEPS[step].description}</p>
+              <h4 className="text-base font-bold text-slate-900">{t(DEMO_STEPS[step].title)}</h4>
+              <p className="mt-0.5 text-sm text-slate-600">{t(DEMO_STEPS[step].description)}</p>
             </motion.div>
           </AnimatePresence>
         </div>
@@ -131,24 +143,24 @@ export function InteractiveDemo({ className }: InteractiveDemoProps) {
           <button
             type="button"
             onClick={goToPrev}
-            aria-label="Étape précédente"
+            aria-label={t('Étape précédente')}
             className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition-all hover:border-slate-300 hover:text-slate-900 hover:shadow-md"
           >
             <ChevronLeft className="h-4 w-4" aria-hidden="true" />
           </button>
 
-          <div className="flex items-center gap-2" role="tablist" aria-label="Étapes de la démo">
+          <div className="flex items-center gap-2" role="tablist" aria-label={t('Étapes de la démo')}>
             {DEMO_STEPS.map((_, i) => (
               <button
                 key={i}
                 type="button"
                 role="tab"
                 aria-selected={step === i}
-                aria-label={`Étape ${i + 1}`}
+                aria-label={t('Étape {n}', { n: i + 1 })}
                 onClick={() => setStep(i)}
                 className={cn(
                   'h-2.5 rounded-full transition-all duration-300',
-                  step === i ? 'w-7 bg-emerald-500' : 'w-2.5 bg-slate-300 hover:bg-slate-400',
+                  step === i ? 'w-7 bg-[#0066EF]' : 'w-2.5 bg-slate-300 hover:bg-slate-400',
                 )}
               />
             ))}
@@ -157,7 +169,7 @@ export function InteractiveDemo({ className }: InteractiveDemoProps) {
           <button
             type="button"
             onClick={goToNext}
-            aria-label="Étape suivante"
+            aria-label={t('Étape suivante')}
             className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition-all hover:border-slate-300 hover:text-slate-900 hover:shadow-md"
           >
             <ChevronRight className="h-4 w-4" aria-hidden="true" />
@@ -169,7 +181,7 @@ export function InteractiveDemo({ className }: InteractiveDemoProps) {
             type="button"
             onClick={() => setPlaying((p) => !p)}
             aria-pressed={!playing}
-            aria-label={playing ? 'Mettre la démo en pause' : 'Reprendre la démo'}
+            aria-label={playing ? t('Mettre la démo en pause') : t('Reprendre la démo')}
             className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition-all hover:border-slate-300 hover:shadow-md"
           >
             {playing ? (
@@ -177,7 +189,7 @@ export function InteractiveDemo({ className }: InteractiveDemoProps) {
             ) : (
               <Play className="h-3.5 w-3.5" aria-hidden="true" />
             )}
-            {playing ? 'Pause' : 'Lecture'}
+            {playing ? t('Pause') : t('Lecture')}
           </button>
         </div>
       </div>
@@ -190,6 +202,7 @@ export function InteractiveDemo({ className }: InteractiveDemoProps) {
 // =============================================================
 
 function QrPlaque({ step }: { step: number }) {
+  const { t } = useLandingLang();
   const status = PLAQUE_STATUS[step];
   return (
     <motion.div
@@ -207,7 +220,7 @@ function QrPlaque({ step }: { step: number }) {
         <div className="mb-3 flex items-center gap-2">
           <span
             aria-hidden="true"
-            className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-600 text-sm"
+            className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#0066EF] text-sm"
           >
             🏠
           </span>
@@ -249,9 +262,9 @@ function QrPlaque({ step }: { step: number }) {
                 <motion.div
                   animate={{ top: ['4%', '88%', '4%'] }}
                   transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
-                  className="absolute inset-x-0 h-8 bg-gradient-to-b from-emerald-400/0 via-emerald-400/40 to-emerald-400/0"
+                  className="absolute inset-x-0 h-8 bg-gradient-to-b from-[#0066EF]/0 via-[#0066EF]/40 to-[#0066EF]/0"
                 />
-                <div className="absolute inset-0 rounded-xl ring-2 ring-inset ring-emerald-400/50" />
+                <div className="absolute inset-0 rounded-xl ring-2 ring-inset ring-[#0066EF]/50" />
               </motion.div>
             )}
           </AnimatePresence>
@@ -290,7 +303,7 @@ function QrPlaque({ step }: { step: number }) {
                 status.tone === 'emerald' ? 'text-emerald-700' : 'text-slate-500',
               )}
             >
-              {status.label}
+              {t(status.label)}
             </motion.span>
           </AnimatePresence>
         </div>
@@ -378,7 +391,7 @@ function GuestWelcomeScreen() {
       <div className="flex items-center gap-2.5">
         <span
           aria-hidden="true"
-          className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-600 text-base shadow-sm"
+          className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#0066EF] text-base shadow-sm"
         >
           🏠
         </span>
@@ -396,7 +409,7 @@ function GuestWelcomeScreen() {
       <div className="mt-4 space-y-3">
         <motion.div
           whileHover={{ scale: 1.02 }}
-          className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-3.5 shadow-sm transition-shadow hover:shadow-md"
+          className="flex items-center gap-3 rounded-2xl border border-[#DBE8FF] bg-[#EAF2FF] p-3.5 shadow-sm transition-shadow hover:shadow-md"
         >
           <span aria-hidden="true" className="text-3xl leading-none">
             👤
@@ -405,7 +418,7 @@ function GuestWelcomeScreen() {
             <p className="text-[13px] font-bold text-slate-900">Mode Invité</p>
             <p className="truncate text-[10px] text-slate-600">Guidebook, Wi-Fi & services</p>
           </div>
-          <ChevronRight className="h-4 w-4 shrink-0 text-emerald-600" aria-hidden="true" />
+          <ChevronRight className="h-4 w-4 shrink-0 text-[#0066EF]" aria-hidden="true" />
         </motion.div>
 
         <motion.div
@@ -429,7 +442,7 @@ function GuestWelcomeScreen() {
         transition={{ delay: 0.5, duration: 0.4 }}
         className="mt-auto flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5"
       >
-        <Wifi className="h-3.5 w-3.5 text-emerald-600" aria-hidden="true" />
+        <Wifi className="h-3.5 w-3.5 text-[#0066EF]" aria-hidden="true" />
         <p className="text-[10px] font-medium text-slate-600">
           Wi-Fi <span className="font-bold text-slate-900">Loft_5GHz</span> — connexion en 1 tap
         </p>
@@ -563,7 +576,7 @@ function GuestServicesScreen() {
           <Home className="h-4 w-4" aria-hidden="true" />
           <span className="text-[9px] font-medium">Accueil</span>
         </div>
-        <div className="flex flex-col items-center gap-0.5 text-emerald-600">
+        <div className="flex flex-col items-center gap-0.5 text-[#0066EF]">
           <ConciergeBell className="h-4 w-4" aria-hidden="true" />
           <span className="text-[9px] font-bold">Services</span>
         </div>

@@ -17,7 +17,7 @@ import { ORDER_STATUS_META, ORDER_TRANSITIONS, formatEur2, type OrderStatus } fr
 // et pilote son cycle de vie :
 //   PENDING → CONFIRMED → PREPARING → DELIVERED (+ CANCELLED)
 // ⚠️ La part hôte (hostEarning) n'est JAMAIS exposée au
-// prestataire — c'est un contrat entre Conciergerie Hub et l'hôte.
+// prestataire — c'est un contrat entre RoomScan et l'hôte.
 // Optimiste : rollback + toast en cas d'échec.
 // =============================================================
 
@@ -110,7 +110,7 @@ function PaymentChip({ paymentStatus, orderStatus }: { paymentStatus: string; or
           ? { label: 'Paiement échoué', cls: 'bg-rose-100 text-rose-700 border-rose-300' }
           : { label: 'À payer', cls: 'bg-orange-100 text-orange-800 border-orange-300' };
   return (
-    <Badge className={`${meta.cls} border text-[10px] px-2`} title={paymentStatus === 'PAID' ? 'Encaissé via Conciergerie Hub' : 'Paiement non finalisé'}>
+    <Badge className={`${meta.cls} border text-[10px] px-2`} title={paymentStatus === 'PAID' ? 'Encaissé via RoomScan' : 'Paiement non finalisé'}>
       💳 {meta.label}
     </Badge>
   );
@@ -138,7 +138,7 @@ function ConnectBanner({
           </h2>
           <p className="mt-1 text-xs leading-relaxed text-amber-800">
             Connectez votre compte Stripe pour être payé directement à chaque commande —
-            la commission Conciergerie Hub (15&nbsp;%) est déduite automatiquement, sans facture à gérer.
+            la commission RoomScan (15&nbsp;%) est déduite automatiquement, sans facture à gérer.
           </p>
         </div>
         <Button
@@ -226,7 +226,7 @@ function DocumentStatusBadge({ status }: { status: VerificationDocStatus }) {
  * FIX-4 — Carte « 📄 Documents de vérification » du portail prestataire :
  * liste des documents avec badges statut + upload (type + fichier) avec
  * validation client (MIME + 5 Mo — le serveur re-valide tout).
- * Bandeau explicatif : la vérification est faite par l'équipe Conciergerie Hub.
+ * Bandeau explicatif : la vérification est faite par l'équipe RoomScan.
  */
 function VerificationDocumentsCard({
   documents,
@@ -299,7 +299,7 @@ function VerificationDocumentsCard({
             📄 Documents de vérification
           </h2>
           <p className="mt-1 text-xs leading-relaxed text-slate-500">
-            Vos documents sont vérifiés par l&apos;équipe Conciergerie Hub. Une fois validés,
+            Vos documents sont vérifiés par l&apos;équipe RoomScan. Une fois validés,
             votre profil affiche le badge ✓ Vérifié.
           </p>
         </div>
@@ -694,7 +694,7 @@ export function ProviderDashboard() {
             🔐 Portail sécurisé — vous ne voyez que vos commandes.
           </p>
           <p className="text-xs text-slate-400">
-            Conciergerie Hub — le moteur de transaction de votre conciergerie
+            RoomScan — le moteur de transaction de votre conciergerie
           </p>
         </div>
       </footer>
@@ -786,7 +786,7 @@ function OrderRow({ order, busy, onTransition }: {
               size="sm"
               disabled={busy}
               onClick={() => onTransition(order, s)}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+              className="bg-blue-600 hover:bg-blue-700 text-white"
             >
               {busy ? '…' : NEXT_ACTION_LABEL[s] ?? s}
             </Button>

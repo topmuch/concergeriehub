@@ -8,6 +8,7 @@ import {
   refreshProviderConnectState,
   stripeConnectEnabled,
 } from '@/lib/stripe-connect';
+import { resolveOrigin, siteUrl } from '@/lib/site';
 
 // =============================================================
 // ÉTAPE 20 (V3) — Stripe Connect : onboarding des prestataires
@@ -106,7 +107,7 @@ export async function POST(req: Request) {
     }
 
     // ── STRIPE RÉEL : compte Express + AccountLink ──
-    const origin = req.headers.get('origin') || process.env.NEXTAUTH_URL || 'http://localhost:3000';
+    const origin = resolveOrigin(req);
     const accountId = await ensureExpressAccount({
       providerId: provider.id,
       businessName: provider.businessName,

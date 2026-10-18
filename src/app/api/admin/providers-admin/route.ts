@@ -25,7 +25,7 @@ function slugifyBusiness(businessName: string): string {
   return businessName
     .toLowerCase()
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[̀-ͯ]/g, '')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
     .slice(0, 40) || 'prestataire';
@@ -140,7 +140,7 @@ export async function POST(req: NextRequest) {
     // sans mot de passe, comme les prestataires de démo)
     const email =
       body.email?.trim().toLowerCase() ||
-      `contact.${slugifyBusiness(businessName)}@pro.conciergerie-hub.fr`;
+      `contact.${slugifyBusiness(businessName)}@pro.roomscan.pro`;
 
     const emailTaken = await db.user.findUnique({ where: { email }, select: { id: true } });
     if (emailTaken) {

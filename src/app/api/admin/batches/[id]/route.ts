@@ -59,6 +59,19 @@ export async function DELETE(
       return NextResponse.json({ error: 'Lot introuvable' }, { status: 404 });
     }
 
+    // v4.81 (AUDIT QA-3) — garde : on ne supprime JAMAIS un lot contenant
+    // des plaques réclamées/actives (imprimées, scannées, accrochées chez
+    // un hôte) — cela détruirait des hubs en production.
+    const activeCount = await db.physicalQrCode.count({
+      where: { batchId: id, isClaimed: true },
+    });
+    if (activeCount > 0) {
+      return NextResponse.json(
+        { error: `Suppression impossible : ${activeCount} plaque(s) de ce lot sont déjà réclamées/actives.` },
+        { status: 409 },
+      );
+    }
+
     // Delete all physical QR codes in this batch, then the batch itself
     await db.$transaction(async (tx) => {
       await tx.physicalQrCode.deleteMany({ where: { batchId: id } });

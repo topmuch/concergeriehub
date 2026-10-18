@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { PlaquePrint } from '@/components/airbnb/plaque-print';
 
 export const metadata: Metadata = {
-  title: 'Imprimer une plaque — Conciergerie Hub',
+  title: 'Imprimer une plaque — RoomScan',
   description: 'Fiche plaque QR imprimable (sticker A6) reliant le logement à son Hub.',
 };
 

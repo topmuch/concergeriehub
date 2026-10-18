@@ -2,8 +2,8 @@ import { cn } from '@/lib/utils';
 
 // =============================================================
 // StatusBadge — badge de statut générique du Dashboard Client
-// Mapping sémantique → couleur (vert / ambre / rose / bleu ciel
-// autorisé ici ? non : ciel remplacé par violet clair) / slate.
+// v5.2 « SAPHIR LUXE » : pastille typographique sombre bleutée
+// (.lux-chip + point coloré — SANS icône ni emoji, demande client).
 //
 // Familles gérées : plaques (active/inactive/lost), commandes
 // (PENDING…DELIVERED), paiements (UNPAID/PAID/REFUNDED/FAILED),
@@ -13,13 +13,14 @@ import { cn } from '@/lib/utils';
 
 type Tone = 'success' | 'warning' | 'danger' | 'info' | 'neutral' | 'purple';
 
-const TONES: Record<Tone, string> = {
-  success: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  warning: 'bg-amber-50 text-amber-700 border-amber-200',
-  danger: 'bg-rose-50 text-rose-700 border-rose-200',
-  info: 'bg-violet-50 text-violet-700 border-violet-200',
-  purple: 'bg-purple-50 text-purple-700 border-purple-200',
-  neutral: 'bg-slate-100 text-slate-600 border-slate-200',
+/** Couleur du point indicateur par tonalité (thème nuit saphir). */
+const TONE_DOTS: Record<Tone, string> = {
+  success: '#34d399',
+  warning: '#fbbf24',
+  danger: '#f07d6a',
+  info: '#5c8af0',
+  purple: '#cdb6ff',
+  neutral: '#8fa0c2',
 };
 
 const STATUS_MAP: Record<string, { tone: Tone; label: string }> = {
@@ -43,10 +44,10 @@ const STATUS_MAP: Record<string, { tone: Tone; label: string }> = {
   FAILED: { tone: 'danger', label: 'Échec' },
 
   // --- Équipe ---
-  OWNER: { tone: 'purple', label: '👑 Owner' },
-  MANAGER: { tone: 'info', label: '👔 Manager' },
-  CLEANER: { tone: 'success', label: '🧹 Cleaner' },
-  MAINTENANCE: { tone: 'warning', label: '🔧 Maintenance' },
+  OWNER: { tone: 'purple', label: 'Owner' },
+  MANAGER: { tone: 'info', label: 'Manager' },
+  CLEANER: { tone: 'success', label: 'Cleaner' },
+  MAINTENANCE: { tone: 'warning', label: 'Maintenance' },
   INVITED: { tone: 'neutral', label: 'Invitation en attente' },
 
   // --- Séjours ---
@@ -84,13 +85,12 @@ export function StatusBadge({ status, label, tone, className }: StatusBadgeProps
   const resolvedLabel = label ?? meta?.label ?? status;
 
   return (
-    <span
-      className={cn(
-        'inline-flex items-center gap-1 whitespace-nowrap rounded-full border px-2.5 py-0.5 text-xs font-semibold',
-        TONES[resolvedTone],
-        className,
-      )}
-    >
+    <span className={cn('lux-chip whitespace-nowrap', className)}>
+      <span
+        className="lux-dot"
+        style={{ backgroundColor: TONE_DOTS[resolvedTone] }}
+        aria-hidden="true"
+      />
       {resolvedLabel}
     </span>
   );

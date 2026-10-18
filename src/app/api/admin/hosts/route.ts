@@ -16,9 +16,12 @@ export async function GET() {
   if (!admin) return adminUnauthorized();
 
   try {
+    // PERF : bornes anti-full-scan (la table peut grandir) — 500 derniers
+    // hôtes max, triés du plus récent au plus ancien.
     const hosts = await db.user.findMany({
       where: { role: 'user', providerProfile: null },
       orderBy: { createdAt: 'desc' },
+      take: 500,
       select: {
         id: true,
         fullName: true,
@@ -33,10 +36,13 @@ export async function GET() {
 
     // Abonnements hôte les plus récents (1 par hôte) — requête séparée
     // puis regroupement en JS (SQLite : pas de DISTINCT ON).
+    // PERF : take 2000 max — suffisant pour couvrir 1 sub récente × 500 hôtes
+    // (les plus récents d'abord grâce au orderBy, donc le 1er par hôte est bon).
     const hostIds = hosts.map((h) => h.id);
     const subs = await db.subscription.findMany({
       where: { userId: { in: hostIds } },
       orderBy: { createdAt: 'desc' },
+      take: 2000,
       select: {
         userId: true,
         plan: true,

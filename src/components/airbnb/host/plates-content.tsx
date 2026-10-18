@@ -1,10 +1,11 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { AlertCircle, Copy, MoreHorizontal, X } from 'lucide-react';
+import QRCode from 'qrcode';
+import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { KPICard } from '@/components/airbnb/host/kpi-card';
 import { StatusBadge } from '@/components/airbnb/host/status-badge';
@@ -39,6 +40,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 
 // =============================================================
@@ -55,9 +64,16 @@ import { cn } from '@/lib/utils';
 // NB honnête : les plaques physiques ne sont pas tracées par
 // ScanLog (réservé aux QrCode dynamiques) → pas de statistique
 // de scans ici ; l'action proposée est « Voir le Hub public ».
+//
+// v4.69 — PHASE 1 refonte UI : colonne « Lien » (URL publique du
+//   Hub, copie en 1 clic) + bouton « Aperçu QR » par ligne (dialog
+//   QR généré côté client via `qrcode`, marine #07235B) — même
+//   pattern que la page impression plaque-print. Actions inchangées.
+// v5.2 « SAPHIR LUXE » — refonte design profonde (demande client) :
+//   nuit saphir, SANS icônes ni emojis décoratifs (typographie,
+//   .lux-dot, glyphes purs), portails (Dropdown/Dialog/AlertDialog/
+//   Select) stylés explicitement en sombre bleuté. Logique intacte.
 // =============================================================
-
-const CORAL = '#E23F2B';
 
 type StatusChange = { plaque: PlaqueDTO; status: 'active' | 'inactive' };
 
@@ -93,6 +109,51 @@ export function PlatesContent({ openOrderOnInit = false }: { openOrderOnInit?: b
   const [confirmTarget, setConfirmTarget] = useState<StatusChange | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
 
+  // ----- v4.69 — Lien public du Hub + Aperçu QR -----
+  // L'origine est lue après le montage (évite un mismatch SSR).
+  const [origin, setOrigin] = useState('');
+  const [qrTarget, setQrTarget] = useState<PlaqueDTO | null>(null);
+  const [qrDataUrl, setQrDataUrl] = useState('');
+  const [qrBusy, setQrBusy] = useState(false);
+
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
+
+  /** URL publique scannable de la plaque (vide si pas de hubSlug). */
+  const hubUrlOf = useCallback(
+    (row: PlaqueDTO) => (row.hubSlug ? `${origin}/hub/${row.hubSlug}` : ''),
+    [origin],
+  );
+
+  // Génération du QR à l'ouverture du dialog (client-side, marine). 
+  useEffect(() => {
+    if (!qrTarget) return;
+    const url = hubUrlOf(qrTarget);
+    if (!url) return;
+    let cancelled = false;
+    setQrBusy(true);
+    setQrDataUrl('');
+    QRCode.toDataURL(url, {
+      width: 512,
+      margin: 1,
+      errorCorrectionLevel: 'M',
+      color: { dark: '#07235B', light: '#FFFFFF' },
+    })
+      .then((dataUrl) => {
+        if (!cancelled) setQrDataUrl(dataUrl);
+      })
+      .catch(() => {
+        if (!cancelled) toast.error('Génération du QR code impossible. Réessayez.');
+      })
+      .finally(() => {
+        if (!cancelled) setQrBusy(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [qrTarget, hubUrlOf]);
+
   // ----- Statistiques globales (données réelles) -----
   const total = plaques.length;
   const actives = plaques.filter((p) => p.status === 'active').length;
@@ -126,6 +187,32 @@ export function PlatesContent({ openOrderOnInit = false }: { openOrderOnInit?: b
       .writeText(code)
       .then(() => toast.success('Code copié'))
       .catch(() => toast.error('Copie impossible dans ce navigateur.'));
+  }
+
+  // v4.69 — copie du lien public du Hub (même pattern que copyCode).
+  // v4.81 (AUDIT QA) — fallback execCommand : navigator.clipboard échoue
+  // hors HTTPS / vieux navigateurs → textarea cachée + execCommand('copy').
+  function copyLink(url: string) {
+    navigator.clipboard
+      .writeText(url)
+      .then(() => toast.success('Lien copié'))
+      .catch(() => {
+        try {
+          const ta = document.createElement('textarea');
+          ta.value = url;
+          ta.style.position = 'fixed';
+          ta.style.opacity = '0';
+          document.body.appendChild(ta);
+          ta.focus();
+          ta.select();
+          const ok = document.execCommand('copy');
+          document.body.removeChild(ta);
+          if (ok) toast.success('Lien copié');
+          else toast.error(`Copiez manuellement : ${url}`);
+        } catch {
+          toast.error(`Copiez manuellement : ${url}`);
+        }
+      });
   }
 
   function openOrderModal() {
@@ -198,24 +285,21 @@ export function PlatesContent({ openOrderOnInit = false }: { openOrderOnInit?: b
         header: 'Code',
         sortValue: (row) => row.activationCode,
         cell: (row) => (
-          <div className="flex min-w-0 items-center gap-1">
-            <span className="truncate font-mono text-[13px] font-bold text-slate-900">
+          <div className="flex min-w-0 items-center gap-1.5">
+            <button
+              type="button"
+              className="truncate font-mono text-[13px] font-bold text-white transition-colors hover:text-[#e9c47c]"
+              onClick={() => copyCode(row.activationCode)}
+              aria-label={`Copier le code ${row.activationCode}`}
+              title="Copier le code"
+            >
               {row.activationCode}
-            </span>
+            </button>
             {row.id === lastCreated?.id && (
-              <span className="ml-1 inline-flex shrink-0 items-center rounded-full bg-[#FEF1EF] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#E23F2B] ring-1 ring-[#E23F2B]/30">
+              <span className="ml-0.5 inline-flex shrink-0 items-center rounded-full border border-[#e9c47c]/30 bg-[#e9c47c]/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#e9c47c]">
                 Nouvelle
               </span>
             )}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 shrink-0 text-slate-400 hover:text-slate-700"
-              onClick={() => copyCode(row.activationCode)}
-              aria-label={`Copier le code ${row.activationCode}`}
-            >
-              <Copy className="h-3.5 w-3.5" aria-hidden="true" />
-            </Button>
           </div>
         ),
       },
@@ -224,10 +308,32 @@ export function PlatesContent({ openOrderOnInit = false }: { openOrderOnInit?: b
         header: 'Bien',
         sortValue: (row) => row.property?.name ?? '',
         cell: (row) => (
-          <span className="block max-w-[180px] truncate font-medium text-slate-700">
+          <span className="block max-w-[180px] truncate font-medium text-white">
             {row.property?.name ?? '—'}
           </span>
         ),
+      },
+      {
+        // v4.69 — lien public du Hub : URL tronquée + copie en 1 clic.
+        key: 'hubUrl',
+        header: 'Lien',
+        hideBelow: 'lg',
+        sortValue: (row) => (row.hubSlug ? `/hub/${row.hubSlug}` : ''),
+        cell: (row) => {
+          const url = hubUrlOf(row);
+          if (!url) return <span className="text-[#8fa0c2]/50">—</span>;
+          return (
+            <button
+              type="button"
+              className="max-w-[190px] truncate font-mono text-[11px] text-[#8fa0c2] transition-colors hover:text-[#a9c4ff]"
+              title={url}
+              onClick={() => copyLink(url)}
+              aria-label={`Copier le lien public du Hub ${url}`}
+            >
+              {url.replace(/^https?:\/\//, '')}
+            </button>
+          );
+        },
       },
       {
         key: 'status',
@@ -240,7 +346,7 @@ export function PlatesContent({ openOrderOnInit = false }: { openOrderOnInit?: b
         header: 'Créée le',
         sortValue: (row) => timeValue(row.createdAt),
         cell: (row) => (
-          <time dateTime={row.createdAt} className="whitespace-nowrap text-slate-600">
+          <time dateTime={row.createdAt} className="whitespace-nowrap text-[#8fa0c2]">
             {dateFr(row.createdAt)}
           </time>
         ),
@@ -252,11 +358,11 @@ export function PlatesContent({ openOrderOnInit = false }: { openOrderOnInit?: b
         sortValue: (row) => timeValue(row.claimedAt),
         cell: (row) =>
           row.claimedAt ? (
-            <time dateTime={row.claimedAt} className="whitespace-nowrap text-slate-600">
+            <time dateTime={row.claimedAt} className="whitespace-nowrap text-[#8fa0c2]">
               {dateFr(row.claimedAt)}
             </time>
           ) : (
-            <span className="text-slate-400">—</span>
+            <span className="text-[#8fa0c2]/50">—</span>
           ),
       },
       {
@@ -264,51 +370,75 @@ export function PlatesContent({ openOrderOnInit = false }: { openOrderOnInit?: b
         header: 'Actions',
         className: 'text-right',
         cell: (row) => (
-          <div className="flex justify-end">
+          <div className="flex justify-end gap-1">
+            {/* v4.69 — aperçu QR : dialog avec QR généré côté client. */}
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-8 shrink-0 rounded-full px-2.5 text-[11px] font-semibold tracking-[0.08em] text-[#8fa0c2] hover:bg-white/8 hover:text-white"
+              onClick={() => setQrTarget(row)}
+              disabled={!row.hubSlug}
+              aria-label={`Aperçu QR de la plaque ${row.activationCode}`}
+              title="Aperçu QR"
+            >
+              QR
+            </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 text-slate-500 hover:text-slate-900"
+                  className="h-8 w-8 rounded-full text-[#8fa0c2] hover:bg-white/8 hover:text-white"
                   disabled={busyId === row.id}
                   aria-label={`Actions pour la plaque ${row.activationCode}`}
                 >
-                  <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
+                  <span aria-hidden="true" className="text-base leading-none">▾</span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-60">
+              <DropdownMenuContent
+                align="end"
+                className="w-60 border-white/10 bg-[#0d1530] text-white"
+              >
                 <DropdownMenuItem
+                  className="focus:bg-white/8 focus:text-white"
                   onSelect={() => router.push(`/airbnb/plates/${row.id}/print`)}
                 >
-                  🖨️ Télécharger / Imprimer PDF
+                  Télécharger / Imprimer PDF
                 </DropdownMenuItem>
                 {row.hubSlug ? (
-                  <DropdownMenuItem asChild>
+                  <DropdownMenuItem asChild className="focus:bg-white/8 focus:text-white">
                     <a
                       href={`/hub/${row.hubSlug}`}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      👁️ Voir le Hub public
+                      Voir le Hub public
                     </a>
                   </DropdownMenuItem>
                 ) : (
-                  <DropdownMenuItem disabled>👁️ Voir le Hub public</DropdownMenuItem>
+                  <DropdownMenuItem disabled className="focus:bg-white/8 focus:text-white">
+                    Voir le Hub public
+                  </DropdownMenuItem>
                 )}
-                <DropdownMenuSeparator />
+                <DropdownMenuSeparator className="bg-white/10" />
                 {row.status === 'active' ? (
-                  <DropdownMenuItem onSelect={() => setConfirmTarget({ plaque: row, status: 'inactive' })}>
-                    ⏸️ Désactiver
+                  <DropdownMenuItem
+                    className="focus:bg-white/8 focus:text-white"
+                    onSelect={() => setConfirmTarget({ plaque: row, status: 'inactive' })}
+                  >
+                    Désactiver
                   </DropdownMenuItem>
                 ) : row.status === 'lost' ? (
-                  <DropdownMenuItem disabled>🔒 Perdue — contactez le support</DropdownMenuItem>
+                  <DropdownMenuItem disabled className="focus:bg-white/8 focus:text-white">
+                    Perdue — contactez le support
+                  </DropdownMenuItem>
                 ) : (
                   <DropdownMenuItem
+                    className="focus:bg-white/8 focus:text-white"
                     onSelect={() => setConfirmTarget({ plaque: row, status: 'active' })}
-                    className="focus:text-emerald-700"
                   >
-                    ▶️ Réactiver
+                    Réactiver
                   </DropdownMenuItem>
                 )}
               </DropdownMenuContent>
@@ -318,7 +448,7 @@ export function PlatesContent({ openOrderOnInit = false }: { openOrderOnInit?: b
       },
     ];
     return cols;
-  }, [lastCreated, busyId, router]);
+  }, [lastCreated, busyId, router, hubUrlOf]);
 
   // ----- Rendus intermédiaires -----
   const showEmptyState = !loading && !error && total === 0;
@@ -328,31 +458,36 @@ export function PlatesContent({ openOrderOnInit = false }: { openOrderOnInit?: b
       {/* ---------- En-tête ---------- */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-            📱 Plaques QR
+          <h1 className="lux-display text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+            Plaques QR
           </h1>
-          <p className="mt-1 truncate text-sm text-slate-600">
+          <p className="mt-1.5 truncate text-xs text-[#8fa0c2] sm:text-sm">
             {loading || propertiesLoading
               ? 'Chargement de vos plaques…'
               : `${total} plaque${total > 1 ? 's' : ''} · ${actives} activée${actives > 1 ? 's' : ''} · ${attente} en attente`}
           </p>
+          <p className="mt-0.5 hidden text-xs text-[#8fa0c2]/70 sm:block">
+            Chaque plaque possède un lien public scannable : copiez-le ou générez son QR en un
+            clic.
+          </p>
         </div>
-        <Button
+        <button
+          type="button"
           onClick={openOrderModal}
-          className="h-10 shrink-0 bg-[#E23F2B] font-semibold text-white hover:bg-[#c93520]"
+          className="lux-btn h-9 w-full shrink-0 px-4 text-xs sm:w-auto"
           aria-label="Commander une nouvelle plaque QR"
         >
-          <span aria-hidden="true">📱</span> Commander une nouvelle plaque
-        </Button>
+          Commander une nouvelle plaque
+        </button>
       </div>
 
       {/* ---------- Erreur API ---------- */}
       {error && (
         <div
-          className="flex items-center gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800"
+          className="flex items-center gap-3 rounded-2xl border border-[#f07d6a]/25 bg-[#f07d6a]/8 px-4 py-3 text-sm text-[#f6a293]"
           role="alert"
         >
-          <AlertCircle className="h-5 w-5 shrink-0" aria-hidden="true" />
+          <span className="lux-dot shrink-0" style={{ backgroundColor: '#f07d6a' }} aria-hidden="true" />
           {error}
         </div>
       )}
@@ -362,32 +497,29 @@ export function PlatesContent({ openOrderOnInit = false }: { openOrderOnInit?: b
         <motion.div
           initial={{ opacity: 0, y: -6 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex flex-wrap items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3"
+          className="flex flex-wrap items-center gap-3 rounded-2xl border border-[#34d399]/25 bg-[#34d399]/8 px-4 py-3"
           role="status"
         >
-          <span aria-hidden="true" className="text-xl">🎉</span>
-          <p className="min-w-0 flex-1 text-sm text-emerald-900">
+          <span className="lux-dot shrink-0" style={{ backgroundColor: '#34d399' }} aria-hidden="true" />
+          <p className="min-w-0 flex-1 text-sm text-[#b8ecd9]">
             <span className="font-bold">Plaque créée !</span>{' '}
-            Code <span className="font-mono font-semibold">{lastCreated.activationCode}</span> —
+            Code <span className="font-mono font-semibold text-white">{lastCreated.activationCode}</span> —
             imprimez-la et collez-la dans le logement.
           </p>
-          <Button
-            size="sm"
-            asChild
-            className="h-8 shrink-0 bg-[#E23F2B] font-semibold text-white hover:bg-[#c93520]"
+          <Link
+            href={`/airbnb/plates/${lastCreated.id}/print`}
+            className="lux-btn lux-btn-gold h-8 shrink-0 px-3 text-[11px]"
           >
-            <Link href={`/airbnb/plates/${lastCreated.id}/print`}>
-              🖨️ Imprimer maintenant
-            </Link>
-          </Button>
+            Imprimer maintenant
+          </Link>
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 shrink-0 text-emerald-700 hover:text-emerald-900"
+            className="h-8 w-8 shrink-0 rounded-full text-[#8fa0c2] hover:bg-white/8 hover:text-white"
             onClick={() => setLastCreated(null)}
             aria-label="Masquer la confirmation"
           >
-            <X className="h-4 w-4" aria-hidden="true" />
+            <span aria-hidden="true" className="text-base leading-none">×</span>
           </Button>
         </motion.div>
       )}
@@ -397,25 +529,20 @@ export function PlatesContent({ openOrderOnInit = false }: { openOrderOnInit?: b
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-slate-300 bg-white px-6 py-14 text-center shadow-sm"
+          className="lux-empty flex flex-col items-center gap-2 rounded-2xl px-6 py-14 text-center"
         >
-          <span
-            aria-hidden="true"
-            className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#FEF1EF] text-3xl ring-1 ring-[#E23F2B]/20"
-          >
-            📱
-          </span>
-          <h2 className="text-lg font-bold text-slate-900">Aucune plaque pour le moment</h2>
-          <p className="max-w-md text-sm text-slate-600">
+          <h2 className="lux-display text-lg text-white">Aucune plaque pour le moment</h2>
+          <p className="max-w-md text-xs text-[#8fa0c2] sm:text-sm">
             Commandez une plaque QR, imprimez-la et collez-la dans le logement : vos voyageurs
             n&apos;auront qu&apos;à scanner pour accéder au Hub (Wi-Fi, guide, services…).
           </p>
-          <Button
+          <button
+            type="button"
             onClick={openOrderModal}
-            className="mt-1 bg-[#E23F2B] font-semibold text-white hover:bg-[#c93520]"
+            className="lux-btn mt-3 h-9 w-full px-4 text-xs sm:w-auto"
           >
-            <span aria-hidden="true">📱</span> Commander ma première plaque
-          </Button>
+            Commander ma première plaque
+          </button>
         </motion.div>
       ) : (
         <>
@@ -425,7 +552,7 @@ export function PlatesContent({ openOrderOnInit = false }: { openOrderOnInit?: b
             className="grid grid-cols-1 gap-4 sm:grid-cols-3"
           >
             <KPICard
-              icon="🏷️"
+              tone="rausch"
               label="Total plaques"
               value={loading ? '—' : total}
               hint={loading ? undefined : totalHint}
@@ -433,7 +560,7 @@ export function PlatesContent({ openOrderOnInit = false }: { openOrderOnInit?: b
               className="min-w-0"
             />
             <KPICard
-              icon="✅"
+              tone="emerald"
               label="Activées"
               value={loading ? '—' : actives}
               hint={loading ? undefined : 'Le Hub public est accessible'}
@@ -441,7 +568,7 @@ export function PlatesContent({ openOrderOnInit = false }: { openOrderOnInit?: b
               className="min-w-0"
             />
             <KPICard
-              icon="⏳"
+              tone="amber"
               label="En attente"
               value={loading ? '—' : attente}
               hint={loading ? undefined : 'À imprimer et coller sur place'}
@@ -453,24 +580,24 @@ export function PlatesContent({ openOrderOnInit = false }: { openOrderOnInit?: b
           {/* ---------- Filtre + Tableau ---------- */}
           <section
             aria-label="Liste des plaques"
-            className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6"
+            className="lux-card p-4 sm:p-6"
           >
             <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <h2 className="text-base font-bold text-slate-900">📋 Liste des plaques</h2>
+              <h2 className="lux-display text-lg font-semibold text-white">Liste des plaques</h2>
               {loading || propertiesLoading ? (
-                <Skeleton className="h-9 w-full rounded-lg sm:w-[240px]" aria-hidden="true" />
+                <Skeleton className="h-9 w-full rounded-xl bg-white/8 sm:w-[240px]" aria-hidden="true" />
               ) : (
                 <Select value={propertyFilter} onValueChange={setPropertyFilter}>
                   <SelectTrigger
-                    className="w-full text-sm sm:w-[240px]"
+                    className="w-full rounded-xl border-white/12 bg-white/[0.04] text-sm text-white sm:w-[240px]"
                     aria-label="Filtrer par bien"
                   >
                     <SelectValue placeholder="Tous les biens" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Tous les biens</SelectItem>
+                  <SelectContent className="border-white/10 bg-[#0d1530] text-white">
+                    <SelectItem value="all" className="focus:bg-white/8 focus:text-white">Tous les biens</SelectItem>
                     {properties.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>
+                      <SelectItem key={p.id} value={p.id} className="focus:bg-white/8 focus:text-white">
                         {p.name}
                       </SelectItem>
                     ))}
@@ -482,7 +609,7 @@ export function PlatesContent({ openOrderOnInit = false }: { openOrderOnInit?: b
             {loading ? (
               <div className="flex flex-col gap-2" aria-busy="true" aria-label="Chargement du tableau">
                 {Array.from({ length: 3 }).map((_, i) => (
-                  <Skeleton key={i} className="h-11 w-full rounded-lg" aria-hidden="true" />
+                  <Skeleton key={i} className="h-11 w-full rounded-xl bg-white/8" aria-hidden="true" />
                 ))}
               </div>
             ) : (
@@ -510,33 +637,37 @@ export function PlatesContent({ openOrderOnInit = false }: { openOrderOnInit?: b
         size="sm"
         footer={
           <>
-            <Button variant="outline" onClick={() => setOrderOpen(false)} disabled={creating}>
+            <Button
+              variant="outline"
+              className="rounded-full"
+              onClick={() => setOrderOpen(false)}
+              disabled={creating}
+            >
               Annuler
             </Button>
-            <Button
+            <button
+              type="button"
               onClick={() => void createPlaque()}
               disabled={creating || !effectiveOrderPropertyId}
-              className="bg-[#E23F2B] font-semibold text-white hover:bg-[#c93520]"
+              className="lux-btn h-9 px-4 text-xs disabled:pointer-events-none disabled:opacity-60"
             >
               {creating ? (
                 <>
                   <span
                     aria-hidden="true"
-                    className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"
+                    className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/40 border-t-white"
                   />
                   Génération…
                 </>
               ) : (
-                <>
-                  <span aria-hidden="true">📱</span> Générer la plaque
-                </>
+                <>Générer la plaque</>
               )}
-            </Button>
+            </button>
           </>
         }
       >
         {properties.length === 0 ? (
-          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+          <div className="rounded-xl border border-amber-300/70 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-200">
             Vous n&apos;avez aucun bien pour le moment. Ajoutez d&apos;abord une propriété pour
             lui commander une plaque.
           </div>
@@ -555,7 +686,7 @@ export function PlatesContent({ openOrderOnInit = false }: { openOrderOnInit?: b
                 ))}
               </SelectContent>
             </Select>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-muted-foreground">
               La plaque sera rattachée à ce bien et son Hub public sera actif aussitôt.
             </p>
           </div>
@@ -569,18 +700,18 @@ export function PlatesContent({ openOrderOnInit = false }: { openOrderOnInit?: b
           if (!open) setConfirmTarget(null);
         }}
       >
-        <AlertDialogContent>
+        <AlertDialogContent className="border-white/10 bg-[#0b1226] text-white">
           <AlertDialogHeader>
-            <AlertDialogTitle>
+            <AlertDialogTitle className="lux-display text-lg font-semibold text-white">
               {confirmTarget?.status === 'inactive'
                 ? 'Désactiver cette plaque ?'
                 : 'Réactiver cette plaque ?'}
             </AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogDescription className="text-[#8fa0c2]">
               {confirmTarget?.status === 'inactive' ? (
                 <>
                   Le QR{' '}
-                  <span className="font-mono font-semibold text-slate-900">
+                  <span className="font-mono font-semibold text-white">
                     {confirmTarget?.plaque.activationCode}
                   </span>{' '}
                   cessera de fonctionner : le Hub public affichera une page indisponible aux
@@ -589,7 +720,7 @@ export function PlatesContent({ openOrderOnInit = false }: { openOrderOnInit?: b
               ) : (
                 <>
                   Le QR{' '}
-                  <span className="font-mono font-semibold text-slate-900">
+                  <span className="font-mono font-semibold text-white">
                     {confirmTarget?.plaque.activationCode}
                   </span>{' '}
                   redeviendra actif : les voyageurs accéderont de nouveau au Hub public du bien.
@@ -598,21 +729,98 @@ export function PlatesContent({ openOrderOnInit = false }: { openOrderOnInit?: b
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogCancel className="rounded-full border-white/12 bg-white/[0.04] text-[#d5def0] hover:bg-white/8 hover:text-white">
+              Annuler
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => void performStatusChange()}
               className={cn(
-                'font-semibold text-white',
+                'rounded-full font-semibold text-white',
                 confirmTarget?.status === 'inactive'
-                  ? 'bg-slate-900 hover:bg-slate-800'
-                  : 'bg-emerald-600 hover:bg-emerald-700',
+                  ? 'bg-[#f07d6a] hover:bg-[#f8957f]'
+                  : 'bg-gradient-to-br from-[#3d6fe0] to-[#24479c] hover:brightness-110',
               )}
             >
-              {confirmTarget?.status === 'inactive' ? '⏸️ Désactiver' : '▶️ Réactiver'}
+              {confirmTarget?.status === 'inactive' ? 'Désactiver' : 'Réactiver'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* ---------- v4.69 — Dialog « Aperçu QR » ---------- */}
+      <Dialog open={!!qrTarget} onOpenChange={(o) => !o && setQrTarget(null)}>
+        <DialogContent className="max-w-md rounded-2xl border-white/10 bg-[#0b1226] text-white">
+          <DialogHeader>
+            <DialogTitle className="lux-display flex items-center gap-2 text-lg font-semibold text-white">
+              Aperçu QR — {qrTarget?.activationCode ?? ''}
+            </DialogTitle>
+            <DialogDescription className="text-[#8fa0c2]">
+              Ce QR pointe vers le Hub public du bien : les voyageurs le scannent depuis la
+              plaque collée sur place (Wi-Fi, guide, services…).
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex flex-col items-center gap-3">
+            <div className="flex h-56 w-56 items-center justify-center rounded-xl border border-white/15 bg-white p-2 shadow-inner">
+              {qrBusy ? (
+                <Loader2 className="h-8 w-8 animate-spin text-[#8fa0c2]" aria-hidden="true" />
+              ) : qrDataUrl ? (
+                <img
+                  src={qrDataUrl}
+                  alt={`QR code du Hub public de la plaque ${qrTarget?.activationCode ?? ''}`}
+                  className="h-full w-full rounded-lg"
+                />
+              ) : (
+                <span className="text-xs text-[#8fa0c2]">QR indisponible</span>
+              )}
+            </div>
+            <p className="w-full break-all rounded-xl bg-white/[0.04] p-2.5 text-center font-mono text-[11px] text-[#8fa0c2]">
+              {qrTarget ? hubUrlOf(qrTarget) : ''}
+            </p>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              className="h-9 rounded-full border border-white/12 bg-white/[0.03] px-4 text-xs font-semibold text-[#d5def0] hover:bg-white/8 hover:text-white"
+              onClick={() => qrTarget && copyLink(hubUrlOf(qrTarget))}
+              disabled={!qrTarget?.hubSlug}
+            >
+              Copier le lien
+            </Button>
+            {qrTarget?.hubSlug ? (
+              <Button
+                type="button"
+                variant="ghost"
+                className="h-9 rounded-full border border-white/12 bg-white/[0.03] px-4 text-xs font-semibold text-[#d5def0] hover:bg-white/8 hover:text-white"
+                asChild
+              >
+                <a href={`/hub/${qrTarget.hubSlug}`} target="_blank" rel="noopener noreferrer">
+                  Ouvrir le Hub public
+                </a>
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                variant="ghost"
+                className="h-9 rounded-full border border-white/12 bg-white/[0.03] px-4 text-xs font-semibold text-[#d5def0] hover:bg-white/8 hover:text-white"
+                disabled
+              >
+                Ouvrir le Hub public
+              </Button>
+            )}
+            <Button
+              type="button"
+              onClick={() => qrTarget && router.push(`/airbnb/plates/${qrTarget.id}/print`)}
+              disabled={!qrTarget}
+              className="lux-btn h-9 rounded-full text-xs"
+            >
+              Imprimer la plaque
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

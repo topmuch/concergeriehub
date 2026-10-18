@@ -1,24 +1,9 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
-import {
-  ChevronRight,
-  CreditCard,
-  Globe,
-  LayoutDashboard,
-  LogOut,
-  Mail,
-  QrCode,
-  ScrollText,
-  Settings,
-  ShieldCheck,
-  ShoppingCart,
-  Users,
-  Wrench,
-  Home,
-} from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
@@ -31,21 +16,26 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { ThemeToggle } from '@/components/shared/theme-toggle';
+
 // =============================================================
-// AdminAppSidebar — Console Superadmin V3 (8 modules, prompt SaaS)
-// Style QRTags imposé : fond slate-900, texte blanc, emojis,
-// icônes lucide-react. Les 8 modules :
-//  1 Dashboard · 2 Clients · 3 Générateur QR · 4 Abonnements
-//  5 Prestataires · 6 Transactions · 7 Paramètres · 8 Logs
-// + Emails (Plateforme) et lien vers le site public.
+// AdminAppSidebar — v6.0 « LUXE AURA » — sidebar rouge Airbnb,
+// navigation TYPOGRAPHIQUE SANS ICÔNES : pastille colorée par groupe,
+// onglet actif = pilule blanche (via .lux-sidebar en CSS), profil +
+// bascule thème.
 // =============================================================
+
+// v6.0 — point de couleur par groupe (Pilotage / Opérations / Plateforme)
+const GROUP_DOTS: Record<string, string> = {
+  Pilotage: '#ffd76a',
+  'Opérations': '#7ce7c8',
+  'Plateforme': '#9ec1ff',
+};
 
 interface NavItem {
   href: string;
   label: string;
-  emoji: string;
   description: string;
-  icon: React.ElementType;
   exact?: boolean;
 }
 
@@ -56,33 +46,38 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
       {
         href: '/admin/dashboard',
         label: 'Tableau de bord',
-        emoji: '📊',
         description: 'KPIs temps réel, revenus et activité',
-        icon: LayoutDashboard,
         exact: true,
+      },
+      {
+        href: '/admin/monitoring',
+        label: 'Tour de Contrôle',
+        description: 'Santé système, incidents et crons',
       },
       {
         href: '/admin/users',
         label: 'Clients & Hôtes',
-        emoji: '👥',
         description: 'Comptes, plans et actions',
-        icon: Users,
       },
       {
-        // AUD-FULL : /admin/hosts était orphelin (page existante,
-        // aucun lien) — intégré à la navigation (FIX-9c).
         href: '/admin/hosts',
         label: 'Biens & Plaques',
-        emoji: '🏠',
         description: 'Hôtes, propriétés et plaques QR',
-        icon: Home,
       },
       {
         href: '/admin/subscriptions',
         label: 'Abonnements',
-        emoji: '💳',
         description: 'MRR, plans, factures, coupons',
-        icon: CreditCard,
+      },
+      {
+        href: '/admin/invoices',
+        label: 'Commissions',
+        description: 'Factures mensuelles des hôtes',
+      },
+      {
+        href: '/admin/notification-settings',
+        label: 'Notifications',
+        description: 'Smart Prompts, contrôle global, impact',
       },
     ],
   },
@@ -92,23 +87,17 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
       {
         href: '/admin/qr',
         label: 'Générateur QR',
-        emoji: '⬛',
         description: 'Lots, plaques physiques, setup tokens',
-        icon: QrCode,
       },
       {
         href: '/admin/providers',
         label: 'Prestataires',
-        emoji: '🧰',
         description: 'Annuaire, carte, vérifications',
-        icon: Wrench,
       },
       {
         href: '/admin/transactions',
         label: 'Transactions',
-        emoji: '🛒',
         description: 'Commandes, marketplace, reversements',
-        icon: ShoppingCart,
       },
     ],
   },
@@ -118,23 +107,27 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
       {
         href: '/admin/emails',
         label: 'Emails',
-        emoji: '📧',
-        description: 'Outbox transactionnelle et retries',
-        icon: Mail,
+        description: 'Outbox transactionnelle et configuration',
+      },
+      {
+        href: '/admin/content',
+        label: 'Contenu universel',
+        description: 'Guidebook & appareils partagés',
+      },
+      {
+        href: '/admin/voices',
+        label: 'Voix plateforme',
+        description: 'Voix par défaut des messages du Hub',
       },
       {
         href: '/admin/logs',
         label: 'Logs & Tickets',
-        emoji: '📜',
         description: 'Audit, scans, support',
-        icon: ScrollText,
       },
       {
         href: '/admin/settings',
         label: 'Paramètres',
-        emoji: '⚙️',
         description: 'Plateforme, white-label, sécurité',
-        icon: Settings,
       },
     ],
   },
@@ -159,25 +152,29 @@ export function AdminAppSidebar({ adminName, adminEmail }: AdminAppSidebarProps)
   return (
     <Sidebar
       collapsible="icon"
-      style={{ ['--sidebar' as string]: '#0f172a' }} // Module 1 — fond slate-900 imposé
+      className="lux-sidebar border-none"
+      style={{ ['--sidebar' as string]: 'transparent' }}
     >
       {/* ----- En-tête : marque + badge contrôle ----- */}
-      <SidebarHeader className="pt-5 pb-2">
+      <SidebarHeader className="relative z-10 pb-2 pt-5">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild tooltip="Retour au site">
-              <Link href="/" aria-label="Retour au site Conciergerie Hub">
-                <span
-                  aria-hidden="true"
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-slate-900 shadow-sm"
-                >
-                  <ShieldCheck className="h-5 w-5" />
-                </span>
+              <Link href="/" aria-label="Retour au site RoomScan">
+                {/* Logo officiel RoomScan — variante blanche (fonds sombres), proportions d'origine */}
+                <Image
+                  src="/brand/roomscan-icon-white.png"
+                  alt=""
+                  width={124}
+                  height={121}
+                  className="shrink-0"
+                  style={{ height: 40, width: 'auto' }}
+                />
                 <span className="flex min-w-0 flex-col items-start gap-0.5 leading-tight">
-                  <span className="truncate text-base font-extrabold text-white">
-                    Conciergerie Hub
+                  <span className="lux-display truncate text-base font-semibold text-white">
+                    RoomScan
                   </span>
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-white/60">
+                  <span className="text-[9px] font-semibold uppercase tracking-[0.28em] text-[#e9c47c]">
                     Console Superadmin
                   </span>
                 </span>
@@ -187,39 +184,37 @@ export function AdminAppSidebar({ adminName, adminEmail }: AdminAppSidebarProps)
         </SidebarMenu>
       </SidebarHeader>
 
-      {/* ----- Navigation 8 modules ----- */}
-      <SidebarContent className="px-2 pt-2">
+      {/* ----- Navigation 3 groupes (typographique, sans icône) ----- */}
+      <SidebarContent className="lux-scroll relative z-10 px-2 pt-2">
         {NAV_GROUPS.map((group) => (
           <SidebarGroup key={group.label}>
-            <SidebarGroupLabel className="text-white/50">{group.label}</SidebarGroupLabel>
+            <SidebarGroupLabel className="flex items-center gap-1.5 text-[9.5px] font-bold uppercase tracking-[0.3em] text-white/60">
+              <span
+                className="lux-dot shrink-0"
+                style={{ backgroundColor: GROUP_DOTS[group.label] ?? '#ffffff' }}
+                aria-hidden="true"
+              />
+              {group.label}
+            </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu className="gap-1">
                 {group.items.map((item) => {
                   const active = item.exact
                     ? pathname === item.href || pathname === '/admin'
                     : pathname.startsWith(item.href);
-                  const Icon = item.icon;
                   return (
                     <SidebarMenuItem key={item.href}>
                       <SidebarMenuButton
                         asChild
                         isActive={active}
-                        tooltip={`${item.emoji} ${item.label} — ${item.description}`}
+                        tooltip={`${item.label} — ${item.description}`}
                       >
                         <Link
                           href={item.href}
                           aria-current={active ? 'page' : undefined}
-                          className="h-11 rounded-xl text-[14px] font-medium text-white/85 hover:bg-white/10 hover:text-white data-[active=true]:bg-white data-[active=true]:font-bold data-[active=true]:text-slate-900 data-[active=true]:hover:bg-white data-[active=true]:hover:text-slate-900"
+                          aria-label={`${item.label} — ${item.description}`}
                         >
-                          <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
-                          <span className="truncate">
-                            <span aria-hidden="true" className="mr-1.5">{item.emoji}</span>
-                            {item.label}
-                          </span>
-                          <ChevronRight
-                            className="ml-auto h-4 w-4 opacity-50 group-data-[collapsible=icon]:hidden"
-                            aria-hidden="true"
-                          />
+                          <span className="truncate">{item.label}</span>
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -235,19 +230,14 @@ export function AdminAppSidebar({ adminName, adminEmail }: AdminAppSidebarProps)
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton tooltip="Ouvrir le site public Conciergerie Hub" asChild>
+                <SidebarMenuButton tooltip="Ouvrir le site public RoomScan" asChild>
                   <Link
                     href="/"
                     target="_blank"
                     rel="noreferrer"
-                    className="h-11 rounded-xl text-[14px] font-medium text-white/85 hover:bg-white/10 hover:text-white"
+                    aria-label="Ouvrir le site public RoomScan"
                   >
-                    <Globe className="h-5 w-5 shrink-0" aria-hidden="true" />
-                    <span>🌐 Site public</span>
-                    <ChevronRight
-                      className="ml-auto h-4 w-4 opacity-50 group-data-[collapsible=icon]:hidden"
-                      aria-hidden="true"
-                    />
+                    <span>Site public</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -256,29 +246,32 @@ export function AdminAppSidebar({ adminName, adminEmail }: AdminAppSidebarProps)
         </SidebarGroup>
       </SidebarContent>
 
-      {/* ----- Pied : compte admin ----- */}
-      <SidebarFooter className="pb-5">
+      {/* ----- Pied : bascule thème + compte admin ----- */}
+      <SidebarFooter className="relative z-10 pb-5">
+        <div className="mb-2 flex items-center justify-end px-2 group-data-[collapsible=icon]:justify-center">
+          <ThemeToggle variant="light" />
+        </div>
         <SidebarMenu>
           <SidebarMenuItem>
-            <div className="flex items-center gap-2.5 rounded-xl bg-white/10 px-3 py-2.5 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-2">
+            <div className="flex items-center gap-2.5 rounded-2xl border border-white/10 bg-white/[0.06] px-3 py-2.5 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-2">
               <span
                 aria-hidden="true"
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-xs font-extrabold text-slate-900"
+                className="lux-num flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#e9c47c] text-xs font-semibold text-[#1a1206]"
               >
                 {initials}
               </span>
               <div className="min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
-                <p className="truncate text-sm font-bold text-white">{adminName}</p>
-                <p className="truncate text-[11px] text-white/60">{adminEmail}</p>
+                <p className="truncate text-sm font-semibold text-white">{adminName}</p>
+                <p className="truncate text-[11px] text-white/55">{adminEmail}</p>
               </div>
               <button
                 type="button"
                 onClick={() => signOut({ callbackUrl: '/' })}
                 title="Se déconnecter"
                 aria-label="Se déconnecter"
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white/70 transition-colors hover:bg-white/10 hover:text-white group-data-[collapsible=icon]:hidden"
+                className="shrink-0 rounded-lg px-2 py-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-white/60 transition-colors hover:bg-white/10 hover:text-white group-data-[collapsible=icon]:hidden"
               >
-                <LogOut className="h-4 w-4" />
+                Quitter
               </button>
             </div>
           </SidebarMenuItem>

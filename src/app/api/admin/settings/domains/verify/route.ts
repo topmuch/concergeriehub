@@ -13,6 +13,7 @@ import { requireSuperadmin, adminUnauthorized } from '@/lib/admin';
 import { db } from '@/lib/db';
 import { logAudit, clientIp } from '@/lib/audit';
 import { mutationGuard, mutationKey, MUTATIONS_LIMIT_ADMIN } from '@/lib/mutation-guard';
+import { resolveOrigin, siteUrl } from '@/lib/site';
 
 export async function POST(
   req: NextRequest,
@@ -51,7 +52,7 @@ export async function POST(
 
     // 2) CNAME vers le domaine de l'app (fallback)
     if (!verified) {
-      const appHost = new URL(process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'http://localhost:3000').hostname;
+      const appHost = new URL(siteUrl).hostname;
       try {
         const cnames = await dns.resolveCname(domain);
         checks.push(`CNAME: ${cnames.join(', ')}`);

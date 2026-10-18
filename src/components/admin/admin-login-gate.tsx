@@ -14,19 +14,24 @@ import { Label } from '@/components/ui/label';
  * AdminLoginGate — écran de connexion réservé au Superadmin,
  * affiché sur /admin/* quand la session est absente ou sans le
  * rôle requis. Aucune donnée admin n'est rendue avant validation.
+ *
+ * v4.60 — `sessionExpired` : un cookie de session était présent mais
+ * rejeté (expiration, redéploiement). On l'explique clairement : les
+ * données (propriétés, configuration e-mail…) restent en base, seule
+ * la connexion doit être refaite.
  */
 
-const ADMIN_CREDENTIALS = {
-  // Pré-rempli avec l'email admin (non secret). Le mot de passe n'est
-  // JAMAIS embarqué côté client (durcissement Module 7 Sécurité).
-  email: 'admin@qrdomotik.roomscan.pro',
-  password: '',
-};
-
-export function AdminLoginGate() {
+// AUDIT PRÉ-PROD — SÉCURITÉ : aucun identifiant pré-rempli (l'email
+// admin n'est pas devinable depuis la page de connexion publique).
+export function AdminLoginGate({
+  sessionExpired = false,
+}: {
+  /** Cookie de session présent mais invalide → bandeau « session expirée ». */
+  sessionExpired?: boolean;
+}) {
   const router = useRouter();
-  const [email, setEmail] = useState(ADMIN_CREDENTIALS.email);
-  const [password, setPassword] = useState(ADMIN_CREDENTIALS.password);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -59,9 +64,23 @@ export function AdminLoginGate() {
             <BrandLogo size="lg" />
             <h1 className="mt-5 text-2xl font-bold text-slate-900">Console Superadmin</h1>
             <p className="text-sm text-slate-600 mt-1">
-              Accès strictement réservé à l&apos;équipe Conciergerie Hub.
+              Accès strictement réservé à l&apos;équipe RoomScan.
             </p>
           </div>
+
+          {sessionExpired && (
+            <div
+              role="status"
+              className="mb-4 flex items-start gap-2.5 rounded-xl border border-sky-200 bg-sky-50 p-3.5 dark:border-sky-400/30 dark:bg-sky-400/10"
+            >
+              <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-sky-600 dark:text-sky-400" aria-hidden="true" />
+              <p className="text-xs leading-relaxed text-sky-900 dark:text-sky-200">
+                <span className="font-bold">Votre session a expiré.</span> Vos données sont intactes
+                (propriétés, réservations, configuration e-mail…). Reconnectez-vous pour retrouver
+                la console.
+              </p>
+            </div>
+          )}
 
           <B2BCard>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -126,7 +145,7 @@ export function AdminLoginGate() {
       <footer className="mt-auto border-t border-slate-200 bg-white">
         <div className="max-w-6xl mx-auto w-full px-4 py-4 text-center">
           <p className="text-xs text-slate-500">
-            🛡️ <span className="font-semibold text-slate-700">Conciergerie Hub</span> — Console d&apos;administration
+            🛡️ <span className="font-semibold text-slate-700">RoomScan</span> — Console d&apos;administration
           </p>
         </div>
       </footer>

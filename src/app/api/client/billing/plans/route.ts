@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { SUBSCRIBER_TYPES, type SubscriberType } from '@/types/database';
+import { resolveOrigin, siteUrl } from '@/lib/site';
 
 const isSimulation = !process.env.STRIPE_SECRET_KEY;
 
@@ -181,7 +182,7 @@ export async function POST(request: NextRequest) {
       customerEmail = provider?.user?.email ?? null;
     }
 
-    const origin = request.headers.get('origin') || 'http://localhost:3000';
+    const origin = resolveOrigin(request);
 
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',

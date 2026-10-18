@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import { AdminQrContent } from '@/components/admin/admin-qr-content';
 
 export const metadata: Metadata = {
-  title: 'Générateur QR — Superadmin Conciergerie Hub',
+  title: 'Générateur QR — Superadmin RoomScan',
 };
 
 // Module 3 — Générateur QR : lots, plaques physiques, setup tokens.

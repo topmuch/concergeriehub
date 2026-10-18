@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
     const ticket = await db.supportTicket.create({
       data: {
         subject: `[Demande prestataire] ${service}`.slice(0, 160),
-        email: user.email ?? 'inconnu@conciergerie-hub.app',
+        email: user.email ?? 'inconnu@roomscan.pro',
         priority: 'NORMAL',
         status: 'OPEN',
         body: message.slice(0, 2000),

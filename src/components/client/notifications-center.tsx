@@ -41,7 +41,7 @@ function relativeTime(dateStr: string): string {
   const diffMin = Math.floor(diffMs / 60000);
   const diffH = Math.floor(diffMin / 60);
   const diffD = Math.floor(diffH / 24);
-  if (diffMin < 1) return "\u00e0 l'instant";
+  if (diffMin < 1) return "à l'instant";
   if (diffMin < 60) return `il y a ${diffMin}min`;
   if (diffH < 24) return `il y a ${diffH}h`;
   if (diffD < 7) return `il y a ${diffD}j`;
@@ -108,7 +108,7 @@ export function NotificationCenter() {
       if (res.ok) {
         setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)));
         setUnreadCount((prev) => Math.max(0, prev - 1));
-        toast.success('Marqu\u00e9e comme lue');
+        toast.success('Marquée comme lue');
       }
     } catch { toast.error('Erreur'); }
   };
@@ -138,7 +138,7 @@ export function NotificationCenter() {
         const notif = notifications.find((n) => n.id === id);
         if (notif && !notif.isRead) setUnreadCount((c) => Math.max(0, c - 1));
         setNotifications((prev) => prev.filter((n) => n.id !== id));
-        toast.success('Supprim\u00e9e');
+        toast.success('Supprimée');
       }
     } catch { toast.error('Erreur'); }
   };
@@ -162,7 +162,7 @@ export function NotificationCenter() {
             </div>
             <h3 className="text-lg font-semibold mb-1">Aucune notification</h3>
             <p className="text-sm text-muted-foreground max-w-sm">
-              Les \u00e9v\u00e9nements de votre foyer appara\u00eetront ici.
+              Les événements de votre foyer apparaîtront ici.
             </p>
           </div>
         </CardContent></Card>
@@ -176,7 +176,7 @@ export function NotificationCenter() {
             <div
               key={notif.id}
               className={`flex items-start gap-4 p-4 transition-colors hover:bg-muted/50 ${
-                !notif.isRead ? 'bg-emerald-50/50 dark:bg-emerald-950/10' : ''
+                !notif.isRead ? 'bg-blue-50/50 dark:bg-blue-950/10' : ''
               }`}
             >
               <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${config.bgClass}`}>
@@ -187,7 +187,7 @@ export function NotificationCenter() {
                   <p className={`text-sm leading-snug ${!notif.isRead ? 'font-semibold text-foreground' : 'font-medium text-muted-foreground'}`}>
                     {notif.title}
                   </p>
-                  {!notif.isRead && <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-emerald-500" />}
+                  {!notif.isRead && <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-blue-500" />}
                 </div>
                 {notif.body && (
                   <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{notif.body}</p>
@@ -196,7 +196,7 @@ export function NotificationCenter() {
               </div>
               <div className="flex items-center gap-1 shrink-0">
                 {!notif.isRead && (
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-emerald-600" onClick={() => handleMarkAsRead(notif.id)} title="Marquer comme lu">
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-blue-600" onClick={() => handleMarkAsRead(notif.id)} title="Marquer comme lu">
                     <Check className="h-4 w-4" />
                   </Button>
                 )}
@@ -216,17 +216,17 @@ export function NotificationCenter() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Centre de notifications</h2>
-          <p className="text-sm text-muted-foreground">Restez inform\u00e9 de l&apos;activit\u00e9 de votre foyer.</p>
+          <p className="text-sm text-muted-foreground">Restez informé de l&apos;activité de votre foyer.</p>
         </div>
         <div className="flex items-center gap-3">
           {unreadCount > 0 && (
-            <Badge className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1">
+            <Badge className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1">
               {unreadCount} non lue{unreadCount > 1 ? 's' : ''}
             </Badge>
           )}
           <Button variant="outline" size="sm" onClick={handleMarkAllAsRead} disabled={markingAll || unreadCount === 0} className="gap-2">
             <CheckCheck className="h-4 w-4" />
-            {markingAll ? 'Mise \u00e0 jour...' : 'Tout marquer comme lu'}
+            {markingAll ? 'Mise à jour...' : 'Tout marquer comme lu'}
           </Button>
         </div>
       </div>
@@ -236,7 +236,7 @@ export function NotificationCenter() {
           <TabsTrigger value="all" className="gap-2">
             Toutes
             {unreadCount > 0 && (
-              <span className="ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-[10px] font-bold text-white">
+              <span className="ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white">
                 {unreadCount}
               </span>
             )}

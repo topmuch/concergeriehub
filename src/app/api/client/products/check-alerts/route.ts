@@ -76,13 +76,13 @@ export async function POST(request: NextRequest) {
           where: { id: inst.id },
           data: { status: 'expired' },
         });
-        title = `\u26a0\ufe0f ${inst.product.name} a expiré !`;
+        title = `⚠️ ${inst.product.name} a expiré !`;
         notificationBody = `Le produit ${inst.product.name} a expiré aujourd'hui.`;
         pushBody = `Le produit ${inst.product.name} a expiré aujourd'hui. Pensez à le retirer.`;
       } else {
         // J-1, J-2, J-3
         const jourStr = diffDays === 1 ? 'jour' : 'jours';
-        title = `\ud83d\udd50 ${inst.product.name} expire dans ${diffDays} ${jourStr}`;
+        title = `🕐 ${inst.product.name} expire dans ${diffDays} ${jourStr}`;
         notificationBody = `Le produit ${inst.product.name} expire dans ${diffDays} ${jourStr}.`;
         pushBody = `Le produit ${inst.product.name} expire dans ${diffDays} ${jourStr}. Consommez-le rapidement !`;
       }
@@ -149,7 +149,7 @@ export async function POST(request: NextRequest) {
         });
       }
 
-      const title = `\ud83d\udce6 ${product.name} stock bas (${product.currentStock}/${product.minStockThreshold})`;
+      const title = `📦 ${product.name} stock bas (${product.currentStock}/${product.minStockThreshold})`;
       const notificationBody = `Le stock de ${product.name} est bas (${product.currentStock}/${product.minStockThreshold}). Ajoutez-le à votre liste de courses.`;
       const pushBody = `Le stock de ${product.name} est bas. Ajoutez-le à votre liste de courses !`;
 

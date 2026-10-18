@@ -2,21 +2,22 @@
 
 // =============================================================
 // NotificationsBell — ÉTAPE 13 V2 : centre de notifications hôte
-// Cloche dans le header de l'Espace Hôte : badge non-lues,
-// panneau déroulant (Popover), marquage lu individuel/global.
+// Déclencheur TYPOGRAPHIQUE « Alertes » du header (v5.2 SAPHIR LUXE,
+// sans icône) : pastille .lux-dot pour les non-lues, panneau déroulant
+// (Popover), marquage lu individuel/global.
 // Polling 45 s + rafraîchissement à l'ouverture.
 // =============================================================
 import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Bell, CheckCheck, Zap } from 'lucide-react';
+import { toast } from 'sonner';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { notificationEmoji, relativeFrTime } from '@/lib/automations';
+import { relativeFrTime } from '@/lib/automations';
 
 interface NotificationItem {
   id: string;
@@ -33,6 +34,8 @@ export function NotificationsBell() {
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [open, setOpen] = useState(false);
+  // v5.0 — « Tout marquer comme lu » : spinner pendant l'appel PUT.
+  const [markingAll, setMarkingAll] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -82,13 +85,24 @@ export function NotificationsBell() {
     }
   };
 
+  // v5.0 — marque TOUTES les notifications lues : mise à jour
+  // optimiste immédiate (badge → 0, plus de non-lues), puis PUT
+  // /api/airbnb/notifications (updateMany côté API). En cas
+  // d'échec on resynchronise avec le serveur + toast d'erreur.
   const markAllRead = async () => {
+    if (markingAll || unreadCount === 0) return;
+    setMarkingAll(true);
     setItems((prev) => prev.map((n) => ({ ...n, isRead: true })));
     setUnreadCount(0);
     try {
-      await fetch('/api/airbnb/notifications', { method: 'PUT' });
+      const res = await fetch('/api/airbnb/notifications', { method: 'PUT' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      toast.success('Toutes les notifications sont marquées comme lues');
     } catch {
-      // silencieux
+      toast.error('Impossible de tout marquer comme lu');
+      await load(); // resynchronise l'état réel (badge + liste)
+    } finally {
+      setMarkingAll(false);
     }
   };
 
@@ -120,7 +134,7 @@ export function NotificationsBell() {
     return (
       <span
         aria-hidden="true"
-        className="h-9 w-9 inline-block rounded-lg border border-slate-200 bg-white"
+        className="inline-block h-9 w-[78px] rounded-full border border-white/10 bg-white/[0.03]"
       />
     );
   }
@@ -136,44 +150,48 @@ export function NotificationsBell() {
       <PopoverTrigger asChild>
         <button
           type="button"
-          aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} non lues)` : ''}`}
-          className="relative h-9 w-9 inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors"
+          aria-label={`Alertes${unreadCount > 0 ? ` (${unreadCount} non lues)` : ''}`}
+          className="relative inline-flex h-9 items-center gap-2 rounded-full px-3.5 text-xs font-semibold tracking-[0.04em] text-white/70 transition-colors hover:bg-white/8 hover:text-white"
         >
-          <Bell className="h-4 w-4" />
+          Alertes
           {unreadCount > 0 && (
             <span
               aria-hidden="true"
-              className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 inline-flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold leading-none"
-            >
-              {unreadCount > 9 ? '9+' : unreadCount}
-            </span>
+              className="lux-dot"
+              style={{ backgroundColor: '#e9c47c' }}
+            />
           )}
         </button>
       </PopoverTrigger>
 
-      <PopoverContent align="end" className="w-[min(24rem,calc(100vw-2rem))] p-0 bg-white text-slate-900">
-        <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-slate-100">
-          <p className="text-sm font-bold text-slate-900">Notifications</p>
+      <PopoverContent align="end" className="w-[min(24rem,calc(100vw-2rem))] border-white/10 bg-[#0b1226] p-0 text-white">
+        <div className="flex items-center justify-between gap-2 border-b border-white/10 px-4 py-3">
+          <p className="lux-display text-sm font-semibold text-white">Alertes</p>
           {unreadCount > 0 && (
             <button
               type="button"
-              onClick={markAllRead}
-              className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors"
+              onClick={() => void markAllRead()}
+              disabled={markingAll}
+              aria-label="Tout marquer comme lu"
+              className="inline-flex items-center rounded-full px-3 py-2 text-xs font-semibold text-[#a9c4ff] transition-colors hover:bg-white/8 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5c8af0]/50 disabled:cursor-wait disabled:opacity-60"
             >
-              <CheckCheck className="h-3.5 w-3.5" aria-hidden="true" />
+              {markingAll && (
+                <span
+                  className="lux-dot mr-1.5 animate-pulse"
+                  style={{ backgroundColor: '#a9c4ff' }}
+                  aria-hidden="true"
+                />
+              )}
               Tout marquer comme lu
             </button>
           )}
         </div>
 
-        <div className="max-h-96 overflow-y-auto custom-scrollbar">
+        <div className="lux-scroll max-h-96 overflow-y-auto">
           {items.length === 0 ? (
             <div className="px-4 py-10 text-center">
-              <p className="text-2xl" aria-hidden="true">
-                🔔
-              </p>
-              <p className="mt-2 text-sm font-semibold text-slate-700">Aucune notification</p>
-              <p className="mt-1 text-xs text-slate-400">
+              <p className="lux-display text-sm font-semibold text-white">Aucune notification</p>
+              <p className="mt-1 text-xs text-[#8fa0c2]">
                 Réservations, ménages et réclamations arriveront ici.
               </p>
             </div>
@@ -190,31 +208,28 @@ export function NotificationsBell() {
                         : n.title
                     }
                     className={cn(
-                      'w-full text-left px-4 py-3 flex gap-3 hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-b-0',
-                      !n.isRead && 'bg-amber-50/60',
+                      'flex w-full gap-3 border-b border-white/8 px-4 py-3 text-left transition-colors last:border-b-0 hover:bg-white/8 focus-visible:bg-white/8 focus-visible:text-white focus-visible:outline-none',
+                      !n.isRead && 'bg-[#e9c47c]/[0.05]',
                     )}
                   >
-                    <span aria-hidden="true" className="text-lg leading-6 shrink-0">
-                      {notificationEmoji(n.type)}
-                    </span>
+                    <span
+                      aria-label={n.isRead ? undefined : 'Non lue'}
+                      aria-hidden={n.isRead || undefined}
+                      className="lux-dot mt-2 shrink-0"
+                      style={{ backgroundColor: n.isRead ? 'rgba(143,160,194,0.4)' : '#e9c47c' }}
+                    />
                     <span className="min-w-0 flex-1">
                       <span className="flex items-center gap-2">
-                        <span className="text-sm font-semibold text-slate-900 truncate">
+                        <span className="truncate text-sm font-semibold text-white">
                           {n.title}
                         </span>
-                        {!n.isRead && (
-                          <span
-                            aria-label="Non lue"
-                            className="h-2 w-2 rounded-full bg-red-500 shrink-0"
-                          />
-                        )}
                       </span>
                       {n.body && (
-                        <span className="block text-xs text-slate-600 mt-0.5 line-clamp-2">
+                        <span className="mt-0.5 block text-xs text-[#8fa0c2] line-clamp-2">
                           {n.body}
                         </span>
                       )}
-                      <span className="block text-[11px] text-slate-400 mt-1">
+                      <span className="mt-1 block text-[11px] text-[#8fa0c2]/70">
                         {relativeFrTime(n.createdAt)}
                       </span>
                     </span>
@@ -225,14 +240,14 @@ export function NotificationsBell() {
           )}
         </div>
 
-        <div className="border-t border-slate-100 px-4 py-2.5">
+        <div className="border-t border-white/10 px-4 py-2.5">
           <Link
             href="/airbnb/dashboard/automations"
             onClick={() => setOpen(false)}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#8fa0c2] transition-colors hover:text-white"
           >
-            <Zap className="h-3.5 w-3.5" aria-hidden="true" />
             Gérer les automatisations
+            <span aria-hidden="true">→</span>
           </Link>
         </div>
       </PopoverContent>

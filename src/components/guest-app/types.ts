@@ -10,6 +10,15 @@
 // =============================================================
 
 import type { PropertyBranding } from '@/lib/branding';
+import type {
+  GuestAccessCodes,
+  GuestAppliance,
+  GuestEmergencyInfo,
+  GuestPremiumFeatures,
+  GuestSpot,
+  GuestSurvivalItem,
+  GuestVisualStep,
+} from '@/lib/concierge';
 
 /** ÉTAPE 19 — marque de la conciergerie (white-label). */
 export type GuestBranding = PropertyBranding;
@@ -21,6 +30,8 @@ export interface GuestServiceOffer {
   description: string | null;
   unitPrice: number;
   unit: string;
+  /** v4.23 « hub réel » — photo réelle de l'offre (fallback gradient+emoji si absent). */
+  imageUrl?: string | null;
 }
 
 export interface GuestService {
@@ -32,6 +43,11 @@ export interface GuestService {
   priceLabel: string;
   /** Prix numérique de l'offre standard (null → "Sur devis" → email). */
   unitPrice: number | null;
+  /** Démonstration sociale — note moyenne et avis du prestataire. */
+  ratingAvg: number;
+  totalReviews: number;
+  /** v4.23 « hub réel » — photo de couverture (1re offre photographiée). */
+  imageUrl?: string | null;
   /** Catalogue fin du prestataire pour CE bien — prioritaire sur l'offre standard. */
   offers: GuestServiceOffer[];
 }
@@ -57,6 +73,8 @@ export interface GuestBookingInfo {
   checkIn: string;
   checkOut: string;
   guests: number;
+  /** PREMIUM V5 (Étape 3.3) — 'REQUESTED' | 'PAID' | null (Stripe late check-out). */
+  lateCheckoutStatus?: string | null;
 }
 
 export interface GuestPayload {
@@ -70,6 +88,25 @@ export interface GuestPayload {
     propertyTypeLabel: string;
     propertyTypeEmoji: string;
     address: string | null;
+    /** DIGITAL CONCIERGE (V4.1) — météo Open-Meteo + carte du quartier. */
+    latitude: number | null;
+    longitude: number | null;
+    /** DIGITAL CONCIERGE (V4.1) — les 4 modules enrichis (null/[] = non configurés). */
+    accessCodes: GuestAccessCodes | null;
+    appliances: GuestAppliance[];
+    localSpots: GuestSpot[];
+    emergencyInfo: GuestEmergencyInfo | null;
+    /** PREMIUM V5 — « Conciergerie 5 Étoiles » (null/[] = non configuré).
+     *  paymentEnabled (Étape 3.3) : Stripe actif côté serveur →
+     *  la carte Late check-out propose « Confirmer et payer ». */
+    premiumFeatures: (GuestPremiumFeatures & { paymentEnabled?: boolean }) | null;
+    visualGuide: GuestVisualStep[];
+    survivalKitItems: GuestSurvivalItem[];
+    /** WP-VISUAL — « Voix de l'hôte » : mémo audio du guidebook
+     *  (contrat backend parallèle). Absent/null = payload ancien ou non
+     *  configuré → la carte n'est pas rendue. v = version du média
+     *  (cache-bust de l'URL /api/public/hub/<slug>/voice-messages/audio). */
+    guidebookVoice?: { available: boolean; v: number } | null;
   };
   ownerName: string | null;
   guest: {
@@ -82,14 +119,51 @@ export interface GuestPayload {
   };
 }
 
-export type GuestTab = 'home' | 'guide' | 'services' | 'help';
+// =============================================================
+// DIGITAL CONCIERGE (V4.1) — Navigation Bottom Nav 4 onglets :
+//   🏠 Accueil · 📖 Guide · 🗺️ Quartier · 🆘 Urgence
+// Les vues « Services » (upselling) et « Aide » (contact hôte +
+// problème) deviennent des SOUS-VUES ouvertes depuis les cartes
+// de l'Accueil (ou de l'onglet Urgence) — sans onglet dédié.
+// =============================================================
+
+export type GuestTab = 'home' | 'guide' | 'local' | 'sos';
+
+/** Sous-vues secondaires (ouvertes depuis l'Accueil / Urgence).
+ *  v5.0 — 'checkout-inspection' : état des lieux de sortie signé
+ *  (formulaire invité → PDF + preuve publique). */
+export type GuestSubview = 'access' | 'services' | 'help' | 'checkout-inspection';
+
+export type GuestView = GuestTab | GuestSubview;
 
 export const GUEST_TABS: { id: GuestTab; emoji: string; label: string }[] = [
   { id: 'home', emoji: '🏠', label: 'Accueil' },
   { id: 'guide', emoji: '📖', label: 'Guide' },
-  { id: 'services', emoji: '🥐', label: 'Services' },
-  { id: 'help', emoji: '🚨', label: 'Aide' },
+  { id: 'local', emoji: '🗺️', label: 'Quartier' },
+  { id: 'sos', emoji: '🆘', label: 'Urgence' },
 ];
+
+/** Ordre spatial des vues → direction de la transition horizontale. */
+const VIEW_ORDER: Record<GuestView, number> = {
+  home: 0,
+  guide: 1,
+  local: 2,
+  sos: 3,
+  access: 0.25,  // sous-vue ouverte depuis l'Accueil (coffre-fort)
+  services: 0.5, // sous-vue ouverte depuis l'Accueil → glisse vers la droite
+  help: 3.5,     // ouverte depuis l'Accueil (ou l'onglet Urgence) → glisse vers la gauche/droite
+  'checkout-inspection': 0.75, // v5.0 — état des lieux de sortie (depuis l'Accueil)
+};
+
+/** Direction de la transition : 1 = entre par la droite, -1 = par la gauche. */
+export function viewDirection(from: GuestView, to: GuestView): 1 | -1 {
+  return VIEW_ORDER[to] >= VIEW_ORDER[from] ? 1 : -1;
+}
+
+/** Onglet actif de la bottom nav (les sous-vues éclairent « Accueil »). */
+export function activeTabOf(view: GuestView): GuestTab {
+  return GUEST_TABS.some((t) => t.id === view) ? (view as GuestTab) : 'home';
+}
 
 /** Format FR court : "lun. 1 sept." */
 export function formatFrDate(iso: string): string {

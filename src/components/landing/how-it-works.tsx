@@ -1,144 +1,127 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import {
-  Package, Settings, Smartphone, ArrowRight,
-} from 'lucide-react';
+// =============================================================
+// COMMENT ÇA MARCHE — 3 étapes premium (cartes claires + serif).
+// Garde l'ancre #how-it-works et le contenu commercial d'origine
+// (plaque livrée 48 h → wizard 2 min → invités autonomes).
+// v4.61 — version claire « AIRBNB PRO » : pastilles d'étapes en
+// dégradés de la famille bleu logo (#0066EF → #07235B), eyebrow
+// bleu, pill « Zéro application » émeraude (sémantique succès).
+// =============================================================
 
-function FadeIn({ children, delay = 0, className = '' }: { children: React.ReactNode; delay?: number; className?: string }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-60px' }}
-      transition={{ duration: 0.6, delay, ease: 'easeOut' }}
-      className={className}
-    >
-      {children}
-    </motion.div>
-  );
-}
+import { ArrowRight } from 'lucide-react';
+import { Reveal } from '@/components/premium/reveal';
+import { useLandingLang } from '@/lib/landing-i18n';
 
 const STEPS = [
   {
     number: '01',
-    icon: <Package className="w-6 h-6" />,
+    icon: '📦',
     title: 'Recevez votre plaque',
     description:
-      'Une plaque QR élégante en aluminium gravé est livrée chez vous. Fixez-la à l\'entrée de votre logement, de chaque pièce, ou de votre location Airbnb.',
-    color: 'from-emerald-500 to-emerald-600',
-    glowColor: 'emerald',
+      'Design premium en aluminium gravé, prête à poser. Livrée chez vous en 48 h.',
+    gradient: 'from-[#0066EF] to-[#0052C4]',
   },
   {
     number: '02',
-    icon: <Settings className="w-6 h-6" />,
-    title: 'Configurez en ligne',
+    icon: '📱',
+    title: 'Scannez pour configurer',
     description:
-      'En 5 minutes, associez chaque QR code à un module : Wi-Fi, guide du logement, liste de courses, messages vocaux, et bien plus encore.',
-    color: 'from-emerald-500 to-teal-600',
-    glowColor: 'emerald',
+      'Wizard guidé : Wi-Fi, guidebook, règles, PIN. 2 minutes chrono, sans compétence technique.',
+    gradient: 'from-[#0052C4] to-[#0047B3]',
   },
   {
     number: '03',
-    icon: <Smartphone className="w-6 h-6" />,
-    title: 'Scannez et profitez',
+    icon: '🚀',
+    title: 'Vos invités sont autonomes',
     description:
-      'Vos invités scannent simplement le QR avec leur téléphone. Aucune application à installer. Tout s\'ouvre directement dans le navigateur.',
-    color: 'from-amber-500 to-orange-600',
-    glowColor: 'amber',
+      'Ils scannent, commandent, s\'informent. Vous pilotez tout à distance, depuis votre dashboard.',
+    gradient: 'from-[#0047B3] to-[#07235B]',
   },
 ];
 
 export function HowItWorks() {
+  const { t } = useLandingLang();
   return (
     <section
-      id="avantages"
-      className="py-24 md:py-32 px-4 md:px-8 scroll-mt-16 relative"
-      style={{ background: 'linear-gradient(180deg, #020617 0%, #0f172a 50%, #020617 100%)' }}
+      id="how-it-works"
+      className="relative scroll-mt-24 bg-white py-24"
     >
-      {/* Ambient glow */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-emerald-500/[0.03] rounded-full blur-[120px] pointer-events-none" />
+      <div className="mx-auto max-w-7xl px-4 sm:px-6">
+        {/* En-tête */}
+        <Reveal className="mb-14 text-center">
+          <p className="mb-3 text-xs font-bold uppercase tracking-[0.25em] text-[#0052C4]">
+            {t('Comment ça marche')}
+          </p>
+          <h2 className="display-title font-serif! mb-4 text-4xl font-bold text-slate-900 md:text-5xl">
+            {t('Opérationnel en')}{' '}
+            <span className="air-gradient-text font-serif italic">
+              {t('3 minutes')}
+            </span>
+          </h2>
+          <p className="mx-auto max-w-2xl text-lg text-slate-600">
+            {t(
+              "De la réception de la plaque à l'autonomie de vos invités, c'est simple comme bonjour.",
+            )}
+          </p>
+        </Reveal>
 
-      <div className="max-w-6xl mx-auto relative z-10">
-        {/* Section header */}
-        <div className="text-center mb-16 md:mb-20">
-          <FadeIn>
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4">
-              Comment ça marche ?
-            </h2>
-          </FadeIn>
-          <FadeIn delay={0.1}>
-            <p className="text-white/50 text-lg md:text-xl max-w-2xl mx-auto">
-              3 étapes simples pour une location intelligente et connectée
-            </p>
-          </FadeIn>
-        </div>
-
-        {/* Steps */}
+        {/* Étapes + ligne de connexion (desktop) */}
         <div className="relative">
-          {/* Connecting line (desktop) */}
-          <div className="hidden lg:block absolute top-1/2 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-y-1/2" />
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">
+          <div
+            aria-hidden="true"
+            className="absolute left-0 right-0 top-24 hidden h-px bg-gradient-to-r from-transparent via-slate-300 to-transparent lg:block"
+          />
+          <ol className="relative grid grid-cols-1 gap-6 md:grid-cols-3 lg:gap-8">
             {STEPS.map((step, i) => (
-              <FadeIn key={step.number} delay={0.15 + i * 0.15}>
-                <div className="relative group">
-                  {/* Step card */}
-                  <div className="relative bg-white/[0.03] backdrop-blur-sm border border-white/[0.06] rounded-2xl p-6 md:p-8 text-center hover:bg-white/[0.05] hover:border-white/[0.12] transition-all duration-500">
-                    {/* Glow effect on hover */}
-                    <div
-                      className={`absolute inset-0 rounded-2xl bg-gradient-to-b ${step.color} opacity-0 group-hover:opacity-[0.03] transition-opacity duration-500`}
-                    />
-
-                    {/* Number badge */}
-                    <div className="relative flex justify-center mb-6">
-                      <div
-                        className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${step.color} flex items-center justify-center text-white shadow-lg`}
-                        style={{
-                          boxShadow: `0 8px 30px -4px ${step.glowColor === 'emerald' ? 'rgba(16,185,129,0.35)' : 'rgba(245,158,11,0.35)'}`,
-                        }}
+              <li key={step.number} className="relative">
+                <Reveal delay={i * 0.15} className="h-full">
+                  <div className="group relative h-full rounded-3xl border border-slate-200/70 bg-white/95 p-7 air-shadow backdrop-blur-xl backdrop-saturate-[1.4] transition-transform duration-500 hover:-translate-y-1.5 sm:p-8">
+                    <div className="mb-6 flex items-start justify-between">
+                      <span
+                        className={`flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${step.gradient} text-2xl shadow-[0_8px_20px_rgba(0,82,196,0.30)] transition-transform duration-500 group-hover:scale-110`}
+                        aria-hidden="true"
                       >
                         {step.icon}
-                      </div>
+                      </span>
+                      <span className="font-serif text-5xl font-bold leading-none text-slate-200">
+                        {step.number}
+                      </span>
                     </div>
-
-                    {/* Step number */}
-                    <span className="inline-block text-xs font-bold tracking-widest text-white/20 uppercase mb-3">
-                      Étape {step.number}
-                    </span>
-
-                    {/* Title */}
-                    <h3 className="text-xl font-bold text-white mb-3">{step.title}</h3>
-
-                    {/* Description */}
-                    <p className="text-white/40 text-sm leading-relaxed">{step.description}</p>
+                    <h3 className="mb-2 font-serif text-xl font-bold text-slate-900">
+                      {t(step.title)}
+                    </h3>
+                    <p className="text-sm leading-relaxed text-slate-600">
+                      {t(step.description)}
+                    </p>
                   </div>
-
-                  {/* Arrow between steps (desktop) */}
-                  {i < STEPS.length - 1 && (
-                    <div className="hidden lg:flex absolute -right-6 top-1/2 -translate-y-1/2 z-10">
-                      <div className="w-12 h-12 rounded-full bg-white/[0.05] border border-white/[0.08] flex items-center justify-center">
-                        <ArrowRight className="w-5 h-5 text-white/30" />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </FadeIn>
+                </Reveal>
+                {/* Flèche entre les étapes (desktop) */}
+                {i < STEPS.length - 1 && (
+                  <div
+                    aria-hidden="true"
+                    className="absolute -right-5 top-1/2 z-10 hidden -translate-y-1/2 lg:block"
+                  >
+                    <span className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200/70 bg-white/95 backdrop-blur-xl">
+                      <ArrowRight className="h-4 w-4 text-[#0052C4] rtl:rotate-180" />
+                    </span>
+                  </div>
+                )}
+              </li>
             ))}
-          </div>
+          </ol>
         </div>
 
-        {/* Bottom highlight */}
-        <FadeIn delay={0.6}>
-          <div className="mt-16 md:mt-20 text-center">
-            <div className="inline-flex items-center gap-3 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-6 py-3">
-              <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-emerald-300 text-sm font-medium">
-                Zéro application à installer — tout fonctionne dans le navigateur
-              </span>
-            </div>
-          </div>
-        </FadeIn>
+        {/* Note bas de section */}
+        <Reveal delay={0.4} className="mt-12 text-center">
+          <p className="inline-flex items-center gap-2.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-5 py-2.5 text-sm font-medium text-emerald-700">
+            <span
+              className="h-2 w-2 animate-pulse rounded-full bg-emerald-500"
+              aria-hidden="true"
+            />
+            {t('Zéro application à installer — tout fonctionne dans le navigateur')}
+          </p>
+        </Reveal>
       </div>
     </section>
   );

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { dispatchWebhooks } from '@/lib/webhook-dispatcher';
 import { rateLimit } from '@/lib/rate-limit';
 // FIX-14 — monitoring d'erreurs : trace AuditLog (action='runtime.error').
 import { captureError } from '@/lib/error-monitor';
@@ -164,6 +165,18 @@ export async function POST(
         contentJson: JSON.stringify(currentContent),
       },
     });
+
+    // AUDIT PRÉ-PROD (Module 5) — WEBHOOK SORTANT 'guestbook' (HMAC) :
+    // dispatcher branché sur l'ajout d'un avis au livre d'or.
+    if (propertyId) {
+      void dispatchWebhooks(propertyId, 'guestbook', {
+        event: 'guestbook.entry_created',
+        qrCodeId,
+        author: newEntry.author,
+        rating: newEntry.rating ?? null,
+        message: newEntry.message.slice(0, 500),
+      });
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -4,18 +4,44 @@ import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
 // =============================================================
-// KPICard — carte de statistique du Dashboard Client
-// (icône emoji + valeur + label + variation optionnelle)
-// Style QRTags Pro : carte blanche, bordure slate-200, ombre douce.
+// KPICard — carte de statistique du Dashboard Hôte
+// v5.2 « SAPHIR LUXE » : carte verre luxueuse TYPOGRAPHIQUE —
+// SANS icône ni emoji (demande client) : label en petites
+// capitales espacées, valeur chiffre serif, chip et hint.
+//
+// RÉTRO-COMPATIBILITÉ : l'ancienne API (icon/emoji, tone,
+// delta: number|null, loading, onClick, className) reste
+// supportée pour orders-content.tsx et plates-content.tsx —
+// les props icon/emoji ne sont plus rendues (design sans icônes)
+// et `tone` devient un simple accent de point coloré.
 // =============================================================
 
+export type KPITone = 'rausch' | 'emerald' | 'amber' | 'violet' | 'teal' | 'orange';
+
+/** Accent coloré du point (design sans icône — le chiffre est le héros). */
+const TONE_DOTS: Record<KPITone, string> = {
+  rausch: '#5c8af0',
+  emerald: '#86e9cb',
+  amber: '#e9c47c',
+  violet: '#cdb6ff',
+  teal: '#2dd4bf',
+  orange: '#ffab92',
+};
+
 export interface KPICardProps {
-  icon: string;
-  value: string | number;
   label: string;
-  /** Variation vs période précédente, en % (ex: +12). */
+  value: string | number;
+  /** Ancienne prop (design sans icônes : non rendue). */
+  emoji?: string;
+  /** Ancienne prop (design sans icônes : non rendue). */
+  icon?: unknown;
+  /** v4.59 — tonalité chromatique → accent du point coloré. */
+  tone?: KPITone;
+  /** v4.59 — pastille d'info en haut à droite (ex : « ▲ 12% », « nouveau »). */
+  chip?: { text: string; tone?: 'positive' | 'negative' | 'neutral' };
+  /** Ancienne API — variation vs période précédente, en % (convertie en chip). */
   delta?: number | null;
-  /** Texte complémentaire sous la valeur (ex: "vs mois précédent"). */
+  /** Texte complémentaire sous la valeur (ex : "vs mois précédent"). */
   hint?: string;
   loading?: boolean;
   /** Clic optionnel → carte interactive. */
@@ -24,9 +50,10 @@ export interface KPICardProps {
 }
 
 export function KPICard({
-  icon,
-  value,
   label,
+  value,
+  tone,
+  chip,
   delta,
   hint,
   loading = false,
@@ -35,12 +62,22 @@ export function KPICard({
 }: KPICardProps) {
   const interactive = Boolean(onClick);
 
+  // Chip : nouvelle API prioritaire, sinon conversion de l'ancienne `delta`.
+  const resolvedChip =
+    chip ??
+    (delta != null && !loading
+      ? {
+          text: `${delta >= 0 ? '▲' : '▼'} ${Math.abs(delta)}%`,
+          tone: (delta >= 0 ? 'positive' : 'negative') as 'positive' | 'negative',
+        }
+      : undefined);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, ease: 'easeOut' }}
-      whileHover={interactive ? { y: -3 } : undefined}
+      whileHover={{ y: -2 }}
       onClick={onClick}
       role={interactive ? 'button' : undefined}
       tabIndex={interactive ? 0 : undefined}
@@ -55,40 +92,38 @@ export function KPICard({
           : undefined
       }
       className={cn(
-        'group rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-shadow',
-        interactive && 'cursor-pointer hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E23F2B]/40',
+        // v5.7 — demande client : fond plein #FF385C (rouge Airbnb).
+        // .kpi-solid surcharge le verre .lux-card ; .lux-keep-dark
+        // préserve l'encre blanche des textes internes en mode Jour.
+        'lux-card lux-card-hover kpi-solid lux-keep-dark group relative p-5',
+        interactive &&
+          'cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5c8af0]/60',
         className,
       )}
       aria-label={`${label} : ${loading ? 'chargement' : value}`}
     >
-      <div className="flex items-start justify-between gap-2">
-        <span
-          aria-hidden="true"
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-xl ring-1 ring-slate-100 transition-colors group-hover:bg-[#FEF1EF]"
-        >
-          {icon}
-        </span>
-        {delta !== null && delta !== undefined && !loading && (
-          <span
-            className={cn(
-              'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-bold',
-              delta >= 0
-                ? 'bg-emerald-50 text-emerald-700'
-                : 'bg-rose-50 text-rose-700',
-            )}
-          >
-            {delta >= 0 ? '▲' : '▼'} {Math.abs(delta)}%
-          </span>
-        )}
-      </div>
-
+      <span
+        className="lux-dot absolute right-4 top-5 opacity-80"
+        style={{ backgroundColor: tone ? TONE_DOTS[tone] : '#5c8af0' }}
+        aria-hidden="true"
+      />
+      <p className="lux-eyebrow">{label}</p>
       {loading ? (
-        <div className="mt-4 h-8 w-24 animate-pulse rounded-lg bg-slate-100" aria-hidden="true" />
+        <div className="mt-3 h-8 w-24 animate-pulse rounded-lg bg-white/10" aria-hidden="true" />
       ) : (
-        <p className="mt-4 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">{value}</p>
+        <p className="lux-num mt-2 text-3xl leading-none text-white">{value}</p>
       )}
-      <p className="mt-1 text-sm font-medium text-slate-600">{label}</p>
-      {hint && !loading && <p className="mt-0.5 text-xs text-slate-400">{hint}</p>}
+      {resolvedChip && !loading && (
+        <span className="lux-chip mt-3 inline-flex">
+          <span
+            className="lux-dot"
+            style={{ backgroundColor: resolvedChip.tone === 'positive' ? '#34d399' : resolvedChip.tone === 'negative' ? '#f07d6a' : '#8fa0c2' }}
+            aria-hidden="true"
+          />
+          {resolvedChip.text}
+        </span>
+      )}
+      {hint && !loading && <p className="mt-2 text-[11.5px] text-[#8fa0c2]">{hint}</p>}
     </motion.div>
   );
 }

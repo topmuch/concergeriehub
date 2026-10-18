@@ -1,9 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
+
+/**
+ * Vérifie que l'utilisateur est owner de la propriété
+ * ou membre actif (invitation acceptée).
+ */
+async function canAccessProperty(userId: string, propertyId: string): Promise<boolean> {
+  const property = await db.property.findFirst({
+    where: {
+      id: propertyId,
+      OR: [
+        { ownerId: userId },
+        { members: { some: { userId, acceptedAt: { not: null } } } },
+      ],
+    },
+    select: { id: true },
+  });
+  return property !== null;
+}
 
 // GET: Fetch module content for a QR code
 export async function GET(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+    }
+
+    const userId = (session.user as { id?: string }).id;
+    if (!userId) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const qrCodeId = searchParams.get('qrCodeId');
 
@@ -27,6 +57,10 @@ export async function GET(request: NextRequest) {
         { error: 'QR code introuvable' },
         { status: 404 }
       );
+    }
+
+    if (!(await canAccessProperty(userId, qrCode.propertyId))) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
     }
 
     let contentData: Record<string, unknown> = {};
@@ -60,6 +94,16 @@ export async function GET(request: NextRequest) {
 // PUT: Save module content for a QR code
 export async function PUT(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+    }
+
+    const userId = (session.user as { id?: string }).id;
+    if (!userId) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+    }
+
     const body = await request.json();
     const { qrCodeId, content } = body as {
       qrCodeId: string;
@@ -82,6 +126,11 @@ export async function PUT(request: NextRequest) {
         { error: 'QR code introuvable' },
         { status: 404 }
       );
+    }
+
+    // Garde d'accès AVANT l'upsert : owner OU membre accepté
+    if (!(await canAccessProperty(userId, qrCode.propertyId))) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
     }
 
     const contentJson = JSON.stringify(content);

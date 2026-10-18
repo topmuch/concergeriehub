@@ -1,5 +1,5 @@
 // =============================================================
-// Guard Superadmin — Conciergerie Hub (ÉTAPE 9)
+// Guard Superadmin — RoomScan (ÉTAPE 9)
 // À utiliser UNIQUEMENT côté serveur (pages + API routes /admin/*).
 // Le rôle est stocké dans le JWT (session callback de lib/auth.ts).
 // =============================================================

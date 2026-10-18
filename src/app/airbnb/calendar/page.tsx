@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { CalendarContent } from '@/components/airbnb/host/calendar-content';
 
 export const metadata: Metadata = {
-  title: 'Calendrier — Conciergerie Hub',
+  title: 'Calendrier — RoomScan',
   description:
     'Planning multi-plateformes : réservations, arrivées et départs du jour, ménages et synchronisation iCal (Airbnb, Booking, Abritel).',
 };

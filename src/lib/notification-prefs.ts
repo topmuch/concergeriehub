@@ -80,6 +80,170 @@ export const NOTIFICATION_EVENTS: NotificationEventMeta[] = [
     defaultEmail: true,
     defaultPush: false,
   },
+  // =============================================================
+  // PREMIUM « CONCIERGERIE 5 ÉTOILES » (V5) — ÉTAPE 3
+  // =============================================================
+  {
+    key: 'guest_feedback_alert',
+    emoji: '🚨',
+    label: 'Alerte Guest (avis négatif)',
+    description: 'Un invité signale un problème via le Bouclier d’avis (1-3 ★) — alerte critique.',
+    defaultEmail: true,
+    defaultPush: true,
+  },
+  {
+    key: 'guest_feedback',
+    emoji: '⭐',
+    label: 'Avis privé (Bouclier d’avis)',
+    description: 'Un invité laisse un avis 4-5 ★ en privé via le Bouclier d’avis.',
+    defaultEmail: true,
+    defaultPush: false,
+  },
+  {
+    key: 'late_checkout_requested',
+    emoji: '⏱️',
+    label: 'Demande de départ tardif',
+    description: 'Un invité demande un départ tardif depuis son Hub Invité.',
+    defaultEmail: true,
+    defaultPush: true,
+  },
+  {
+    key: 'guest_arrival',
+    emoji: '👋',
+    label: 'Premier scan du Hub',
+    description: 'Un invité vient d’ouvrir son Hub Invité pour la première fois.',
+    defaultEmail: true,
+    defaultPush: true,
+  },
+  {
+    key: 'late_checkout_paid',
+    emoji: '⏱️',
+    label: 'Late check-out payé',
+    description: 'Un invité a réglé son départ tardif via Stripe.',
+    defaultEmail: true,
+    defaultPush: true,
+  },
+  {
+    key: 'guest_departed',
+    emoji: '🚪',
+    label: 'Départ définitif (alerte ménage)',
+    description:
+      'Le voyageur a confirmé son départ depuis son Hub — alerte automatique « Vous pouvez intervenir » pour l\'équipe de ménage.',
+    defaultEmail: true,
+    defaultPush: true,
+  },
+  {
+    key: 'minibar_order',
+    emoji: '🍷',
+    label: 'Commande minibar',
+    description: 'Un invité a déclaré et réglé sa consommation au minibar numérique.',
+    defaultEmail: true,
+    defaultPush: true,
+  },
+  // =============================================================
+  // v4.46 — ACTIVITÉ DU HUB INVITÉ (email hôte : commandes & alertes)
+  // =============================================================
+  {
+    key: 'shop_order',
+    emoji: '🛍️',
+    label: 'Commande boutique (Shop the Stay)',
+    description: 'Un invité commande un produit de la boutique du Hub.',
+    defaultEmail: true,
+    defaultPush: true,
+  },
+  {
+    key: 'sos_logement',
+    emoji: '🚨',
+    label: 'SOS Logement / casse',
+    description: 'Un invité signale une urgence ou un objet cassé depuis le Hub.',
+    defaultEmail: true,
+    defaultPush: true,
+  },
+  {
+    key: 'complaint_created',
+    emoji: '📝',
+    label: 'Signaler un problème',
+    description: 'Un invité envoie une réclamation écrite (fuite, électricité, ménage…).',
+    defaultEmail: true,
+    defaultPush: true,
+  },
+  // =============================================================
+  // v4.53 « OPÉRATIONS & MAINTENANCE INTELLIGENTE »
+  // =============================================================
+  // =============================================================
+  // v4.81 (AUDIT QA) — état des lieux signé par l'invité (push critique)
+  // =============================================================
+  {
+    key: 'checkout_inspection',
+    emoji: '🧾',
+    label: 'État des lieux signé',
+    description: "L'invité a signé l'état des lieux d'arrivée ou de sortie (push immédiat si dégâts signalés).",
+    defaultEmail: true,
+    defaultPush: true,
+  },
+  {
+    key: 'checkout_report',
+    emoji: '📋',
+    label: 'Rapport de check-out',
+    description:
+      'Récapitulatif automatique au départ : consommations minibar, signalements, preuve ménage horodatée.',
+    defaultEmail: true,
+    defaultPush: false,
+  },
+  {
+    key: 'ready_for_arrival',
+    emoji: '🔔',
+    label: '« Prêt pour l’arrivée » envoyé',
+    description:
+      'Le ménage est validé avant l’arrivée du prochain voyageur : notification anticipée envoyée à l’invité.',
+    defaultEmail: true,
+    defaultPush: false,
+  },
+  // =============================================================
+  // v4.54 « 8 AMÉLIORATIONS » — pressing + alertes stock
+  // =============================================================
+  {
+    key: 'pressing_order',
+    emoji: '👔',
+    label: 'Commande pressing / blanchisserie',
+    description: 'Un invité commande un service pressing (repassage, lessive, pressing à sec) depuis le Hub.',
+    defaultEmail: true,
+    defaultPush: true,
+  },
+  {
+    key: 'inventory_alert',
+    emoji: '📦',
+    label: 'Alerte stock (équipe ménage)',
+    description:
+      'L’équipe de ménage signale un stock bas ou épuisé (serviettes, papier toilette, savon, capsules café).',
+    defaultEmail: true,
+    defaultPush: true,
+  },
+  // =============================================================
+  // « DEMANDES PARTICULIÈRES » — équipements demandés par l'invité
+  // (lit d'appoint, lit bébé, siège bébé, serviettes…)
+  // =============================================================
+  {
+    key: 'special_request',
+    emoji: '🛎️',
+    label: 'Demandes particulières',
+    description:
+      'Un invité demande un équipement ou un service depuis le Hub (lit d’appoint, lit bébé, siège bébé, serviettes…).',
+    defaultEmail: true,
+    defaultPush: true,
+  },
+  // =============================================================
+  // v5.4 « COACH ROOMSCAN » — recommandations critiques de l'IA
+  // =============================================================
+  {
+    key: 'coach_insight',
+    emoji: '🎓',
+    label: 'Coach — urgence détectée',
+    description:
+      'Le Coach Roomscan détecte un problème urgent : conflit ménage/arrivée, rupture de stock, dégâts non traités, invité mécontent.',
+    defaultEmail: true,
+    defaultPush: true,
+  },
 ];
 
 export interface NotificationPref {

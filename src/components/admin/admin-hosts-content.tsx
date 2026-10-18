@@ -2,9 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { ChevronDown, ChevronRight, RefreshCw, Search, MapPin } from 'lucide-react';
-import { B2BCard } from '@/components/ui/b2b-card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -63,7 +60,7 @@ interface HostDetail {
 }
 
 /** Plan affiché : abonnement actif en priorité, sinon intention. */
-function hostPlan(h: HostRow): { label: string; className: string; source: string } {
+function hostPlan(h: HostRow): { label: string; dot: string; source: string } {
   if (h.subscription && h.subscription.status === 'active') {
     const p = planBadge(h.subscription.plan);
     return { ...p, source: h.subscription.billingCycle === 'monthly' ? 'mensuel' : 'annuel' };
@@ -72,16 +69,16 @@ function hostPlan(h: HostRow): { label: string; className: string; source: strin
   return { ...p, source: 'intention' };
 }
 
-function planBadge(plan: string | null): { label: string; className: string } {
+function planBadge(plan: string | null): { label: string; dot: string } {
   switch (plan) {
     case 'airbnb_solo':
-      return { label: 'Solo', className: 'bg-emerald-50 border-emerald-200 text-emerald-700' };
+      return { label: 'Solo', dot: '#2dd4bf' };
     case 'airbnb_pro':
-      return { label: 'Pro', className: 'bg-slate-900 border-slate-900 text-white' };
+      return { label: 'Pro', dot: '#5c8af0' };
     case 'agency':
-      return { label: 'Agence', className: 'bg-amber-50 border-amber-200 text-amber-700' };
+      return { label: 'Agence', dot: '#e9c47c' };
     default:
-      return { label: 'Free', className: 'bg-slate-100 border-slate-200 text-slate-500' };
+      return { label: 'Free', dot: '#64748b' };
   }
 }
 
@@ -180,26 +177,26 @@ export function AdminHostsContent() {
       {/* ================= En-tête ================= */}
       <section className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Hôtes 🏠</h1>
-          <p className="text-sm text-slate-600 mt-1">
+          <p className="lux-eyebrow">Annuaire</p>
+          <h1 className="lux-display mt-1 text-2xl font-semibold text-white sm:text-3xl">Hôtes</h1>
+          <p className="text-sm text-[#8fa0c2] mt-1">
             Comptes, abonnements et biens — désactivez un compte en cas d&apos;abus.
           </p>
         </div>
-        <Button variant="outline" onClick={load} className="bg-white" aria-label="Rafraîchir la liste">
-          <RefreshCw className={cn('h-4 w-4', loading && 'animate-spin')} /> Actualiser
+        <Button variant="outline" onClick={load} className="lux-btn-ghost h-9 rounded-full px-4 text-xs" aria-label="Rafraîchir la liste">
+          Actualiser
         </Button>
       </section>
 
       {/* ================= Recherche ================= */}
       <section>
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" aria-hidden="true" />
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Rechercher par nom ou email…"
             aria-label="Rechercher un hôte"
-            className="pl-9 bg-white"
+            className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
           />
         </div>
       </section>
@@ -207,25 +204,24 @@ export function AdminHostsContent() {
       {/* ================= Liste ================= */}
       <section aria-label="Liste des hôtes" className="space-y-3 pb-6">
         {loading && hosts.length === 0 ? (
-          [0, 1, 2].map((i) => <Skeleton key={i} className="h-20 rounded-xl" />)
+          [0, 1, 2].map((i) => <Skeleton key={i} className="h-20 rounded-xl bg-white/8" />)
         ) : error ? (
-          <B2BCard className="text-center">
-            <p className="text-sm text-slate-600">{error}</p>
-            <Button onClick={load} className="mt-3 bg-slate-900 hover:bg-slate-800 text-white">
-              <RefreshCw className="h-4 w-4" /> Réessayer
+          <div className="lux-card p-6 text-center">
+            <p className="text-sm text-[#8fa0c2]">{error}</p>
+            <Button onClick={load} className="lux-btn mt-3 h-9 rounded-full px-4 text-xs">
+              Réessayer
             </Button>
-          </B2BCard>
+          </div>
         ) : filtered.length === 0 ? (
-          <B2BCard className="text-center">
-            <p className="text-3xl" aria-hidden="true">🔍</p>
-            <p className="mt-2 font-semibold text-slate-900">Aucun hôte trouvé</p>
-          </B2BCard>
+          <div className="lux-empty rounded-2xl px-4 py-10 text-center">
+            <p className="lux-display text-lg text-white">Aucun hôte trouvé</p>
+          </div>
         ) : (
           filtered.map((h) => {
             const plan = hostPlan(h);
             const expanded = expandedId === h.id;
             return (
-              <B2BCard key={h.id} hover className={cn(!h.isActive && 'opacity-80')}>
+              <div key={h.id} className={cn('lux-card lux-card-hover p-4 sm:p-5', !h.isActive && 'opacity-80')}>
                 {/* ----- Ligne principale ----- */}
                 <div className="flex items-center gap-3">
                   <button
@@ -233,45 +229,46 @@ export function AdminHostsContent() {
                     onClick={() => toggleExpand(h.id)}
                     aria-expanded={expanded}
                     aria-label={`${expanded ? 'Masquer' : 'Voir'} les biens de ${h.fullName ?? h.email}`}
-                    className="h-8 w-8 shrink-0 inline-flex items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+                    className="h-8 w-8 shrink-0 inline-flex items-center justify-center rounded-lg text-[#8fa0c2] hover:bg-white/8 hover:text-white transition-colors"
                   >
-                    {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                    <span aria-hidden="true">{expanded ? '▾' : '›'}</span>
                   </button>
 
                   <span
                     aria-hidden="true"
-                    className="h-10 w-10 rounded-full bg-slate-100 border border-slate-200 text-sm font-bold text-slate-600 inline-flex items-center justify-center shrink-0"
+                    className="lux-num h-10 w-10 rounded-full bg-[#3d6fe0]/15 text-xs font-semibold text-[#a9c4ff] ring-1 ring-[#5c8af0]/25 inline-flex items-center justify-center shrink-0"
                   >
                     {(h.fullName ?? h.email).slice(0, 2).toUpperCase()}
                   </span>
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-sm font-bold text-slate-900 truncate">{h.fullName ?? 'Sans nom'}</p>
-                      <Badge variant="outline" className={cn('font-semibold', plan.className)}>
+                      <p className="text-sm font-bold text-white truncate">{h.fullName ?? 'Sans nom'}</p>
+                      <span className="lux-chip">
+                        <span className="lux-dot" style={{ backgroundColor: plan.dot }} aria-hidden="true" />
                         {plan.label}
                         {plan.label !== 'Free' && (
-                          <span className="ml-1 font-normal opacity-80">· {plan.source}</span>
+                          <span className="font-normal opacity-80">· {plan.source}</span>
                         )}
-                      </Badge>
+                      </span>
                       {!h.isActive && (
-                        <Badge variant="outline" className="bg-red-50 border-red-200 text-red-600 font-semibold">
-                          ⛔ Désactivé
-                        </Badge>
+                        <span className="lux-chip">
+                          <span className="lux-dot" style={{ backgroundColor: '#f07d6a' }} aria-hidden="true" /> Désactivé
+                        </span>
                       )}
                       {!h.onboardingCompleted && (
-                        <Badge variant="outline" className="bg-amber-50 border-amber-200 text-amber-700 font-semibold">
-                          onboarding incomplet
-                        </Badge>
+                        <span className="lux-chip">
+                          <span className="lux-dot" style={{ backgroundColor: '#fbbf24' }} aria-hidden="true" /> onboarding incomplet
+                        </span>
                       )}
                     </div>
-                    <p className="text-xs text-slate-500 truncate">
+                    <p className="text-xs text-[#8fa0c2] truncate">
                       {h.email} · inscrit le {formatDay(h.createdAt)}
                     </p>
                   </div>
 
                   <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 sm:gap-4 shrink-0">
-                    <span className="text-xs font-semibold text-slate-600 whitespace-nowrap">
+                    <span className="text-xs font-semibold text-[#8fa0c2] whitespace-nowrap">
                       {h.propertyCount} bien{h.propertyCount > 1 ? 's' : ''}
                     </span>
                     <label className="flex items-center gap-2 cursor-pointer">
@@ -280,7 +277,7 @@ export function AdminHostsContent() {
                         onCheckedChange={(v) => toggleActive(h, v)}
                         aria-label={`Compte ${h.fullName ?? h.email} ${h.isActive ? 'actif' : 'désactivé'}`}
                       />
-                      <span className="text-xs font-semibold text-slate-600 sm:whitespace-nowrap">
+                      <span className="text-xs font-semibold text-[#8fa0c2] sm:whitespace-nowrap">
                         {h.isActive ? 'Actif' : 'Désactivé'}
                       </span>
                     </label>
@@ -289,42 +286,46 @@ export function AdminHostsContent() {
 
                 {/* ----- Biens dépliés ----- */}
                 {expanded && (
-                  <div className="mt-4 pt-4 border-t border-slate-100">
+                  <div className="mt-4 pt-4 border-t border-white/8">
                     {detailLoading ? (
                       <div className="space-y-2">
-                        <Skeleton className="h-16 rounded-xl" />
-                        <Skeleton className="h-16 rounded-xl" />
+                        <Skeleton className="h-16 rounded-xl bg-white/8" />
+                        <Skeleton className="h-16 rounded-xl bg-white/8" />
                       </div>
                     ) : detail && detail.properties.length > 0 ? (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         {detail.properties.map((p) => {
                           const tm = propertyTypeMeta(p.propertyType);
                           return (
-                            <div key={p.id} className="border border-slate-200 rounded-xl p-3.5 bg-slate-50/50">
+                            <div key={p.id} className="rounded-xl border border-white/10 bg-white/[0.03] p-3.5">
                               <div className="flex items-start gap-2.5">
-                                <span className="text-lg leading-none select-none" aria-hidden="true">
-                                  {tm.emoji}
-                                </span>
+                                <span
+                                  aria-hidden="true"
+                                  className="lux-dot mt-2 shrink-0"
+                                  style={{ backgroundColor: '#2dd4bf' }}
+                                />
                                 <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-bold text-slate-900 truncate">{p.name}</p>
-                                  <p className="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5">
-                                    <MapPin className="h-3 w-3" aria-hidden="true" />
+                                  <p className="text-sm font-bold text-white truncate">{p.name}</p>
+                                  <p className="text-[11px] text-[#8fa0c2] mt-0.5">
                                     {p.address ?? tm.label}
                                   </p>
                                   <div className="mt-2 flex flex-wrap gap-1.5">
-                                    <span className="inline-flex text-[10px] font-semibold px-2 py-0.5 rounded-full border bg-white border-slate-200 text-slate-600">
+                                    <span className="lux-chip !px-2 !py-0.5 !text-[10px]">
                                       {p.qrCount} QR code{p.qrCount > 1 ? 's' : ''}
                                     </span>
-                                    <span className="inline-flex text-[10px] font-semibold px-2 py-0.5 rounded-full border bg-white border-slate-200 text-slate-600">
+                                    <span className="lux-chip !px-2 !py-0.5 !text-[10px]">
                                       {p.plaqueCount} plaque{p.plaqueCount > 1 ? 's' : ''}
                                     </span>
                                     {p.hubSlugs.length > 0 && (
-                                      <span className="inline-flex text-[10px] font-semibold px-2 py-0.5 rounded-full border bg-white border-slate-200 text-slate-600 truncate max-w-full">
-                                        🔗 /hub/{p.hubSlugs[0]}
+                                      <span className="lux-chip !px-2 !py-0.5 !text-[10px] truncate max-w-full">
+                                        /hub/{p.hubSlugs[0]}
                                       </span>
                                     )}
                                     {!p.isActive && (
-                                      <span className="inline-flex text-[10px] font-semibold px-2 py-0.5 rounded-full border bg-red-50 border-red-200 text-red-600">
+                                      <span
+                                        className="lux-chip !px-2 !py-0.5 !text-[10px]"
+                                        style={{ borderColor: 'rgba(240, 125, 106, 0.35)', color: '#f5a58f' }}
+                                      >
                                         bien désactivé
                                       </span>
                                     )}
@@ -336,13 +337,13 @@ export function AdminHostsContent() {
                         })}
                       </div>
                     ) : (
-                      <p className="text-sm text-slate-500 text-center py-4">
+                      <p className="text-sm text-[#8fa0c2] text-center py-4">
                         Aucune propriété pour cet hôte.
                       </p>
                     )}
                   </div>
                 )}
-              </B2BCard>
+              </div>
             );
           })
         )}

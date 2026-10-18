@@ -24,7 +24,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'not_found' }, { status: 400 });
   }
 
-  let propertyName = 'Conciergerie Hub';
+  let propertyName = 'RoomScan';
   if (slug !== DEMO_SLUG) {
     // Plaque QR (flux V1) OU Hub du bien (V2)
     const plaque = await db.physicalQrCode.findUnique({
@@ -63,7 +63,7 @@ export async function GET(req: Request) {
     lang: 'fr',
     dir: 'ltr',
     background_color: '#F8FAFC',
-    theme_color: '#059669',
+    theme_color: '#07235B',
     categories: ['travel', 'lifestyle'],
     icons: [
       { src: icon(192, 'any'), sizes: '192x192', type: 'image/png', purpose: 'any' },

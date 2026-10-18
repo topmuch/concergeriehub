@@ -1,20 +1,23 @@
-export const dynamic = 'force-dynamic';
 import type { Metadata } from 'next';
-import { Plus_Jakarta_Sans } from 'next/font/google';
 import { LandingShell } from '@/components/landing/landing-shell';
 import { siteName, siteUrl } from '@/lib/site';
+import { SEO_FAQ } from '@/lib/seo-faq';
 
-// Police landing (spec : Inter ou Plus Jakarta Sans) — scopée à la
-// page, n'affecte pas le reste de l'application (Geist global).
-const jakarta = Plus_Jakarta_Sans({
-  subsets: ['latin'],
-  variable: '--font-jakarta',
-  display: 'swap',
-});
+// FIX-CSP-PROD : la CSP à nonce (middleware FIX-8b) exige le rendu dynamique.
+// En statique (pré-rendu au build), les scripts n'ont pas le nonce de la requête
+// et 'strict-dynamic' les bloque tous → page blanche en production.
+export const dynamic = 'force-dynamic';
 
-const LANDING_TITLE = 'Conciergerie Hub — Transformez chaque séjour en expérience 5 étoiles';
+// TYPOGRAPHIE SITE — Tahoma (choix utilisateur) : définie GLOBALEMENT
+// dans globals.css (@theme --font-sans / --font-serif, Tahoma en tête
+// de stack). L'ancienne police landing (Plus Jakarta Sans) est retirée :
+// la page hérite de la police du site comme tout le reste.
+
+// SEO v4.77 — title/description OG enrichis avec les mots-clés cœur
+// (hub invité Airbnb, conciergerie QR code, guide numérique) sans bourrage.
+const LANDING_TITLE = 'RoomScan — Transformez chaque séjour en expérience 5 étoiles';
 const LANDING_DESCRIPTION =
-  'Une seule plaque QR élégante : Wi-Fi, guidebook et services en 1 scan pour vos invités. Vous pilotez tout depuis un dashboard professionnel. Sans application.';
+  'Votre hub invité Airbnb en une plaque QR : Wi-Fi, guide numérique et services en 1 scan. La conciergerie QR code qui pilote tout le séjour. Sans application.';
 
 export const metadata: Metadata = {
   title: LANDING_TITLE,
@@ -23,6 +26,9 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'fr_FR',
+    // Remplace TOTALEMENT l'openGraph du layout (règle Next.js) →
+    // il faut re-déclarer les langues alternatives ici.
+    alternateLocale: ['en_US', 'es_ES'],
     url: '/',
     siteName,
     title: LANDING_TITLE,
@@ -38,8 +44,11 @@ export const metadata: Metadata = {
 
 // ── JSON-LD (rich results Google) ─────────────────────────────
 // @graph : Organization (identité) + WebSite + SoftwareApplication
-// avec les deux offres affichées sur la landing (Solo 9,90 €/mois,
-// Pro 199 €/an). Pas d'aggregateRating : jamais de fausses notes.
+// (catégorie TravelApplication, offres réelles affichées sur la
+// landing : Solo 9,90 €/mois, Pro 199 €/an) + FAQPage dont les
+// Q/R sont rendues VISIBLEMENT dans markets-section.tsx (exigence
+// Google — source unique : lib/seo-faq.ts).
+// Pas d'aggregateRating : jamais de fausses notes.
 const jsonLd = {
   '@context': 'https://schema.org',
   '@graph': [
@@ -49,6 +58,12 @@ const jsonLd = {
       name: siteName,
       url: siteUrl,
       logo: `${siteUrl}/icon-512.png`,
+      contactPoint: {
+        '@type': 'ContactPoint',
+        contactType: 'customer support',
+        email: 'contact@roomscan.pro',
+        availableLanguage: ['fr', 'en', 'es'],
+      },
     },
     {
       '@type': 'WebSite',
@@ -61,13 +76,18 @@ const jsonLd = {
     {
       '@type': 'SoftwareApplication',
       '@id': `${siteUrl}/#app`,
-      name: siteName,
+      name: `${siteName} — Concierge Hub`,
       url: siteUrl,
-      applicationCategory: 'BusinessApplication',
+      applicationCategory: 'TravelApplication',
       operatingSystem: 'Web',
       description: LANDING_DESCRIPTION,
       inLanguage: 'fr-FR',
       publisher: { '@id': `${siteUrl}/#organization` },
+      areaServed: [
+        { '@type': 'AdministrativeArea', name: 'Afrique de l’Ouest' },
+        { '@type': 'AdministrativeArea', name: 'Europe' },
+        { '@type': 'Country', name: 'Canada' },
+      ],
       offers: [
         {
           '@type': 'Offer',
@@ -85,11 +105,24 @@ const jsonLd = {
         },
       ],
       featureList: [
-        'Plaque QR intelligente pour vos invités',
-        'Wi-Fi, guidebook et services en 1 scan',
-        'Dashboard multi-propriétés pour les hôtes',
-        'Sans application pour les invités',
+        'Hub invité Airbnb ouvert par une plaque QR',
+        'Conciergerie QR code : Wi-Fi en 1 clic',
+        'Guide numérique de location saisonnière (house manual digital)',
+        'Welcome book digital & digital guestbook',
+        'Minibar numérique, départ tardif et boutique de souvenirs',
+        'Bouclier d’avis et messagerie vocale hôte-invité',
+        'Dashboard hôte : calendrier, ménage, notifications, sync iCal',
       ],
+    },
+    {
+      '@type': 'FAQPage',
+      '@id': `${siteUrl}/#faq`,
+      inLanguage: 'fr-FR',
+      mainEntity: SEO_FAQ.map((item) => ({
+        '@type': 'Question',
+        name: item.q,
+        acceptedAnswer: { '@type': 'Answer', text: item.a },
+      })),
     },
   ],
 };
@@ -99,7 +132,7 @@ const jsonLd = {
 // redirection par rôle). L'aperçu É1 et la V1 restent dans page.tsx.bak.
 export default function Home() {
   return (
-    <div className={`${jakarta.variable} font-[family-name:var(--font-jakarta)]`}>
+    <div className="font-sans">
       <script
         type="application/ld+json"
         // Données structurées statiques (aucune entrée utilisateur) —

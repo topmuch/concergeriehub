@@ -6,7 +6,7 @@
 //
 // ⚠️ Synchronisation : ces corps reflètent les templates codés en
 // dur de lib/email-templates.ts (même charte : fond slate, carte
-// 560 px, accent émeraude #059669, styles inline). Le rendu réel
+// 560 px, accent émeraude #0066EF, styles inline). Le rendu réel
 // (lib/email-template-render.ts) lit D'ABORD la ligne DB par key ;
 // si elle est absente/désactivée, fallback silencieux sur les
 // fonctions codées en dur. Les valeurs sont substituées aux jetons
@@ -21,8 +21,8 @@ export interface EmailTemplateDefault {
   description: string;
 }
 
-const BRAND = 'Conciergerie Hub';
-const ACCENT = '#059669';
+const BRAND = 'RoomScan';
+const ACCENT = '#0066EF';
 
 /** Miroir fidèle de shell() de lib/email-templates.ts. */
 function shell(opts: {
@@ -85,7 +85,7 @@ export const EMAIL_TEMPLATE_DEFAULTS: EmailTemplateDefault[] = [
   // ── 2) Reçu de paiement invité ──
   {
     key: 'guest_receipt',
-    subject: 'Reçu {{amount}} — votre commande Conciergerie Hub',
+    subject: 'Reçu {{amount}} — votre commande RoomScan',
     description:
       "Reçu de paiement envoyé à l'invité après le règlement d'une commande service (Stripe). {{amount}} est déjà formaté (ex : 36,00 €), {{orderRef}} est la référence courte sur 8 caractères.",
     htmlBody: shell({
@@ -107,7 +107,7 @@ export const EMAIL_TEMPLATE_DEFAULTS: EmailTemplateDefault[] = [
   // ── 3) Confirmation de remboursement invité ──
   {
     key: 'guest_refund',
-    subject: 'Remboursement de {{amount}} — Conciergerie Hub',
+    subject: 'Remboursement de {{amount}} — RoomScan',
     description:
       "Confirmation envoyée à l'invité après remboursement d'une commande service (Stripe refund ou remboursement Superadmin). {{amount}} est déjà formaté (ex : 36,00 €).",
     htmlBody: shell({
@@ -151,7 +151,7 @@ export const EMAIL_TEMPLATE_DEFAULTS: EmailTemplateDefault[] = [
   // ── 5) Mot de passe réinitialisé par le Superadmin ──
   {
     key: 'admin_password_reset',
-    subject: 'Votre mot de passe Conciergerie Hub a été réinitialisé',
+    subject: 'Votre mot de passe RoomScan a été réinitialisé',
     description:
       "Envoyé lorsqu'un Superadmin réinitialise le mot de passe d'un compte (Console → Utilisateurs). Contient le mot de passe temporaire en clair.",
     htmlBody: shell({

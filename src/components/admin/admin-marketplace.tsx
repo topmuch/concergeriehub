@@ -3,10 +3,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
 import {
-  Store, Tag, Zap, Ticket, Receipt, Plus, Search, Trash2, Loader2,
-  Edit, QrCode, Play, Ban, Eye, Star, ShieldCheck, XCircle, CheckCircle,
-} from 'lucide-react';
-import {
   Card, CardContent, CardDescription, CardHeader, CardTitle,
 } from '@/components/ui/card';
 import {
@@ -38,9 +34,8 @@ interface MerchantData {
 interface PromoData {
   id: string; merchantId: string | null; title: string; description: string | null;
   originalPrice: number | null; promoPrice: number | null;
-  validFrom: string | null; validUntil: string | null; category: string | null;
-  source: string; viewsCount: number; redemptionsCount: number; createdAt: string;
-  merchant: { id: string; name: string } | null;
+  validUntil: string | null; category: string | null; viewsCount: number;
+  redemptionsCount: number; merchant: { id: string; name: string } | null;
 }
 
 interface FlashSaleData {
@@ -66,25 +61,26 @@ interface TransactionData {
 // ── Constants ──────────────────────────────────────────────────
 const CATEGORIES = ['Boulangerie', 'Boucherie', 'Épicerie', 'Pharmacie', 'Restauration', 'Beauté', 'Autre'];
 
+// Badges de statut « lux » — teintes sémantiques 8-10 % sur fond nuit.
 const FLASH_STATUS: Record<string, { label: string; cls: string }> = {
-  scheduled: { label: 'Programmée', cls: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300 border-0' },
-  active: { label: 'Active', cls: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 border-0' },
-  expired: { label: 'Expirée', cls: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border-0' },
-  cancelled: { label: 'Annulée', cls: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 border-0' },
+  scheduled: { label: 'Programmée', cls: 'border border-[#fbbf24]/25 bg-[#fbbf24]/10 text-[#fbbf24]' },
+  active: { label: 'Active', cls: 'border border-[#34d399]/25 bg-[#34d399]/10 text-[#86e9cb]' },
+  expired: { label: 'Expirée', cls: 'border border-white/10 bg-white/[0.05] text-[#8fa0c2]' },
+  cancelled: { label: 'Annulée', cls: 'border border-[#f07d6a]/25 bg-[#f07d6a]/10 text-[#f07d6a]' },
 };
 
 const TXN_STATUS: Record<string, { label: string; cls: string }> = {
-  pending: { label: 'En attente', cls: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300 border-0' },
-  completed: { label: 'Terminé', cls: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 border-0' },
-  failed: { label: 'Échoué', cls: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 border-0' },
-  refunded: { label: 'Remboursé', cls: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border-0' },
+  pending: { label: 'En attente', cls: 'border border-[#fbbf24]/25 bg-[#fbbf24]/10 text-[#fbbf24]' },
+  completed: { label: 'Terminé', cls: 'border border-[#34d399]/25 bg-[#34d399]/10 text-[#86e9cb]' },
+  failed: { label: 'Échoué', cls: 'border border-[#f07d6a]/25 bg-[#f07d6a]/10 text-[#f07d6a]' },
+  refunded: { label: 'Remboursé', cls: 'border border-white/10 bg-white/[0.05] text-[#8fa0c2]' },
 };
 
 const COUPON_STATUS: Record<string, { label: string; cls: string }> = {
-  active: { label: 'Actif', cls: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 border-0' },
-  used: { label: 'Utilisé', cls: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border-0' },
-  expired: { label: 'Expiré', cls: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300 border-0' },
-  cancelled: { label: 'Annulé', cls: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 border-0' },
+  active: { label: 'Actif', cls: 'border border-[#34d399]/25 bg-[#34d399]/10 text-[#86e9cb]' },
+  used: { label: 'Utilisé', cls: 'border border-white/10 bg-white/[0.05] text-[#8fa0c2]' },
+  expired: { label: 'Expiré', cls: 'border border-[#fbbf24]/25 bg-[#fbbf24]/10 text-[#fbbf24]' },
+  cancelled: { label: 'Annulé', cls: 'border border-[#f07d6a]/25 bg-[#f07d6a]/10 text-[#f07d6a]' },
 };
 
 // ── Helpers ────────────────────────────────────────────────────
@@ -97,16 +93,22 @@ function SB({ cfg }: { cfg: { label: string; cls: string } }) {
   return <Badge className={cfg.cls}>{cfg.label}</Badge>;
 }
 
-function StatCard({ label, value, icon: Icon }: { label: string; value: number | string; icon: React.ElementType }) {
+function StatCard({ label, value }: { label: string; value: number | string }) {
   return (
-    <Card className="p-4">
-      <div className="flex items-center justify-between">
-        <div><p className="text-sm text-muted-foreground">{label}</p><p className="text-2xl font-bold tabular-nums mt-1">{value}</p></div>
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted"><Icon className="h-5 w-5 text-muted-foreground" /></div>
-      </div>
+    <Card className="lux-card p-4">
+      <p className="lux-eyebrow">{label}</p>
+      <p className="lux-num mt-2 truncate text-2xl leading-none text-white">{value}</p>
     </Card>
   );
 }
+
+// Champs de formulaire « lux » (sombre bleuté).
+const LUX_INPUT =
+  'h-10 rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50';
+const LUX_SELECT_TRIGGER =
+  'h-10 rounded-xl border-white/12 bg-white/[0.04] text-white focus-visible:ring-[#5c8af0]/50';
+const LUX_SELECT_CONTENT = 'border-white/10 bg-[#0d1530] text-white';
+const LUX_SELECT_ITEM = 'focus:bg-white/8 focus:text-white';
 
 // ── Component ──────────────────────────────────────────────────
 export function AdminMarketplace() {
@@ -260,75 +262,77 @@ export function AdminMarketplace() {
     return `${h}h ${m}m ${s}s`;
   };
 
-  const PROMO_STATUS_ACTIVE = { label: 'Active', cls: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 border-0' };
-  const PROMO_STATUS_EXPIRED = { label: 'Expirée', cls: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border-0' };
+  const PROMO_STATUS_ACTIVE = { label: 'Active', cls: 'border border-[#34d399]/25 bg-[#34d399]/10 text-[#86e9cb]' };
+  const PROMO_STATUS_EXPIRED = { label: 'Expirée', cls: 'border border-white/10 bg-white/[0.05] text-[#8fa0c2]' };
 
   if (loading) return (
     <div className="space-y-4">
-      <Skeleton className="h-8 w-64" />
-      <div className="grid grid-cols-3 gap-4">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-24" />)}</div>
-      <Skeleton className="h-96" />
+      <Skeleton className="h-8 w-64 bg-white/8" />
+      <div className="grid grid-cols-3 gap-4">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-2xl bg-white/8" />)}</div>
+      <Skeleton className="h-96 rounded-2xl bg-white/8" />
     </div>
   );
 
   return (
-    <Card>
+    <Card className="lux-card">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2"><Store className="h-5 w-5" /> Marketplace</CardTitle>
-        <CardDescription>Gestion des commerçants, promotions, ventes flash, coupons et transactions</CardDescription>
+        <CardTitle className="lux-display text-xl text-white">Marketplace</CardTitle>
+        <CardDescription className="text-sm text-[#8fa0c2]">Gestion des commerçants, promotions, ventes flash, coupons et transactions</CardDescription>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="merchants">
-          <TabsList className="mb-4 w-full flex-wrap h-auto gap-1">
-            <TabsTrigger value="merchants" className="gap-1.5"><Store className="h-3.5 w-3.5" /><span className="hidden sm:inline">Commerçants</span></TabsTrigger>
-            <TabsTrigger value="promos" className="gap-1.5"><Tag className="h-3.5 w-3.5" /><span className="hidden sm:inline">Promotions</span></TabsTrigger>
-            <TabsTrigger value="flash" className="gap-1.5"><Zap className="h-3.5 w-3.5" /><span className="hidden sm:inline">Ventes Flash</span></TabsTrigger>
-            <TabsTrigger value="coupons" className="gap-1.5"><Ticket className="h-3.5 w-3.5" /><span className="hidden sm:inline">Coupons</span></TabsTrigger>
-            <TabsTrigger value="transactions" className="gap-1.5"><Receipt className="h-3.5 w-3.5" /><span className="hidden sm:inline">Transactions</span></TabsTrigger>
+          <TabsList className="mb-4 w-full flex-wrap h-auto gap-1 rounded-full border border-white/10 bg-white/[0.04] p-1">
+            <TabsTrigger value="merchants" className="rounded-full text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fa0c2] transition-colors data-[state=active]:bg-white/10 data-[state=active]:text-white">Commerçants</TabsTrigger>
+            <TabsTrigger value="promos" className="rounded-full text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fa0c2] transition-colors data-[state=active]:bg-white/10 data-[state=active]:text-white">Promotions</TabsTrigger>
+            <TabsTrigger value="flash" className="rounded-full text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fa0c2] transition-colors data-[state=active]:bg-white/10 data-[state=active]:text-white">Ventes Flash</TabsTrigger>
+            <TabsTrigger value="coupons" className="rounded-full text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fa0c2] transition-colors data-[state=active]:bg-white/10 data-[state=active]:text-white">Coupons</TabsTrigger>
+            <TabsTrigger value="transactions" className="rounded-full text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fa0c2] transition-colors data-[state=active]:bg-white/10 data-[state=active]:text-white">Transactions</TabsTrigger>
           </TabsList>
 
           {/* ── Commerçants ──────────────────────────────────────── */}
           <TabsContent value="merchants" className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <StatCard label="Total" value={merchants.length} icon={Store} />
-              <StatCard label="Vérifiés" value={merchants.filter(m => m.isVerified).length} icon={ShieldCheck} />
-              <StatCard label="Actifs" value={merchants.filter(m => m.isActive).length} icon={CheckCircle} />
+              <StatCard label="Total" value={merchants.length} />
+              <StatCard label="Vérifiés" value={merchants.filter(m => m.isVerified).length} />
+              <StatCard label="Actifs" value={merchants.filter(m => m.isActive).length} />
             </div>
             <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
               <div className="flex gap-2 flex-wrap">
-                <div className="relative"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input placeholder="Rechercher..." value={mSearch} onChange={e => setMSearch(e.target.value)} className="pl-9 w-56" /></div>
-                <Select value={mCategory} onValueChange={setMCategory}><SelectTrigger className="w-40"><SelectValue placeholder="Catégorie" /></SelectTrigger><SelectContent><SelectItem value="all">Toutes</SelectItem>{CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select>
+                <Input placeholder="Rechercher..." value={mSearch} onChange={e => setMSearch(e.target.value)} className={`${LUX_INPUT} w-56`} />
+                <Select value={mCategory} onValueChange={setMCategory}><SelectTrigger className={`${LUX_SELECT_TRIGGER} w-40`}><SelectValue placeholder="Catégorie" /></SelectTrigger><SelectContent className={LUX_SELECT_CONTENT}><SelectItem className={LUX_SELECT_ITEM} value="all">Toutes</SelectItem>{CATEGORIES.map(c => <SelectItem className={LUX_SELECT_ITEM} key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select>
               </div>
               <Dialog open={merchantDlg} onOpenChange={o => { setMerchantDlg(o); if (!o) { setEditId(null); rstM(); } }}>
-                <DialogTrigger asChild><Button size="sm"><Plus className="mr-1.5 h-4 w-4" />Ajouter</Button></DialogTrigger>
-                <DialogContent><DialogHeader><DialogTitle>{editId ? 'Modifier le commerçant' : 'Nouveau commerçant'}</DialogTitle><DialogDescription>{editId ? 'Modifier les informations' : 'Ajouter un commerçant'}</DialogDescription></DialogHeader>
+                <DialogTrigger asChild><Button size="sm" className="lux-btn h-9 rounded-full px-4 text-xs">Ajouter</Button></DialogTrigger>
+                <DialogContent className="border-white/10 bg-[#0b1226] text-white"><DialogHeader><DialogTitle className="lux-display text-lg text-white">{editId ? 'Modifier le commerçant' : 'Nouveau commerçant'}</DialogTitle><DialogDescription className="text-sm text-[#8fa0c2]">{editId ? 'Modifier les informations' : 'Ajouter un commerçant'}</DialogDescription></DialogHeader>
                   <div className="grid gap-3 py-2">
-                    <div className="grid gap-1.5"><Label>Nom *</Label><Input value={mf.name} onChange={e => setMf(f => ({ ...f, name: e.target.value }))} /></div>
-                    <div className="grid gap-1.5"><Label>Catégorie</Label><Select value={mf.category} onValueChange={v => setMf(f => ({ ...f, category: v }))}><SelectTrigger><SelectValue placeholder="Choisir" /></SelectTrigger><SelectContent>{CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select></div>
-                    <div className="grid gap-1.5"><Label>Adresse</Label><Input value={mf.address} onChange={e => setMf(f => ({ ...f, address: e.target.value }))} /></div>
-                    <div className="grid gap-1.5"><Label>Téléphone</Label><Input value={mf.phone} onChange={e => setMf(f => ({ ...f, phone: e.target.value }))} /></div>
-                    <div className="grid gap-1.5"><Label>Site web</Label><Input value={mf.website} onChange={e => setMf(f => ({ ...f, website: e.target.value }))} /></div>
-                    <div className="grid gap-1.5"><Label>Description</Label><Input value={mf.description} onChange={e => setMf(f => ({ ...f, description: e.target.value }))} /></div>
+                    <div className="grid gap-1.5"><Label className="text-xs font-semibold text-[#c7d3ec]">Nom *</Label><Input className={LUX_INPUT} value={mf.name} onChange={e => setMf(f => ({ ...f, name: e.target.value }))} /></div>
+                    <div className="grid gap-1.5"><Label className="text-xs font-semibold text-[#c7d3ec]">Catégorie</Label><Select value={mf.category} onValueChange={v => setMf(f => ({ ...f, category: v }))}><SelectTrigger className={LUX_SELECT_TRIGGER}><SelectValue placeholder="Choisir" /></SelectTrigger><SelectContent className={LUX_SELECT_CONTENT}>{CATEGORIES.map(c => <SelectItem className={LUX_SELECT_ITEM} key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select></div>
+                    <div className="grid gap-1.5"><Label className="text-xs font-semibold text-[#c7d3ec]">Adresse</Label><Input className={LUX_INPUT} value={mf.address} onChange={e => setMf(f => ({ ...f, address: e.target.value }))} /></div>
+                    <div className="grid gap-1.5"><Label className="text-xs font-semibold text-[#c7d3ec]">Téléphone</Label><Input className={LUX_INPUT} value={mf.phone} onChange={e => setMf(f => ({ ...f, phone: e.target.value }))} /></div>
+                    <div className="grid gap-1.5"><Label className="text-xs font-semibold text-[#c7d3ec]">Site web</Label><Input className={LUX_INPUT} value={mf.website} onChange={e => setMf(f => ({ ...f, website: e.target.value }))} /></div>
+                    <div className="grid gap-1.5"><Label className="text-xs font-semibold text-[#c7d3ec]">Description</Label><Input className={LUX_INPUT} value={mf.description} onChange={e => setMf(f => ({ ...f, description: e.target.value }))} /></div>
                   </div>
-                  <DialogFooter><Button onClick={saveMerchant} disabled={submitting || !mf.name.trim()}>{submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{editId ? 'Enregistrer' : 'Créer'}</Button></DialogFooter>
+                  <DialogFooter><Button onClick={saveMerchant} disabled={submitting || !mf.name.trim()} className="lux-btn h-9 rounded-full px-4 text-xs">{editId ? 'Enregistrer' : 'Créer'}</Button></DialogFooter>
                 </DialogContent>
               </Dialog>
             </div>
-            <div className="overflow-x-auto max-h-96 overflow-y-auto">
+            <div className="lux-scroll overflow-x-auto max-h-96 overflow-y-auto rounded-xl border border-white/10">
               <Table>
-                <TableHeader><TableRow><TableHead>Nom</TableHead><TableHead>Catégorie</TableHead><TableHead>Adresse</TableHead><TableHead className="hidden md:table-cell">Tél</TableHead><TableHead className="hidden lg:table-cell">Note</TableHead><TableHead>Vérifié</TableHead><TableHead>Actif</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
+                <TableHeader className="sticky top-0 z-10 bg-[#0d1530]">
+                  <TableRow className="border-white/8 hover:bg-transparent"><TableHead className="lux-eyebrow !text-[9.5px]">Nom</TableHead><TableHead className="lux-eyebrow !text-[9.5px]">Catégorie</TableHead><TableHead className="lux-eyebrow !text-[9.5px]">Adresse</TableHead><TableHead className="lux-eyebrow !text-[9.5px] hidden md:table-cell">Tél</TableHead><TableHead className="lux-eyebrow !text-[9.5px] hidden lg:table-cell">Note</TableHead><TableHead className="lux-eyebrow !text-[9.5px]">Vérifié</TableHead><TableHead className="lux-eyebrow !text-[9.5px]">Actif</TableHead><TableHead className="lux-eyebrow !text-[9.5px] text-right">Actions</TableHead></TableRow>
+                </TableHeader>
                 <TableBody>
-                  {filteredMerchants.length === 0 && <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Aucun commerçant</TableCell></TableRow>}
+                  {filteredMerchants.length === 0 && <TableRow className="border-white/8 hover:bg-white/[0.04]"><TableCell colSpan={8} className="text-center py-8 text-[#8fa0c2]">Aucun commerçant</TableCell></TableRow>}
                   {filteredMerchants.map(m => (
-                    <TableRow key={m.id}>
-                      <TableCell className="font-medium">{m.name}</TableCell>
-                      <TableCell><Badge variant="outline">{m.category || '—'}</Badge></TableCell>
-                      <TableCell className="text-sm text-muted-foreground max-w-28 truncate">{m.address || '—'}</TableCell>
-                      <TableCell className="hidden md:table-cell text-sm">{m.phone || '—'}</TableCell>
-                      <TableCell className="hidden lg:table-cell"><div className="flex items-center gap-1"><Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" /><span className="text-sm">{m.ratingAvg?.toFixed(1) || '—'}</span></div></TableCell>
-                      <TableCell><Button variant="ghost" size="sm" onClick={() => toggleMerchant(m, 'isVerified')}>{m.isVerified ? <ShieldCheck className="h-4 w-4 text-emerald-600" /> : <XCircle className="h-4 w-4 text-muted-foreground" />}</Button></TableCell>
-                      <TableCell><Button variant="ghost" size="sm" onClick={() => toggleMerchant(m, 'isActive')}>{m.isActive ? <CheckCircle className="h-4 w-4 text-emerald-600" /> : <XCircle className="h-4 w-4 text-muted-foreground" />}</Button></TableCell>
-                      <TableCell className="text-right"><div className="flex justify-end gap-1"><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => editMerchant(m)}><Edit className="h-3.5 w-3.5" /></Button><Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteMerchant(m.id)}><Trash2 className="h-3.5 w-3.5" /></Button></div></TableCell>
+                    <TableRow key={m.id} className="border-white/8 hover:bg-white/[0.04]">
+                      <TableCell className="font-medium text-white">{m.name}</TableCell>
+                      <TableCell><Badge variant="outline" className="border-white/12 bg-white/[0.03] text-[#8fa0c2]">{m.category || '—'}</Badge></TableCell>
+                      <TableCell className="text-sm text-[#8fa0c2] max-w-28 truncate">{m.address || '—'}</TableCell>
+                      <TableCell className="hidden md:table-cell text-sm text-[#c7d3ec]">{m.phone || '—'}</TableCell>
+                      <TableCell className="hidden lg:table-cell"><div className="flex items-center gap-1"><span className="text-[#e9c47c]" aria-hidden="true">★</span><span className="text-sm text-white">{m.ratingAvg?.toFixed(1) || '—'}</span></div></TableCell>
+                      <TableCell><Button variant="ghost" size="sm" className="h-8 w-8" onClick={() => toggleMerchant(m, 'isVerified')} title="Basculer vérifié"><span aria-hidden="true" className={m.isVerified ? 'text-[#86e9cb]' : 'text-[#8fa0c2]/50'}>✓</span></Button></TableCell>
+                      <TableCell><Button variant="ghost" size="sm" className="h-8 w-8" onClick={() => toggleMerchant(m, 'isActive')} title="Basculer actif"><span aria-hidden="true" className={m.isActive ? 'text-[#86e9cb]' : 'text-[#8fa0c2]/50'}>✓</span></Button></TableCell>
+                      <TableCell className="text-right"><div className="flex justify-end gap-1"><Button variant="ghost" size="sm" className="h-8 text-xs text-[#8fa0c2] hover:bg-white/[0.06] hover:text-white" onClick={() => editMerchant(m)}>Modifier</Button><Button variant="ghost" size="sm" className="h-8 text-xs text-[#f07d6a] hover:bg-[#f07d6a]/10 hover:text-[#f07d6a]" onClick={() => deleteMerchant(m.id)}>Supprimer</Button></div></TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -339,44 +343,46 @@ export function AdminMarketplace() {
           {/* ── Promotions ───────────────────────────────────────── */}
           <TabsContent value="promos" className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <StatCard label="Total" value={promos.length} icon={Tag} />
-              <StatCard label="Actives" value={promos.filter(p => isPromoActive(p)).length} icon={CheckCircle} />
-              <StatCard label="Expirées" value={promos.filter(p => !isPromoActive(p)).length} icon={XCircle} />
+              <StatCard label="Total" value={promos.length} />
+              <StatCard label="Actives" value={promos.filter(p => isPromoActive(p)).length} />
+              <StatCard label="Expirées" value={promos.filter(p => !isPromoActive(p)).length} />
             </div>
             <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
               <div className="flex gap-2 flex-wrap">
-                <Select value={pMerchant} onValueChange={setPMerchant}><SelectTrigger className="w-44"><SelectValue placeholder="Commerçant" /></SelectTrigger><SelectContent><SelectItem value="all">Tous</SelectItem>{merchants.map(m => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}</SelectContent></Select>
-                <Select value={pStatus} onValueChange={setPStatus}><SelectTrigger className="w-36"><SelectValue placeholder="Statut" /></SelectTrigger><SelectContent><SelectItem value="all">Tous</SelectItem><SelectItem value="active">Actives</SelectItem><SelectItem value="expired">Expirées</SelectItem></SelectContent></Select>
+                <Select value={pMerchant} onValueChange={setPMerchant}><SelectTrigger className={`${LUX_SELECT_TRIGGER} w-44`}><SelectValue placeholder="Commerçant" /></SelectTrigger><SelectContent className={LUX_SELECT_CONTENT}><SelectItem className={LUX_SELECT_ITEM} value="all">Tous</SelectItem>{merchants.map(m => <SelectItem className={LUX_SELECT_ITEM} key={m.id} value={m.id}>{m.name}</SelectItem>)}</SelectContent></Select>
+                <Select value={pStatus} onValueChange={setPStatus}><SelectTrigger className={`${LUX_SELECT_TRIGGER} w-36`}><SelectValue placeholder="Statut" /></SelectTrigger><SelectContent className={LUX_SELECT_CONTENT}><SelectItem className={LUX_SELECT_ITEM} value="all">Tous</SelectItem><SelectItem className={LUX_SELECT_ITEM} value="active">Actives</SelectItem><SelectItem className={LUX_SELECT_ITEM} value="expired">Expirées</SelectItem></SelectContent></Select>
               </div>
               <Dialog open={promoDlg} onOpenChange={o => { setPromoDlg(o); if (!o) { setEditId(null); rstP(); } }}>
-                <DialogTrigger asChild><Button size="sm"><Plus className="mr-1.5 h-4 w-4" />Ajouter</Button></DialogTrigger>
-                <DialogContent><DialogHeader><DialogTitle>{editId ? 'Modifier la promotion' : 'Nouvelle promotion'}</DialogTitle><DialogDescription>{editId ? 'Modifier les détails' : 'Créer une promotion'}</DialogDescription></DialogHeader>
+                <DialogTrigger asChild><Button size="sm" className="lux-btn h-9 rounded-full px-4 text-xs">Ajouter</Button></DialogTrigger>
+                <DialogContent className="border-white/10 bg-[#0b1226] text-white"><DialogHeader><DialogTitle className="lux-display text-lg text-white">{editId ? 'Modifier la promotion' : 'Nouvelle promotion'}</DialogTitle><DialogDescription className="text-sm text-[#8fa0c2]">{editId ? 'Modifier les détails' : 'Créer une promotion'}</DialogDescription></DialogHeader>
                   <div className="grid gap-3 py-2">
-                    <div className="grid gap-1.5"><Label>Commerçant</Label><Select value={pf.merchantId} onValueChange={v => setPf(f => ({ ...f, merchantId: v }))}><SelectTrigger><SelectValue placeholder="Choisir" /></SelectTrigger><SelectContent>{merchants.map(m => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}</SelectContent></Select></div>
-                    <div className="grid gap-1.5"><Label>Titre *</Label><Input value={pf.title} onChange={e => setPf(f => ({ ...f, title: e.target.value }))} /></div>
-                    <div className="grid gap-1.5"><Label>Description</Label><Input value={pf.description} onChange={e => setPf(f => ({ ...f, description: e.target.value }))} /></div>
-                    <div className="grid grid-cols-2 gap-3"><div className="grid gap-1.5"><Label>Prix original</Label><Input type="number" step="0.01" value={pf.originalPrice} onChange={e => setPf(f => ({ ...f, originalPrice: e.target.value }))} /></div><div className="grid gap-1.5"><Label>Prix promo</Label><Input type="number" step="0.01" value={pf.promoPrice} onChange={e => setPf(f => ({ ...f, promoPrice: e.target.value }))} /></div></div>
-                    <div className="grid grid-cols-2 gap-3"><div className="grid gap-1.5"><Label>Valide jusqu'au</Label><Input type="date" value={pf.validUntil} onChange={e => setPf(f => ({ ...f, validUntil: e.target.value }))} /></div><div className="grid gap-1.5"><Label>Catégorie</Label><Select value={pf.category} onValueChange={v => setPf(f => ({ ...f, category: v }))}><SelectTrigger><SelectValue placeholder="Choisir" /></SelectTrigger><SelectContent>{CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select></div></div>
+                    <div className="grid gap-1.5"><Label className="text-xs font-semibold text-[#c7d3ec]">Commerçant</Label><Select value={pf.merchantId} onValueChange={v => setPf(f => ({ ...f, merchantId: v }))}><SelectTrigger className={LUX_SELECT_TRIGGER}><SelectValue placeholder="Choisir" /></SelectTrigger><SelectContent className={LUX_SELECT_CONTENT}>{merchants.map(m => <SelectItem className={LUX_SELECT_ITEM} key={m.id} value={m.id}>{m.name}</SelectItem>)}</SelectContent></Select></div>
+                    <div className="grid gap-1.5"><Label className="text-xs font-semibold text-[#c7d3ec]">Titre *</Label><Input className={LUX_INPUT} value={pf.title} onChange={e => setPf(f => ({ ...f, title: e.target.value }))} /></div>
+                    <div className="grid gap-1.5"><Label className="text-xs font-semibold text-[#c7d3ec]">Description</Label><Input className={LUX_INPUT} value={pf.description} onChange={e => setPf(f => ({ ...f, description: e.target.value }))} /></div>
+                    <div className="grid grid-cols-2 gap-3"><div className="grid gap-1.5"><Label className="text-xs font-semibold text-[#c7d3ec]">Prix original</Label><Input className={LUX_INPUT} type="number" step="0.01" value={pf.originalPrice} onChange={e => setPf(f => ({ ...f, originalPrice: e.target.value }))} /></div><div className="grid gap-1.5"><Label className="text-xs font-semibold text-[#c7d3ec]">Prix promo</Label><Input className={LUX_INPUT} type="number" step="0.01" value={pf.promoPrice} onChange={e => setPf(f => ({ ...f, promoPrice: e.target.value }))} /></div></div>
+                    <div className="grid grid-cols-2 gap-3"><div className="grid gap-1.5"><Label className="text-xs font-semibold text-[#c7d3ec]">Valide jusqu'au</Label><Input className={LUX_INPUT} type="date" value={pf.validUntil} onChange={e => setPf(f => ({ ...f, validUntil: e.target.value }))} /></div><div className="grid gap-1.5"><Label className="text-xs font-semibold text-[#c7d3ec]">Catégorie</Label><Select value={pf.category} onValueChange={v => setPf(f => ({ ...f, category: v }))}><SelectTrigger className={LUX_SELECT_TRIGGER}><SelectValue placeholder="Choisir" /></SelectTrigger><SelectContent className={LUX_SELECT_CONTENT}>{CATEGORIES.map(c => <SelectItem className={LUX_SELECT_ITEM} key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select></div></div>
                   </div>
-                  <DialogFooter><Button onClick={savePromo} disabled={submitting || !pf.title.trim()}>{submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{editId ? 'Enregistrer' : 'Créer'}</Button></DialogFooter>
+                  <DialogFooter><Button onClick={savePromo} disabled={submitting || !pf.title.trim()} className="lux-btn h-9 rounded-full px-4 text-xs">{editId ? 'Enregistrer' : 'Créer'}</Button></DialogFooter>
                 </DialogContent>
               </Dialog>
             </div>
-            <div className="overflow-x-auto max-h-96 overflow-y-auto">
+            <div className="lux-scroll overflow-x-auto max-h-96 overflow-y-auto rounded-xl border border-white/10">
               <Table>
-                <TableHeader><TableRow><TableHead>Titre</TableHead><TableHead>Commerçant</TableHead><TableHead>Prix</TableHead><TableHead className="hidden md:table-cell">Vues</TableHead><TableHead className="hidden md:table-cell">Utilisations</TableHead><TableHead>Statut</TableHead><TableHead className="hidden lg:table-cell">Expire</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
+                <TableHeader className="sticky top-0 z-10 bg-[#0d1530]">
+                  <TableRow className="border-white/8 hover:bg-transparent"><TableHead className="lux-eyebrow !text-[9.5px]">Titre</TableHead><TableHead className="lux-eyebrow !text-[9.5px]">Commerçant</TableHead><TableHead className="lux-eyebrow !text-[9.5px]">Prix</TableHead><TableHead className="lux-eyebrow !text-[9.5px] hidden md:table-cell">Vues</TableHead><TableHead className="lux-eyebrow !text-[9.5px] hidden md:table-cell">Utilisations</TableHead><TableHead className="lux-eyebrow !text-[9.5px]">Statut</TableHead><TableHead className="lux-eyebrow !text-[9.5px] hidden lg:table-cell">Expire</TableHead><TableHead className="lux-eyebrow !text-[9.5px] text-right">Actions</TableHead></TableRow>
+                </TableHeader>
                 <TableBody>
-                  {filteredPromos.length === 0 && <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Aucune promotion</TableCell></TableRow>}
+                  {filteredPromos.length === 0 && <TableRow className="border-white/8 hover:bg-white/[0.04]"><TableCell colSpan={8} className="text-center py-8 text-[#8fa0c2]">Aucune promotion</TableCell></TableRow>}
                   {filteredPromos.map(p => (
-                    <TableRow key={p.id}>
-                      <TableCell className="font-medium">{p.title}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{p.merchant?.name || '—'}</TableCell>
-                      <TableCell>{p.originalPrice && p.promoPrice ? <><span className="line-through text-muted-foreground mr-1.5">{fmtEur(p.originalPrice)}</span><span className="font-semibold text-emerald-600">{fmtEur(p.promoPrice)}</span></> : (p.promoPrice ? fmtEur(p.promoPrice) : '—')}</TableCell>
-                      <TableCell className="hidden md:table-cell"><div className="flex items-center gap-1"><Eye className="h-3.5 w-3.5 text-muted-foreground" />{p.viewsCount}</div></TableCell>
-                      <TableCell className="hidden md:table-cell">{p.redemptionsCount}</TableCell>
+                    <TableRow key={p.id} className="border-white/8 hover:bg-white/[0.04]">
+                      <TableCell className="font-medium text-white">{p.title}</TableCell>
+                      <TableCell className="text-sm text-[#8fa0c2]">{p.merchant?.name || '—'}</TableCell>
+                      <TableCell>{p.originalPrice && p.promoPrice ? <><span className="line-through text-[#8fa0c2] mr-1.5">{fmtEur(p.originalPrice)}</span><span className="font-semibold text-[#86e9cb]">{fmtEur(p.promoPrice)}</span></> : (p.promoPrice ? fmtEur(p.promoPrice) : '—')}</TableCell>
+                      <TableCell className="hidden md:table-cell text-sm text-[#c7d3ec]">{p.viewsCount}</TableCell>
+                      <TableCell className="hidden md:table-cell text-sm text-[#c7d3ec]">{p.redemptionsCount}</TableCell>
                       <TableCell><SB cfg={isPromoActive(p) ? PROMO_STATUS_ACTIVE : PROMO_STATUS_EXPIRED} /></TableCell>
-                      <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">{p.validUntil ? fmtDate(p.validUntil) : '—'}</TableCell>
-                      <TableCell className="text-right"><div className="flex justify-end gap-1"><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => editPromo(p)}><Edit className="h-3.5 w-3.5" /></Button><Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deletePromo(p.id)}><Trash2 className="h-3.5 w-3.5" /></Button></div></TableCell>
+                      <TableCell className="hidden lg:table-cell text-sm text-[#8fa0c2]">{p.validUntil ? fmtDate(p.validUntil) : '—'}</TableCell>
+                      <TableCell className="text-right"><div className="flex justify-end gap-1"><Button variant="ghost" size="sm" className="h-8 text-xs text-[#8fa0c2] hover:bg-white/[0.06] hover:text-white" onClick={() => editPromo(p)}>Modifier</Button><Button variant="ghost" size="sm" className="h-8 text-xs text-[#f07d6a] hover:bg-[#f07d6a]/10 hover:text-[#f07d6a]" onClick={() => deletePromo(p.id)}>Supprimer</Button></div></TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -387,46 +393,48 @@ export function AdminMarketplace() {
           {/* ── Ventes Flash ─────────────────────────────────────── */}
           <TabsContent value="flash" className="space-y-4">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <StatCard label="Total" value={flashSales.length} icon={Zap} />
-              <StatCard label="Actives" value={flashSales.filter(f => f.status === 'active').length} icon={Zap} />
-              <StatCard label="Programmées" value={flashSales.filter(f => f.status === 'scheduled').length} icon={Tag} />
-              <StatCard label="Expirées" value={flashSales.filter(f => f.status === 'expired' || f.status === 'cancelled').length} icon={XCircle} />
+              <StatCard label="Total" value={flashSales.length} />
+              <StatCard label="Actives" value={flashSales.filter(f => f.status === 'active').length} />
+              <StatCard label="Programmées" value={flashSales.filter(f => f.status === 'scheduled').length} />
+              <StatCard label="Expirées" value={flashSales.filter(f => f.status === 'expired' || f.status === 'cancelled').length} />
             </div>
             <div className="flex justify-end">
               <Dialog open={flashDlg} onOpenChange={o => { setFlashDlg(o); if (!o) rstF(); }}>
-                <DialogTrigger asChild><Button size="sm"><Plus className="mr-1.5 h-4 w-4" />Créer</Button></DialogTrigger>
-                <DialogContent><DialogHeader><DialogTitle>Nouvelle vente flash</DialogTitle><DialogDescription>Planifier une vente flash géolocalisée</DialogDescription></DialogHeader>
+                <DialogTrigger asChild><Button size="sm" className="lux-btn h-9 rounded-full px-4 text-xs">Créer</Button></DialogTrigger>
+                <DialogContent className="border-white/10 bg-[#0b1226] text-white"><DialogHeader><DialogTitle className="lux-display text-lg text-white">Nouvelle vente flash</DialogTitle><DialogDescription className="text-sm text-[#8fa0c2]">Planifier une vente flash géolocalisée</DialogDescription></DialogHeader>
                   <div className="grid gap-3 py-2">
-                    <div className="grid gap-1.5"><Label>Commerçant *</Label><Select value={ff.merchantId} onValueChange={v => setFf(f => ({ ...f, merchantId: v }))}><SelectTrigger><SelectValue placeholder="Choisir" /></SelectTrigger><SelectContent>{merchants.map(m => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}</SelectContent></Select></div>
-                    <div className="grid gap-1.5"><Label>Promo liée</Label><Select value={ff.promoId} onValueChange={v => setFf(f => ({ ...f, promoId: v }))}><SelectTrigger><SelectValue placeholder="Optionnelle" /></SelectTrigger><SelectContent><SelectItem value="">Aucune</SelectItem>{merchantPromosForFlash.map(p => <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>)}</SelectContent></Select></div>
-                    <div className="grid gap-1.5"><Label>Titre</Label><Input value={ff.title} onChange={e => setFf(f => ({ ...f, title: e.target.value }))} /></div>
-                    <div className="grid grid-cols-2 gap-3"><div className="grid gap-1.5"><Label>Prix flash (€) *</Label><Input type="number" step="0.01" value={ff.flashPrice} onChange={e => setFf(f => ({ ...f, flashPrice: e.target.value }))} /></div><div className="grid gap-1.5"><Label>Max utilisations</Label><Input type="number" value={ff.maxRedemptions} onChange={e => setFf(f => ({ ...f, maxRedemptions: e.target.value }))} placeholder="Illimité" /></div></div>
-                    <div className="grid grid-cols-2 gap-3"><div className="grid gap-1.5"><Label>Début *</Label><Input type="datetime-local" value={ff.startsAt} onChange={e => setFf(f => ({ ...f, startsAt: e.target.value }))} /></div><div className="grid gap-1.5"><Label>Fin *</Label><Input type="datetime-local" value={ff.endsAt} onChange={e => setFf(f => ({ ...f, endsAt: e.target.value }))} /></div></div>
+                    <div className="grid gap-1.5"><Label className="text-xs font-semibold text-[#c7d3ec]">Commerçant *</Label><Select value={ff.merchantId} onValueChange={v => setFf(f => ({ ...f, merchantId: v }))}><SelectTrigger className={LUX_SELECT_TRIGGER}><SelectValue placeholder="Choisir" /></SelectTrigger><SelectContent className={LUX_SELECT_CONTENT}>{merchants.map(m => <SelectItem className={LUX_SELECT_ITEM} key={m.id} value={m.id}>{m.name}</SelectItem>)}</SelectContent></Select></div>
+                    <div className="grid gap-1.5"><Label className="text-xs font-semibold text-[#c7d3ec]">Promo liée</Label><Select value={ff.promoId} onValueChange={v => setFf(f => ({ ...f, promoId: v }))}><SelectTrigger className={LUX_SELECT_TRIGGER}><SelectValue placeholder="Optionnelle" /></SelectTrigger><SelectContent className={LUX_SELECT_CONTENT}><SelectItem className={LUX_SELECT_ITEM} value="">Aucune</SelectItem>{merchantPromosForFlash.map(p => <SelectItem className={LUX_SELECT_ITEM} key={p.id} value={p.id}>{p.title}</SelectItem>)}</SelectContent></Select></div>
+                    <div className="grid gap-1.5"><Label className="text-xs font-semibold text-[#c7d3ec]">Titre</Label><Input className={LUX_INPUT} value={ff.title} onChange={e => setFf(f => ({ ...f, title: e.target.value }))} /></div>
+                    <div className="grid grid-cols-2 gap-3"><div className="grid gap-1.5"><Label className="text-xs font-semibold text-[#c7d3ec]">Prix flash (€) *</Label><Input className={LUX_INPUT} type="number" step="0.01" value={ff.flashPrice} onChange={e => setFf(f => ({ ...f, flashPrice: e.target.value }))} /></div><div className="grid gap-1.5"><Label className="text-xs font-semibold text-[#c7d3ec]">Max utilisations</Label><Input className={LUX_INPUT} type="number" value={ff.maxRedemptions} onChange={e => setFf(f => ({ ...f, maxRedemptions: e.target.value }))} placeholder="Illimité" /></div></div>
+                    <div className="grid grid-cols-2 gap-3"><div className="grid gap-1.5"><Label className="text-xs font-semibold text-[#c7d3ec]">Début *</Label><Input className={LUX_INPUT} type="datetime-local" value={ff.startsAt} onChange={e => setFf(f => ({ ...f, startsAt: e.target.value }))} /></div><div className="grid gap-1.5"><Label className="text-xs font-semibold text-[#c7d3ec]">Fin *</Label><Input className={LUX_INPUT} type="datetime-local" value={ff.endsAt} onChange={e => setFf(f => ({ ...f, endsAt: e.target.value }))} /></div></div>
                   </div>
-                  <DialogFooter><Button onClick={saveFlash} disabled={submitting || !ff.merchantId || !ff.flashPrice}>{submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Créer</Button></DialogFooter>
+                  <DialogFooter><Button onClick={saveFlash} disabled={submitting || !ff.merchantId || !ff.flashPrice} className="lux-btn h-9 rounded-full px-4 text-xs">Créer</Button></DialogFooter>
                 </DialogContent>
               </Dialog>
             </div>
-            <div className="overflow-x-auto max-h-96 overflow-y-auto">
+            <div className="lux-scroll overflow-x-auto max-h-96 overflow-y-auto rounded-xl border border-white/10">
               <Table>
-                <TableHeader><TableRow><TableHead>Titre</TableHead><TableHead>Commerçant</TableHead><TableHead>Prix</TableHead><TableHead>Statut</TableHead><TableHead>Compte à rebours</TableHead><TableHead className="hidden md:table-cell">Progression</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
+                <TableHeader className="sticky top-0 z-10 bg-[#0d1530]">
+                  <TableRow className="border-white/8 hover:bg-transparent"><TableHead className="lux-eyebrow !text-[9.5px]">Titre</TableHead><TableHead className="lux-eyebrow !text-[9.5px]">Commerçant</TableHead><TableHead className="lux-eyebrow !text-[9.5px]">Prix</TableHead><TableHead className="lux-eyebrow !text-[9.5px]">Statut</TableHead><TableHead className="lux-eyebrow !text-[9.5px]">Compte à rebours</TableHead><TableHead className="lux-eyebrow !text-[9.5px] hidden md:table-cell">Progression</TableHead><TableHead className="lux-eyebrow !text-[9.5px] text-right">Actions</TableHead></TableRow>
+                </TableHeader>
                 <TableBody>
-                  {flashSales.length === 0 && <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Aucune vente flash</TableCell></TableRow>}
+                  {flashSales.length === 0 && <TableRow className="border-white/8 hover:bg-white/[0.04]"><TableCell colSpan={7} className="text-center py-8 text-[#8fa0c2]">Aucune vente flash</TableCell></TableRow>}
                   {flashSales.map(f => {
                     const cfg = FLASH_STATUS[f.status] || FLASH_STATUS.expired;
                     const pct = f.maxRedemptions ? Math.min(100, (f.currentRedemptions / f.maxRedemptions) * 100) : 0;
                     return (
-                      <TableRow key={f.id}>
-                        <TableCell className="font-medium">{f.title || 'Sans titre'}</TableCell>
-                        <TableCell className="text-sm text-muted-foreground">{f.merchant?.name || '—'}</TableCell>
-                        <TableCell className="font-semibold text-emerald-600">{fmtEur(f.flashPrice)}</TableCell>
+                      <TableRow key={f.id} className="border-white/8 hover:bg-white/[0.04]">
+                        <TableCell className="font-medium text-white">{f.title || 'Sans titre'}</TableCell>
+                        <TableCell className="text-sm text-[#8fa0c2]">{f.merchant?.name || '—'}</TableCell>
+                        <TableCell className="font-semibold text-[#86e9cb]">{fmtEur(f.flashPrice)}</TableCell>
                         <TableCell><SB cfg={cfg} /></TableCell>
-                        <TableCell><span className={`font-mono text-sm ${f.status === 'active' ? 'text-red-600 font-semibold' : 'text-muted-foreground'}`}>{f.status === 'active' ? getCountdown(f.endsAt) : fmtDate(f.endsAt)}</span></TableCell>
-                        <TableCell className="hidden md:table-cell"><div className="w-24 space-y-1"><Progress value={pct} className="h-2" /><span className="text-xs text-muted-foreground">{f.currentRedemptions}{f.maxRedemptions ? `/${f.maxRedemptions}` : ''}</span></div></TableCell>
+                        <TableCell><span className={`font-mono text-sm ${f.status === 'active' ? 'text-[#f07d6a] font-semibold' : 'text-[#8fa0c2]'}`}>{f.status === 'active' ? getCountdown(f.endsAt) : fmtDate(f.endsAt)}</span></TableCell>
+                        <TableCell className="hidden md:table-cell"><div className="w-24 space-y-1"><Progress value={pct} className="h-2 bg-white/10 [&_[data-slot=progress-indicator]]:bg-[#5c8af0]" /><span className="text-xs text-[#8fa0c2]">{f.currentRedemptions}{f.maxRedemptions ? `/${f.maxRedemptions}` : ''}</span></div></TableCell>
                         <TableCell className="text-right"><div className="flex justify-end gap-1">
-                          {f.status === 'scheduled' && <Button variant="ghost" size="icon" className="h-8 w-8 text-emerald-600" onClick={() => flashAction(f.id, 'active')} title="Activer"><Play className="h-3.5 w-3.5" /></Button>}
-                          {(f.status === 'active' || f.status === 'scheduled') && <Button variant="ghost" size="icon" className="h-8 w-8 text-yellow-600" onClick={() => flashAction(f.id, 'cancelled')} title="Annuler"><Ban className="h-3.5 w-3.5" /></Button>}
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => flashAction(f.id, 'delete')} title="Supprimer"><Trash2 className="h-3.5 w-3.5" /></Button>
+                          {f.status === 'scheduled' && <Button variant="ghost" size="sm" className="h-8 text-xs text-[#5c8af0] hover:bg-[#5c8af0]/10 hover:text-[#a9c4ff]" onClick={() => flashAction(f.id, 'active')} title="Activer">Activer</Button>}
+                          {(f.status === 'active' || f.status === 'scheduled') && <Button variant="ghost" size="sm" className="h-8 text-xs text-[#fbbf24] hover:bg-[#fbbf24]/10 hover:text-[#fbbf24]" onClick={() => flashAction(f.id, 'cancelled')} title="Annuler">Annuler</Button>}
+                          <Button variant="ghost" size="sm" className="h-8 text-xs text-[#f07d6a] hover:bg-[#f07d6a]/10 hover:text-[#f07d6a]" onClick={() => flashAction(f.id, 'delete')} title="Supprimer">Supprimer</Button>
                         </div></TableCell>
                       </TableRow>
                     );
@@ -439,42 +447,44 @@ export function AdminMarketplace() {
           {/* ── Coupons ──────────────────────────────────────────── */}
           <TabsContent value="coupons" className="space-y-4">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <StatCard label="Total" value={coupons.length} icon={Ticket} />
-              <StatCard label="Actifs" value={coupons.filter(c => c.status === 'active').length} icon={CheckCircle} />
-              <StatCard label="Utilisés" value={coupons.filter(c => c.status === 'used').length} icon={QrCode} />
-              <StatCard label="Expirés" value={coupons.filter(c => c.status === 'expired').length} icon={XCircle} />
+              <StatCard label="Total" value={coupons.length} />
+              <StatCard label="Actifs" value={coupons.filter(c => c.status === 'active').length} />
+              <StatCard label="Utilisés" value={coupons.filter(c => c.status === 'used').length} />
+              <StatCard label="Expirés" value={coupons.filter(c => c.status === 'expired').length} />
             </div>
             <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
               <div className="flex gap-2 flex-wrap">
-                <Select value={cStatus} onValueChange={setCStatus}><SelectTrigger className="w-36"><SelectValue placeholder="Statut" /></SelectTrigger><SelectContent><SelectItem value="all">Tous</SelectItem><SelectItem value="active">Actifs</SelectItem><SelectItem value="used">Utilisés</SelectItem><SelectItem value="expired">Expirés</SelectItem></SelectContent></Select>
-                <Select value={cMerchant} onValueChange={setCMerchant}><SelectTrigger className="w-44"><SelectValue placeholder="Commerçant" /></SelectTrigger><SelectContent><SelectItem value="all">Tous</SelectItem>{merchants.map(m => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}</SelectContent></Select>
+                <Select value={cStatus} onValueChange={setCStatus}><SelectTrigger className={`${LUX_SELECT_TRIGGER} w-36`}><SelectValue placeholder="Statut" /></SelectTrigger><SelectContent className={LUX_SELECT_CONTENT}><SelectItem className={LUX_SELECT_ITEM} value="all">Tous</SelectItem><SelectItem className={LUX_SELECT_ITEM} value="active">Actifs</SelectItem><SelectItem className={LUX_SELECT_ITEM} value="used">Utilisés</SelectItem><SelectItem className={LUX_SELECT_ITEM} value="expired">Expirés</SelectItem></SelectContent></Select>
+                <Select value={cMerchant} onValueChange={setCMerchant}><SelectTrigger className={`${LUX_SELECT_TRIGGER} w-44`}><SelectValue placeholder="Commerçant" /></SelectTrigger><SelectContent className={LUX_SELECT_CONTENT}><SelectItem className={LUX_SELECT_ITEM} value="all">Tous</SelectItem>{merchants.map(m => <SelectItem className={LUX_SELECT_ITEM} key={m.id} value={m.id}>{m.name}</SelectItem>)}</SelectContent></Select>
               </div>
               <Dialog open={couponDlg} onOpenChange={o => { setCouponDlg(o); if (!o) rstC(); }}>
-                <DialogTrigger asChild><Button size="sm"><Plus className="mr-1.5 h-4 w-4" />Créer</Button></DialogTrigger>
-                <DialogContent><DialogHeader><DialogTitle>Nouveau coupon</DialogTitle><DialogDescription>Générer un code de réduction</DialogDescription></DialogHeader>
+                <DialogTrigger asChild><Button size="sm" className="lux-btn h-9 rounded-full px-4 text-xs">Créer</Button></DialogTrigger>
+                <DialogContent className="border-white/10 bg-[#0b1226] text-white"><DialogHeader><DialogTitle className="lux-display text-lg text-white">Nouveau coupon</DialogTitle><DialogDescription className="text-sm text-[#8fa0c2]">Générer un code de réduction</DialogDescription></DialogHeader>
                   <div className="grid gap-3 py-2">
-                    <div className="grid gap-1.5"><Label>Commerçant *</Label><Select value={cf.merchantId} onValueChange={v => setCf(f => ({ ...f, merchantId: v }))}><SelectTrigger><SelectValue placeholder="Choisir" /></SelectTrigger><SelectContent>{merchants.map(m => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}</SelectContent></Select></div>
-                    <div className="grid grid-cols-2 gap-3"><div className="grid gap-1.5"><Label>Type</Label><Select value={cf.discountType} onValueChange={v => setCf(f => ({ ...f, discountType: v }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="percentage">Pourcentage</SelectItem><SelectItem value="fixed">Montant fixe</SelectItem></SelectContent></Select></div><div className="grid gap-1.5"><Label>Valeur *</Label><Input type="number" step="0.01" value={cf.discountValue} onChange={e => setCf(f => ({ ...f, discountValue: e.target.value }))} /></div></div>
-                    <div className="grid grid-cols-2 gap-3"><div className="grid gap-1.5"><Label>Max utilisations</Label><Input type="number" value={cf.maxUses} onChange={e => setCf(f => ({ ...f, maxUses: e.target.value }))} /></div><div className="grid gap-1.5"><Label>Valide jusqu'au</Label><Input type="date" value={cf.validUntil} onChange={e => setCf(f => ({ ...f, validUntil: e.target.value }))} /></div></div>
+                    <div className="grid gap-1.5"><Label className="text-xs font-semibold text-[#c7d3ec]">Commerçant *</Label><Select value={cf.merchantId} onValueChange={v => setCf(f => ({ ...f, merchantId: v }))}><SelectTrigger className={LUX_SELECT_TRIGGER}><SelectValue placeholder="Choisir" /></SelectTrigger><SelectContent className={LUX_SELECT_CONTENT}>{merchants.map(m => <SelectItem className={LUX_SELECT_ITEM} key={m.id} value={m.id}>{m.name}</SelectItem>)}</SelectContent></Select></div>
+                    <div className="grid grid-cols-2 gap-3"><div className="grid gap-1.5"><Label className="text-xs font-semibold text-[#c7d3ec]">Type</Label><Select value={cf.discountType} onValueChange={v => setCf(f => ({ ...f, discountType: v }))}><SelectTrigger className={LUX_SELECT_TRIGGER}><SelectValue /></SelectTrigger><SelectContent className={LUX_SELECT_CONTENT}><SelectItem className={LUX_SELECT_ITEM} value="percentage">Pourcentage</SelectItem><SelectItem className={LUX_SELECT_ITEM} value="fixed">Montant fixe</SelectItem></SelectContent></Select></div><div className="grid gap-1.5"><Label className="text-xs font-semibold text-[#c7d3ec]">Valeur *</Label><Input className={LUX_INPUT} type="number" step="0.01" value={cf.discountValue} onChange={e => setCf(f => ({ ...f, discountValue: e.target.value }))} /></div></div>
+                    <div className="grid grid-cols-2 gap-3"><div className="grid gap-1.5"><Label className="text-xs font-semibold text-[#c7d3ec]">Max utilisations</Label><Input className={LUX_INPUT} type="number" value={cf.maxUses} onChange={e => setCf(f => ({ ...f, maxUses: e.target.value }))} /></div><div className="grid gap-1.5"><Label className="text-xs font-semibold text-[#c7d3ec]">Valide jusqu'au</Label><Input className={LUX_INPUT} type="date" value={cf.validUntil} onChange={e => setCf(f => ({ ...f, validUntil: e.target.value }))} /></div></div>
                   </div>
-                  <DialogFooter><Button onClick={saveCoupon} disabled={submitting || !cf.merchantId || !cf.discountValue}>{submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Créer</Button></DialogFooter>
+                  <DialogFooter><Button onClick={saveCoupon} disabled={submitting || !cf.merchantId || !cf.discountValue} className="lux-btn h-9 rounded-full px-4 text-xs">Créer</Button></DialogFooter>
                 </DialogContent>
               </Dialog>
             </div>
-            <div className="overflow-x-auto max-h-96 overflow-y-auto">
+            <div className="lux-scroll overflow-x-auto max-h-96 overflow-y-auto rounded-xl border border-white/10">
               <Table>
-                <TableHeader><TableRow><TableHead>Code</TableHead><TableHead>Commerçant</TableHead><TableHead>Remise</TableHead><TableHead>Statut</TableHead><TableHead className="hidden md:table-cell">Utilisations</TableHead><TableHead className="hidden lg:table-cell">Expire</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
+                <TableHeader className="sticky top-0 z-10 bg-[#0d1530]">
+                  <TableRow className="border-white/8 hover:bg-transparent"><TableHead className="lux-eyebrow !text-[9.5px]">Code</TableHead><TableHead className="lux-eyebrow !text-[9.5px]">Commerçant</TableHead><TableHead className="lux-eyebrow !text-[9.5px]">Remise</TableHead><TableHead className="lux-eyebrow !text-[9.5px]">Statut</TableHead><TableHead className="lux-eyebrow !text-[9.5px] hidden md:table-cell">Utilisations</TableHead><TableHead className="lux-eyebrow !text-[9.5px] hidden lg:table-cell">Expire</TableHead><TableHead className="lux-eyebrow !text-[9.5px] text-right">Actions</TableHead></TableRow>
+                </TableHeader>
                 <TableBody>
-                  {filteredCoupons.length === 0 && <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Aucun coupon</TableCell></TableRow>}
+                  {filteredCoupons.length === 0 && <TableRow className="border-white/8 hover:bg-white/[0.04]"><TableCell colSpan={7} className="text-center py-8 text-[#8fa0c2]">Aucun coupon</TableCell></TableRow>}
                   {filteredCoupons.map(c => (
-                    <TableRow key={c.id}>
-                      <TableCell><code className="rounded bg-muted px-2 py-0.5 font-mono text-sm font-semibold cursor-pointer hover:bg-muted/80" onClick={() => { navigator.clipboard.writeText(c.code); toast.success('Code copié !'); }}>{c.code}</code></TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{c.merchant?.name || '—'}</TableCell>
-                      <TableCell className="font-semibold">{c.discountType === 'percentage' ? `${c.discountValue}%` : fmtEur(c.discountValue)}</TableCell>
+                    <TableRow key={c.id} className="border-white/8 hover:bg-white/[0.04]">
+                      <TableCell><code className="cursor-pointer rounded border border-white/10 bg-white/[0.06] px-2 py-0.5 font-mono text-sm font-semibold text-white hover:bg-white/[0.09]" onClick={() => { navigator.clipboard.writeText(c.code); toast.success('Code copié !'); }}>{c.code}</code></TableCell>
+                      <TableCell className="text-sm text-[#8fa0c2]">{c.merchant?.name || '—'}</TableCell>
+                      <TableCell className="font-semibold text-white">{c.discountType === 'percentage' ? `${c.discountValue}%` : fmtEur(c.discountValue)}</TableCell>
                       <TableCell><SB cfg={COUPON_STATUS[c.status] || COUPON_STATUS.active} /></TableCell>
-                      <TableCell className="hidden md:table-cell">{c.currentUses}{c.maxUses ? `/${c.maxUses}` : ''}</TableCell>
-                      <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">{c.validUntil ? fmtDate(c.validUntil) : '—'}</TableCell>
-                      <TableCell className="text-right">{c.status === 'active' && <Button variant="ghost" size="sm" className="h-8" onClick={() => scanCoupon(c.id)}><QrCode className="mr-1.5 h-3.5 w-3.5" />Scanner</Button>}</TableCell>
+                      <TableCell className="hidden md:table-cell text-sm text-[#c7d3ec]">{c.currentUses}{c.maxUses ? `/${c.maxUses}` : ''}</TableCell>
+                      <TableCell className="hidden lg:table-cell text-sm text-[#8fa0c2]">{c.validUntil ? fmtDate(c.validUntil) : '—'}</TableCell>
+                      <TableCell className="text-right">{c.status === 'active' && <Button variant="ghost" size="sm" className="lux-btn-ghost h-8 rounded-full px-3.5 text-xs" onClick={() => scanCoupon(c.id)}>Scanner</Button>}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -485,27 +495,29 @@ export function AdminMarketplace() {
           {/* ── Transactions ─────────────────────────────────────── */}
           <TabsContent value="transactions" className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <StatCard label="Total" value={transactions.length} icon={Receipt} />
-              <StatCard label="Montant total" value={fmtEur(transactions.reduce((s, t) => s + t.amount, 0))} icon={Receipt} />
-              <StatCard label="Ce mois" value={transactions.filter(t => { const d = new Date(t.createdAt), n = new Date(); return d.getMonth() === n.getMonth() && d.getFullYear() === n.getFullYear(); }).length} icon={Receipt} />
+              <StatCard label="Total" value={transactions.length} />
+              <StatCard label="Montant total" value={fmtEur(transactions.reduce((s, t) => s + t.amount, 0))} />
+              <StatCard label="Ce mois" value={transactions.filter(t => { const d = new Date(t.createdAt), n = new Date(); return d.getMonth() === n.getMonth() && d.getFullYear() === n.getFullYear(); }).length} />
             </div>
             <div className="flex gap-2 flex-wrap">
-              <Select value={tType} onValueChange={setTType}><SelectTrigger className="w-44"><SelectValue placeholder="Type" /></SelectTrigger><SelectContent><SelectItem value="all">Tous</SelectItem><SelectItem value="flash_sale">Vente flash</SelectItem><SelectItem value="subscription">Abonnement</SelectItem><SelectItem value="wallet_topup">Recharge</SelectItem></SelectContent></Select>
-              <Select value={tStatus} onValueChange={setTStatus}><SelectTrigger className="w-40"><SelectValue placeholder="Statut" /></SelectTrigger><SelectContent><SelectItem value="all">Tous</SelectItem><SelectItem value="completed">Terminé</SelectItem><SelectItem value="pending">En attente</SelectItem><SelectItem value="failed">Échoué</SelectItem><SelectItem value="refunded">Remboursé</SelectItem></SelectContent></Select>
+              <Select value={tType} onValueChange={setTType}><SelectTrigger className={`${LUX_SELECT_TRIGGER} w-44`}><SelectValue placeholder="Type" /></SelectTrigger><SelectContent className={LUX_SELECT_CONTENT}><SelectItem className={LUX_SELECT_ITEM} value="all">Tous</SelectItem><SelectItem className={LUX_SELECT_ITEM} value="flash_sale">Vente flash</SelectItem><SelectItem className={LUX_SELECT_ITEM} value="subscription">Abonnement</SelectItem><SelectItem className={LUX_SELECT_ITEM} value="wallet_topup">Recharge</SelectItem></SelectContent></Select>
+              <Select value={tStatus} onValueChange={setTStatus}><SelectTrigger className={`${LUX_SELECT_TRIGGER} w-40`}><SelectValue placeholder="Statut" /></SelectTrigger><SelectContent className={LUX_SELECT_CONTENT}><SelectItem className={LUX_SELECT_ITEM} value="all">Tous</SelectItem><SelectItem className={LUX_SELECT_ITEM} value="completed">Terminé</SelectItem><SelectItem className={LUX_SELECT_ITEM} value="pending">En attente</SelectItem><SelectItem className={LUX_SELECT_ITEM} value="failed">Échoué</SelectItem><SelectItem className={LUX_SELECT_ITEM} value="refunded">Remboursé</SelectItem></SelectContent></Select>
             </div>
-            <div className="overflow-x-auto max-h-96 overflow-y-auto">
+            <div className="lux-scroll overflow-x-auto max-h-96 overflow-y-auto rounded-xl border border-white/10">
               <Table>
-                <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Type</TableHead><TableHead>Montant</TableHead><TableHead>Statut</TableHead><TableHead className="hidden md:table-cell">Payeur</TableHead><TableHead className="hidden md:table-cell">Receveur</TableHead></TableRow></TableHeader>
+                <TableHeader className="sticky top-0 z-10 bg-[#0d1530]">
+                  <TableRow className="border-white/8 hover:bg-transparent"><TableHead className="lux-eyebrow !text-[9.5px]">Date</TableHead><TableHead className="lux-eyebrow !text-[9.5px]">Type</TableHead><TableHead className="lux-eyebrow !text-[9.5px]">Montant</TableHead><TableHead className="lux-eyebrow !text-[9.5px]">Statut</TableHead><TableHead className="lux-eyebrow !text-[9.5px] hidden md:table-cell">Payeur</TableHead><TableHead className="lux-eyebrow !text-[9.5px] hidden md:table-cell">Receveur</TableHead></TableRow>
+                </TableHeader>
                 <TableBody>
-                  {filteredTxns.length === 0 && <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Aucune transaction</TableCell></TableRow>}
+                  {filteredTxns.length === 0 && <TableRow className="border-white/8 hover:bg-white/[0.04]"><TableCell colSpan={6} className="text-center py-8 text-[#8fa0c2]">Aucune transaction</TableCell></TableRow>}
                   {filteredTxns.map(t => (
-                    <TableRow key={t.id}>
-                      <TableCell className="text-sm">{fmtDateTime(t.createdAt)}</TableCell>
-                      <TableCell><Badge variant="outline">{t.type.replace(/_/g, ' ')}</Badge></TableCell>
-                      <TableCell className="font-semibold">{fmtEur(t.amount)}</TableCell>
+                    <TableRow key={t.id} className="border-white/8 hover:bg-white/[0.04]">
+                      <TableCell className="text-sm text-[#c7d3ec]">{fmtDateTime(t.createdAt)}</TableCell>
+                      <TableCell><Badge variant="outline" className="border-white/12 bg-white/[0.03] text-[#8fa0c2]">{t.type.replace(/_/g, ' ')}</Badge></TableCell>
+                      <TableCell className="font-semibold text-white">{fmtEur(t.amount)}</TableCell>
                       <TableCell><SB cfg={TXN_STATUS[t.status] || TXN_STATUS.pending} /></TableCell>
-                      <TableCell className="hidden md:table-cell text-sm text-muted-foreground font-mono">{t.payerId ? `${t.payerId.slice(0, 8)}...` : '—'}</TableCell>
-                      <TableCell className="hidden md:table-cell text-sm text-muted-foreground font-mono">{t.receiverId ? `${t.receiverId.slice(0, 8)}...` : '—'}</TableCell>
+                      <TableCell className="hidden md:table-cell text-sm text-[#8fa0c2] font-mono">{t.payerId ? `${t.payerId.slice(0, 8)}...` : '—'}</TableCell>
+                      <TableCell className="hidden md:table-cell text-sm text-[#8fa0c2] font-mono">{t.receiverId ? `${t.receiverId.slice(0, 8)}...` : '—'}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

@@ -4,26 +4,10 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, type Variants } from 'framer-motion';
-import {
-  AlertCircle,
-  ArrowLeft,
-  ArrowRight,
-  Check,
-  Copy,
-  ExternalLink,
-  Eye,
-  Loader2,
-  MapPin,
-  Pencil,
-  Plus,
-  QrCode,
-  Users,
-} from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -32,18 +16,30 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { FormDialog } from '@/components/airbnb/host/form-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { StatusBadge } from '@/components/airbnb/host/status-badge';
 import { useHostContext, type HostProperty } from '@/components/airbnb/host/host-context';
 import { useCreateProperty, type CreatePropertyResult } from '@/hooks/use-properties';
 import { PROPERTY_TYPE_META, propertyTypeMeta } from '@/lib/b2b';
 import { cn } from '@/lib/utils';
+// v4.43 — autocomplétion d'adresse (Google Places / OpenStreetMap) :
+// adresse complète + latitude/longitude exactes stockées en base.
+import { AddressAutocomplete } from '@/components/airbnb/host/address-autocomplete';
 
 // =============================================================
 // PropertiesContent — page « Mes Propriétés » du Dashboard Client
-// (spécification QRTags Pro)
+// v5.2 « SAPHIR LUXE » — refonte design profonde (demande client) :
+// mode sombre bleuté, SANS ICÔNES ni emojis (typographie, points
+// colorés, monogrammes). Données, handlers et textes métier intacts.
 //
-// • Grille de PropertyCards (dégradé par type, stats 30j réelles,
+// • Grille de PropertyCards (monogramme par bien, stats 30j réelles,
 //   actions Voir / Modifier / Équipe + lien Hub public)
 // • Wizard d'ajout 3 étapes (Informations → Configuration →
 //   Plaque QR) branché sur useCreateProperty + POST /api/airbnb/plaques
@@ -51,21 +47,11 @@ import { cn } from '@/lib/utils';
 // • Bandeau de capacité de plan + bannière d'invitations
 // =============================================================
 
-const BRAND = '#E23F2B';
-
-/** Dégradé du bandeau visuel selon le type de bien. */
-const TYPE_GRADIENTS: Record<string, string> = {
-  AIRBNB: 'from-[#E23F2B]/85 to-[#F97316]/70',
-  BOOKING: 'from-violet-500/80 to-fuchsia-500/60',
-  GITE: 'from-emerald-500/80 to-teal-500/60',
-  CHAMBRE_HOTE: 'from-amber-500/80 to-orange-500/60',
-};
-
 const ROLE_LABELS: Record<string, string> = {
-  OWNER: '👑 Propriétaire',
-  MANAGER: '👔 Manager',
-  CLEANER: '🧹 Ménage',
-  MAINTENANCE: '🔧 Maintenance',
+  OWNER: 'Propriétaire',
+  MANAGER: 'Manager',
+  CLEANER: 'Ménage',
+  MAINTENANCE: 'Maintenance',
 };
 
 const WIZARD_STEPS = ['Informations', 'Configuration', 'Plaque QR'] as const;
@@ -107,28 +93,29 @@ export function PropertiesContent({ openWizardOnInit = false }: { openWizardOnIn
       {/* ---------- En-tête ---------- */}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+          <p className="lux-eyebrow">Portfolio</p>
+          <h1 className="lux-display mt-1 text-2xl font-semibold text-white sm:text-3xl">
             Mes Propriétés
           </h1>
-          <p className="mt-1 text-sm text-slate-600">
+          <p className="mt-1.5 text-xs text-[#8fa0c2] sm:text-sm">
             {properties.length} bien{properties.length > 1 ? 's' : ''} géré
             {properties.length > 1 ? 's' : ''}
             {plan ? (
               <>
                 {' '}
-                · Plan <span className="font-semibold text-slate-900">{plan.planName}</span>
+                · Plan <span className="font-semibold text-white">{plan.planName}</span>
               </>
             ) : null}
           </p>
         </div>
-        <Button
+        <button
+          type="button"
           onClick={openWizard}
-          className="h-10 gap-2 rounded-lg bg-[#E23F2B] px-4 text-sm font-bold text-white shadow-sm transition-colors hover:bg-[#c93623] focus-visible:ring-2 focus-visible:ring-[#E23F2B]/40"
+          className="lux-btn h-9 w-full sm:w-auto"
           aria-label="Ajouter une propriété"
         >
-          <Plus className="h-4 w-4" aria-hidden="true" />
           Ajouter une propriété
-        </Button>
+        </button>
       </div>
 
       {/* ---------- Bandeau de capacité (limite de plan atteinte) ---------- */}
@@ -136,13 +123,11 @@ export function PropertiesContent({ openWizardOnInit = false }: { openWizardOnIn
         <motion.div
           initial={{ opacity: 0, y: -6 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3"
+          className="flex flex-wrap items-center gap-3 rounded-2xl border border-[#e9c47c]/25 bg-[#e9c47c]/8 px-4 py-3"
           role="status"
         >
-          <span aria-hidden="true" className="text-lg">
-            🔒
-          </span>
-          <p className="min-w-0 flex-1 text-sm text-slate-700">
+          <span className="lux-dot shrink-0" style={{ backgroundColor: '#e9c47c' }} aria-hidden="true" />
+          <p className="min-w-0 flex-1 text-sm text-[#e9c47c]">
             <span className="font-bold">
               Limite du plan atteinte ({plan.ownedCount}/{plan.maxProperties})
             </span>{' '}
@@ -150,7 +135,7 @@ export function PropertiesContent({ openWizardOnInit = false }: { openWizardOnIn
           </p>
           <Link
             href="/airbnb/billing"
-            className="inline-flex h-8 shrink-0 items-center rounded-lg bg-slate-900 px-3 text-xs font-bold text-white transition-colors hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+            className="inline-flex h-8 shrink-0 items-center rounded-full bg-[#e9c47c] px-3 text-xs font-semibold text-[#1a1206] transition-[filter] hover:brightness-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#e9c47c]/50"
           >
             Découvrir les offres
           </Link>
@@ -162,20 +147,18 @@ export function PropertiesContent({ openWizardOnInit = false }: { openWizardOnIn
         <motion.div
           initial={{ opacity: 0, y: -6 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex flex-wrap items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3"
+          className="flex flex-wrap items-center gap-3 rounded-2xl border border-[#e9c47c]/25 bg-[#e9c47c]/8 px-4 py-3"
           role="status"
         >
-          <span aria-hidden="true" className="text-xl">
-            ✉️
-          </span>
-          <p className="min-w-0 flex-1 text-sm text-amber-900">
+          <span className="lux-dot shrink-0" style={{ backgroundColor: '#e9c47c' }} aria-hidden="true" />
+          <p className="min-w-0 flex-1 text-sm text-[#e9c47c]">
             <span className="font-bold">Invitation</span> — {invitations[0].property.name} (
             {ROLE_LABELS[invitations[0].role] ?? invitations[0].role})
             {invitations.length > 1 && ` + ${invitations.length - 1} autre(s)`} — gérer dans Équipe
           </p>
           <Link
             href="/airbnb/team"
-            className="inline-flex h-8 shrink-0 items-center rounded-lg bg-amber-600 px-3 text-xs font-bold text-white transition-colors hover:bg-amber-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+            className="inline-flex h-8 shrink-0 items-center rounded-full bg-[#e9c47c] px-3 text-xs font-semibold text-[#1a1206] transition-[filter] hover:brightness-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#e9c47c]/50"
           >
             Voir l&apos;invitation
           </Link>
@@ -185,10 +168,10 @@ export function PropertiesContent({ openWizardOnInit = false }: { openWizardOnIn
       {/* ---------- Erreur API ---------- */}
       {propertiesError && (
         <div
-          className="flex items-center gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800"
+          className="flex items-center gap-3 rounded-2xl border border-[#f07d6a]/25 bg-[#f07d6a]/10 px-4 py-3 text-sm text-[#f07d6a]"
           role="alert"
         >
-          <AlertCircle className="h-5 w-5 shrink-0" aria-hidden="true" />
+          <span className="lux-dot shrink-0" style={{ backgroundColor: '#f07d6a' }} aria-hidden="true" />
           {propertiesError}
         </div>
       )}
@@ -200,16 +183,13 @@ export function PropertiesContent({ openWizardOnInit = false }: { openWizardOnIn
           aria-label="Chargement des propriétés"
         >
           {[0, 1, 2].map((i) => (
-            <div
-              key={i}
-              className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
-            >
-              <Skeleton className="h-24 w-full rounded-none" aria-hidden="true" />
+            <div key={i} className="lux-card overflow-hidden">
+              <Skeleton className="h-20 w-full rounded-none bg-white/8" aria-hidden="true" />
               <div className="flex flex-col gap-3 p-4">
-                <Skeleton className="h-5 w-2/3" aria-hidden="true" />
-                <Skeleton className="h-4 w-4/5" aria-hidden="true" />
-                <Skeleton className="h-10 w-full" aria-hidden="true" />
-                <Skeleton className="h-9 w-full" aria-hidden="true" />
+                <Skeleton className="h-5 w-2/3 bg-white/8" aria-hidden="true" />
+                <Skeleton className="h-4 w-4/5 bg-white/8" aria-hidden="true" />
+                <Skeleton className="h-10 w-full bg-white/8" aria-hidden="true" />
+                <Skeleton className="h-9 w-full bg-white/8" aria-hidden="true" />
               </div>
             </div>
           ))}
@@ -267,7 +247,6 @@ interface PropertyCardProps {
 
 function PropertyCard({ property: p, index, onView, onEdit, onTeam }: PropertyCardProps) {
   const typeMeta = propertyTypeMeta(p.propertyType);
-  const gradient = TYPE_GRADIENTS[p.propertyType] ?? 'from-slate-400/70 to-slate-500/50';
   const canManage = p.isOwner || p.myRole === 'OWNER' || p.myRole === 'MANAGER';
 
   return (
@@ -275,80 +254,80 @@ function PropertyCard({ property: p, index, onView, onEdit, onTeam }: PropertyCa
       variants={cardVariants}
       transition={{ duration: 0.3, delay: Math.min(index * 0.04, 0.24), ease: 'easeOut' }}
       whileHover={{ y: -4 }}
-      className="group flex min-w-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-md"
+      className="lux-card lux-card-hover group flex min-w-0 flex-col overflow-hidden"
     >
-      {/* Bandeau visuel dégradé + emoji + statut */}
-      <div className={cn('relative h-24 shrink-0 bg-gradient-to-br', gradient)}>
+      {/* Bandeau : monogramme + type + statut */}
+      <div className="relative flex h-20 shrink-0 items-center gap-3 border-b border-white/8 bg-white/[0.03] px-4">
         <span
           aria-hidden="true"
-          className="absolute inset-0 flex items-center justify-center text-4xl drop-shadow-sm transition-transform duration-300 group-hover:scale-110"
+          className="lux-num flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#3d6fe0]/15 text-lg font-semibold text-[#a9c4ff] ring-1 ring-[#5c8af0]/25"
         >
-          {typeMeta.emoji}
+          {p.name.trim().charAt(0).toUpperCase()}
         </span>
+        <div className="min-w-0 flex-1">
+          <p className="lux-eyebrow !text-[9.5px]">{typeMeta.label}</p>
+        </div>
         <span className="sr-only">{`Type : ${typeMeta.label}`}</span>
-        <StatusBadge
-          status={p.isActive ? 'active' : 'inactive'}
-          className="absolute right-2 top-2 bg-white/90 shadow-sm backdrop-blur-sm"
-        />
+        <StatusBadge status={p.isActive ? 'active' : 'inactive'} className="shrink-0" />
       </div>
 
       {/* Corps : nom + rôle + adresse + lien hub */}
       <div className="min-w-0 p-4">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="min-w-0 truncate font-bold text-slate-900" title={p.name}>
+          <h3 className="lux-display min-w-0 truncate text-lg font-semibold text-white" title={p.name}>
             {p.name}
           </h3>
           <StatusBadge
             status={p.myRole}
-            label={p.isOwner ? '👑 Propriétaire' : (ROLE_LABELS[p.myRole] ?? p.myRole)}
+            label={p.isOwner ? 'Propriétaire' : (ROLE_LABELS[p.myRole] ?? p.myRole)}
             className="shrink-0"
           />
         </div>
-        <p className="mt-1.5 flex min-w-0 items-center gap-1.5 text-sm text-slate-600">
-          <MapPin className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true" />
-          <span className="truncate" title={p.address ?? undefined}>
-            {p.address ?? 'Adresse non renseignée'}
-          </span>
+        <p className="mt-1.5 truncate text-sm text-[#8fa0c2]" title={p.address ?? undefined}>
+          {p.address ?? 'Adresse non renseignée'}
         </p>
         {p.qrHubSlug && (
           <a
             href={`/hub/${p.qrHubSlug}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-slate-400 transition-colors hover:text-[#E23F2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E23F2B]/40"
+            className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-[#a9c4ff] transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5c8af0]/50"
             aria-label={`Ouvrir le Hub public de ${p.name} dans un nouvel onglet`}
           >
-            <ExternalLink className="h-3 w-3" aria-hidden="true" />
+            <span aria-hidden="true">→</span>
             Voir le Hub public
           </a>
         )}
       </div>
 
       {/* Stats 30 jours */}
-      <div className="grid grid-cols-4 divide-x divide-slate-100 border-y border-slate-100 px-2 py-3 text-center">
+      <div className="grid grid-cols-4 divide-x divide-white/8 border-y border-white/8 bg-white/[0.02] px-2 py-3 text-center">
         <div className="min-w-0">
-          <p className="truncate text-sm font-bold text-slate-900" title={`${p.stats.scans30d}`}>
-            📡 {p.stats.scans30d}
+          <p className="lux-num truncate text-sm font-semibold text-white" title={`${p.stats.scans30d}`}>
+            {p.stats.scans30d}
           </p>
-          <p className="text-[11px] leading-tight text-slate-400">scans</p>
+          <p className="text-[10px] uppercase tracking-[0.14em] text-[#8fa0c2]/70">scans</p>
         </div>
         <div className="min-w-0">
-          <p className="truncate text-sm font-bold text-slate-900" title={`${Math.round(p.stats.upsellRevenue30d)} €`}>
-            💰 {Math.round(p.stats.upsellRevenue30d)} €
+          <p
+            className="lux-num truncate text-sm font-semibold text-white"
+            title={`${Math.round(p.stats.upsellRevenue30d)} €`}
+          >
+            {Math.round(p.stats.upsellRevenue30d)} €
           </p>
-          <p className="text-[11px] leading-tight text-slate-400">upsell 30j</p>
+          <p className="text-[10px] uppercase tracking-[0.14em] text-[#8fa0c2]/70">upsell 30j</p>
         </div>
         <div className="min-w-0">
-          <p className="truncate text-sm font-bold text-slate-900">
-            📈 {Math.round(p.stats.occupancyRate * 100)}%
+          <p className="lux-num truncate text-sm font-semibold text-white">
+            {Math.round(p.stats.occupancyRate * 100)}%
           </p>
-          <p className="text-[11px] leading-tight text-slate-400">occ.</p>
+          <p className="text-[10px] uppercase tracking-[0.14em] text-[#8fa0c2]/70">occ.</p>
         </div>
         <div className="min-w-0">
-          <p className="truncate text-sm font-bold text-slate-900" title={`${p.stats.qrCount}`}>
-            📶 {p.stats.qrCount}
+          <p className="lux-num truncate text-sm font-semibold text-white" title={`${p.stats.qrCount}`}>
+            {p.stats.qrCount}
           </p>
-          <p className="text-[11px] leading-tight text-slate-400">QR</p>
+          <p className="text-[10px] uppercase tracking-[0.14em] text-[#8fa0c2]/70">QR</p>
         </div>
       </div>
 
@@ -356,31 +335,28 @@ function PropertyCard({ property: p, index, onView, onEdit, onTeam }: PropertyCa
       <div className="mt-auto flex gap-2 p-3">
         <Button
           variant="outline"
-          className="h-9 flex-1 gap-1.5 border-slate-200 text-xs font-semibold text-slate-700 hover:bg-[#FEF1EF] hover:text-[#E23F2B] focus-visible:ring-2 focus-visible:ring-[#E23F2B]/40"
+          className="h-9 flex-1 rounded-full border-white/12 bg-white/[0.04] text-xs font-semibold text-[#d5def0] hover:bg-white/8 hover:text-white"
           onClick={onView}
           aria-label={`Voir le tableau de bord de ${p.name}`}
         >
-          <Eye className="h-3.5 w-3.5" aria-hidden="true" />
           Voir
         </Button>
         {canManage && (
           <Button
             variant="outline"
-            className="h-9 flex-1 gap-1.5 border-slate-200 text-xs font-semibold text-slate-700 hover:bg-[#FEF1EF] hover:text-[#E23F2B] focus-visible:ring-2 focus-visible:ring-[#E23F2B]/40"
+            className="h-9 flex-1 rounded-full border-white/12 bg-white/[0.04] text-xs font-semibold text-[#d5def0] hover:bg-white/8 hover:text-white"
             onClick={onEdit}
             aria-label={`Modifier ${p.name}`}
           >
-            <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
             Modifier
           </Button>
         )}
         <Button
           variant="outline"
-          className="h-9 flex-1 gap-1.5 border-slate-200 text-xs font-semibold text-slate-700 hover:bg-[#FEF1EF] hover:text-[#E23F2B] focus-visible:ring-2 focus-visible:ring-[#E23F2B]/40"
+          className="h-9 flex-1 rounded-full border-white/12 bg-white/[0.04] text-xs font-semibold text-[#d5def0] hover:bg-white/8 hover:text-white"
           onClick={onTeam}
           aria-label={`Gérer l'équipe de ${p.name}`}
         >
-          <Users className="h-3.5 w-3.5" aria-hidden="true" />
           Équipe
         </Button>
       </div>
@@ -398,24 +374,19 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: 'easeOut' }}
-      className="rounded-xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center"
+      className="lux-empty flex flex-col items-center gap-2 px-6 py-12 text-center"
     >
-      <span aria-hidden="true" className="text-5xl">
-        🏠
-      </span>
-      <h2 className="mt-4 text-lg font-bold text-slate-900">Créez votre première propriété</h2>
-      <p className="mx-auto mt-1 max-w-md text-sm text-slate-600">
+      <span aria-hidden="true" className="lux-dot" style={{ backgroundColor: '#5c8af0' }} />
+      <h2 className="lux-display mt-2 text-lg font-semibold text-white">
+        Créez votre première propriété
+      </h2>
+      <p className="mx-auto mt-1 max-w-md text-xs text-[#8fa0c2]">
         Ajoutez votre bien pour générer sa plaque QR, son Hub public voyageurs et centraliser
         scans, services, équipe et calendrier.
       </p>
-      <Button
-        onClick={onAdd}
-        className="mt-5 h-10 gap-2 rounded-lg bg-[#E23F2B] px-5 text-sm font-bold text-white transition-colors hover:bg-[#c93623] focus-visible:ring-2 focus-visible:ring-[#E23F2B]/40"
-        aria-label="Ajouter une première propriété"
-      >
-        <Plus className="h-4 w-4" aria-hidden="true" />
+      <button type="button" onClick={onAdd} className="lux-btn mt-4 w-full sm:w-auto" aria-label="Ajouter une première propriété">
         Ajouter une propriété
-      </Button>
+      </button>
     </motion.div>
   );
 }
@@ -439,19 +410,18 @@ function Stepper({ step }: { step: number }) {
             <span
               aria-current={current ? 'step' : undefined}
               className={cn(
-                'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold transition-colors',
-                done && 'bg-[#E23F2B] text-white',
-                current && 'border-2 bg-white',
-                !done && !current && 'bg-slate-100 text-slate-400',
+                'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold transition-colors',
+                done && 'bg-[#3d6fe0] text-white',
+                current && 'border border-[#e9c47c] bg-[#e9c47c]/10 text-[#e9c47c]',
+                !done && !current && 'bg-white/[0.05] text-[#8fa0c2]',
               )}
-              style={current ? { borderColor: BRAND, color: BRAND } : undefined}
             >
               {done ? '✓' : n}
             </span>
             <span
               className={cn(
                 'hidden text-xs font-semibold sm:block',
-                current ? 'text-slate-900' : 'text-slate-400',
+                current ? 'text-white' : 'text-[#8fa0c2]',
               )}
             >
               {label}
@@ -459,7 +429,7 @@ function Stepper({ step }: { step: number }) {
             {n < WIZARD_STEPS.length && (
               <span
                 aria-hidden="true"
-                className={cn('h-0.5 min-w-4 flex-1 rounded-full', done ? 'bg-[#E23F2B]/60' : 'bg-slate-200')}
+                className={cn('h-0.5 min-w-4 flex-1 rounded-full', done ? 'bg-[#5c8af0]/50' : 'bg-white/10')}
               />
             )}
           </li>
@@ -627,7 +597,6 @@ function AddPropertyWizard({ open, onOpenChange }: AddPropertyWizardProps) {
     }
   }, []);
 
-  const typeMeta = propertyTypeMeta(propertyType);
   const hubUrl =
     plaque?.hubSlug != null
       ? `${typeof window !== 'undefined' ? window.location.origin : ''}/hub/${plaque.hubSlug}`
@@ -649,340 +618,349 @@ function AddPropertyWizard({ open, onOpenChange }: AddPropertyWizardProps) {
   };
 
   return (
-    <FormDialog
-      open={open}
-      onOpenChange={handleClose}
-      title={stepTitles[step].title}
-      description={stepTitles[step].description}
-      size="lg"
-      footer={
-        step === 1 ? (
-          <>
-            <Button
-              variant="outline"
-              className="border-slate-200 text-slate-700"
-              onClick={() => handleClose(false)}
-            >
-              Annuler
-            </Button>
-            <Button
-              className="gap-2 bg-[#E23F2B] font-bold text-white hover:bg-[#c93623] focus-visible:ring-2 focus-visible:ring-[#E23F2B]/40"
-              onClick={() => {
-                if (validateStep1()) {
-                  setErrors({});
-                  setStep(2);
-                } else {
-                  toast.error('Veuillez corriger les champs en rouge.');
-                }
-              }}
-            >
-              Continuer
-              <ArrowRight className="h-4 w-4" aria-hidden="true" />
-            </Button>
-          </>
-        ) : step === 2 ? (
-          <>
-            <Button
-              variant="outline"
-              className="gap-2 border-slate-200 text-slate-700"
-              onClick={() => setStep(1)}
-              disabled={submitting}
-            >
-              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-              Retour
-            </Button>
-            {limitHit && (
-              <Button
-                variant="outline"
-                asChild
-                className="gap-2 border-amber-300 bg-amber-50 text-xs font-bold text-amber-800 hover:bg-amber-100"
-              >
-                <Link href="/airbnb/billing">Voir les offres</Link>
-              </Button>
-            )}
-            <Button
-              className="gap-2 bg-[#E23F2B] font-bold text-white hover:bg-[#c93623] focus-visible:ring-2 focus-visible:ring-[#E23F2B]/40"
-              onClick={() => void handleSubmit()}
-              disabled={submitting}
-            >
-              {submitting ? (
-                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-              ) : (
-                <Check className="h-4 w-4" aria-hidden="true" />
-              )}
-              Créer le bien
-            </Button>
-          </>
-        ) : (
-          <>
-            {plaque && (
-              <Button
-                variant="outline"
-                className="gap-2 border-slate-200 text-slate-700"
-                onClick={() => router.push(`/airbnb/plates/${plaque.id}/print`)}
-              >
-                🖨️ Imprimer la plaque
-              </Button>
-            )}
-            <Button
-              className="bg-[#E23F2B] font-bold text-white hover:bg-[#c93623] focus-visible:ring-2 focus-visible:ring-[#E23F2B]/40"
-              onClick={() => handleClose(false)}
-            >
-              Terminer
-            </Button>
-          </>
-        )
-      }
-    >
-      <Stepper step={step} />
-
-      {/* ---------- Étape 1 : Informations ---------- */}
-      {step === 1 && (
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="max-h-[90vh] overflow-y-auto rounded-2xl border-white/10 bg-[#0b1226] text-white shadow-2xl sm:max-w-3xl">
+        <DialogHeader>
+          <DialogTitle className="lux-display text-xl font-semibold text-white">
+            {stepTitles[step].title}
+          </DialogTitle>
+          <DialogDescription className="text-sm text-[#8fa0c2]">
+            {stepTitles[step].description}
+          </DialogDescription>
+        </DialogHeader>
         <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="wizard-name">Nom du bien *</Label>
-            <Input
-              id="wizard-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Ex : Loft Canal Saint-Martin"
-              maxLength={80}
-              aria-invalid={Boolean(errors.name)}
-              aria-describedby={errors.name ? 'wizard-name-error' : undefined}
-              className={cn(errors.name && 'border-rose-400 focus-visible:ring-rose-300')}
-            />
-            {errors.name && (
-              <p id="wizard-name-error" className="text-xs font-medium text-rose-600">
-                {errors.name}
-              </p>
-            )}
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="wizard-address">Adresse *</Label>
-            <Textarea
-              id="wizard-address"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              placeholder="12 quai de Valmy, 75010 Paris, France"
-              rows={2}
-              aria-invalid={Boolean(errors.address)}
-              aria-describedby={errors.address ? 'wizard-address-error' : undefined}
-              className={cn(errors.address && 'border-rose-400 focus-visible:ring-rose-300')}
-            />
-            {errors.address && (
-              <p id="wizard-address-error" className="text-xs font-medium text-rose-600">
-                {errors.address}
-              </p>
-            )}
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="wizard-type">Type de bien</Label>
-            <Select value={propertyType} onValueChange={setPropertyType}>
-              <SelectTrigger id="wizard-type" className="w-full" aria-label="Type de bien">
-                <SelectValue placeholder="Choisir un type" />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(PROPERTY_TYPE_META).map(([key, meta]) => (
-                  <SelectItem key={key} value={key}>
-                    {meta.emoji} {meta.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      )}
+          <Stepper step={step} />
 
-      {/* ---------- Étape 2 : Configuration ---------- */}
-      {step === 2 && (
-        <div className="flex flex-col gap-4">
-          {limitHit && (
-            <div
-              className="flex flex-wrap items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-900"
-              role="alert"
-            >
-              <span aria-hidden="true">🔒</span>
-              <span className="min-w-0 flex-1 font-medium">{limitHit.message}</span>
+          {/* ---------- Étape 1 : Informations ---------- */}
+          {step === 1 && (
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="wizard-name" className="text-[#8fa0c2]">Nom du bien *</Label>
+                <Input
+                  id="wizard-name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Ex : Loft Canal Saint-Martin"
+                  maxLength={80}
+                  aria-invalid={Boolean(errors.name)}
+                  aria-describedby={errors.name ? 'wizard-name-error' : undefined}
+                  className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+                />
+                {errors.name && (
+                  <p id="wizard-name-error" className="text-xs font-medium text-[#f07d6a]">
+                    {errors.name}
+                  </p>
+                )}
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="wizard-address" className="text-[#8fa0c2]">Adresse *</Label>
+                {/* v4.43 — autocomplétion : l'hôte tape les premières lettres,
+                    choisit l'adresse → texte complet + lat/lng remplis auto. */}
+                <AddressAutocomplete
+                  id="wizard-address"
+                  value={address}
+                  onChange={(v) => {
+                    setAddress(v);
+                  }}
+                  onSelect={(pick) => {
+                    setAddress(pick.label);
+                    if (pick.lat != null && pick.lng != null) {
+                      setLatitude(String(pick.lat));
+                      setLongitude(String(pick.lng));
+                    }
+                  }}
+                  invalid={Boolean(errors.address)}
+                  describedBy={errors.address ? 'wizard-address-error' : undefined}
+                />
+                <p className="text-[11px] text-[#8fa0c2]">
+                  Tapez les premières lettres : l&apos;adresse se complète et la position GPS
+                  (latitude/longitude) est extraite automatiquement — activée pour le bouton
+                  « Retour à la maison » des invités.
+                </p>
+                {errors.address && (
+                  <p id="wizard-address-error" className="text-xs font-medium text-[#f07d6a]">
+                    {errors.address}
+                  </p>
+                )}
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="wizard-type" className="text-[#8fa0c2]">Type de bien</Label>
+                <Select value={propertyType} onValueChange={setPropertyType}>
+                  <SelectTrigger
+                    id="wizard-type"
+                    className="w-full rounded-xl border-white/12 bg-white/[0.04] text-white"
+                    aria-label="Type de bien"
+                  >
+                    <SelectValue placeholder="Choisir un type" />
+                  </SelectTrigger>
+                  <SelectContent className="border-white/10 bg-[#0d1530] text-white">
+                    {Object.entries(PROPERTY_TYPE_META).map(([key, meta]) => (
+                      <SelectItem key={key} value={key} className="focus:bg-white/8 focus:text-white">
+                        {meta.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           )}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="wizard-lat">Latitude</Label>
-              <Input
-                id="wizard-lat"
-                value={latitude}
-                onChange={(e) => setLatitude(e.target.value)}
-                placeholder="48.8566"
-                inputMode="decimal"
-                aria-invalid={Boolean(errors.latitude)}
-                aria-describedby={errors.latitude ? 'wizard-lat-error' : 'wizard-coords-help'}
-                className={cn(errors.latitude && 'border-rose-400 focus-visible:ring-rose-300')}
-              />
-              {errors.latitude && (
-                <p id="wizard-lat-error" className="text-xs font-medium text-rose-600">
-                  {errors.latitude}
-                </p>
-              )}
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="wizard-lng">Longitude</Label>
-              <Input
-                id="wizard-lng"
-                value={longitude}
-                onChange={(e) => setLongitude(e.target.value)}
-                placeholder="2.3522"
-                inputMode="decimal"
-                aria-invalid={Boolean(errors.longitude)}
-                aria-describedby={errors.longitude ? 'wizard-lng-error' : 'wizard-coords-help'}
-                className={cn(errors.longitude && 'border-rose-400 focus-visible:ring-rose-300')}
-              />
-              {errors.longitude && (
-                <p id="wizard-lng-error" className="text-xs font-medium text-rose-600">
-                  {errors.longitude}
-                </p>
-              )}
-            </div>
-          </div>
-          <p id="wizard-coords-help" className="text-xs text-slate-500">
-            💡 Utilisez maps.google.com pour trouver les coordonnées — nécessaires pour
-            l&apos;annuaire de prestataires géolocalisé.
-          </p>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="wizard-pin">PIN Mode Hôte (optionnel)</Label>
-            <Input
-              id="wizard-pin"
-              type="password"
-              value={hubPin}
-              onChange={(e) => setHubPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
-              placeholder="••••"
-              inputMode="numeric"
-              autoComplete="off"
-              aria-invalid={Boolean(errors.hubPin)}
-              aria-describedby={errors.hubPin ? 'wizard-pin-error' : 'wizard-pin-help'}
-              className={cn('w-40', errors.hubPin && 'border-rose-400 focus-visible:ring-rose-300')}
-            />
-            {errors.hubPin ? (
-              <p id="wizard-pin-error" className="text-xs font-medium text-rose-600">
-                {errors.hubPin}
-              </p>
-            ) : (
-              <p id="wizard-pin-help" className="text-xs text-slate-500">
-                🔐 Protège l&apos;accès tablette/QR du Hub — hashing bcrypt côté serveur.
-              </p>
-            )}
-          </div>
-        </div>
-      )}
 
-      {/* ---------- Étape 3 : Plaque QR ---------- */}
-      {step === 3 && created && (
-        <div className="flex flex-col gap-4">
-          {/* Résumé du bien créé */}
-          <div className="flex items-start gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4">
-            <Check className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" aria-hidden="true" />
-            <div className="min-w-0">
-              <p className="font-bold text-slate-900">
-                <span aria-hidden="true">{typeMeta.emoji}</span> {created.name}
-              </p>
-              <p className="mt-0.5 truncate text-sm text-slate-600">
-                {address.trim()} · {propertyTypeMeta(propertyType).label}
-              </p>
-            </div>
-          </div>
-
-          {!plaque ? (
-            <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-6 text-center">
-              <span aria-hidden="true" className="text-4xl">
-                📱
-              </span>
-              <p className="text-sm text-slate-600">
-                Générez la plaque QR de ce bien : son Hub public sera accessible par scan
-                (Wi-Fi, guidebook, upselling…).
-              </p>
-              <Button
-                className="gap-2 bg-[#E23F2B] font-bold text-white hover:bg-[#c93623] focus-visible:ring-2 focus-visible:ring-[#E23F2B]/40"
-                onClick={() => void handleGeneratePlaque()}
-                disabled={generating}
-              >
-                {generating ? (
-                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-                ) : (
-                  <QrCode className="h-4 w-4" aria-hidden="true" />
-                )}
-                Générer la plaque QR maintenant
-              </Button>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-3">
-              <div className="flex flex-col gap-1.5 rounded-lg border border-slate-200 bg-slate-50 p-4">
-                <div className="flex items-center justify-between gap-2">
-                  <Label htmlFor="plaque-code" className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Code d&apos;activation
-                  </Label>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-8 gap-1.5 border-slate-200 px-2 text-xs"
-                    onClick={() => void copyToClipboard(plaque.activationCode, 'Code')}
-                    aria-label="Copier le code d'activation"
-                  >
-                    <Copy className="h-3.5 w-3.5" aria-hidden="true" />
-                    Copier
-                  </Button>
-                </div>
-                <code
-                  id="plaque-code"
-                  className="select-all font-mono text-lg font-bold tracking-[0.2em] text-slate-900"
+          {/* ---------- Étape 2 : Configuration ---------- */}
+          {step === 2 && (
+            <div className="flex flex-col gap-4">
+              {limitHit && (
+                <div
+                  className="flex flex-wrap items-center gap-2 rounded-xl border border-[#e9c47c]/25 bg-[#e9c47c]/8 px-3 py-2.5 text-sm text-[#e9c47c]"
+                  role="alert"
                 >
-                  {plaque.activationCode}
-                </code>
+                  <span className="lux-dot shrink-0" style={{ backgroundColor: '#e9c47c' }} aria-hidden="true" />
+                  <span className="min-w-0 flex-1 font-medium">{limitHit.message}</span>
+                </div>
+              )}
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="wizard-lat" className="text-[#8fa0c2]">Latitude</Label>
+                  <Input
+                    id="wizard-lat"
+                    value={latitude}
+                    onChange={(e) => setLatitude(e.target.value)}
+                    placeholder="48.8566"
+                    inputMode="decimal"
+                    aria-invalid={Boolean(errors.latitude)}
+                    aria-describedby={errors.latitude ? 'wizard-lat-error' : 'wizard-coords-help'}
+                    className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+                  />
+                  {errors.latitude && (
+                    <p id="wizard-lat-error" className="text-xs font-medium text-[#f07d6a]">
+                      {errors.latitude}
+                    </p>
+                  )}
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="wizard-lng" className="text-[#8fa0c2]">Longitude</Label>
+                  <Input
+                    id="wizard-lng"
+                    value={longitude}
+                    onChange={(e) => setLongitude(e.target.value)}
+                    placeholder="2.3522"
+                    inputMode="decimal"
+                    aria-invalid={Boolean(errors.longitude)}
+                    aria-describedby={errors.longitude ? 'wizard-lng-error' : 'wizard-coords-help'}
+                    className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+                  />
+                  {errors.longitude && (
+                    <p id="wizard-lng-error" className="text-xs font-medium text-[#f07d6a]">
+                      {errors.longitude}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <p id="wizard-coords-help" className="text-xs text-[#8fa0c2]">
+                Utilisez maps.google.com pour trouver les coordonnées — nécessaires pour
+                l&apos;annuaire de prestataires géolocalisé.
+              </p>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="wizard-pin" className="text-[#8fa0c2]">PIN Mode Hôte (optionnel)</Label>
+                <Input
+                  id="wizard-pin"
+                  type="password"
+                  value={hubPin}
+                  onChange={(e) => setHubPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                  placeholder="••••"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  aria-invalid={Boolean(errors.hubPin)}
+                  aria-describedby={errors.hubPin ? 'wizard-pin-error' : 'wizard-pin-help'}
+                  className={cn(
+                    'w-40 rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50',
+                    errors.hubPin && 'border-[#f07d6a]/60 focus-visible:ring-[#f07d6a]/50',
+                  )}
+                />
+                {errors.hubPin ? (
+                  <p id="wizard-pin-error" className="text-xs font-medium text-[#f07d6a]">
+                    {errors.hubPin}
+                  </p>
+                ) : (
+                  <p id="wizard-pin-help" className="text-xs text-[#8fa0c2]">
+                    Protège l&apos;accès tablette/QR du Hub — hashing bcrypt côté serveur.
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ---------- Étape 3 : Plaque QR ---------- */}
+          {step === 3 && created && (
+            <div className="flex flex-col gap-4">
+              {/* Résumé du bien créé */}
+              <div className="flex items-start gap-3 rounded-2xl border border-[#34d399]/25 bg-[#34d399]/8 p-4">
+                <span className="lux-dot mt-1.5 shrink-0" style={{ backgroundColor: '#34d399' }} aria-hidden="true" />
+                <div className="min-w-0">
+                  <p className="lux-display font-semibold text-white">{created.name}</p>
+                  <p className="mt-0.5 truncate text-sm text-[#8fa0c2]">
+                    {address.trim()} · {propertyTypeMeta(propertyType).label}
+                  </p>
+                </div>
               </div>
 
-              {hubUrl && (
-                <div className="flex flex-col gap-1.5 rounded-lg border border-slate-200 bg-white p-4">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                      Lien du Hub public
-                    </span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-8 gap-1.5 border-slate-200 px-2 text-xs"
-                      onClick={() => void copyToClipboard(hubUrl, 'Lien')}
-                      aria-label="Copier le lien du Hub public"
-                    >
-                      <Copy className="h-3.5 w-3.5" aria-hidden="true" />
-                      Copier
-                    </Button>
-                  </div>
-                  <a
-                    href={`/hub/${plaque.hubSlug}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex min-w-0 items-center gap-1.5 text-sm font-medium text-[#E23F2B] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E23F2B]/40"
+              {!plaque ? (
+                <div className="lux-empty flex flex-col items-center gap-3 p-6 text-center">
+                  <p className="text-xs text-[#8fa0c2]">
+                    Générez la plaque QR de ce bien : son Hub public sera accessible par scan
+                    (Wi-Fi, guidebook, upselling…).
+                  </p>
+                  <button
+                    type="button"
+                    className="lux-btn h-9 px-4 text-xs disabled:pointer-events-none disabled:opacity-60"
+                    onClick={() => void handleGeneratePlaque()}
+                    disabled={generating}
                   >
-                    <ExternalLink className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                    <span className="truncate">{hubUrl}</span>
-                  </a>
+                    Générer la plaque QR maintenant
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  <div className="flex flex-col gap-1.5 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                    <div className="flex items-center justify-between gap-2">
+                      <Label htmlFor="plaque-code" className="lux-eyebrow !text-[9.5px]">
+                        Code d&apos;activation
+                      </Label>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 rounded-full border-white/12 bg-white/[0.04] px-3 text-xs text-[#d5def0] hover:bg-white/8 hover:text-white"
+                        onClick={() => void copyToClipboard(plaque.activationCode, 'Code')}
+                        aria-label="Copier le code d'activation"
+                      >
+                        Copier
+                      </Button>
+                    </div>
+                    <code
+                      id="plaque-code"
+                      className="lux-num select-all text-lg font-semibold tracking-[0.2em] text-[#e9c47c]"
+                    >
+                      {plaque.activationCode}
+                    </code>
+                  </div>
+
+                  {hubUrl && (
+                    <div className="flex flex-col gap-1.5 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="lux-eyebrow !text-[9.5px]">Lien du Hub public</span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8 rounded-full border-white/12 bg-white/[0.04] px-3 text-xs text-[#d5def0] hover:bg-white/8 hover:text-white"
+                          onClick={() => void copyToClipboard(hubUrl, 'Lien')}
+                          aria-label="Copier le lien du Hub public"
+                        >
+                          Copier
+                        </Button>
+                      </div>
+                      <a
+                        href={`/hub/${plaque.hubSlug}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex min-w-0 items-center gap-1.5 text-sm font-medium text-[#a9c4ff] transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5c8af0]/50"
+                      >
+                        <span aria-hidden="true">→</span>
+                        <span className="truncate font-semibold">{hubUrl}</span>
+                      </a>
+                    </div>
+                  )}
+
+                  <p className="text-xs text-[#8fa0c2]">
+                    Imprimez la plaque et posez-la dans le logement — vos voyageurs scannent, tout
+                    est là.
+                  </p>
                 </div>
               )}
-
-              <p className="text-xs text-slate-500">
-                🖨️ Imprimez la plaque et posez-la dans le logement — vos voyageurs scannent, tout
-                est là.
-              </p>
             </div>
           )}
-        </div>
-      )}
 
-      {/* Garde : étape 3 sans `created` (ne devrait jamais arriver) */}
-      {step === 3 && !created && (
-        <p className="text-sm text-rose-600" role="alert">
-          Une erreur est survenue. Fermez et relancez l&apos;assistant.
-        </p>
-      )}
-    </FormDialog>
+          {/* Garde : étape 3 sans `created` (ne devrait jamais arriver) */}
+          {step === 3 && !created && (
+            <p className="text-sm text-[#f07d6a]" role="alert">
+              Une erreur est survenue. Fermez et relancez l&apos;assistant.
+            </p>
+          )}
+        </div>
+        <DialogFooter className="mt-1 gap-2">
+          {step === 1 ? (
+            <>
+              <Button
+                variant="outline"
+                className="rounded-full border-white/12 bg-white/[0.04] text-[#d5def0] hover:bg-white/8 hover:text-white"
+                onClick={() => handleClose(false)}
+              >
+                Annuler
+              </Button>
+              <button
+                type="button"
+                className="lux-btn h-9 px-4 text-xs"
+                onClick={() => {
+                  if (validateStep1()) {
+                    setErrors({});
+                    setStep(2);
+                  } else {
+                    toast.error('Veuillez corriger les champs en rouge.');
+                  }
+                }}
+              >
+                Continuer
+              </button>
+            </>
+          ) : step === 2 ? (
+            <>
+              <Button
+                variant="outline"
+                className="rounded-full border-white/12 bg-white/[0.04] text-[#d5def0] hover:bg-white/8 hover:text-white"
+                onClick={() => setStep(1)}
+                disabled={submitting}
+              >
+                Retour
+              </Button>
+              {limitHit && (
+                <Button
+                  variant="outline"
+                  asChild
+                  className="rounded-full border-[#e9c47c]/30 bg-[#e9c47c]/10 text-xs font-semibold text-[#e9c47c] hover:bg-[#e9c47c]/20 hover:text-[#e9c47c]"
+                >
+                  <Link href="/airbnb/billing">Voir les offres</Link>
+                </Button>
+              )}
+              <button
+                type="button"
+                className="lux-btn h-9 px-4 text-xs disabled:pointer-events-none disabled:opacity-60"
+                onClick={() => void handleSubmit()}
+                disabled={submitting}
+              >
+                Créer le bien
+              </button>
+            </>
+          ) : (
+            <>
+              {plaque && (
+                <Button
+                  variant="outline"
+                  className="rounded-full border-white/12 bg-white/[0.04] text-[#d5def0] hover:bg-white/8 hover:text-white"
+                  onClick={() => router.push(`/airbnb/plates/${plaque.id}/print`)}
+                >
+                  Imprimer la plaque
+                </Button>
+              )}
+              <button
+                type="button"
+                className="lux-btn h-9 px-4 text-xs"
+                onClick={() => handleClose(false)}
+              >
+                Terminer
+              </button>
+            </>
+          )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -1098,116 +1076,132 @@ function EditPropertyDialogInner({
   }, [address, latitude, longitude, name, onOpenChange, property.id, propertyType, refreshProperties]);
 
   return (
-    <FormDialog
-      open={open}
-      onOpenChange={onOpenChange}
-      title={`Modifier « ${property.name} »`}
-      description="Les changements sont visibles immédiatement dans le Hub public."
-      size="md"
-      footer={
-        <>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[90vh] overflow-y-auto rounded-2xl border-white/10 bg-[#0b1226] text-white shadow-2xl sm:max-w-xl">
+        <DialogHeader>
+          <DialogTitle className="lux-display text-xl font-semibold text-white">
+            {`Modifier « ${property.name} »`}
+          </DialogTitle>
+          <DialogDescription className="text-sm text-[#8fa0c2]">
+            Les changements sont visibles immédiatement dans le Hub public.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="edit-name" className="text-[#8fa0c2]">Nom du bien *</Label>
+            <Input
+              id="edit-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              maxLength={80}
+              aria-invalid={Boolean(errors.name)}
+              aria-describedby={errors.name ? 'edit-name-error' : undefined}
+              className="rounded-xl border-white/12 bg-white/[0.04] text-white focus-visible:ring-[#5c8af0]/50"
+            />
+            {errors.name && (
+              <p id="edit-name-error" className="text-xs font-medium text-[#f07d6a]">
+                {errors.name}
+              </p>
+            )}
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="edit-address" className="text-[#8fa0c2]">Adresse *</Label>
+            {/* v4.43 — autocomplétion : adresse complète + lat/lng exacts. */}
+            <AddressAutocomplete
+              id="edit-address"
+              value={address}
+              onChange={(v) => setAddress(v)}
+              onSelect={(pick) => {
+                setAddress(pick.label);
+                if (pick.lat != null && pick.lng != null) {
+                  setLatitude(String(pick.lat));
+                  setLongitude(String(pick.lng));
+                }
+              }}
+              invalid={Boolean(errors.address)}
+              describedBy={errors.address ? 'edit-address-error' : undefined}
+            />
+            <p className="text-[11px] text-[#8fa0c2]">
+              Tapez les premières lettres : l&apos;adresse se complète et la position GPS est
+              extraite automatiquement (utilisée par le bouton « Retour à la maison » des invités).
+            </p>
+            {errors.address && (
+              <p id="edit-address-error" className="text-xs font-medium text-[#f07d6a]">
+                {errors.address}
+              </p>
+            )}
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="edit-type" className="text-[#8fa0c2]">Type de bien</Label>
+            <Select value={propertyType} onValueChange={setPropertyType}>
+              <SelectTrigger
+                id="edit-type"
+                className="w-full rounded-xl border-white/12 bg-white/[0.04] text-white"
+                aria-label="Type de bien"
+              >
+                <SelectValue placeholder="Choisir un type" />
+              </SelectTrigger>
+              <SelectContent className="border-white/10 bg-[#0d1530] text-white">
+                {Object.entries(PROPERTY_TYPE_META).map(([key, meta]) => (
+                  <SelectItem key={key} value={key} className="focus:bg-white/8 focus:text-white">
+                    {meta.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="edit-lat" className="text-[#8fa0c2]">Latitude</Label>
+              <Input
+                id="edit-lat"
+                value={latitude}
+                onChange={(e) => setLatitude(e.target.value)}
+                placeholder="48.8566"
+                inputMode="decimal"
+                aria-invalid={Boolean(errors.latitude)}
+                className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+              />
+              {errors.latitude && (
+                <p className="text-xs font-medium text-[#f07d6a]">{errors.latitude}</p>
+              )}
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="edit-lng" className="text-[#8fa0c2]">Longitude</Label>
+              <Input
+                id="edit-lng"
+                value={longitude}
+                onChange={(e) => setLongitude(e.target.value)}
+                placeholder="2.3522"
+                inputMode="decimal"
+                aria-invalid={Boolean(errors.longitude)}
+                className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+              />
+              {errors.longitude && (
+                <p className="text-xs font-medium text-[#f07d6a]">{errors.longitude}</p>
+              )}
+            </div>
+          </div>
+        </div>
+        <DialogFooter className="mt-1 gap-2">
           <Button
             variant="outline"
-            className="border-slate-200 text-slate-700"
+            className="rounded-full border-white/12 bg-white/[0.04] text-[#d5def0] hover:bg-white/8 hover:text-white"
             onClick={() => onOpenChange(false)}
             disabled={saving}
           >
             Annuler
           </Button>
-          <Button
-            className="gap-2 bg-[#E23F2B] font-bold text-white hover:bg-[#c93623] focus-visible:ring-2 focus-visible:ring-[#E23F2B]/40"
+          <button
+            type="button"
+            className="lux-btn h-9 px-4 text-xs disabled:pointer-events-none disabled:opacity-60"
             onClick={() => void handleSave()}
             disabled={saving}
           >
-            {saving && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
             Enregistrer
-          </Button>
-        </>
-      }
-    >
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="edit-name">Nom du bien *</Label>
-          <Input
-            id="edit-name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            maxLength={80}
-            aria-invalid={Boolean(errors.name)}
-            aria-describedby={errors.name ? 'edit-name-error' : undefined}
-            className={cn(errors.name && 'border-rose-400 focus-visible:ring-rose-300')}
-          />
-          {errors.name && (
-            <p id="edit-name-error" className="text-xs font-medium text-rose-600">
-              {errors.name}
-            </p>
-          )}
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="edit-address">Adresse *</Label>
-          <Textarea
-            id="edit-address"
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            rows={2}
-            aria-invalid={Boolean(errors.address)}
-            aria-describedby={errors.address ? 'edit-address-error' : undefined}
-            className={cn(errors.address && 'border-rose-400 focus-visible:ring-rose-300')}
-          />
-          {errors.address && (
-            <p id="edit-address-error" className="text-xs font-medium text-rose-600">
-              {errors.address}
-            </p>
-          )}
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="edit-type">Type de bien</Label>
-          <Select value={propertyType} onValueChange={setPropertyType}>
-            <SelectTrigger id="edit-type" className="w-full" aria-label="Type de bien">
-              <SelectValue placeholder="Choisir un type" />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(PROPERTY_TYPE_META).map(([key, meta]) => (
-                <SelectItem key={key} value={key}>
-                  {meta.emoji} {meta.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="edit-lat">Latitude</Label>
-            <Input
-              id="edit-lat"
-              value={latitude}
-              onChange={(e) => setLatitude(e.target.value)}
-              placeholder="48.8566"
-              inputMode="decimal"
-              aria-invalid={Boolean(errors.latitude)}
-              className={cn(errors.latitude && 'border-rose-400 focus-visible:ring-rose-300')}
-            />
-            {errors.latitude && (
-              <p className="text-xs font-medium text-rose-600">{errors.latitude}</p>
-            )}
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="edit-lng">Longitude</Label>
-            <Input
-              id="edit-lng"
-              value={longitude}
-              onChange={(e) => setLongitude(e.target.value)}
-              placeholder="2.3522"
-              inputMode="decimal"
-              aria-invalid={Boolean(errors.longitude)}
-              className={cn(errors.longitude && 'border-rose-400 focus-visible:ring-rose-300')}
-            />
-            {errors.longitude && (
-              <p className="text-xs font-medium text-rose-600">{errors.longitude}</p>
-            )}
-          </div>
-        </div>
-      </div>
-    </FormDialog>
+          </button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

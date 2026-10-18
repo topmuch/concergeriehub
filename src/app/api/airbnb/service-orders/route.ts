@@ -3,8 +3,10 @@ import { getServerSession } from 'next-auth';
 import { mutationGuard, mutationKey } from '@/lib/mutation-guard';
 import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { resolveUserProperties, canAccessProperty } from '@/lib/b2b-server';
+import { resolveUserProperties, canAccessProperty, canManageFinance, resolveManagedPropertyIds } from '@/lib/b2b-server';
 import { canTransition, isOrderStatus, round2 } from '@/lib/orders';
+// AUDIT PRÉ-PROD (Module 5.2) — le prestataire est notifié des validations hôte
+import { sendNotification } from '@/lib/notifications';
 
 // =============================================================
 // ÉTAPE 17.2 (V3) — Moteur de transaction côté HÔTE :
@@ -41,6 +43,11 @@ export async function GET(req: NextRequest) {
     }
     const userId = (session.user as { id: string }).id;
 
+    // AUDIT PRÉ-PROD — SÉPARATION FINANCIÈRE : les commandes exposent CA,
+    // commission et part hôte → OWNER/MANAGER uniquement. Un CLEANER ou
+    // MAINTENANCE reçoit 403 (son périmètre = planning ménage/réclamations).
+    const managedIds = await resolveManagedPropertyIds(userId);
+
     const properties = await resolveUserProperties(userId);
     const { searchParams } = new URL(req.url);
     const requestedId = searchParams.get('propertyId');
@@ -52,6 +59,11 @@ export async function GET(req: NextRequest) {
       : requestedId
         ? properties.find((p) => p.id === requestedId) ?? properties[0]
         : properties[0];
+
+    // Garde rôle : bien précis → OWNER/MANAGER de CE bien obligatoire.
+    if (!isAllScope && property && !managedIds.includes(property.id)) {
+      return NextResponse.json({ error: 'Accès refusé : planning financier réservé à l\'hôte et au manager.' }, { status: 403 });
+    }
 
     if (!property && !isAllScope) {
       return NextResponse.json({
@@ -67,7 +79,13 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Accès refusé' }, { status: 403 });
     }
 
-    const targetIds = isAllScope ? properties.map((p) => p.id) : property ? [property.id] : [];
+    // AUDIT PRÉ-PROD — 'all' scope filtré aux biens OWNER/MANAGER : un
+    // CLEANER/MAINTENANCE ne voit les revenus D'AUCUN bien.
+    const targetIds = isAllScope
+      ? managedIds
+      : property
+        ? [property.id]
+        : [];
 
     const orders = await db.serviceOrder.findMany({
       where: { propertyId: { in: targetIds } },
@@ -80,6 +98,8 @@ export async function GET(req: NextRequest) {
         guestName: true,
         guestEmail: true,
         items: true,
+        // REFONTE SERVICES PREMIUM (V4.11) — instructions de livraison invité
+        guestNote: true,
         totalAmount: true,
         commission: true,
         hostEarning: true,
@@ -194,6 +214,11 @@ export async function PATCH(req: NextRequest) {
     if (!(await canAccessProperty(userId, order.propertyId))) {
       return NextResponse.json({ error: 'Accès refusé' }, { status: 403 });
     }
+    // AUDIT PRÉ-PROD — transitions de commande = opération financière
+    // (statuts PENDING→CONFIRMED→DELIVERED/CANCELLED) → OWNER/MANAGER.
+    if (!(await canManageFinance(userId, order.propertyId))) {
+      return NextResponse.json({ error: 'Accès refusé : gestion des commandes réservée à l\'hôte et au manager.' }, { status: 403 });
+    }
     if (!canTransition(order.status as Parameters<typeof canTransition>[0], nextStatus)) {
       return NextResponse.json(
         { error: `Transition impossible : ${order.status} → ${nextStatus}` },
@@ -208,8 +233,33 @@ export async function PATCH(req: NextRequest) {
         // Horodatage de la livraison (une seule fois)
         ...(nextStatus === 'DELIVERED' && !order.deliveryDate ? { deliveryDate: new Date() } : {}),
       },
-      select: { id: true, status: true, deliveryDate: true },
+      select: { id: true, status: true, deliveryDate: true, propertyId: true, guestName: true },
     });
+
+    // AUDIT PRÉ-PROD (Module 5.2) — le PRESTATAIRE est notifié quand
+    // l'hôte valide/confirme sa commande (fire-and-forget).
+    const providerLink = await db.serviceOrder.findUnique({
+      where: { id: updated.id },
+      select: {
+        provider: { select: { userId: true, businessName: true } },
+      },
+    });
+    const H_STATUS_META: Record<string, { emoji: string; label: string }> = {
+      CONFIRMED: { emoji: '✅', label: 'confirmée' },
+      PREPARING: { emoji: '🍳', label: 'en préparation' },
+      DELIVERED: { emoji: '📦', label: 'livrée' },
+      CANCELLED: { emoji: '❌', label: 'annulée' },
+    };
+    const hMeta = H_STATUS_META[nextStatus] ?? { emoji: '🔔', label: nextStatus.toLowerCase() };
+    if (providerLink?.provider?.userId) {
+      sendNotification(providerLink.provider.userId, 'host_order', {
+        title: `${hMeta.emoji} Commande ${hMeta.label} — ${updated.guestName}`,
+        body: `L'hôte a marqué la commande « ${hMeta.label} ». Consultez vos commandes service.`,
+        propertyId: updated.propertyId,
+        url: '/provider/dashboard',
+        meta: { source: 'host_update', orderId: updated.id, status: nextStatus },
+      }).catch(() => undefined);
+    }
 
     return NextResponse.json({ ok: true, order: updated });
   } catch (error) {

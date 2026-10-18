@@ -146,7 +146,7 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
     if (body.qrHubSlug !== undefined) {
       const slug = body.qrHubSlug
         .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[̀-ͯ]/g, '')
         .toLowerCase()
         .replace(/[^a-z0-9-]+/g, '-')
         .replace(/^-+|-+$/g, '');

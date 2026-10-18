@@ -5,25 +5,6 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { toast } from 'sonner';
 import {
-  Ban,
-  CheckCircle2,
-  CreditCard,
-  Eye,
-  Home,
-  KeyRound,
-  Loader2,
-  MoreHorizontal,
-  Search,
-  ShieldCheck,
-  Trash2,
-  UserPlus,
-  Users,
-  Wallet,
-  X,
-} from 'lucide-react';
-
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -66,7 +47,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -229,18 +209,34 @@ function planLabel(plan: string | null): string {
 }
 
 function subscriptionStatusBadge(status: string) {
-  if (status === 'active') return <Badge className="bg-emerald-600 hover:bg-emerald-700">Actif</Badge>;
-  if (status === 'past_due') return <Badge className="bg-amber-500 hover:bg-amber-600">Paiement en retard</Badge>;
-  if (status === 'trialing') return <Badge className="bg-sky-600 hover:bg-sky-700">Essai</Badge>;
-  if (status === 'cancelled') return <Badge variant="outline" className="border-slate-300 text-slate-600">Annulé</Badge>;
-  return <Badge variant="outline" className="border-slate-300 text-slate-600">{status}</Badge>;
+  const meta: Record<string, { label: string; dot: string }> = {
+    active: { label: 'Actif', dot: '#34d399' },
+    past_due: { label: 'Paiement en retard', dot: '#fbbf24' },
+    trialing: { label: 'Essai', dot: '#5c8af0' },
+    cancelled: { label: 'Annulé', dot: '#8fa0c2' },
+  };
+  const m = meta[status] ?? { label: status, dot: '#8fa0c2' };
+  return (
+    <span className="lux-chip">
+      <span className="lux-dot" style={{ backgroundColor: m.dot }} aria-hidden="true" />
+      {m.label}
+    </span>
+  );
 }
 
 function transactionStatusBadge(status: string) {
-  if (status === 'completed') return <Badge className="bg-emerald-600 hover:bg-emerald-700">Complété</Badge>;
-  if (status === 'refunded') return <Badge className="bg-amber-500 hover:bg-amber-600">Remboursé</Badge>;
-  if (status === 'failed') return <Badge className="bg-red-600 hover:bg-red-700">Échec</Badge>;
-  return <Badge variant="outline" className="border-slate-300 text-slate-600">{status}</Badge>;
+  const meta: Record<string, { label: string; dot: string }> = {
+    completed: { label: 'Complété', dot: '#34d399' },
+    refunded: { label: 'Remboursé', dot: '#fbbf24' },
+    failed: { label: 'Échec', dot: '#f07d6a' },
+  };
+  const m = meta[status] ?? { label: status, dot: '#8fa0c2' };
+  return (
+    <span className="lux-chip">
+      <span className="lux-dot" style={{ backgroundColor: m.dot }} aria-hidden="true" />
+      {m.label}
+    </span>
+  );
 }
 
 const TRANSACTION_TYPE_LABELS: Record<string, string> = {
@@ -254,14 +250,22 @@ const TRANSACTION_TYPE_LABELS: Record<string, string> = {
 
 function PlanBadge({ user }: { user: AdminUser }) {
   if (user.providerBusinessName) {
-    return <Badge className="bg-slate-900 text-white hover:bg-slate-800">Prestataire</Badge>;
+    return (
+      <span className="lux-chip">
+        <span className="lux-dot" style={{ backgroundColor: '#cdb6ff' }} aria-hidden="true" /> Prestataire
+      </span>
+    );
   }
   const plan = user.selectedPlan;
-  if (!plan || plan === 'free') return <Badge variant="outline" className="border-slate-300 text-slate-700">Gratuit</Badge>;
-  if (plan === 'airbnb_pro') return <Badge className="bg-emerald-600 hover:bg-emerald-700">Airbnb Pro</Badge>;
-  if (plan === 'airbnb_solo') return <Badge variant="default">Airbnb Solo</Badge>;
-  if (plan === 'agency') return <Badge className="bg-amber-500 hover:bg-amber-600">Agence</Badge>;
-  return <Badge variant="outline" className="border-slate-300 text-slate-700">{plan}</Badge>;
+  if (!plan || plan === 'free') return <span className="lux-chip">Gratuit</span>;
+  const dot =
+    plan === 'airbnb_pro' ? '#34d399' : plan === 'airbnb_solo' ? '#5c8af0' : plan === 'agency' ? '#fbbf24' : '#8fa0c2';
+  const label = PLAN_LABELS[plan] ?? plan;
+  return (
+    <span className="lux-chip">
+      <span className="lux-dot" style={{ backgroundColor: dot }} aria-hidden="true" /> {label}
+    </span>
+  );
 }
 
 export function AdminUsers() {
@@ -373,24 +377,34 @@ export function AdminUsers() {
       setCreateError('Tous les champs sont requis');
       return;
     }
-    if (createForm.password.length < 6) {
-      setCreateError('Le mot de passe doit contenir au moins 6 caractères');
+    // WP-BACK v4.61 — même politique que le serveur (8 car. min + lettres + chiffres).
+    if (createForm.password.length < 8 || !/[A-Za-z]/.test(createForm.password) || !/\d/.test(createForm.password)) {
+      setCreateError('Le mot de passe doit contenir au moins 8 caractères, avec des lettres et des chiffres');
       return;
     }
     try {
       setCreateLoading(true);
       setCreateError(null);
-      const res = await fetch('/api/auth/register', {
+      // WP-BACK v4.61 — création via l'API admin dédiée : le rôle choisi
+      // est honoré (plus de détournement de /api/auth/register qui
+      // hardcodait role='user', était gated par signups_enabled et créait
+      // un bien « Ma Maison » fantôme).
+      const res = await fetch('/api/admin/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(createForm),
+        body: JSON.stringify({
+          name: createForm.fullName.trim(),
+          email: createForm.email.trim(),
+          password: createForm.password,
+          role: createForm.role,
+        }),
       });
       const data = await res.json();
       if (!res.ok) {
         setCreateError(data.error || 'Erreur lors de la création');
         return;
       }
-      toast.success('Utilisateur créé');
+      toast.success(`Utilisateur créé — ${createForm.email.trim()} (${createForm.role})`);
       setDialogOpen(false);
       setCreateForm({ email: '', fullName: '', password: '', role: 'user' });
       setPage(1);
@@ -449,34 +463,32 @@ export function AdminUsers() {
       {/* ----- Stats réelles ----- */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {[
-          { label: 'Comptes totaux', value: stats?.totalAll, icon: Users },
-          { label: 'Comptes actifs', value: stats?.totalActive, icon: CheckCircle2 },
-          { label: 'Hôtes', value: stats?.totalHosts, icon: Home },
+          { label: 'Comptes totaux', value: stats?.totalAll, dot: '#5c8af0' },
+          { label: 'Comptes actifs', value: stats?.totalActive, dot: '#34d399' },
+          { label: 'Hôtes', value: stats?.totalHosts, dot: '#e9c47c' },
         ].map((s) => (
-          <Card key={s.label} className="border-slate-200 bg-white">
-            <CardContent className="flex items-center gap-3 p-4">
-              <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 text-slate-700">
-                <s.icon className="h-5 w-5" aria-hidden="true" />
-              </span>
-              <div>
-                <div className="text-2xl font-extrabold text-slate-900">
-                  {s.value === undefined ? <Skeleton className="h-7 w-10" /> : s.value}
-                </div>
-                <p className="text-xs text-slate-500">{s.label}</p>
-              </div>
-            </CardContent>
-          </Card>
+          <div key={s.label} className="lux-card relative p-5">
+            <span className="lux-eyebrow">{s.label}</span>
+            <p className="lux-num mt-2 text-3xl leading-none text-white">
+              {s.value === undefined ? (
+                <span className="inline-block h-7 w-12 animate-pulse rounded-lg bg-white/8" aria-hidden="true" />
+              ) : (
+                s.value
+              )}
+            </p>
+            <span className="lux-dot absolute right-5 top-5 opacity-70" style={{ backgroundColor: s.dot }} aria-hidden="true" />
+          </div>
         ))}
       </div>
 
-      <Card className="border-slate-200 bg-white">
-        <CardHeader>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="lux-card">
+        <div className="flex flex-col gap-3 px-5 pt-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
             <div>
-              <CardTitle>👥 Clients & Hôtes</CardTitle>
-              <CardDescription>
+              <p className="lux-eyebrow">Comptes</p>
+              <h2 className="lux-display mt-1 text-xl text-white">Clients &amp; Hôtes</h2>
+              <p className="mt-0.5 text-xs text-[#8fa0c2]">
                 Gestion complète des comptes : activation, plan, rôle, mot de passe.
-              </CardDescription>
+              </p>
             </div>
             <Dialog open={dialogOpen} onOpenChange={(open) => {
               setDialogOpen(open);
@@ -486,86 +498,85 @@ export function AdminUsers() {
               }
             }}>
               <DialogTrigger asChild>
-                <Button size="sm">
-                  <UserPlus className="mr-2 h-4 w-4" />
+                <Button size="sm" className="lux-btn h-9 rounded-full px-4 text-xs">
                   Ajouter un utilisateur
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="border-white/10 bg-[#0b1226] text-white">
                 <DialogHeader>
-                  <DialogTitle>Nouvel utilisateur</DialogTitle>
-                  <DialogDescription>Créer un compte sur la plateforme</DialogDescription>
+                  <DialogTitle className="lux-display text-lg text-white">Nouvel utilisateur</DialogTitle>
+                  <DialogDescription className="text-[#8fa0c2]">Créer un compte sur la plateforme</DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-2">
-                  {createError && <p className="text-sm text-destructive">{createError}</p>}
+                  {createError && <p className="text-sm text-[#f07d6a]">{createError}</p>}
                   <div className="grid gap-2">
-                    <Label htmlFor="create-email">Email</Label>
+                    <Label htmlFor="create-email" className="text-[#8fa0c2]">Email</Label>
                     <Input id="create-email" type="email" placeholder="user@example.com" value={createForm.email}
+                      className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
                       onChange={(e) => setCreateForm((f) => ({ ...f, email: e.target.value }))} />
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="create-name">Nom complet</Label>
+                    <Label htmlFor="create-name" className="text-[#8fa0c2]">Nom complet</Label>
                     <Input id="create-name" placeholder="Jean Dupont" value={createForm.fullName}
+                      className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
                       onChange={(e) => setCreateForm((f) => ({ ...f, fullName: e.target.value }))} />
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="create-password">Mot de passe</Label>
-                    <Input id="create-password" type="password" placeholder="6 caractères minimum" value={createForm.password}
+                    <Label htmlFor="create-password" className="text-[#8fa0c2]">Mot de passe</Label>
+                    <Input id="create-password" type="password" placeholder="8 caractères minimum (lettres et chiffres)" value={createForm.password}
+                      className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
                       onChange={(e) => setCreateForm((f) => ({ ...f, password: e.target.value }))} />
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="create-role">Rôle</Label>
+                    <Label htmlFor="create-role" className="text-[#8fa0c2]">Rôle</Label>
                     <Select value={createForm.role} onValueChange={(v) => setCreateForm((f) => ({ ...f, role: v as 'user' | 'superadmin' }))}>
-                      <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="user">Utilisateur</SelectItem>
-                        <SelectItem value="superadmin">Superadmin</SelectItem>
+                      <SelectTrigger className="w-full rounded-xl border-white/12 bg-white/[0.04] text-white"><SelectValue /></SelectTrigger>
+                      <SelectContent className="border-white/10 bg-[#0b1226] text-white">
+                        <SelectItem className="focus:bg-white/8 focus:text-white" value="user">Utilisateur</SelectItem>
+                        <SelectItem className="focus:bg-white/8 focus:text-white" value="superadmin">Superadmin</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button onClick={handleCreateUser} disabled={createLoading}>
-                    {createLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  <Button onClick={handleCreateUser} disabled={createLoading} className="lux-btn h-9 rounded-full px-4 text-xs">
                     Créer
                   </Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
+        </div>
+        <div className="space-y-4 p-5 sm:p-6">
           {/* ----- Filtres ----- */}
           <div className="flex flex-col gap-2 sm:flex-row">
             <div className="relative flex-1 sm:max-w-xs">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <Input
                 placeholder="Rechercher par email ou nom…"
                 aria-label="Rechercher un utilisateur"
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-                className="pl-9"
+                className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
               />
             </div>
             {/* FIX-10 — filtre par date d'inscription (plage createdAt) */}
             <div className="flex items-center gap-1.5">
-              <span className="hidden text-xs font-medium text-slate-500 xl:inline">Inscrit du</span>
+              <span className="hidden text-xs font-medium text-[#8fa0c2] xl:inline">Inscrit du</span>
               <Input
                 type="date"
                 aria-label="Inscrit du (date de début)"
                 title="Filtrer les comptes inscrits à partir de cette date"
                 value={dateFrom}
                 onChange={(e) => { setDateFrom(e.target.value); setPage(1); }}
-                className="w-[9.5rem]"
+                className="w-[9.5rem] rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
               />
-              <span className="text-xs text-slate-400" aria-hidden="true">au</span>
+              <span className="text-xs text-[#8fa0c2]/70" aria-hidden="true">au</span>
               <Input
                 type="date"
                 aria-label="Inscrit au (date de fin)"
                 title="Filtrer les comptes inscrits jusqu'à cette date"
                 value={dateTo}
                 onChange={(e) => { setDateTo(e.target.value); setPage(1); }}
-                className="w-[9.5rem]"
+                className="w-[9.5rem] rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
               />
               {(dateFrom || dateTo) && (
                 <Button
@@ -574,36 +585,35 @@ export function AdminUsers() {
                   onClick={clearDateFilter}
                   aria-label="Effacer le filtre par date d'inscription"
                   title="Effacer le filtre par date d'inscription"
-                  className="shrink-0 text-slate-500 hover:text-slate-900"
+                  className="shrink-0 text-[#8fa0c2] hover:bg-white/8 hover:text-white"
                 >
-                  <X className="mr-1 h-4 w-4" aria-hidden="true" />
                   Effacer
                 </Button>
               )}
             </div>
             <Select value={roleFilter || 'all'} onValueChange={(v) => { setRoleFilter(v === 'all' ? '' : v); setPage(1); }}>
-              <SelectTrigger className="w-full sm:w-40" aria-label="Filtrer par rôle"><SelectValue placeholder="Rôle" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tous les rôles</SelectItem>
-                <SelectItem value="user">Utilisateurs</SelectItem>
-                <SelectItem value="superadmin">Superadmins</SelectItem>
+              <SelectTrigger className="w-full rounded-xl border-white/12 bg-white/[0.04] text-white sm:w-40" aria-label="Filtrer par rôle"><SelectValue placeholder="Rôle" /></SelectTrigger>
+              <SelectContent className="border-white/10 bg-[#0b1226] text-white">
+                <SelectItem className="focus:bg-white/8 focus:text-white" value="all">Tous les rôles</SelectItem>
+                <SelectItem className="focus:bg-white/8 focus:text-white" value="user">Utilisateurs</SelectItem>
+                <SelectItem className="focus:bg-white/8 focus:text-white" value="superadmin">Superadmins</SelectItem>
               </SelectContent>
             </Select>
             <Select value={planFilter || 'all'} onValueChange={(v) => { setPlanFilter(v === 'all' ? '' : v); setPage(1); }}>
-              <SelectTrigger className="w-full sm:w-44" aria-label="Filtrer par plan"><SelectValue placeholder="Plan" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tous les plans</SelectItem>
+              <SelectTrigger className="w-full rounded-xl border-white/12 bg-white/[0.04] text-white sm:w-44" aria-label="Filtrer par plan"><SelectValue placeholder="Plan" /></SelectTrigger>
+              <SelectContent className="border-white/10 bg-[#0b1226] text-white">
+                <SelectItem className="focus:bg-white/8 focus:text-white" value="all">Tous les plans</SelectItem>
                 {PLANS.map((p) => (
-                  <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                  <SelectItem key={p.value} className="focus:bg-white/8 focus:text-white" value={p.value}>{p.label}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
             <Select value={statusFilter || 'all'} onValueChange={(v) => { setStatusFilter(v === 'all' ? '' : v); setPage(1); }}>
-              <SelectTrigger className="w-full sm:w-40" aria-label="Filtrer par statut"><SelectValue placeholder="Statut" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tous statuts</SelectItem>
-                <SelectItem value="active">Actifs</SelectItem>
-                <SelectItem value="inactive">Désactivés</SelectItem>
+              <SelectTrigger className="w-full rounded-xl border-white/12 bg-white/[0.04] text-white sm:w-40" aria-label="Filtrer par statut"><SelectValue placeholder="Statut" /></SelectTrigger>
+              <SelectContent className="border-white/10 bg-[#0b1226] text-white">
+                <SelectItem className="focus:bg-white/8 focus:text-white" value="all">Tous statuts</SelectItem>
+                <SelectItem className="focus:bg-white/8 focus:text-white" value="active">Actifs</SelectItem>
+                <SelectItem className="focus:bg-white/8 focus:text-white" value="inactive">Désactivés</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -611,13 +621,13 @@ export function AdminUsers() {
           {loading && <TableSkeleton />}
 
           {!loading && !error && pagination && (
-            <p className="text-sm text-slate-500" role="status" aria-live="polite">
+            <p className="text-sm text-[#8fa0c2]" role="status" aria-live="polite">
               {pagination.total} résultat{pagination.total > 1 ? 's' : ''}
               {(dateFrom || dateTo) && (
                 <>
                   {' '}
-                  pour la période du <span className="font-medium text-slate-700">{dateFrom || '…'}</span> au{' '}
-                  <span className="font-medium text-slate-700">{dateTo || '…'}</span>
+                  pour la période du <span className="font-medium text-white">{dateFrom || '…'}</span> au{' '}
+                  <span className="font-medium text-white">{dateTo || '…'}</span>
                 </>
               )}
             </p>
@@ -625,119 +635,124 @@ export function AdminUsers() {
 
           {error && !loading && (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <p className="text-sm text-destructive">{error}</p>
-              <Button variant="outline" size="sm" className="mt-3" onClick={fetchUsers}>Réessayer</Button>
+              <p className="text-sm text-[#f07d6a]">{error}</p>
+              <Button variant="outline" size="sm" className="lux-btn-ghost mt-3 h-9 rounded-full px-4 text-xs" onClick={fetchUsers}>Réessayer</Button>
             </div>
           )}
 
           {!loading && !error && users.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <Users className="mb-4 h-12 w-12 text-slate-300" />
-              <h3 className="text-lg font-medium">Aucun utilisateur</h3>
-              <p className="mt-1 text-sm text-slate-500">Aucun compte ne correspond aux filtres.</p>
+            <div className="lux-empty rounded-2xl px-4 py-12 text-center">
+              <h3 className="lux-display text-lg text-white">Aucun utilisateur</h3>
+              <p className="mt-1 text-sm text-[#8fa0c2]">Aucun compte ne correspond aux filtres.</p>
             </div>
           )}
 
           {!loading && !error && users.length > 0 && (
             <>
-              <div className="overflow-x-auto rounded-lg border">
+              <div className="overflow-x-auto rounded-xl border border-white/10">
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead>Compte</TableHead>
-                      <TableHead>Plan</TableHead>
-                      <TableHead className="hidden md:table-cell">Abonnement</TableHead>
-                      <TableHead className="hidden text-center sm:table-cell">Biens</TableHead>
-                      <TableHead>Statut</TableHead>
-                      <TableHead className="hidden lg:table-cell">Inscrit le</TableHead>
+                    <TableRow className="border-white/8">
+                      <TableHead className="lux-eyebrow !text-[9.5px]">Compte</TableHead>
+                      <TableHead className="lux-eyebrow !text-[9.5px]">Plan</TableHead>
+                      <TableHead className="lux-eyebrow !text-[9.5px] hidden md:table-cell">Abonnement</TableHead>
+                      <TableHead className="lux-eyebrow !text-[9.5px] hidden text-center sm:table-cell">Biens</TableHead>
+                      <TableHead className="lux-eyebrow !text-[9.5px]">Statut</TableHead>
+                      <TableHead className="lux-eyebrow !text-[9.5px] hidden lg:table-cell">Inscrit le</TableHead>
                       <TableHead className="w-10"><span className="sr-only">Actions</span></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {users.map((user) => (
-                      <TableRow key={user.id}>
+                      <TableRow key={user.id} className="border-white/8 hover:bg-white/[0.04]">
                         <TableCell>
                           <button
                             type="button"
-                            className="text-left font-semibold text-slate-900 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-slate-900"
+                            className="text-left font-semibold text-white hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#5c8af0]"
                             onClick={() => openDetail(user)}
                             aria-label={`Ouvrir la fiche de ${user.fullName || user.email}`}
                           >
                             {user.fullName || '—'}
                           </button>
-                          <p className="text-xs text-slate-500">{user.email}</p>
+                          <p className="text-xs text-[#8fa0c2]">{user.email}</p>
                           {user.role === 'superadmin' && (
-                            <Badge className="mt-1 bg-amber-500 hover:bg-amber-600">Superadmin</Badge>
+                            <span className="lux-chip mt-1">
+                              <span className="lux-dot" style={{ backgroundColor: '#fbbf24' }} aria-hidden="true" /> Superadmin
+                            </span>
                           )}
                         </TableCell>
                         <TableCell><PlanBadge user={user} /></TableCell>
                         <TableCell className="hidden md:table-cell">
                           {user.subscription ? (
-                            <span className="text-xs">
-                              <span className="font-semibold">{user.subscription.amount.toFixed(2)} €</span>{' '}
-                              / {user.subscription.billingCycle === 'monthly' ? 'mois' : 'an'}
-                            </span>
+                            <>
+                              <span className="lux-num text-xs font-semibold text-white">
+                                {user.subscription.amount.toFixed(2)} €
+                              </span>{' '}
+                              <span className="text-xs text-[#8fa0c2]">
+                                / {user.subscription.billingCycle === 'monthly' ? 'mois' : 'an'}
+                              </span>
+                            </>
                           ) : (
-                            <span className="text-xs text-slate-400">—</span>
+                            <span className="text-xs text-[#8fa0c2]/60">—</span>
                           )}
                         </TableCell>
-                        <TableCell className="hidden text-center sm:table-cell">{user.propertyCount}</TableCell>
+                        <TableCell className="hidden text-center text-sm text-white sm:table-cell">{user.propertyCount}</TableCell>
                         <TableCell>
                           {user.isActive ? (
-                            <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700">
-                              <CheckCircle2 className="h-3.5 w-3.5" /> Actif
+                            <span className="lux-chip">
+                              <span className="lux-dot" style={{ backgroundColor: '#34d399' }} aria-hidden="true" /> Actif
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 text-xs font-semibold text-red-600">
-                              <Ban className="h-3.5 w-3.5" /> Désactivé
+                            <span className="lux-chip">
+                              <span className="lux-dot" style={{ backgroundColor: '#f07d6a' }} aria-hidden="true" /> Désactivé
                             </span>
                           )}
                         </TableCell>
-                        <TableCell className="hidden text-sm text-slate-500 lg:table-cell">
+                        <TableCell className="hidden text-sm text-[#8fa0c2] lg:table-cell">
                           {format(new Date(user.createdAt), 'dd MMM yyyy', { locale: fr })}
                         </TableCell>
                         <TableCell>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm" disabled={busyId === user.id} aria-label={`Actions pour ${user.email}`}>
-                                {busyId === user.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <MoreHorizontal className="h-4 w-4" />}
+                              <Button variant="ghost" size="sm" disabled={busyId === user.id} aria-label={`Actions pour ${user.email}`} className="text-[#8fa0c2] hover:bg-white/8 hover:text-white">
+                                <span aria-hidden="true">▾</span>
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-56">
-                              <DropdownMenuLabel>Actions compte</DropdownMenuLabel>
-                              <DropdownMenuItem className="cursor-pointer" onClick={() => openDetail(user)}>
-                                <Eye className="h-4 w-4" /> Voir la fiche client
+                            <DropdownMenuContent align="end" className="w-56 border-white/10 bg-[#0b1226] text-white">
+                              <DropdownMenuLabel className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#8fa0c2]/70">
+                                Actions compte
+                              </DropdownMenuLabel>
+                              <DropdownMenuItem className="cursor-pointer focus:bg-white/8 focus:text-white" onClick={() => openDetail(user)}>
+                                Voir la fiche client
                               </DropdownMenuItem>
-                              <DropdownMenuSeparator />
+                              <DropdownMenuSeparator className="bg-white/10" />
                               <DropdownMenuItem
-                                className="cursor-pointer"
+                                className="cursor-pointer focus:bg-white/8 focus:text-white"
                                 onClick={() => runAction(user, 'toggle-active')}
                               >
-                                {user.isActive ? <Ban className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
                                 {user.isActive ? 'Désactiver le compte' : 'Activer le compte'}
                               </DropdownMenuItem>
                               <DropdownMenuItem
-                                className="cursor-pointer"
+                                className="cursor-pointer focus:bg-white/8 focus:text-white"
                                 onClick={() => { setPlanTarget(user); setPlanChoice(user.selectedPlan || 'airbnb_solo'); }}
                               >
-                                <Wallet className="h-4 w-4" /> Changer de plan
+                                Changer de plan
                               </DropdownMenuItem>
                               <DropdownMenuItem
-                                className="cursor-pointer"
+                                className="cursor-pointer focus:bg-white/8 focus:text-white"
                                 onClick={() => runAction(user, 'change-role', { role: user.role === 'superadmin' ? 'user' : 'superadmin' })}
                               >
-                                <ShieldCheck className="h-4 w-4" />
                                 {user.role === 'superadmin' ? 'Retirer Superadmin' : 'Promouvoir Superadmin'}
                               </DropdownMenuItem>
-                              <DropdownMenuItem className="cursor-pointer" onClick={() => runAction(user, 'reset-password')}>
-                                <KeyRound className="h-4 w-4" /> Réinitialiser le mot de passe
+                              <DropdownMenuItem className="cursor-pointer focus:bg-white/8 focus:text-white" onClick={() => runAction(user, 'reset-password')}>
+                                Réinitialiser le mot de passe
                               </DropdownMenuItem>
-                              <DropdownMenuSeparator />
+                              <DropdownMenuSeparator className="bg-white/10" />
                               <DropdownMenuItem
-                                className="cursor-pointer text-red-600 focus:text-red-600"
+                                className="cursor-pointer text-[#f07d6a] focus:bg-[#f07d6a]/10 focus:text-[#f07d6a]"
                                 onClick={() => setDeleteTarget(user)}
                               >
-                                <Trash2 className="h-4 w-4" /> Supprimer le compte
+                                Supprimer le compte
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -750,14 +765,14 @@ export function AdminUsers() {
 
               {pagination && pagination.totalPages > 1 && (
                 <div className="flex items-center justify-between pt-2">
-                  <p className="text-sm text-slate-500">
+                  <p className="text-sm text-[#8fa0c2]">
                     Page {pagination.page} / {pagination.totalPages} — {pagination.total} résultat{pagination.total > 1 ? 's' : ''}
                   </p>
                   <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" disabled={pagination.page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
+                    <Button variant="outline" size="sm" className="lux-btn-ghost h-9 rounded-full px-4 text-xs" disabled={pagination.page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
                       Précédent
                     </Button>
-                    <Button variant="outline" size="sm" disabled={pagination.page >= pagination.totalPages} onClick={() => setPage((p) => p + 1)}>
+                    <Button variant="outline" size="sm" className="lux-btn-ghost h-9 rounded-full px-4 text-xs" disabled={pagination.page >= pagination.totalPages} onClick={() => setPage((p) => p + 1)}>
                       Suivant
                     </Button>
                   </div>
@@ -765,31 +780,32 @@ export function AdminUsers() {
               )}
             </>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* ----- Dialog changement de plan ----- */}
       <Dialog open={planTarget !== null} onOpenChange={(o) => !o && setPlanTarget(null)}>
-        <DialogContent>
+        <DialogContent className="border-white/10 bg-[#0b1226] text-white">
           <DialogHeader>
-            <DialogTitle>Changer de plan</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="lux-display text-lg text-white">Changer de plan</DialogTitle>
+            <DialogDescription className="text-[#8fa0c2]">
               {planTarget?.email} — l'abonnement actif éventuel sera annulé et le plan sélectionné mis à jour.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-2 py-2">
-            <Label htmlFor="plan-choice">Nouveau plan</Label>
+            <Label htmlFor="plan-choice" className="text-[#8fa0c2]">Nouveau plan</Label>
             <Select value={planChoice} onValueChange={setPlanChoice}>
-              <SelectTrigger id="plan-choice" className="w-full"><SelectValue /></SelectTrigger>
-              <SelectContent>
+              <SelectTrigger id="plan-choice" className="w-full rounded-xl border-white/12 bg-white/[0.04] text-white"><SelectValue /></SelectTrigger>
+              <SelectContent className="border-white/10 bg-[#0b1226] text-white">
                 {PLANS.map((p) => (
-                  <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                  <SelectItem key={p.value} className="focus:bg-white/8 focus:text-white" value={p.value}>{p.label}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
           <DialogFooter>
             <Button
+              className="lux-btn h-9 rounded-full px-4 text-xs"
               onClick={async () => {
                 if (planTarget && (await runAction(planTarget, 'change-plan', { plan: planChoice }))) {
                   setPlanTarget(null);
@@ -797,7 +813,6 @@ export function AdminUsers() {
               }}
               disabled={busyId !== null}
             >
-              {busyId !== null && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Appliquer
             </Button>
           </DialogFooter>
@@ -806,18 +821,18 @@ export function AdminUsers() {
 
       {/* ----- Confirmation suppression ----- */}
       <AlertDialog open={deleteTarget !== null} onOpenChange={(o) => !o && setDeleteTarget(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="border-white/10 bg-[#0b1226] text-white">
           <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer ce compte ?</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="lux-display text-lg text-white">Supprimer ce compte ?</AlertDialogTitle>
+            <AlertDialogDescription className="text-[#8fa0c2]">
               Action irréversible : le compte <strong>{deleteTarget?.email}</strong> et ses données associées
               seront définitivement supprimés. Les comptes possédant des biens sont refusés.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogCancel className="lux-btn-ghost h-9 rounded-full border-white/12 bg-transparent px-4 text-xs">Annuler</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-red-600 hover:bg-red-700"
+              className="border border-[#f07d6a]/40 bg-[#f07d6a]/10 text-[#f07d6a] hover:bg-[#f07d6a]/20"
               onClick={(e) => {
                 e.preventDefault();
                 if (deleteTarget) handleDelete(deleteTarget);
@@ -831,19 +846,20 @@ export function AdminUsers() {
 
       {/* ----- Mot de passe temporaire (affiché une seule fois) ----- */}
       <Dialog open={tempPassword !== null} onOpenChange={(o) => !o && setTempPassword(null)}>
-        <DialogContent>
+        <DialogContent className="border-white/10 bg-[#0b1226] text-white">
           <DialogHeader>
-            <DialogTitle>🔑 Mot de passe temporaire</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="lux-display text-lg text-white">Mot de passe temporaire</DialogTitle>
+            <DialogDescription className="text-[#8fa0c2]">
               Pour <strong>{tempPassword?.email}</strong>. Un email de notification a été mis en outbox.
               Copiez-le maintenant : il ne sera plus jamais affiché.
             </DialogDescription>
           </DialogHeader>
-          <div className="rounded-lg bg-slate-900 px-4 py-3 text-center">
-            <code className="select-all text-lg font-bold tracking-widest text-emerald-400">{tempPassword?.password}</code>
+          <div className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-center">
+            <code className="lux-num select-all text-lg font-bold tracking-widest text-[#e9c47c]">{tempPassword?.password}</code>
           </div>
           <DialogFooter>
             <Button
+              className="lux-btn h-9 rounded-full px-4 text-xs"
               onClick={() => {
                 if (tempPassword) {
                   navigator.clipboard?.writeText(tempPassword.password).then(
@@ -872,12 +888,12 @@ export function AdminUsers() {
           }
         }}
       >
-        <SheetContent className="flex w-full flex-col gap-0 overflow-y-auto sm:max-w-lg">
+        <SheetContent className="flex w-full flex-col gap-0 overflow-y-auto border-white/10 bg-[#0b1226] text-white sm:max-w-lg">
           <SheetHeader>
-            <SheetTitle className="text-lg font-bold text-slate-900">
+            <SheetTitle className="lux-display text-lg font-bold text-white">
               Fiche client{detail ? ` — ${detail.user.fullName || detail.user.email}` : ''}
             </SheetTitle>
-            <SheetDescription id="user-detail-desc">
+            <SheetDescription id="user-detail-desc" className="text-[#8fa0c2]">
               {detailTarget?.email} — équipe, facturation et informations du compte (données de la base).
             </SheetDescription>
           </SheetHeader>
@@ -885,17 +901,17 @@ export function AdminUsers() {
           <div className="flex-1 space-y-6 px-4 pb-8">
             {detailLoading && (
               <div className="space-y-3" role="status" aria-live="polite">
-                <Skeleton className="h-5 w-44" />
-                <Skeleton className="h-16 w-full" />
-                <Skeleton className="h-36 w-full" />
-                <Skeleton className="h-44 w-full" />
+                <Skeleton className="h-5 w-44 bg-white/8" />
+                <Skeleton className="h-16 w-full bg-white/8" />
+                <Skeleton className="h-36 w-full bg-white/8" />
+                <Skeleton className="h-44 w-full bg-white/8" />
               </div>
             )}
 
             {detailError && !detailLoading && (
               <div className="flex flex-col items-center gap-3 py-8 text-center">
-                <p className="text-sm text-destructive">{detailError}</p>
-                <Button variant="outline" size="sm" onClick={() => detailTarget && openDetail(detailTarget)}>
+                <p className="text-sm text-[#f07d6a]">{detailError}</p>
+                <Button variant="outline" size="sm" className="lux-btn-ghost h-9 rounded-full px-4 text-xs" onClick={() => detailTarget && openDetail(detailTarget)}>
                   Réessayer
                 </Button>
               </div>
@@ -906,57 +922,54 @@ export function AdminUsers() {
                 {/* ----- Badges compte ----- */}
                 <div className="flex flex-wrap items-center gap-2">
                   {detail.user.role === 'superadmin' && (
-                    <Badge className="bg-amber-500 hover:bg-amber-600">Superadmin</Badge>
+                    <span className="lux-chip">
+                      <span className="lux-dot" style={{ backgroundColor: '#fbbf24' }} aria-hidden="true" /> Superadmin
+                    </span>
                   )}
                   {detail.user.providerBusinessName && (
-                    <Badge className="bg-slate-900 text-white hover:bg-slate-800">
+                    <span className="lux-chip">
+                      <span className="lux-dot" style={{ backgroundColor: '#cdb6ff' }} aria-hidden="true" />
                       Prestataire : {detail.user.providerBusinessName}
-                    </Badge>
+                    </span>
                   )}
                   {detail.user.selectedPlan && detail.user.selectedPlan !== 'free' ? (
-                    <Badge variant="default">{planLabel(detail.user.selectedPlan)}</Badge>
+                    <span className="lux-chip">{planLabel(detail.user.selectedPlan)}</span>
                   ) : (
-                    <Badge variant="outline" className="border-slate-300 text-slate-700">Gratuit</Badge>
+                    <span className="lux-chip">Gratuit</span>
                   )}
                   {detail.user.isActive ? (
-                    <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700">
-                      <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" /> Actif
+                    <span className="lux-chip">
+                      <span className="lux-dot" style={{ backgroundColor: '#34d399' }} aria-hidden="true" /> Actif
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1 text-xs font-semibold text-red-600">
-                      <Ban className="h-3.5 w-3.5" aria-hidden="true" /> Désactivé
+                    <span className="lux-chip">
+                      <span className="lux-dot" style={{ backgroundColor: '#f07d6a' }} aria-hidden="true" /> Désactivé
                     </span>
                   )}
                 </div>
 
                 {/* ----- Profil (champs réels uniquement) ----- */}
                 <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                  <dt className="text-slate-500">Inscrit le</dt>
-                  <dd className="font-medium text-slate-900">
+                  <dt className="text-[#8fa0c2]">Inscrit le</dt>
+                  <dd className="font-medium text-white">
                     {format(new Date(detail.user.createdAt), 'dd MMM yyyy', { locale: fr })}
                   </dd>
-                  <dt className="text-slate-500">Téléphone</dt>
-                  <dd className="font-medium text-slate-900">{detail.user.phone ?? '—'}</dd>
-                  <dt className="text-slate-500">Adresse</dt>
-                  <dd className="font-medium text-slate-900">{detail.user.address ?? '—'}</dd>
+                  <dt className="text-[#8fa0c2]">Téléphone</dt>
+                  <dd className="font-medium text-white">{detail.user.phone ?? '—'}</dd>
+                  <dt className="text-[#8fa0c2]">Adresse</dt>
+                  <dd className="font-medium text-white">{detail.user.address ?? '—'}</dd>
                 </dl>
 
-                <Separator />
+                <Separator className="bg-white/10" />
 
                 {/* ================= ÉQUIPE ================= */}
                 <section aria-labelledby="detail-team-title" className="space-y-3">
-                  <h3
-                    id="detail-team-title"
-                    className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-slate-500"
-                  >
-                    <Users className="h-4 w-4" aria-hidden="true" /> Équipe
-                  </h3>
+                  <h3 id="detail-team-title" className="lux-eyebrow">Équipe</h3>
 
                   {detail.team.ownedProperties.length === 0 && detail.team.memberships.length === 0 ? (
-                    <div className="rounded-lg border border-dashed border-slate-300 p-6 text-center">
-                      <Users className="mx-auto mb-2 h-8 w-8 text-slate-300" aria-hidden="true" />
-                      <p className="text-sm font-medium text-slate-700">Aucun membre d&apos;équipe</p>
-                      <p className="mt-1 text-xs text-slate-500">
+                    <div className="lux-empty rounded-xl p-6 text-center">
+                      <p className="text-sm font-medium text-white">Aucun membre d&apos;équipe</p>
+                      <p className="mt-1 text-xs text-[#8fa0c2]">
                         Ce compte ne gère aucun bien et n&apos;appartient à l&apos;équipe d&apos;aucun autre hôte.
                       </p>
                     </div>
@@ -964,46 +977,47 @@ export function AdminUsers() {
                     <>
                       {detail.team.ownedProperties.length > 0 && (
                         <div className="space-y-3">
-                          <h4 className="text-xs font-semibold uppercase text-slate-400">
+                          <h4 className="lux-eyebrow">
                             Biens gérés ({detail.team.ownedProperties.length})
                           </h4>
                           {detail.team.ownedProperties.map((p) => (
-                            <div key={p.id} className="rounded-lg border border-slate-200 bg-white p-3">
+                            <div key={p.id} className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
                               <div className="flex flex-wrap items-center justify-between gap-2">
-                                <p className="font-semibold text-slate-900">{p.name}</p>
+                                <p className="font-semibold text-white">{p.name}</p>
                                 <span className="flex items-center gap-1.5">
-                                  <Badge variant="outline">{p.propertyType}</Badge>
+                                  <span className="lux-chip">{p.propertyType}</span>
                                   {p.isActive ? (
-                                    <Badge variant="outline" className="border-emerald-300 text-emerald-700">Actif</Badge>
+                                    <span className="lux-chip">
+                                      <span className="lux-dot" style={{ backgroundColor: '#34d399' }} aria-hidden="true" /> Actif
+                                    </span>
                                   ) : (
-                                    <Badge variant="outline" className="border-slate-300 text-slate-500">Désactivé</Badge>
+                                    <span className="lux-chip">Désactivé</span>
                                   )}
                                 </span>
                               </div>
-                              {p.address && <p className="mt-0.5 text-xs text-slate-500">{p.address}</p>}
-                              <p className="mt-1.5 text-xs font-medium text-slate-600">
+                              {p.address && <p className="mt-0.5 text-xs text-[#8fa0c2]">{p.address}</p>}
+                              <p className="mt-1.5 text-xs font-medium text-[#8fa0c2]">
                                 {p.memberCount} membre{p.memberCount > 1 ? 's' : ''}
                               </p>
-                              <ul className="mt-2 divide-y divide-slate-100">
+                              <ul className="mt-2 divide-y divide-white/8">
                                 {p.members.map((m) => {
                                   const meta = memberRoleMeta(m.role);
                                   return (
                                     <li key={m.id} className="flex flex-wrap items-center justify-between gap-2 py-1.5 text-sm">
                                       <span className="flex min-w-0 items-center gap-1.5">
-                                        <span aria-hidden="true">{meta.emoji}</span>
-                                        <span className="truncate font-medium text-slate-900">
+                                        <span className="truncate font-medium text-white">
                                           {m.user.fullName || m.user.email}
                                         </span>
                                         {m.user.fullName && (
-                                          <span className="truncate text-xs text-slate-400">{m.user.email}</span>
+                                          <span className="truncate text-xs text-[#8fa0c2]/70">{m.user.email}</span>
                                         )}
                                       </span>
                                       <span className="flex shrink-0 flex-wrap items-center gap-1">
-                                        <Badge variant="secondary">{meta.label}</Badge>
+                                        <span className="lux-chip">{meta.label}</span>
                                         {!m.acceptedAt && (
-                                          <Badge variant="outline" className="border-amber-300 text-amber-700">
-                                            Invitation en attente
-                                          </Badge>
+                                          <span className="lux-chip">
+                                            <span className="lux-dot" style={{ backgroundColor: '#fbbf24' }} aria-hidden="true" /> Invitation en attente
+                                          </span>
                                         )}
                                       </span>
                                     </li>
@@ -1017,26 +1031,26 @@ export function AdminUsers() {
 
                       {detail.team.memberships.length > 0 && (
                         <div className="space-y-2">
-                          <h4 className="text-xs font-semibold uppercase text-slate-400">
+                          <h4 className="lux-eyebrow">
                             Équipes rejointes ({detail.team.memberships.length})
                           </h4>
-                          <ul className="rounded-lg border border-slate-200 bg-white divide-y divide-slate-100">
+                          <ul className="divide-y divide-white/8 rounded-xl border border-white/10 bg-white/[0.02]">
                             {detail.team.memberships.map((m) => {
                               const meta = memberRoleMeta(m.role);
                               return (
                                 <li key={m.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-sm">
                                   <span className="min-w-0">
-                                    <span className="block truncate font-medium text-slate-900">{m.property.name}</span>
-                                    <span className="block truncate text-xs text-slate-400">
+                                    <span className="block truncate font-medium text-white">{m.property.name}</span>
+                                    <span className="block truncate text-xs text-[#8fa0c2]/70">
                                       hôte : {m.property.ownerName || m.property.ownerEmail}
                                     </span>
                                   </span>
                                   <span className="flex shrink-0 flex-wrap items-center gap-1">
-                                    <Badge variant="secondary">{meta.label}</Badge>
+                                    <span className="lux-chip">{meta.label}</span>
                                     {!m.acceptedAt && (
-                                      <Badge variant="outline" className="border-amber-300 text-amber-700">
-                                        Invitation en attente
-                                      </Badge>
+                                      <span className="lux-chip">
+                                        <span className="lux-dot" style={{ backgroundColor: '#fbbf24' }} aria-hidden="true" /> Invitation en attente
+                                      </span>
                                     )}
                                   </span>
                                 </li>
@@ -1049,33 +1063,28 @@ export function AdminUsers() {
                   )}
                 </section>
 
-                <Separator />
+                <Separator className="bg-white/10" />
 
                 {/* ================= FACTURATION ================= */}
                 <section aria-labelledby="detail-billing-title" className="space-y-3">
-                  <h3
-                    id="detail-billing-title"
-                    className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-slate-500"
-                  >
-                    <CreditCard className="h-4 w-4" aria-hidden="true" /> Facturation
-                  </h3>
+                  <h3 id="detail-billing-title" className="lux-eyebrow">Facturation</h3>
 
                   {/* Abonnement actif : plan, statut, échéance */}
                   {detail.billing.activeSubscription ? (
-                    <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+                    <div className="rounded-xl border border-[#34d399]/25 bg-[#34d399]/8 p-3">
                       <div className="flex flex-wrap items-center justify-between gap-2">
-                        <p className="font-semibold text-slate-900">
+                        <p className="font-semibold text-white">
                           {planLabel(detail.billing.activeSubscription.plan)}
                         </p>
                         {subscriptionStatusBadge(detail.billing.activeSubscription.status)}
                       </div>
-                      <p className="mt-1 text-sm text-slate-700">
-                        <span className="font-semibold">
+                      <p className="mt-1 text-sm text-white/85">
+                        <span className="lux-num font-semibold text-white">
                           {detail.billing.activeSubscription.amount.toFixed(2)} €
                         </span>{' '}
                         / {detail.billing.activeSubscription.billingCycle === 'monthly' ? 'mois' : 'an'}
                       </p>
-                      <p className="mt-0.5 text-xs text-slate-500">
+                      <p className="mt-0.5 text-xs text-[#8fa0c2]">
                         Échéance :{' '}
                         {detail.billing.activeSubscription.currentPeriodEnd
                           ? format(new Date(detail.billing.activeSubscription.currentPeriodEnd), 'dd MMM yyyy', { locale: fr })
@@ -1083,44 +1092,44 @@ export function AdminUsers() {
                       </p>
                     </div>
                   ) : (
-                    <div className="rounded-lg border border-slate-200 p-3 text-sm text-slate-500">
+                    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-sm text-[#8fa0c2]">
                       Aucun abonnement actif.
                     </div>
                   )}
 
                   {/* Commandes de service sur les biens + cumuls réels */}
                   <dl className="grid grid-cols-3 gap-2">
-                    <div className="rounded-lg border border-slate-200 p-2.5 text-center">
-                      <dt className="text-[11px] uppercase text-slate-400">Commandes</dt>
-                      <dd className="text-lg font-bold text-slate-900">{detail.billing.serviceOrders.count}</dd>
+                    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-2.5 text-center">
+                      <dt className="lux-eyebrow !text-[9.5px]">Commandes</dt>
+                      <dd className="lux-num text-lg font-bold text-white">{detail.billing.serviceOrders.count}</dd>
                     </div>
-                    <div className="rounded-lg border border-slate-200 p-2.5 text-center">
-                      <dt className="text-[11px] uppercase text-slate-400">Cumul commandes</dt>
-                      <dd className="text-lg font-bold text-slate-900">
+                    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-2.5 text-center">
+                      <dt className="lux-eyebrow !text-[9.5px]">Cumul commandes</dt>
+                      <dd className="lux-num text-lg font-bold text-white">
                         {detail.billing.serviceOrders.totalAmount.toFixed(2)} €
                       </dd>
                     </div>
-                    <div className="rounded-lg border border-slate-200 p-2.5 text-center">
-                      <dt className="text-[11px] uppercase text-slate-400">Part hôte</dt>
-                      <dd className="text-lg font-bold text-slate-900">
+                    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-2.5 text-center">
+                      <dt className="lux-eyebrow !text-[9.5px]">Part hôte</dt>
+                      <dd className="lux-num text-lg font-bold text-white">
                         {detail.billing.serviceOrders.hostEarnings.toFixed(2)} €
                       </dd>
                     </div>
                   </dl>
-                  <p className="-mt-2 text-[11px] text-slate-400">
+                  <p className="-mt-2 text-[11px] text-[#8fa0c2]/70">
                     Commandes de service (hors annulées) posées par les invités sur les biens du client.
                   </p>
 
                   {/* Historique d'abonnements */}
                   {detail.billing.subscriptions.length > 0 && (
                     <div className="space-y-1.5">
-                      <h4 className="text-xs font-semibold uppercase text-slate-400">Historique d&apos;abonnements</h4>
-                      <ul className="rounded-lg border border-slate-200 bg-white divide-y divide-slate-100">
+                      <h4 className="lux-eyebrow">Historique d&apos;abonnements</h4>
+                      <ul className="divide-y divide-white/8 rounded-xl border border-white/10 bg-white/[0.02]">
                         {detail.billing.subscriptions.map((s) => (
                           <li key={s.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-sm">
-                            <span className="font-medium text-slate-900">{planLabel(s.plan)}</span>
+                            <span className="font-medium text-white">{planLabel(s.plan)}</span>
                             <span className="flex items-center gap-2">
-                              <span className="text-xs text-slate-500">
+                              <span className="text-xs text-[#8fa0c2]">
                                 {s.amount.toFixed(2)} € / {s.billingCycle === 'monthly' ? 'mois' : 'an'}
                                 {s.currentPeriodEnd
                                   ? ` — échéance ${format(new Date(s.currentPeriodEnd), 'dd MMM yyyy', { locale: fr })}`
@@ -1136,25 +1145,25 @@ export function AdminUsers() {
 
                   {/* Paiements enregistrés (Transaction.payerId = ce compte) */}
                   <div className="space-y-1.5">
-                    <h4 className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase text-slate-400">
+                    <h4 className="flex flex-wrap items-center gap-2 lux-eyebrow">
                       Paiements enregistrés
-                      <Badge variant="outline" className="font-mono text-[11px]">
+                      <span className="lux-chip font-mono !text-[11px]">
                         {detail.billing.transactions.count} · {detail.billing.transactions.totalAmount.toFixed(2)} €
-                      </Badge>
+                      </span>
                     </h4>
                     {detail.billing.transactions.items.length === 0 ? (
-                      <p className="rounded-lg border border-dashed border-slate-300 p-3 text-xs text-slate-500">
+                      <p className="lux-empty rounded-xl p-3 text-xs text-[#8fa0c2]">
                         Aucun paiement enregistré pour ce compte.
                       </p>
                     ) : (
-                      <ul className="rounded-lg border border-slate-200 bg-white divide-y divide-slate-100">
+                      <ul className="divide-y divide-white/8 rounded-xl border border-white/10 bg-white/[0.02]">
                         {detail.billing.transactions.items.map((t) => (
                           <li key={t.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-sm">
                             <span>
-                              <span className="block font-medium text-slate-900">
+                              <span className="block font-medium text-white">
                                 {TRANSACTION_TYPE_LABELS[t.type] ?? t.type} — {t.amount.toFixed(2)} €
                               </span>
-                              <span className="block text-xs text-slate-400">
+                              <span className="block text-xs text-[#8fa0c2]/70">
                                 {format(new Date(t.createdAt), 'dd MMM yyyy HH:mm', { locale: fr })}
                                 {t.stripePaymentId ? ` · ${t.stripePaymentId}` : ''}
                               </span>
@@ -1168,15 +1177,15 @@ export function AdminUsers() {
 
                   {/* Références Stripe réelles (champs existants uniquement) */}
                   <div className="space-y-1.5">
-                    <h4 className="text-xs font-semibold uppercase text-slate-400">Références Stripe</h4>
-                    <dl className="rounded-lg border border-slate-200 bg-white p-3 text-xs">
+                    <h4 className="lux-eyebrow">Références Stripe</h4>
+                    <dl className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-xs">
                       <div className="flex items-center justify-between gap-2 py-0.5">
-                        <dt className="text-slate-500">Compte Connect (reversements)</dt>
-                        <dd className="truncate font-mono text-slate-900">{detail.user.stripeAccountId ?? '—'}</dd>
+                        <dt className="text-[#8fa0c2]">Compte Connect (reversements)</dt>
+                        <dd className="truncate font-mono text-white">{detail.user.stripeAccountId ?? '—'}</dd>
                       </div>
                       <div className="flex items-center justify-between gap-2 py-0.5">
-                        <dt className="text-slate-500">Abonnement Stripe</dt>
-                        <dd className="truncate font-mono text-slate-900">
+                        <dt className="text-[#8fa0c2]">Abonnement Stripe</dt>
+                        <dd className="truncate font-mono text-white">
                           {detail.billing.activeSubscription?.stripeSubscriptionId ?? '—'}
                         </dd>
                       </div>
@@ -1197,12 +1206,12 @@ function TableSkeleton() {
     <div className="space-y-3 p-4">
       {Array.from({ length: 6 }).map((_, i) => (
         <div key={i} className="flex items-center gap-4">
-          <Skeleton className="h-4 w-40" />
-          <Skeleton className="h-4 w-32" />
-          <Skeleton className="h-5 w-24" />
-          <Skeleton className="h-4 w-12" />
-          <Skeleton className="h-4 w-12" />
-          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-4 w-40 bg-white/8" />
+          <Skeleton className="h-4 w-32 bg-white/8" />
+          <Skeleton className="h-5 w-24 bg-white/8" />
+          <Skeleton className="h-4 w-12 bg-white/8" />
+          <Skeleton className="h-4 w-12 bg-white/8" />
+          <Skeleton className="h-4 w-24 bg-white/8" />
         </div>
       ))}
     </div>

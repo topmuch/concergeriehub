@@ -1,5 +1,5 @@
 // =============================================================
-// Catalogue d'abonnements HÔTE — Conciergerie Hub (ÉTAPE 10)
+// Catalogue d'abonnements HÔTE — RoomScan (ÉTAPE 10)
 //
 // Offres du spec :
 //  - Airbnb Solo : 9,90 €/mois OU 99 €/an (mise en avant)

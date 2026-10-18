@@ -26,6 +26,9 @@ import { db } from '@/lib/db';
 import { getUserRoleForProperty } from '@/lib/b2b-server';
 import { canManageTeam, isKnownMemberRoleInput, normalizeMemberRole, MEMBER_ROLES, type MemberRole } from '@/lib/team';
 import { runAutomationTrigger } from '@/lib/automations-server';
+// AUDIT PRÉ-PROD (Module 3.4) — l'invitation équipe part aussi par EMAIL
+import { queueEmail } from '@/lib/email';
+import { siteUrl } from '@/lib/site';
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -141,7 +144,7 @@ export async function POST(req: NextRequest, ctx: Ctx) {
       return NextResponse.json(
         {
           error:
-            "Aucun compte Conciergerie Hub avec cet email. Demandez-lui de s'inscrire (gratuit), puis invitez-le.",
+            "Aucun compte RoomScan avec cet email. Demandez-lui de s'inscrire (gratuit), puis invitez-le.",
         },
         { status: 404 },
       );
@@ -184,6 +187,32 @@ export async function POST(req: NextRequest, ctx: Ctx) {
       },
       select: { id: true, role: true, invitedAt: true },
     });
+
+    // AUDIT PRÉ-PROD (Module 3.4) — EMAIL D'INVITATION : le membre
+    // invité reçoit un email avec le lien d'acceptation du Dashboard.
+    // Fire-and-forget : un échec email ne casse JAMAIS l'invitation.
+    const ROLE_LABELS: Record<string, string> = {
+      MANAGER: 'Gestionnaire',
+      CLEANER: 'Ménage',
+      MAINTENANCE: 'Maintenance',
+    };
+    queueEmail({
+      to: email,
+      subject: `👥 Vous êtes invité(e) sur « ${property.name} » — RoomScan`,
+      html:
+        `<p style="margin:0 0 12px">Bonjour <strong>${invitedUser.fullName ?? ''}</strong>,</p>` +
+        `<p style="margin:0 0 12px">Vous avez été invité(e) comme <strong>${ROLE_LABELS[role] ?? role}</strong> ` +
+        `sur le logement <strong>${property.name}</strong> sur RoomScan.</p>` +
+        `<p style="margin:0 0 16px"><a href="${siteUrl}/airbnb/team" style="display:inline-block;background:#0f766e;color:#fff;padding:12px 20px;border-radius:12px;font-weight:700;text-decoration:none">Ouvrir mon Dashboard pour accepter</a></p>` +
+        `<p style="margin:0;color:#64748b;font-size:13px">Connectez-vous avec votre compte (${email}) puis acceptez l'invitation dans l'onglet Équipe.</p>`,
+      text: `Vous êtes invité(e) comme ${ROLE_LABELS[role] ?? role} sur « ${property.name} » — acceptez dans votre Dashboard : ${siteUrl}/airbnb/team`,
+      template: 'custom',
+      userId: invitedUser.id,
+      propertyId,
+      referenceType: 'team_invite',
+      referenceId: member.id,
+      meta: { role, propertyName: property.name },
+    }).catch(() => undefined);
 
     return NextResponse.json(
       {

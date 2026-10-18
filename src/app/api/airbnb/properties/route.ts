@@ -26,6 +26,8 @@ import {
 } from '@/lib/b2b-server';
 import { PROPERTY_TYPE_META } from '@/lib/b2b';
 import { ensureDefaultRules } from '@/lib/automations-server';
+// v4.112 — pré-génération des audios « Denise » (TTS premium) à la création.
+import { ensurePremiumAudio } from '@/lib/tts-service';
 
 const DAYS = 30;
 const MS_PER_DAY = 86_400_000;
@@ -80,6 +82,14 @@ export async function GET() {
     const memberStats = await Promise.all(
       accepted.map((m) => computePortfolioStats(m.property.id, windowStart, new Date(now), false)),
     );
+    // AUDIT PRÉ-PROD — SÉPARATION FINANCIÈRE : un CLEANER ou MAINTENANCE
+    // ne voit PAS les revenus (upsellRevenue30d) des biens d'équipe.
+    const FINANCE_ROLES = new Set(['OWNER', 'MANAGER', 'owner', 'cohost', 'member']);
+    for (let i = 0; i < accepted.length; i++) {
+      if (!FINANCE_ROLES.has(accepted[i].role)) {
+        memberStats[i] = { ...memberStats[i], upsellRevenue30d: 0 };
+      }
+    }
 
     const ownedPortfolio = owned.map((p, i) => ({
       id: p.id,
@@ -285,6 +295,16 @@ export async function POST(req: NextRequest) {
 
     // ÉTAPE 13 : déploie le catalogue d'automatisations sur le bien
     await ensureDefaultRules(property.id);
+
+    // v4.112 « TTS PREMIUM DENISE » — pré-génère l'audio d'accueil du hub
+    // à la CRÉATION du bien (spécification : fichier MP3 prêt avant le
+    // premier scan → zéro temps de chargement pour l'invité).
+    // Fire-and-forget : un échec réseau (WebSocket bloqué) ne doit JAMAIS
+    // retarder la création — le repli Web Speech API reste actif.
+    void ensurePremiumAudio(
+      'Bonjour et bienvenue ! Installez-vous confortablement, tout ce dont vous avez besoin est à portée de main. Bon séjour chez nous.',
+      'hub/welcome-default-fr',
+    ).catch(() => undefined);
 
     return NextResponse.json({ property }, { status: 201 });
   } catch (error) {

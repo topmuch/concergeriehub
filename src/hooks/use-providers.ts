@@ -33,6 +33,8 @@ export interface NearbyProvider {
   totalJobsCompleted: number;
   contactName: string | null;
   contactEmail: string | null;
+  /** v4.32 — false = désactivé par l'hôte pour ce bien (masqué côté invités). */
+  enabled: boolean;
 }
 
 export interface UseProvidersResult {

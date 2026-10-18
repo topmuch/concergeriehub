@@ -1,0 +1,172 @@
+import type { Metadata } from 'next';
+import Link from 'next/link';
+
+// FIX-CSP-PROD : rendu dynamique exigé par la CSP à nonce (même logique
+// que la landing — page pré-rendue = scripts sans nonce = page blanche).
+export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  title: 'Mentions légales, CGU & Confidentialité',
+  description:
+    'Mentions légales, conditions générales d’utilisation et politique de confidentialité de RoomScan (roomscan.pro).',
+};
+
+const SECTIONS = [
+  { id: 'mentions', label: 'Mentions légales' },
+  { id: 'cgu', label: 'CGU' },
+  { id: 'confidentialite', label: 'Confidentialité' },
+];
+
+function H2({ id, children }: { id: string; children: React.ReactNode }) {
+  return (
+    <h2 id={id} className="scroll-mt-24 pt-2 text-2xl font-bold text-slate-900">
+      {children}
+    </h2>
+  );
+}
+
+function P({ children, className }: { children: React.ReactNode; className?: string }) {
+  return <p className={`leading-relaxed text-slate-600 ${className ?? ''}`}>{children}</p>;
+}
+
+export default function LegalPage() {
+  return (
+    <div className="flex min-h-screen flex-col bg-[#F7F7F8] font-sans text-slate-900 antialiased [color-scheme:light]">
+      <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur">
+        <div className="mx-auto flex h-16 max-w-4xl items-center justify-between px-4 sm:px-6">
+          <Link href="/" className="flex items-center gap-2 font-bold">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#0066EF] text-sm text-white">
+              C
+            </span>
+            RoomScan
+          </Link>
+          <Link
+            href="/"
+            className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:border-[#0066EF] hover:text-[#0052C4]"
+          >
+            ← Retour au site
+          </Link>
+        </div>
+      </header>
+
+      <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-10 sm:px-6">
+        <h1 className="text-3xl font-bold md:text-4xl">Informations légales</h1>
+        <p className="mt-2 text-slate-600">
+          Mentions légales, conditions d’utilisation et protection des données — RoomScan,
+          accessible sur roomscan.pro.
+        </p>
+        <nav aria-label="Sommaire" className="mt-6 flex flex-wrap gap-2">
+          {SECTIONS.map((s) => (
+            <a
+              key={s.id}
+              href={`#${s.id}`}
+              className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:border-[#0066EF] hover:text-[#0052C4]"
+            >
+              {s.label}
+            </a>
+          ))}
+        </nav>
+
+        <div className="mt-10 space-y-10">
+          {/* ── Mentions légales ─────────────────────────────── */}
+          <section className="space-y-3 rounded-2xl border border-slate-200 bg-white p-6">
+            <H2 id="mentions">1. Mentions légales</H2>
+            <P>
+              <strong>Éditeur :</strong> RoomScan — plateforme SaaS de conciergerie digitale
+              pour hôtes de locations courte durée, éditée et hébergée sur le domaine roomscan.pro.
+            </P>
+            <P>
+              <strong>Contact :</strong>{' '}
+              <a className="font-semibold text-[#0052C4] hover:underline" href="mailto:contact@roomscan.pro">
+                contact@roomscan.pro
+              </a>{' '}
+              — réponse sous 24 h, 7j/7.
+            </P>
+            <P>
+              <strong>Directeur de la publication :</strong> l‘éditeur de la plateforme.
+              <br />
+              <strong>Hébergement :</strong> infrastructure cloud sécurisée (Union européenne).
+            </P>
+            <P className="text-sm text-slate-500">
+              Note : les informations d‘immatriculation (SIREN, RCS, capital social) sont à compléter
+              par l‘exploitant avant mise en production commerciale.
+            </P>
+          </section>
+
+          {/* ── CGU ──────────────────────────────────────────── */}
+          <section className="space-y-3 rounded-2xl border border-slate-200 bg-white p-6">
+            <H2 id="cgu">2. Conditions générales d‘utilisation</H2>
+            <P>
+              <strong>2.1 Objet.</strong> RoomScan permet aux hôtes de créer un hub digital
+              accessible par plaque QR (Wi-Fi, guide d’arrivée, check-out, prestataires, upselling) et
+              à leurs invités de consulter ces informations, sans installation d‘application.
+            </P>
+            <P>
+              <strong>2.2 Comptes.</strong> L‘hôte garantit l‘exactitude des informations fournies à
+              l‘inscription et garde ses identifiants secrets. L‘invité accède au hub via la plaque QR
+              ou le lien partagé par l‘hôte, sans compte requis.
+            </P>
+            <P>
+              <strong>2.3 Responsabilités.</strong> L‘hôte est seul responsable du contenu publié dans
+              son hub (informations pratiques, photos, prix de services). La plateforme fournit un
+              service technique « en continu » (best efforts) et ne garantit pas la disponibilité des
+              services tiers référencés (prestataires, billetteries, cartographie).
+            </P>
+            <P>
+              <strong>2.4 Abonnements.</strong> Les plans payants (Solo, Pro) sont sans engagement de
+              durée et résiliables à tout moment ; l‘accès reste actif jusqu‘à la fin de la période
+              réglée.
+            </P>
+            <P>
+              <strong>2.5 Usage acceptable.</strong> Sont interdits : contenus illicites ou diffamatoires,
+              contournement des mesures de sécurité, collecte automatisée de données, usage pour
+              porter atteinte aux invités ou aux tiers.
+            </P>
+          </section>
+
+          {/* ── Confidentialité ──────────────────────────────── */}
+          <section className="space-y-3 rounded-2xl border border-slate-200 bg-white p-6">
+            <H2 id="confidentialite">3. Politique de confidentialité (RGPD)</H2>
+            <P>
+              <strong>3.1 Données collectées.</strong> Comptes hôtes (nom, e-mail, mot de passe haché),
+              biens et contenus de hub, commandes de services et paiements (traités par Stripe — aucune
+              carte bancaire n‘est stockée sur nos serveurs), mesures techniques anonymisées
+              (journalisation, détection d‘erreurs).
+            </P>
+            <P>
+              <strong>3.2 Finalités.</strong> Fournir le service, facturer les abonnements, assister les
+              utilisateurs (support, tickets), améliorer la fiabilité. Pas de revente de données, pas de
+              publicité ciblée.
+            </P>
+            <P>
+              <strong>3.3 Durées de conservation.</strong> Données de compte : pendant la durée de
+              l‘abonnement puis 12 mois ; factures : 10 ans (obligation légale) ; journaux techniques :
+              12 mois maximum.
+            </P>
+            <P>
+              <strong>3.4 Vos droits.</strong> Accès, rectification, effacement, portabilité,
+              opposition et limitation — par simple demande à{' '}
+              <a className="font-semibold text-[#0052C4] hover:underline" href="mailto:contact@roomscan.pro">
+                contact@roomscan.pro
+              </a>
+              , traitée sous 30 jours. Vous pouvez aussi saisir la CNIL (cnil.fr).
+            </P>
+            <P>
+              <strong>3.5 Cookies.</strong> Un cookie de session strictement nécessaire (authentification)
+              est utilisé. Aucun cookie publicitaire ni traceur tiers.
+            </P>
+          </section>
+        </div>
+      </main>
+
+      <footer className="mt-auto border-t border-slate-200 bg-white">
+        <div className="mx-auto flex max-w-4xl flex-col items-center justify-between gap-2 px-4 py-6 text-sm text-slate-500 sm:flex-row sm:px-6">
+          <p>
+            © {new Date().getFullYear()} RoomScan — roomscan.pro. Tous droits réservés.
+          </p>
+          <p>Dernière mise à jour : octobre 2026</p>
+        </div>
+      </footer>
+    </div>
+  );
+}

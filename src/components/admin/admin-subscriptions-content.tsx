@@ -5,15 +5,14 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { toast } from 'sonner';
 import {
-  CreditCard,
-  FileText,
-  Loader2,
-  RefreshCw,
-  TicketPercent,
-  XCircle,
-} from 'lucide-react';
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { HOST_PLANS } from '@/lib/billing';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -31,7 +30,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -96,11 +94,11 @@ interface SubsStats {
   byPlan: { plan: string; count: number }[];
 }
 
-const STATUS_LABEL: Record<string, { label: string; className: string }> = {
-  active: { label: 'Actif', className: 'bg-emerald-100 text-emerald-800' },
-  past_due: { label: 'Impayé', className: 'bg-amber-100 text-amber-800' },
-  cancelled: { label: 'Annulé', className: 'bg-slate-100 text-slate-600' },
-  trialing: { label: 'Essai', className: 'bg-sky-100 text-sky-800' },
+const STATUS_LABEL: Record<string, { label: string; dot: string }> = {
+  active: { label: 'Actif', dot: '#34d399' },
+  past_due: { label: 'Impayé', dot: '#fbbf24' },
+  cancelled: { label: 'Annulé', dot: '#8fa0c2' },
+  trialing: { label: 'Essai', dot: '#5c8af0' },
 };
 
 export function AdminSubscriptionsContent() {
@@ -166,6 +164,67 @@ export function AdminSubscriptionsContent() {
     }
   };
 
+  // ── v4.71 — ÉDITION D'UN ABONNEMENT (plan / cycle / montant / statut) ──
+  const [editSub, setEditSub] = useState<SubRow | null>(null);
+  const [editForm, setEditForm] = useState({
+    plan: 'airbnb_solo',
+    billingCycle: 'annual',
+    amount: '',
+    status: 'active',
+  });
+  const [editBusy, setEditBusy] = useState(false);
+
+  const openEdit = (sub: SubRow) => {
+    const isHostPlan = HOST_PLANS.some((p) => p.id === sub.plan);
+    setEditSub(sub);
+    setEditForm({
+      plan: isHostPlan ? sub.plan : 'custom',
+      billingCycle: sub.billingCycle === 'monthly' ? 'monthly' : 'annual',
+      amount: sub.amount.toFixed(2),
+      status: sub.status,
+    });
+  };
+
+  /** Prix du plan × cycle (recalcul immédiat côté serveur via HOST_PLANS). */
+  const editPricePreview = (): { price: number | null; cycle: string } | null => {
+    const hp = HOST_PLANS.find((p) => p.id === editForm.plan);
+    if (!hp) return null;
+    const cycle = editForm.billingCycle === 'monthly' ? 'monthly' : 'annual';
+    return { price: hp.prices[cycle] ?? hp.prices.annual, cycle: hp.prices[cycle] != null ? cycle : 'annual' };
+  };
+
+  const saveEdit = async () => {
+    if (!editSub) return;
+    setEditBusy(true);
+    try {
+      const body: Record<string, unknown> = { status: editForm.status };
+      if (editForm.plan === 'custom') {
+        const amount = Number(editForm.amount.replace(',', '.'));
+        if (!Number.isFinite(amount) || amount < 0) throw new Error('Montant invalide');
+        body.plan = 'custom';
+        body.amount = amount;
+        body.billingCycle = editForm.billingCycle;
+      } else {
+        body.plan = editForm.plan;
+        body.billingCycle = editPricePreview()?.cycle ?? editForm.billingCycle;
+      }
+      const res = await fetch(`/api/admin/subscriptions/${editSub.id}?action=edit`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Erreur serveur');
+      toast.success(data.message || 'Abonnement mis à jour');
+      setEditSub(null);
+      fetchSubs();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erreur inconnue');
+    } finally {
+      setEditBusy(false);
+    }
+  };
+
   const createCoupon = async () => {
     setCouponBusy(true);
     try {
@@ -210,39 +269,40 @@ export function AdminSubscriptionsContent() {
       {/* ----- KPIs réels ----- */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {[
-          { label: 'MRR (revenu mensuel récurrent)', value: stats ? `${stats.mrrEur.toFixed(2)} €` : undefined, emoji: '💰' },
-          { label: 'ARR (projections 12 mois)', value: stats ? `${stats.arrEur.toFixed(2)} €` : undefined, emoji: '📈' },
-          { label: 'Abonnements actifs', value: stats?.activeCount, emoji: '✅' },
-          { label: 'Impayés / churn 30 j', value: stats ? `${stats.pastDueCount} / ${stats.cancelled30d}` : undefined, emoji: '⚠️' },
+          { label: 'MRR (revenu mensuel récurrent)', value: stats ? `${stats.mrrEur.toFixed(2)} €` : undefined, tone: 'luxkpi-gold' },
+          { label: 'ARR (projections 12 mois)', value: stats ? `${stats.arrEur.toFixed(2)} €` : undefined, tone: 'luxkpi-sapphire' },
+          { label: 'Abonnements actifs', value: stats?.activeCount, tone: 'luxkpi-emerald' },
+          { label: 'Impayés / churn 30 j', value: stats ? `${stats.pastDueCount} / ${stats.cancelled30d}` : undefined, tone: 'luxkpi-coral' },
         ].map((kpi) => (
-          <Card key={kpi.label} className="border-slate-200 bg-white">
-            <CardContent className="p-4">
-              <p aria-hidden="true" className="text-lg">{kpi.emoji}</p>
-              <div className="mt-1 text-xl font-extrabold text-slate-900 sm:text-2xl">
-                {kpi.value === undefined ? <Skeleton className="h-7 w-20" /> : kpi.value}
-              </div>
-              <p className="mt-0.5 text-xs text-slate-500">{kpi.label}</p>
-            </CardContent>
-          </Card>
+          <div key={kpi.label} className={`luxkpi ${kpi.tone}`}>
+            <span className="luxkpi-label">{kpi.label}</span>
+            <div className="luxkpi-value mt-2.5 text-[24px] leading-none sm:text-[27px]">
+              {kpi.value === undefined ? (
+                <span className="block h-7 w-24 animate-pulse rounded-lg bg-white/10" aria-hidden="true" />
+              ) : (
+                kpi.value
+              )}
+            </div>
+          </div>
         ))}
       </div>
 
-      <Card className="border-slate-200 bg-white">
-        <CardContent className="p-0">
+      <div className="lux-card overflow-hidden">
+        <div className="p-0">
           <Tabs defaultValue="abonnements" className="gap-0">
-            <div className="border-b border-slate-100 px-4 pt-4 sm:px-6">
-              <TabsList className="h-auto flex-wrap justify-start gap-1 bg-slate-100 p-1">
-                <TabsTrigger value="abonnements" className="gap-1.5">
-                  <CreditCard className="h-4 w-4" /> Abonnements
+            <div className="border-b border-white/8 px-4 pt-4 sm:px-6">
+              <TabsList className="h-auto flex-wrap justify-start gap-1 rounded-full border border-white/10 bg-white/[0.04] p-1">
+                <TabsTrigger value="abonnements" className="rounded-full text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fa0c2] data-[state=active]:bg-white/10 data-[state=active]:text-white">
+                  Abonnements
                 </TabsTrigger>
-                <TabsTrigger value="factures" className="gap-1.5">
-                  <FileText className="h-4 w-4" /> Factures
+                <TabsTrigger value="factures" className="rounded-full text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fa0c2] data-[state=active]:bg-white/10 data-[state=active]:text-white">
+                  Factures
                 </TabsTrigger>
-                <TabsTrigger value="coupons" className="gap-1.5">
-                  <TicketPercent className="h-4 w-4" /> Coupons
+                <TabsTrigger value="coupons" className="rounded-full text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fa0c2] data-[state=active]:bg-white/10 data-[state=active]:text-white">
+                  Coupons
                 </TabsTrigger>
-                <TabsTrigger value="packs" className="gap-1.5">
-                  📦 Packs & Config
+                <TabsTrigger value="packs" className="rounded-full text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fa0c2] data-[state=active]:bg-white/10 data-[state=active]:text-white">
+                  Packs &amp; Config
                 </TabsTrigger>
               </TabsList>
             </div>
@@ -254,63 +314,69 @@ export function AdminSubscriptionsContent() {
               ) : subs.length === 0 ? (
                 <EmptyState text="Aucun abonnement en base — les abonnements apparaissent dès le premier paiement (Stripe ou démo)." />
               ) : (
-                <div className="overflow-x-auto rounded-lg border">
+                <div className="overflow-x-auto rounded-xl border border-white/10">
                   <Table>
                     <TableHeader>
-                      <TableRow>
-                        <TableHead>Souscripteur</TableHead>
-                        <TableHead>Plan</TableHead>
-                        <TableHead>Montant</TableHead>
-                        <TableHead className="hidden md:table-cell">Statut</TableHead>
-                        <TableHead className="hidden lg:table-cell">Fin de période</TableHead>
-                        <TableHead className="hidden xl:table-cell">Créé le</TableHead>
+                      <TableRow className="border-white/8">
+                        <TableHead className="lux-eyebrow !text-[9.5px]">Souscripteur</TableHead>
+                        <TableHead className="lux-eyebrow !text-[9.5px]">Plan</TableHead>
+                        <TableHead className="lux-eyebrow !text-[9.5px]">Montant</TableHead>
+                        <TableHead className="lux-eyebrow !text-[9.5px] hidden md:table-cell">Statut</TableHead>
+                        <TableHead className="lux-eyebrow !text-[9.5px] hidden lg:table-cell">Fin de période</TableHead>
+                        <TableHead className="lux-eyebrow !text-[9.5px] hidden xl:table-cell">Créé le</TableHead>
                         <TableHead className="w-12"><span className="sr-only">Actions</span></TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {subs.map((s) => {
-                        const st = STATUS_LABEL[s.status] ?? { label: s.status, className: 'bg-slate-100 text-slate-600' };
+                        const st = STATUS_LABEL[s.status] ?? { label: s.status, dot: '#8fa0c2' };
                         return (
-                          <TableRow key={s.id}>
+                          <TableRow key={s.id} className="border-white/8 hover:bg-white/[0.04]">
                             <TableCell>
-                              <p className="font-semibold text-slate-900">{s.subscriber.name}</p>
-                              <p className="text-xs text-slate-500">
+                              <p className="font-semibold text-white">{s.subscriber.name}</p>
+                              <p className="text-xs text-[#8fa0c2]">
                                 {s.subscriber.type === 'user' ? s.subscriber.email : s.subscriber.type}
                               </p>
                             </TableCell>
                             <TableCell>
-                              <Badge variant="outline" className="border-slate-300 text-slate-700">{s.plan}</Badge>
+                              <span className="lux-chip">{s.plan}</span>
                             </TableCell>
                             <TableCell className="text-sm">
-                              <span className="font-semibold">{s.amount.toFixed(2)} €</span>
-                              <span className="text-slate-500"> / {s.billingCycle === 'monthly' ? 'mois' : 'an'}</span>
+                              <span className="lux-num font-semibold text-white">{s.amount.toFixed(2)} €</span>
+                              <span className="text-[#8fa0c2]"> / {s.billingCycle === 'monthly' ? 'mois' : 'an'}</span>
                             </TableCell>
                             <TableCell className="hidden md:table-cell">
-                              <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-bold ${st.className}`}>
+                              <span className="lux-chip">
+                                <span className="lux-dot" style={{ backgroundColor: st.dot }} aria-hidden="true" />
                                 {st.label}
                               </span>
                             </TableCell>
-                            <TableCell className="hidden text-sm text-slate-500 lg:table-cell">
+                            <TableCell className="hidden text-sm text-[#8fa0c2] lg:table-cell">
                               {s.currentPeriodEnd ? format(new Date(s.currentPeriodEnd), 'dd MMM yyyy', { locale: fr }) : '—'}
                             </TableCell>
-                            <TableCell className="hidden text-sm text-slate-500 xl:table-cell">
+                            <TableCell className="hidden text-sm text-[#8fa0c2] xl:table-cell">
                               {format(new Date(s.createdAt), 'dd MMM yyyy', { locale: fr })}
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center justify-end gap-1">
-                                {busyId === s.id && <Loader2 className="h-4 w-4 animate-spin text-slate-400" />}
+                                {/* v4.71 — Modifier (plan / cycle / montant / statut) */}
+                                <Button variant="ghost" size="sm" className="h-8 rounded-full px-2.5 text-[11px] font-semibold text-[#8fa0c2] hover:bg-white/8 hover:text-white"
+                                  onClick={() => openEdit(s)} disabled={busyId === s.id}
+                                  aria-label="Modifier cet abonnement">
+                                  Modifier
+                                </Button>
                                 {s.status === 'active' && (
-                                  <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700"
+                                  <Button variant="ghost" size="sm" className="h-8 rounded-full px-2.5 text-[11px] font-semibold text-[#f07d6a] hover:bg-[#f07d6a]/10 hover:text-[#f07d6a]"
                                     onClick={() => subAction(s, 'cancel')} disabled={busyId === s.id}
                                     aria-label="Annuler cet abonnement">
-                                    <XCircle className="h-4 w-4" />
+                                    Annuler
                                   </Button>
                                 )}
                                 {s.status !== 'active' && (
-                                  <Button variant="ghost" size="sm" className="text-emerald-700 hover:text-emerald-800"
+                                  <Button variant="ghost" size="sm" className="h-8 rounded-full px-2.5 text-[11px] font-semibold text-[#5c8af0] hover:bg-[#5c8af0]/10 hover:text-[#a9c4ff]"
                                     onClick={() => subAction(s, 'reactivate')} disabled={busyId === s.id}
                                     aria-label="Réactiver cet abonnement">
-                                    <RefreshCw className="h-4 w-4" />
+                                    Réactiver
                                   </Button>
                                 )}
                               </div>
@@ -329,31 +395,36 @@ export function AdminSubscriptionsContent() {
               {invoices.length === 0 ? (
                 <EmptyState text="Aucune facture — les paiements d'abonnement (webhook Stripe / démo) y apparaissent." />
               ) : (
-                <div className="max-h-96 overflow-y-auto rounded-lg border">
+                <div className="lux-scroll max-h-96 overflow-y-auto rounded-xl border border-white/10">
                   <Table>
-                    <TableHeader className="sticky top-0 bg-white">
-                      <TableRow>
-                        <TableHead>Facture</TableHead>
-                        <TableHead>Montant</TableHead>
-                        <TableHead>Statut</TableHead>
-                        <TableHead className="hidden sm:table-cell">Référence Stripe</TableHead>
-                        <TableHead>Date</TableHead>
+                    <TableHeader className="sticky top-0 z-10 bg-[#0d1530]">
+                      <TableRow className="border-white/8">
+                        <TableHead className="lux-eyebrow !text-[9.5px]">Facture</TableHead>
+                        <TableHead className="lux-eyebrow !text-[9.5px]">Montant</TableHead>
+                        <TableHead className="lux-eyebrow !text-[9.5px]">Statut</TableHead>
+                        <TableHead className="lux-eyebrow !text-[9.5px] hidden sm:table-cell">Référence Stripe</TableHead>
+                        <TableHead className="lux-eyebrow !text-[9.5px]">Date</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {invoices.map((i) => (
-                        <TableRow key={i.id}>
-                          <TableCell className="font-mono text-xs">#{i.id.slice(0, 8)}</TableCell>
-                          <TableCell className="text-sm font-semibold">{i.amount.toFixed(2)} €</TableCell>
+                        <TableRow key={i.id} className="border-white/8 hover:bg-white/[0.04]">
+                          <TableCell className="font-mono text-xs text-white">#{i.id.slice(0, 8)}</TableCell>
+                          <TableCell className="lux-num text-sm font-semibold text-white">{i.amount.toFixed(2)} €</TableCell>
                           <TableCell>
-                            <Badge variant={i.status === 'completed' || i.status === 'PAID' ? 'default' : 'outline'}>
+                            <span className="lux-chip">
+                              <span
+                                className="lux-dot"
+                                style={{ backgroundColor: i.status === 'completed' || i.status === 'PAID' ? '#34d399' : '#8fa0c2' }}
+                                aria-hidden="true"
+                              />
                               {i.status}
-                            </Badge>
+                            </span>
                           </TableCell>
-                          <TableCell className="hidden font-mono text-xs text-slate-500 sm:table-cell">
+                          <TableCell className="hidden font-mono text-xs text-[#8fa0c2] sm:table-cell">
                             {i.stripePaymentId ?? '—'}
                           </TableCell>
-                          <TableCell className="text-sm text-slate-500">
+                          <TableCell className="text-sm text-[#8fa0c2]">
                             {format(new Date(i.createdAt), 'dd MMM yyyy HH:mm', { locale: fr })}
                           </TableCell>
                         </TableRow>
@@ -367,9 +438,9 @@ export function AdminSubscriptionsContent() {
             {/* ----- Onglet Coupons ----- */}
             <TabsContent value="coupons" className="p-4 sm:p-6">
               <div className="mb-4 flex items-center justify-between">
-                <p className="text-sm text-slate-500">Coupons marketplace — réductions et scans réels.</p>
-                <Button size="sm" onClick={() => setCouponDialog(true)}>
-                  <TicketPercent className="mr-2 h-4 w-4" /> Nouveau coupon
+                <p className="text-sm text-[#8fa0c2]">Coupons marketplace — réductions et scans réels.</p>
+                <Button size="sm" className="lux-btn h-9 rounded-full px-4 text-xs" onClick={() => setCouponDialog(true)}>
+                  Nouveau coupon
                 </Button>
               </div>
               {couponsLoading ? (
@@ -377,41 +448,48 @@ export function AdminSubscriptionsContent() {
               ) : coupons.length === 0 ? (
                 <EmptyState text="Aucun coupon en base." />
               ) : (
-                <div className="max-h-96 overflow-y-auto rounded-lg border">
+                <div className="lux-scroll max-h-96 overflow-y-auto rounded-xl border border-white/10">
                   <Table>
-                    <TableHeader className="sticky top-0 bg-white">
-                      <TableRow>
-                        <TableHead>Code</TableHead>
-                        <TableHead>Réduction</TableHead>
-                        <TableHead>Usage</TableHead>
-                        <TableHead className="hidden sm:table-cell">Marchand</TableHead>
-                        <TableHead>Statut</TableHead>
+                    <TableHeader className="sticky top-0 z-10 bg-[#0d1530]">
+                      <TableRow className="border-white/8">
+                        <TableHead className="lux-eyebrow !text-[9.5px]">Code</TableHead>
+                        <TableHead className="lux-eyebrow !text-[9.5px]">Réduction</TableHead>
+                        <TableHead className="lux-eyebrow !text-[9.5px]">Usage</TableHead>
+                        <TableHead className="lux-eyebrow !text-[9.5px] hidden sm:table-cell">Marchand</TableHead>
+                        <TableHead className="lux-eyebrow !text-[9.5px]">Statut</TableHead>
                         <TableHead className="w-12"><span className="sr-only">Actions</span></TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {coupons.map((c) => (
-                        <TableRow key={c.id}>
-                          <TableCell className="font-mono text-sm font-bold">{c.code}</TableCell>
-                          <TableCell className="text-sm">
+                        <TableRow key={c.id} className="border-white/8 hover:bg-white/[0.04]">
+                          <TableCell className="font-mono text-sm font-bold text-[#e9c47c]">{c.code}</TableCell>
+                          <TableCell className="lux-num text-sm text-white">
                             {c.discountType === 'percentage'
                               ? `-${c.discountValue}%`
                               : c.discountType === 'fixed'
                                 ? `-${c.discountValue.toFixed(2)} €`
                                 : 'BOGO'}
                           </TableCell>
-                          <TableCell className="text-xs text-slate-500">
+                          <TableCell className="text-xs text-[#8fa0c2]">
                             {c.currentUses}/{c.maxUses} · {c.scans} scan{c.scans > 1 ? 's' : ''}
                           </TableCell>
-                          <TableCell className="hidden text-sm sm:table-cell">{c.merchantName}</TableCell>
+                          <TableCell className="hidden text-sm text-white/85 sm:table-cell">{c.merchantName}</TableCell>
                           <TableCell>
-                            <Badge variant={c.status === 'active' ? 'default' : 'outline'}>{c.status}</Badge>
+                            <span className="lux-chip">
+                              <span
+                                className="lux-dot"
+                                style={{ backgroundColor: c.status === 'active' ? '#34d399' : '#8fa0c2' }}
+                                aria-hidden="true"
+                              />
+                              {c.status}
+                            </span>
                           </TableCell>
                           <TableCell>
                             {c.status === 'active' && (
-                              <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700"
+                              <Button variant="ghost" size="sm" className="h-8 w-8 rounded-full p-0 text-[#f07d6a] hover:bg-[#f07d6a]/10 hover:text-[#f07d6a]"
                                 onClick={() => cancelCoupon(c)} aria-label={`Annuler le coupon ${c.code}`}>
-                                <XCircle className="h-4 w-4" />
+                                <span aria-hidden="true">×</span>
                               </Button>
                             )}
                           </TableCell>
@@ -428,30 +506,31 @@ export function AdminSubscriptionsContent() {
               <AdminPacks />
             </TabsContent>
           </Tabs>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* ----- Dialog création coupon ----- */}
       <Dialog open={couponDialog} onOpenChange={setCouponDialog}>
-        <DialogContent>
+        <DialogContent className="border-white/10 bg-[#0b1226] text-white">
           <DialogHeader>
-            <DialogTitle>Nouveau coupon marketplace</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="lux-display text-lg text-white">Nouveau coupon marketplace</DialogTitle>
+            <DialogDescription className="text-[#8fa0c2]">
               Code généré automatiquement si vide (format HUB-XXXXXXXX).
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-2">
             <div className="grid gap-2">
-              <Label htmlFor="coupon-code">Code (optionnel)</Label>
+              <Label htmlFor="coupon-code" className="text-[#8fa0c2]">Code (optionnel)</Label>
               <Input id="coupon-code" placeholder="HUB-XXXXXX" value={couponForm.code}
+                className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
                 onChange={(e) => setCouponForm((f) => ({ ...f, code: e.target.value.toUpperCase() }))} />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-2">
-                <Label htmlFor="coupon-type">Type</Label>
+                <Label htmlFor="coupon-type" className="text-[#8fa0c2]">Type</Label>
                 <select
                   id="coupon-type"
-                  className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                  className="h-9 rounded-xl border border-white/12 bg-[#0b1226] px-3 text-sm text-white [&>option]:bg-[#0b1226] [&>option]:text-white"
                   value={couponForm.discountType}
                   onChange={(e) => setCouponForm((f) => ({ ...f, discountType: e.target.value }))}
                 >
@@ -460,28 +539,142 @@ export function AdminSubscriptionsContent() {
                 </select>
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="coupon-value">Valeur</Label>
+                <Label htmlFor="coupon-value" className="text-[#8fa0c2]">Valeur</Label>
                 <Input id="coupon-value" type="number" min="1" value={couponForm.discountValue}
+                  className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
                   onChange={(e) => setCouponForm((f) => ({ ...f, discountValue: e.target.value }))} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-2">
-                <Label htmlFor="coupon-uses">Utilisations max</Label>
+                <Label htmlFor="coupon-uses" className="text-[#8fa0c2]">Utilisations max</Label>
                 <Input id="coupon-uses" type="number" min="1" value={couponForm.maxUses}
+                  className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
                   onChange={(e) => setCouponForm((f) => ({ ...f, maxUses: e.target.value }))} />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="coupon-commission">Commission (%)</Label>
+                <Label htmlFor="coupon-commission" className="text-[#8fa0c2]">Commission (%)</Label>
                 <Input id="coupon-commission" type="number" min="0" max="100" value={couponForm.commissionRate}
+                  className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
                   onChange={(e) => setCouponForm((f) => ({ ...f, commissionRate: e.target.value }))} />
               </div>
             </div>
           </div>
           <DialogFooter>
-            <Button onClick={createCoupon} disabled={couponBusy}>
-              {couponBusy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <Button onClick={createCoupon} disabled={couponBusy} className="lux-btn h-9 rounded-full px-4 text-xs">
               Créer le coupon
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── v4.71 — Dialog « Modifier l'abonnement » ── */}
+      <Dialog open={!!editSub} onOpenChange={(v) => !v && setEditSub(null)}>
+        <DialogContent className="max-w-md rounded-2xl border-white/10 bg-[#0b1226] text-white">
+          <DialogHeader>
+            <DialogTitle className="lux-display text-lg text-white">Modifier l'abonnement</DialogTitle>
+            <DialogDescription className="text-[#8fa0c2]">
+              {editSub
+                ? `${editSub.subscriber.name}${editSub.subscriber.email ? ` — ${editSub.subscriber.email}` : ''} · plan actuel : ${editSub.plan}`
+                : ''}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {/* Plan */}
+            <div className="space-y-1.5">
+              <Label htmlFor="edit-plan" className="text-[#8fa0c2]">Plan</Label>
+              <Select
+                value={editForm.plan}
+                onValueChange={(v) => {
+                  const hp = HOST_PLANS.find((p) => p.id === v);
+                  const cycle = editForm.billingCycle === 'monthly' ? 'monthly' : 'annual';
+                  setEditForm((f) => ({
+                    ...f,
+                    plan: v,
+                    amount: hp ? String(hp.prices[cycle] ?? hp.prices.annual) : f.amount,
+                  }));
+                }}
+              >
+                <SelectTrigger id="edit-plan" className="rounded-xl border-white/12 bg-white/[0.04] text-white"><SelectValue /></SelectTrigger>
+                <SelectContent className="border-white/10 bg-[#0b1226] text-white">
+                  {HOST_PLANS.map((p) => (
+                    <SelectItem key={p.id} className="focus:bg-white/8 focus:text-white" value={p.id}>
+                      {p.name} — {p.maxProperties} bien{p.maxProperties > 1 ? 's' : ''}
+                    </SelectItem>
+                  ))}
+                  <SelectItem className="focus:bg-white/8 focus:text-white" value="custom">Personnalisé (montant libre)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {/* Cycle */}
+            <div className="space-y-1.5">
+              <Label htmlFor="edit-cycle" className="text-[#8fa0c2]">Cycle de facturation</Label>
+              <Select
+                value={editForm.billingCycle}
+                onValueChange={(v) => {
+                  const hp = HOST_PLANS.find((p) => p.id === editForm.plan);
+                  setEditForm((f) => ({
+                    ...f,
+                    billingCycle: v,
+                    ...(hp ? { amount: String(hp.prices[v as 'monthly' | 'annual'] ?? hp.prices.annual) } : {}),
+                  }));
+                }}
+              >
+                <SelectTrigger id="edit-cycle" className="rounded-xl border-white/12 bg-white/[0.04] text-white"><SelectValue /></SelectTrigger>
+                <SelectContent className="border-white/10 bg-[#0b1226] text-white">
+                  <SelectItem className="focus:bg-white/8 focus:text-white" value="monthly">Mensuel</SelectItem>
+                  <SelectItem className="focus:bg-white/8 focus:text-white" value="annual">Annuel</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {/* Montant (custom uniquement) */}
+            {editForm.plan === 'custom' && (
+              <div className="space-y-1.5">
+                <Label htmlFor="edit-amount" className="text-[#8fa0c2]">Montant (€ / cycle)</Label>
+                <Input
+                  id="edit-amount"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={editForm.amount}
+                  onChange={(e) => setEditForm((f) => ({ ...f, amount: e.target.value }))}
+                  className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+                />
+              </div>
+            )}
+            {/* Statut */}
+            <div className="space-y-1.5">
+              <Label htmlFor="edit-status" className="text-[#8fa0c2]">Statut</Label>
+              <Select
+                value={editForm.status}
+                onValueChange={(v) => setEditForm((f) => ({ ...f, status: v }))}
+              >
+                <SelectTrigger id="edit-status" className="rounded-xl border-white/12 bg-white/[0.04] text-white"><SelectValue /></SelectTrigger>
+                <SelectContent className="border-white/10 bg-[#0b1226] text-white">
+                  <SelectItem className="focus:bg-white/8 focus:text-white" value="active">Actif</SelectItem>
+                  <SelectItem className="focus:bg-white/8 focus:text-white" value="trialing">Essai</SelectItem>
+                  <SelectItem className="focus:bg-white/8 focus:text-white" value="past_due">Impayé</SelectItem>
+                  <SelectItem className="focus:bg-white/8 focus:text-white" value="cancelled">Annulé</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {/* Aperçu prix recalculé */}
+            {editForm.plan !== 'custom' && editPricePreview() && (
+              <p className="rounded-xl border border-[#5c8af0]/25 bg-[#5c8af0]/8 px-3 py-2 text-xs font-semibold text-[#a9c4ff]">
+                Prix recalculé immédiatement :{' '}
+                <span className="lux-num font-bold text-white">
+                  {(editPricePreview()!.price ?? 0).toFixed(2)} € / {editPricePreview()!.cycle === 'monthly' ? 'mois' : 'an'}
+                </span>{' '}
+                · {HOST_PLANS.find((p) => p.id === editForm.plan)?.maxProperties} bien(s) inclus
+              </p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" className="lux-btn-ghost h-9 rounded-full px-4 text-xs" onClick={() => setEditSub(null)} disabled={editBusy}>
+              Annuler
+            </Button>
+            <Button onClick={saveEdit} disabled={editBusy} className="lux-btn h-9 rounded-full px-4 text-xs">
+              Enregistrer
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -492,9 +685,8 @@ export function AdminSubscriptionsContent() {
 
 function EmptyState({ text }: { text: string }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-12 text-center">
-      <FileText className="mb-3 h-10 w-10 text-slate-300" />
-      <p className="max-w-md text-sm text-slate-500">{text}</p>
+    <div className="lux-empty rounded-xl px-4 py-12 text-center">
+      <p className="mx-auto max-w-md text-sm text-[#8fa0c2]">{text}</p>
     </div>
   );
 }
@@ -503,7 +695,7 @@ function TableSkeletonRows() {
   return (
     <div className="space-y-3">
       {Array.from({ length: 5 }).map((_, i) => (
-        <Skeleton key={i} className="h-12 w-full" />
+        <Skeleton key={i} className="h-12 w-full bg-white/8" />
       ))}
     </div>
   );

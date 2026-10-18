@@ -57,7 +57,7 @@ export default async function ProviderPage() {
         <NoProfileCard
           emoji="🧰"
           title="Aucun profil prestataire"
-          description="Ce compte n'est pas rattaché à un prestataire. Le portail est réservé aux partenaires de Conciergerie Hub (ménage, plomberie, chef à domicile, transferts…). Si vous êtes un hôte, rendez-vous sur l'Espace Hôte."
+          description="Ce compte n'est pas rattaché à un prestataire. Le portail est réservé aux partenaires de RoomScan (ménage, plomberie, chef à domicile, transferts…). Si vous êtes un hôte, rendez-vous sur l'Espace Hôte."
         />
       </ProviderShell>
     );
@@ -86,7 +86,7 @@ function ProviderShell({ children }: { children: React.ReactNode }) {
       <footer className="mt-auto bg-white border-t border-slate-200 py-4">
         <div className="max-w-6xl mx-auto w-full px-4 flex items-center justify-between gap-2">
           <BrandLogo size="sm" />
-          <p className="text-xs text-slate-400">Conciergerie Hub — Portail Prestataire</p>
+          <p className="text-xs text-slate-400">RoomScan — Portail Prestataire</p>
         </div>
       </footer>
     </div>

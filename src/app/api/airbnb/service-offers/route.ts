@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { mutationGuard, mutationKey } from '@/lib/mutation-guard';
 import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { canAccessProperty } from '@/lib/b2b-server';
+import { canAccessProperty, canManageFinance } from '@/lib/b2b-server';
 import { round2 } from '@/lib/orders';
 
 // =============================================================
@@ -37,7 +37,7 @@ function validateOfferFields(body: Record<string, unknown>) {
 
   if ('name' in body) {
     const name = typeof body.name === 'string' ? body.name.trim() : '';
-    if (name.length < 1 || name.length > 80) return { error: 'Le nom de l\u2019offre doit contenir entre 1 et 80 caractères.' };
+    if (name.length < 1 || name.length > 80) return { error: 'Le nom de l’offre doit contenir entre 1 et 80 caractères.' };
     out.name = name;
   }
   if ('description' in body) {
@@ -57,7 +57,7 @@ function validateOfferFields(body: Record<string, unknown>) {
   }
   if ('unit' in body) {
     const u = typeof body.unit === 'string' && body.unit.trim() ? body.unit.trim() : 'prestation';
-    if (u.length > 30) return { error: 'L\u2019unité est trop longue (30 caractères max).' };
+    if (u.length > 30) return { error: 'L’unité est trop longue (30 caractères max).' };
     out.unit = u;
   }
   if ('isActive' in body) {
@@ -130,6 +130,11 @@ export async function POST(req: NextRequest) {
     if (!(await canAccessProperty(userId, propertyId))) {
       return NextResponse.json({ error: 'Accès refusé' }, { status: 403 });
     }
+    // AUDIT PRÉ-PROD — le catalogue fixe LES PRIX (autorité de facturation)
+    // → OWNER/MANAGER uniquement (un CLEANER/MAINTENANCE ne touche pas aux tarifs).
+    if (!(await canManageFinance(userId, propertyId))) {
+      return NextResponse.json({ error: "Accès refusé : gestion du catalogue réservée à l'hôte et au manager." }, { status: 403 });
+    }
 
     const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
     if (!body) {
@@ -146,7 +151,7 @@ export async function POST(req: NextRequest) {
       : null;
     if (!provider) {
       return NextResponse.json(
-        { error: 'Ce prestataire n\u2019est pas une expérience invité disponible.' },
+        { error: 'Ce prestataire n’est pas une expérience invité disponible.' },
         { status: 400 },
       );
     }
@@ -157,7 +162,7 @@ export async function POST(req: NextRequest) {
     }
     const fields = v.fields ?? {};
     if (!fields.name || fields.unitPrice === undefined) {
-      return NextResponse.json({ error: 'Nom et prix de l\u2019offre requis.' }, { status: 400 });
+      return NextResponse.json({ error: 'Nom et prix de l’offre requis.' }, { status: 400 });
     }
 
     try {
@@ -215,6 +220,10 @@ export async function PATCH(req: NextRequest) {
     }
     if (!(await canAccessProperty(userId, offer.propertyId))) {
       return NextResponse.json({ error: 'Accès refusé' }, { status: 403 });
+    }
+    // AUDIT PRÉ-PROD — modification/suppression de tarif → OWNER/MANAGER.
+    if (!(await canManageFinance(userId, offer.propertyId))) {
+      return NextResponse.json({ error: "Accès refusé : gestion du catalogue réservée à l'hôte et au manager." }, { status: 403 });
     }
 
     const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
@@ -279,6 +288,10 @@ export async function DELETE(req: NextRequest) {
     }
     if (!(await canAccessProperty(userId, offer.propertyId))) {
       return NextResponse.json({ error: 'Accès refusé' }, { status: 403 });
+    }
+    // AUDIT PRÉ-PROD — modification/suppression de tarif → OWNER/MANAGER.
+    if (!(await canManageFinance(userId, offer.propertyId))) {
+      return NextResponse.json({ error: "Accès refusé : gestion du catalogue réservée à l'hôte et au manager." }, { status: 403 });
     }
 
     await db.serviceOffer.delete({ where: { id: offerId } });

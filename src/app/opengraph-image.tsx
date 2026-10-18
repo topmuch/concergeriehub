@@ -14,7 +14,7 @@ import path from 'node:path';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 export const alt =
-  'Conciergerie Hub — Wi-Fi, guidebook et services en 1 scan pour vos invités';
+  'RoomScan Concierge Hub — Wi-Fi, guidebook numérique et services en 1 scan pour vos invités';
 
 // Motif QR décoratif déterministe (9×9) : coins « finder » stylisés
 // + trame pseudo-aléatoire fixe. Purement décoratif, non scannable.
@@ -130,12 +130,12 @@ export default async function OpengraphImage() {
                 width: 22,
                 height: 22,
                 borderRadius: 7,
-                background: 'linear-gradient(135deg, #2563eb 0%, #059669 100%)',
+                background: 'linear-gradient(135deg, #07235B 0%, #0066EF 100%)',
                 display: 'flex',
               }}
             />
             <div style={{ fontSize: 26, fontWeight: 800, color: '#0f172a' }}>
-              Conciergerie Hub
+              RoomScan — Concierge Hub
             </div>
           </div>
 
@@ -174,7 +174,7 @@ export default async function OpengraphImage() {
                 fontSize: 22,
                 fontWeight: 800,
                 color: '#ffffff',
-                background: 'linear-gradient(135deg, #2563eb 0%, #059669 100%)',
+                background: 'linear-gradient(135deg, #07235B 0%, #0066EF 100%)',
                 borderRadius: 9999,
                 padding: '12px 26px',
               }}
@@ -254,7 +254,7 @@ export default async function OpengraphImage() {
                 width: 280,
                 height: 8,
                 borderRadius: 9999,
-                background: 'linear-gradient(90deg, #2563eb 0%, #059669 100%)',
+                background: 'linear-gradient(90deg, #07235B 0%, #0066EF 100%)',
                 marginTop: 22,
               }}
             />

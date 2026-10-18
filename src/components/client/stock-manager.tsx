@@ -441,7 +441,7 @@ export function StockManager() {
         </div>
 
         {/* Shopping list */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-400 via-emerald-500 to-teal-600 p-5 text-white shadow-lg">
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 p-5 text-white shadow-lg">
           <div className="flex items-center justify-between">
             <div className="space-y-1">
               <p className="text-sm font-medium text-white/80">Liste de courses</p>

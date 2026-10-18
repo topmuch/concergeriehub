@@ -27,8 +27,12 @@ export function canTransition(from: OrderStatus, to: OrderStatus): boolean {
   return ORDER_TRANSITIONS[from].includes(to);
 }
 
-/** Commission par défaut de Conciergerie Hub (15 %) — configurable par
- *  prestataire/bien dans une future sous-étape. */
+/** Marge PLATEFORME par défaut sur les commandes marketplace
+ *  (15 %) — split commission/hostEarning journalisé par ServiceOrder.
+ *  ⚠️ DISTINCTE de la « commission mensuelle hôte » (20 %,
+ *  DEFAULT_HOST_COMMISSION_RATE dans lib/commission.ts) qui porte sur
+ *  les commandes encaissées par l'hôte et est facturée en fin de mois
+ *  via MonthlyCommissionInvoice. Ne pas unifier sans validation métier. */
 export const DEFAULT_COMMISSION_RATE = 0.15;
 
 export function round2(n: number): number {

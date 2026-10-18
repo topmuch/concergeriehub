@@ -7,6 +7,8 @@ import { captureError } from '@/lib/error-monitor';
 // FIX-15 (C) — premier usage réel de zod + clientIp pour le rate-limit IP-scopé.
 import { z } from 'zod';
 import { clientIp } from '@/lib/audit';
+// v4.31 « PHOTOS DE MON HUB » — allowlist + plafonds + parse tolérant.
+import { isHubPhotoKey, MAX_HUB_PHOTO_CHARS, parseHubPhotos } from '@/lib/hub-photos';
 
 const DEMO_SLUG = 'demo-hub';
 const isDemo = (slug: string) => slug === DEMO_SLUG;
@@ -39,6 +41,11 @@ const updateSchema = z.object({
     })
     .optional()
     .nullable(),
+  // v4.31 « PHOTOS DE MON HUB » — { [cardKey]: dataURL | null }.
+  // Valeur string = remplacer la photo ; null = revenir à la photo curated.
+  // Les clés/valeurs sont re-validées APRÈS le PIN (allowlist HUB_PHOTO_KEYS,
+  // préfixe data:image/, plafond MAX_HUB_PHOTO_CHARS) avant écriture.
+  hubPhotos: z.record(z.string(), z.string().nullable()).optional(),
   newPin: z
     .string()
     .regex(/^[0-9]{4}$/, { message: 'Le nouveau PIN doit comporter exactement 4 chiffres' })
@@ -83,7 +90,7 @@ export async function PUT(
         { status: 400 },
       );
     }
-    const { pin, updates, homeData, newPin } = parsed.data;
+    const { pin, updates, homeData, newPin, hubPhotos } = parsed.data;
 
     // ── DEMO MODE: any 4-digit PIN works, return success without saving ──
     if (isDemo(slug)) {
@@ -128,7 +135,7 @@ export async function PUT(
 
     const home = await db.property.findUnique({
       where: { id: propertyId },
-      select: { id: true, pinHash: true },
+      select: { id: true, pinHash: true, hubPhotos: true },
     });
 
     if (!home) {
@@ -212,6 +219,26 @@ export async function PUT(
           data: updateData,
         });
       }
+    }
+
+    // ── v4.31 « PHOTOS DE MON HUB » — merge validé dans Property.hubPhotos ──
+    if (hubPhotos && typeof hubPhotos === 'object') {
+      const next: Record<string, string> = { ...parseHubPhotos(home.hubPhotos) };
+      for (const [key, value] of Object.entries(hubPhotos)) {
+        if (!isHubPhotoKey(key)) continue; // clé inconnue → ignorée (allowlist)
+        if (value === null) {
+          delete next[key]; // reset → photo curated d'illustration
+        } else if (
+          value.startsWith('data:image/') &&
+          value.length <= MAX_HUB_PHOTO_CHARS
+        ) {
+          next[key] = value;
+        }
+      }
+      await db.property.update({
+        where: { id: home.id },
+        data: { hubPhotos: next as Record<string, string> },
+      });
     }
 
     // ── Change PIN ── (format déjà validé par zod — FIX-15 (C))

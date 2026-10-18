@@ -2,22 +2,22 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import {
-  Check,
-  MoreHorizontal,
-  ShieldCheck,
-  UserMinus,
-  UserPlus,
-} from 'lucide-react';
 import { toast } from 'sonner';
 import { useHostContext } from '@/components/airbnb/host/host-context';
 import { StatusBadge } from '@/components/airbnb/host/status-badge';
-import { FormDialog } from '@/components/airbnb/host/form-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import {
   Select,
   SelectContent,
@@ -57,6 +57,9 @@ import { cn } from '@/lib/utils';
 
 // =============================================================
 // TeamContent — page « Équipe » du Dashboard Client (H4 — T4c)
+// v5.2 « SAPHIR LUXE » — refonte design profonde (demande client) :
+// nuit bleutée, SANS ICÔNES ni emojis (monogrammes, points colorés,
+// glyphes purs). Données, handlers et textes métier intacts.
 //
 // • Sélecteur de bien local (synchronisé avec le contexte hôte).
 // • Liste réelle des membres : GET /api/airbnb/properties/{id}/members
@@ -68,8 +71,15 @@ import { cn } from '@/lib/utils';
 // • Panneau « Permissions par rôle » (mapping réel du shell).
 // =============================================================
 
-const BRAND = '#E23F2B';
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/** Point coloré par rôle (design sans icône — remplace les bulles à emoji). */
+const ROLE_DOTS: Record<MemberRole, string> = {
+  OWNER: '#cdb6ff',
+  MANAGER: '#5c8af0',
+  CLEANER: '#34d399',
+  MAINTENANCE: '#fbbf24',
+};
 
 /** Rôles invitable via l'API (INVITABLE_ROLES serveur : OWNER exclu). */
 const INVITABLE_ROLES: MemberRole[] = MEMBER_ROLES.filter((r) => r !== 'OWNER');
@@ -267,26 +277,23 @@ export function TeamContent({ initialPropertyId }: { initialPropertyId: string |
       {/* ---------- En-tête ---------- */}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Équipe</h1>
-          <p className="mt-1 truncate text-sm text-slate-600">
+          <p className="lux-eyebrow">Collaboration</p>
+          <h1 className="lux-display mt-1 text-2xl font-semibold text-white sm:text-3xl">Équipe</h1>
+          <p className="mt-1.5 truncate text-sm text-[#8fa0c2]">
             {currentProperty
               ? `Membres et intervenants de ${currentProperty.name}`
               : 'Aucun bien dans votre portfolio'}
           </p>
         </div>
         {canInviteSomewhere && (
-          <Button
-            size="sm"
-            className="h-9 gap-2 text-white sm:h-10 sm:px-5"
-            style={{ backgroundColor: BRAND }}
-            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#C93524')}
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = BRAND)}
+          <button
+            type="button"
             onClick={() => setInviteOpen(true)}
             aria-label="Inviter un membre"
+            className="lux-btn h-9 sm:h-10 sm:px-5 sm:text-sm"
           >
-            <span aria-hidden="true">👥</span>
             Inviter un membre
-          </Button>
+          </button>
         )}
       </div>
 
@@ -298,17 +305,17 @@ export function TeamContent({ initialPropertyId }: { initialPropertyId: string |
               key={inv.membershipId}
               initial={{ opacity: 0, y: -6 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex flex-col gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 sm:flex-row sm:items-center"
+              className="flex flex-col gap-3 rounded-2xl border border-[#e9c47c]/25 bg-[#e9c47c]/8 px-4 py-3 sm:flex-row sm:items-center"
             >
-              <p className="min-w-0 flex-1 truncate text-sm text-amber-900">
-                <span aria-hidden="true">✉️</span>{' '}
+              <p className="min-w-0 flex-1 truncate text-sm text-[#e9c47c]">
+                <span className="lux-dot mr-2 inline-block align-middle" style={{ backgroundColor: '#e9c47c' }} aria-hidden="true" />
                 <span className="font-bold">{inv.property.name}</span> vous invite comme{' '}
                 <span className="font-bold">{memberRoleMeta(inv.role).label.toLowerCase()}</span>
               </p>
               <div className="flex shrink-0 items-center gap-2">
                 <Button
                   size="sm"
-                  className="h-8 bg-amber-600 text-xs font-bold text-white hover:bg-amber-700"
+                  className="h-8 rounded-full bg-[#e9c47c] text-xs font-semibold text-[#1a1206] transition-[filter] hover:bg-[#e9c47c] hover:brightness-105"
                   disabled={respondingId === inv.membershipId}
                   onClick={() =>
                     void respondToInvitation(inv.membershipId, inv.property.id, 'accept')
@@ -320,7 +327,7 @@ export function TeamContent({ initialPropertyId }: { initialPropertyId: string |
                 <Button
                   size="sm"
                   variant="outline"
-                  className="h-8 border-amber-300 bg-transparent text-xs font-bold text-amber-800 hover:bg-amber-100"
+                  className="h-8 rounded-full border-[#e9c47c]/30 bg-transparent text-xs font-semibold text-[#e9c47c] hover:bg-[#e9c47c]/10 hover:text-[#e9c47c]"
                   disabled={respondingId === inv.membershipId}
                   onClick={() =>
                     void respondToInvitation(inv.membershipId, inv.property.id, 'decline')
@@ -341,7 +348,7 @@ export function TeamContent({ initialPropertyId }: { initialPropertyId: string |
         <div className="min-w-0 flex-1">
           {/* Sélecteur de bien */}
           <div className="mb-4 flex flex-col gap-1.5 sm:max-w-xs">
-            <Label htmlFor="team-property-select">Bien</Label>
+            <Label htmlFor="team-property-select" className="text-[#8fa0c2]">Bien</Label>
             <Select
               value={currentId ?? ''}
               onValueChange={(v) => {
@@ -350,12 +357,12 @@ export function TeamContent({ initialPropertyId }: { initialPropertyId: string |
               }}
               disabled={propertiesLoading || properties.length === 0}
             >
-              <SelectTrigger id="team-property-select" className="w-full border-slate-200">
+              <SelectTrigger id="team-property-select" className="w-full rounded-xl border-white/12 bg-white/[0.04] text-white">
                 <SelectValue placeholder="Choisissez un bien" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="border-white/10 bg-[#0d1530] text-white">
                 {properties.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>
+                  <SelectItem key={p.id} value={p.id} className="focus:bg-white/8 focus:text-white">
                     {p.name}
                   </SelectItem>
                 ))}
@@ -365,10 +372,10 @@ export function TeamContent({ initialPropertyId }: { initialPropertyId: string |
 
           {/* Aucun bien */}
           {!propertiesLoading && properties.length === 0 && (
-            <div className="flex flex-col items-center gap-3 rounded-xl border border-slate-200 bg-white px-6 py-10 text-center shadow-sm">
-              <span aria-hidden="true" className="text-4xl">🏠</span>
-              <p className="font-semibold text-slate-900">Aucun bien dans votre portfolio</p>
-              <p className="max-w-md text-sm text-slate-600">
+            <div className="lux-empty flex flex-col items-center gap-2 px-6 py-10 text-center">
+              <span className="lux-dot" style={{ backgroundColor: '#5c8af0' }} aria-hidden="true" />
+              <p className="lux-display text-lg font-semibold text-white">Aucun bien dans votre portfolio</p>
+              <p className="max-w-md text-xs text-[#8fa0c2]">
                 Ajoutez une propriété ou acceptez une invitation pour gérer une équipe.
               </p>
             </div>
@@ -376,12 +383,17 @@ export function TeamContent({ initialPropertyId }: { initialPropertyId: string |
 
           {/* Erreur */}
           {membersError && (
-            <div
-              className="flex items-center gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800"
-              role="alert"
-            >
-              <span aria-hidden="true">⚠️</span>
-              {membersError}
+            <div className="lux-empty flex flex-col items-center gap-3 p-6 text-center" role="alert">
+              <span className="lux-dot" style={{ backgroundColor: '#f07d6a' }} aria-hidden="true" />
+              <p className="text-sm font-semibold text-white">{membersError}</p>
+              <button
+                type="button"
+                onClick={refetchMembers}
+                aria-label="Réessayer le chargement des membres"
+                className="lux-btn h-9 px-4 text-xs"
+              >
+                Réessayer
+              </button>
             </div>
           )}
 
@@ -389,21 +401,21 @@ export function TeamContent({ initialPropertyId }: { initialPropertyId: string |
           {propertiesLoading || (membersLoading && members === null) ? (
             <div className="space-y-3" aria-busy="true" aria-label="Chargement des membres">
               {[0, 1].map((i) => (
-                <div key={i} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div key={i} className="lux-card p-4">
                   <div className="flex items-center gap-3">
-                    <Skeleton className="h-10 w-10 rounded-full" />
+                    <Skeleton className="h-10 w-10 rounded-full bg-white/8" />
                     <div className="flex-1 space-y-2">
-                      <Skeleton className="h-4 w-1/3" />
-                      <Skeleton className="h-3 w-1/2" />
+                      <Skeleton className="h-4 w-1/3 bg-white/8" />
+                      <Skeleton className="h-3 w-1/2 bg-white/8" />
                     </div>
-                    <Skeleton className="h-6 w-24 rounded-full" />
+                    <Skeleton className="h-6 w-24 rounded-full bg-white/8" />
                   </div>
                 </div>
               ))}
             </div>
           ) : /* Liste des membres */
           members && members.length > 0 && currentId ? (
-            <ul className="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+            <ul className="lux-card divide-y divide-white/8 overflow-hidden">
               {members.map((m, idx) => (
                 <MemberRow
                   key={m.id}
@@ -418,22 +430,21 @@ export function TeamContent({ initialPropertyId }: { initialPropertyId: string |
             </ul>
           ) : members && members.length === 0 ? (
             /* Empty state */
-            <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-slate-300 bg-white px-6 py-10 text-center">
-              <span aria-hidden="true" className="text-4xl">👥</span>
-              <p className="font-semibold text-slate-900">
+            <div className="lux-empty flex flex-col items-center gap-2 px-6 py-10 text-center">
+              <span className="lux-dot" style={{ backgroundColor: '#5c8af0' }} aria-hidden="true" />
+              <p className="lux-display text-lg font-semibold text-white">
                 Aucun membre dans l&apos;équipe de ce bien
               </p>
-              <p className="max-w-md text-sm text-slate-600">
+              <p className="max-w-md text-xs text-[#8fa0c2]">
                 Invitez votre premier intervenant : manager, personnel de ménage ou maintenance.
               </p>
               {canInviteSomewhere && (
                 <Button
                   size="sm"
                   variant="outline"
-                  className="border-slate-200 text-slate-700"
+                  className="mt-1 rounded-full border-white/12 bg-white/[0.04] text-[#d5def0] hover:bg-white/8 hover:text-white"
                   onClick={() => setInviteOpen(true)}
                 >
-                  <UserPlus className="h-4 w-4" aria-hidden="true" />
                   Inviter un membre
                 </Button>
               )}
@@ -443,9 +454,9 @@ export function TeamContent({ initialPropertyId }: { initialPropertyId: string |
 
         {/* ----- Panneau latéral : permissions par rôle ----- */}
         <aside className="min-w-0 xl:w-80 xl:shrink-0">
-          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm xl:sticky xl:top-24">
-            <h2 className="flex items-center gap-2 font-bold text-slate-900">
-              <ShieldCheck className="h-4 w-4 text-emerald-600" aria-hidden="true" />
+          <div className="lux-card p-5 xl:sticky xl:top-24">
+            <p className="lux-eyebrow !text-[9.5px]">Gouvernance</p>
+            <h2 className="lux-display mt-1 text-lg font-semibold text-white">
               Permissions par rôle
             </h2>
             <ul className="mt-4 flex flex-col gap-4">
@@ -454,20 +465,19 @@ export function TeamContent({ initialPropertyId }: { initialPropertyId: string |
                 return (
                   <li key={role} className="flex items-start gap-3">
                     <span
+                      className="lux-dot mt-1.5 shrink-0"
+                      style={{ backgroundColor: ROLE_DOTS[role] }}
                       aria-hidden="true"
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-50 text-base ring-1 ring-slate-100"
-                    >
-                      {meta.emoji}
-                    </span>
+                    />
                     <div className="min-w-0">
-                      <p className="text-sm font-bold text-slate-900">{meta.label}</p>
-                      <p className="text-xs leading-relaxed text-slate-500">{roleHint(role)}</p>
+                      <p className="text-sm font-semibold text-white">{meta.label}</p>
+                      <p className="text-xs leading-relaxed text-[#8fa0c2]">{roleHint(role)}</p>
                     </div>
                   </li>
                 );
               })}
             </ul>
-            <p className="mt-4 border-t border-slate-100 pt-3 text-xs text-slate-400">
+            <p className="mt-4 border-t border-white/8 pt-3 text-xs leading-relaxed text-[#8fa0c2]">
               Ce mapping correspond au filtrage réel de la navigation du Dashboard : un Cleaner ne
               voit que le planning ménage, un membre Maintenance que les réclamations techniques.
             </p>
@@ -497,25 +507,26 @@ export function TeamContent({ initialPropertyId }: { initialPropertyId: string |
 
       {/* ---------- AlertDialog retrait ---------- */}
       <AlertDialog open={removeTarget !== null} onOpenChange={(o) => !o && setRemoveTarget(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-2xl border-white/10 bg-[#0b1226] text-white shadow-2xl">
           <AlertDialogHeader>
-            <AlertDialogTitle>Retirer ce membre de l&apos;équipe ?</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="lux-display text-lg font-semibold text-white">
+              Retirer ce membre de l&apos;équipe ?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-sm text-[#8fa0c2]">
               {removeTarget?.user.fullName?.trim() || removeTarget?.user.email} n&apos;aura plus
               accès à {currentProperty?.name ?? 'ce bien'}. Cette action est immédiate ;
               réinvitez la personne pour rétablir son accès.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="border-slate-200 text-slate-700">
+            <AlertDialogCancel className="rounded-full border-white/12 bg-white/[0.04] text-[#d5def0] hover:bg-white/8 hover:text-white">
               Annuler
             </AlertDialogCancel>
             <AlertDialogAction
-              className="bg-rose-600 text-white hover:bg-rose-700 focus-visible:ring-rose-600/40"
+              className="rounded-full bg-[#f07d6a] font-semibold text-[#2a100a] hover:brightness-105 focus-visible:ring-[#f07d6a]/50"
               onClick={handleRemoveConfirmed}
               aria-label="Confirmer le retrait du membre"
             >
-              <UserMinus className="h-4 w-4" aria-hidden="true" />
               Retirer
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -589,25 +600,25 @@ function MemberRow({
   return (
     <li
       className={cn(
-        'flex min-w-0 flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between',
-        first && 'bg-slate-50/50',
+        'flex min-w-0 flex-col gap-3 p-4 transition-colors hover:bg-white/[0.04]',
+        first && 'bg-white/[0.02]',
       )}
     >
       <div className="flex min-w-0 items-center gap-3">
         <span
           aria-hidden="true"
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-base ring-1 ring-slate-200"
+          className="lux-num flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#3d6fe0]/15 text-sm font-semibold text-[#a9c4ff] ring-1 ring-[#5c8af0]/25"
         >
-          {MEMBER_ROLE_META[member.role].emoji}
+          {displayName.trim().charAt(0).toUpperCase()}
         </span>
         <div className="min-w-0">
-          <p className="truncate text-sm font-bold text-slate-900">
+          <p className="truncate text-sm font-semibold text-white">
             {displayName}
             {member.isSelf && (
-              <span className="ml-1.5 text-xs font-normal text-slate-400">(vous)</span>
+              <span className="ml-1.5 text-xs font-normal text-[#8fa0c2]">(vous)</span>
             )}
           </p>
-          <p className="truncate text-xs text-slate-500">{member.user.email}</p>
+          <p className="truncate text-xs text-[#8fa0c2]">{member.user.email}</p>
         </div>
       </div>
 
@@ -616,7 +627,7 @@ function MemberRow({
         {pending ? (
           <StatusBadge status="INVITED" />
         ) : (
-          <span className="whitespace-nowrap text-xs text-slate-400">
+          <span className="whitespace-nowrap text-xs text-[#8fa0c2]">
             depuis {formatDate(member.acceptedAt as string)}
           </span>
         )}
@@ -627,20 +638,21 @@ function MemberRow({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 shrink-0 text-slate-500 focus-visible:ring-[#E23F2B]/40"
+                className="h-8 w-8 shrink-0 rounded-full text-[#8fa0c2] hover:bg-white/8 hover:text-white"
                 aria-label={`Actions pour ${displayName}`}
                 disabled={busy}
               >
-                <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
+                <span aria-hidden="true" className="text-base leading-none">⋯</span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-52">
+            <DropdownMenuContent align="end" className="w-52 border-white/10 bg-[#0d1530] text-white">
               {canManage && !ownerLocked && (
                 <DropdownMenuSub>
-                  <DropdownMenuSubTrigger>
-                    <span aria-hidden="true" className="mr-2">👔</span> Changer le rôle
+                  <DropdownMenuSubTrigger className="focus:bg-white/8 focus:text-white">
+                    <span className="lux-dot mr-2 shrink-0" style={{ backgroundColor: '#cdb6ff' }} aria-hidden="true" />
+                    Changer le rôle
                   </DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent className="w-56">
+                  <DropdownMenuSubContent className="w-56 border-white/10 bg-[#0d1530] text-white">
                     {MEMBER_ROLES.map((role) => {
                       const meta = MEMBER_ROLE_META[role];
                       const isCurrent = member.role === role;
@@ -654,14 +666,15 @@ function MemberRow({
                             if (role === 'OWNER' || isCurrent) return;
                             void changeRole(role);
                           }}
+                          className="focus:bg-white/8 focus:text-white"
                         >
-                          <span aria-hidden="true" className="mr-2">{meta.emoji}</span>
+                          <span className="lux-dot shrink-0" style={{ backgroundColor: ROLE_DOTS[role] }} aria-hidden="true" />
                           {meta.label}
                           {isCurrent && (
-                            <Check className="ml-auto h-4 w-4 text-emerald-600" aria-hidden="true" />
+                            <span className="ml-auto text-sm text-[#e9c47c]" aria-hidden="true">✓</span>
                           )}
                           {role === 'OWNER' && !isCurrent && (
-                            <span className="ml-auto text-[11px] text-slate-400">réservé</span>
+                            <span className="ml-auto text-[11px] text-[#8fa0c2]">réservé</span>
                           )}
                         </DropdownMenuItem>
                       );
@@ -671,13 +684,13 @@ function MemberRow({
               )}
               {!ownerLocked && (
                 <>
-                  {canManage && <DropdownMenuSeparator />}
+                  {canManage && <DropdownMenuSeparator className="bg-white/8" />}
                   <DropdownMenuItem
                     variant="destructive"
                     onSelect={onAskRemove}
                     aria-label={`Retirer ${displayName} de l'équipe`}
+                    className="text-[#f07d6a] focus:bg-[#f07d6a]/10 focus:text-[#f07d6a]"
                   >
-                    <UserMinus className="h-4 w-4" aria-hidden="true" />
                     {selfLeave ? "Quitter l'équipe" : 'Retirer'}
                   </DropdownMenuItem>
                 </>
@@ -781,88 +794,94 @@ function InviteMemberDialog({
   }
 
   return (
-    <FormDialog
-      open={open}
-      onOpenChange={onOpenChange}
-      title="👥 Inviter un membre"
-      description="La personne doit disposer d'un compte Conciergerie Hub (gratuit) avec cet email. Elle reçoit l'invitation dans son Dashboard."
-      size="sm"
-      footer={
-        <>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="rounded-2xl border-white/10 bg-[#0b1226] text-white shadow-2xl sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="lux-display text-xl font-semibold text-white">
+            Inviter un membre
+          </DialogTitle>
+          <DialogDescription className="text-sm text-[#8fa0c2]">
+            La personne doit disposer d'un compte RoomScan (gratuit) avec cet email. Elle reçoit l'invitation dans son Dashboard.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="invite-email" className="text-[#8fa0c2]">Adresse email</Label>
+            <Input
+              id="invite-email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="ex : sophie@menage-pro.fr"
+              autoComplete="email"
+              aria-required="true"
+              aria-invalid={email.length > 0 && !emailValid}
+              className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+            />
+            {email.length > 0 && !emailValid && (
+              <p className="text-xs text-[#f07d6a]" role="alert">
+                Adresse email invalide.
+              </p>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="invite-role" className="text-[#8fa0c2]">Rôle</Label>
+            <Select value={role} onValueChange={(v) => setRole(v as MemberRole)}>
+              <SelectTrigger id="invite-role" className="w-full rounded-xl border-white/12 bg-white/[0.04] text-white">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="border-white/10 bg-[#0d1530] text-white">
+                {INVITABLE_ROLES.map((r) => (
+                  <SelectItem key={r} value={r} className="focus:bg-white/8 focus:text-white">
+                    {MEMBER_ROLE_META[r].label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-[#8fa0c2]">{MEMBER_ROLE_META[role].description}</p>
+          </div>
+
+          <fieldset className="flex flex-col gap-2 rounded-xl border border-white/10 p-3">
+            <legend className="lux-eyebrow px-1 !text-[9.5px]">
+              Biens concernés ({checkedIds.length} sélectionné{checkedIds.length > 1 ? 's' : ''})
+            </legend>
+            {manageableProperties.map((p) => (
+              <label
+                key={p.id}
+                className="flex cursor-pointer items-center gap-2.5 rounded-md px-1 py-1 text-sm text-[#d5def0] transition-colors hover:bg-white/[0.05]"
+              >
+                <Checkbox
+                  checked={checkedIds.includes(p.id)}
+                  onCheckedChange={() => toggleProperty(p.id)}
+                  aria-label={`Inviter sur ${p.name}`}
+                  className="border-white/25 bg-white/[0.04]"
+                />
+                <span className="min-w-0 truncate">{p.name}</span>
+              </label>
+            ))}
+          </fieldset>
+        </div>
+        <DialogFooter className="mt-1 gap-2">
           <Button
             variant="outline"
-            className="border-slate-200 text-slate-700"
+            className="rounded-full border-white/12 bg-white/[0.04] text-[#d5def0] hover:bg-white/8 hover:text-white"
             onClick={() => onOpenChange(false)}
             disabled={submitting}
           >
             Annuler
           </Button>
-          <Button
-            className="text-white"
-            style={{ backgroundColor: BRAND }}
+          <button
+            type="button"
             onClick={() => void submit()}
             disabled={!emailValid || checkedIds.length === 0 || submitting}
             aria-label="Envoyer les invitations"
+            className="lux-btn h-10 px-5 text-sm disabled:pointer-events-none disabled:opacity-60"
           >
             {submitting ? 'Envoi…' : 'Envoyer'}
-          </Button>
-        </>
-      }
-    >
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="invite-email">Adresse email</Label>
-        <Input
-          id="invite-email"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="ex : sophie@menage-pro.fr"
-          autoComplete="email"
-          aria-required="true"
-          aria-invalid={email.length > 0 && !emailValid}
-        />
-        {email.length > 0 && !emailValid && (
-          <p className="text-xs text-rose-600" role="alert">
-            Adresse email invalide.
-          </p>
-        )}
-      </div>
-
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="invite-role">Rôle</Label>
-        <Select value={role} onValueChange={(v) => setRole(v as MemberRole)}>
-          <SelectTrigger id="invite-role" className="w-full border-slate-200">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {INVITABLE_ROLES.map((r) => (
-              <SelectItem key={r} value={r}>
-                {MEMBER_ROLE_META[r].emoji} {MEMBER_ROLE_META[r].label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <p className="text-xs text-slate-500">{MEMBER_ROLE_META[role].description}</p>
-      </div>
-
-      <fieldset className="flex flex-col gap-2 rounded-lg border border-slate-200 p-3">
-        <legend className="px-1 text-xs font-semibold text-slate-600">
-          Biens concernés ({checkedIds.length} sélectionné{checkedIds.length > 1 ? 's' : ''})
-        </legend>
-        {manageableProperties.map((p) => (
-          <label
-            key={p.id}
-            className="flex cursor-pointer items-center gap-2.5 rounded-md px-1 py-1 text-sm text-slate-700 hover:bg-slate-50"
-          >
-            <Checkbox
-              checked={checkedIds.includes(p.id)}
-              onCheckedChange={() => toggleProperty(p.id)}
-              aria-label={`Inviter sur ${p.name}`}
-            />
-            <span className="min-w-0 truncate">{p.name}</span>
-          </label>
-        ))}
-      </fieldset>
-    </FormDialog>
+          </button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -1,348 +1,288 @@
 'use client';
 
-import { useRef, useState, useEffect } from 'react';
-import { motion, useInView } from 'framer-motion';
+// =============================================================
+// HERO PREMIUM V7 — direction « Apple × Airbnb × Linear »
+//
+//   • Badge « Nouveau » : pill gradient bleu logo animé
+//     (.animate-gradient) + reflet shimmer + ✨ en rotation lente
+//   • H1 serif via <StaggerWords> — « 5 étoiles » en air-gradient-text
+//   • v4.73 — VISUEL PHOTO RÉELLE à droite (demande client : « changer
+//     l'image à droite par une image plus engageante ») : photo hôtel
+//     de luxe (plaque QR + smartphone + cloche conciergerie) posée
+//     dans une carte arrondie premium, parallaxe douce au scroll,
+//     chips flottantes conservées (note + commande + Wi-Fi).
+//   • CTA principal <MagneticButton> (confettis) + CTA secondaire
+//     blanc bordure slate — ancres #pricing / #demo
+//   • Fond : voiles bleu logo locaux (fond clair) + halo derrière
+//     la photo + <FloatingParticles> recalibrés pour le clair
+//   • v4.61 : page verrouillée claire « AIRBNB PRO », accent bleu vif
+//     unique (#0066EF ; émeraude de l'écran app réservé au succès)
+// =============================================================
+
+import { useRef } from 'react';
+import Image from 'next/image';
+import { motion, useScroll, useSpring, useTransform } from 'framer-motion';
 import {
-  QrCode, Menu, X, ArrowRight, Sparkles, Shield, Zap, Smartphone,
+  ArrowRight,
+  ChevronRight,
+  Play,
+  Wifi,
 } from 'lucide-react';
-import { InteractiveDemo } from './interactive-demo';
-import { HowItWorks } from './how-it-works';
-import { PricingSection } from './pricing-section';
-import { ModulesShowcase } from './modules-showcase';
-import { BrandLogo } from '@/components/ui/brand-logo';
+import { FloatingParticles } from '@/components/premium/floating-particles';
+import { MagneticButton } from '@/components/premium/magnetic-button';
+import { CountUp } from '@/components/premium/count-up';
+import { Reveal, StaggerWords } from '@/components/premium/reveal';
+import { useLandingLang } from '@/lib/landing-i18n';
 
-interface LandingPageProps { onGoToDashboard: () => void; onGoToSetup?: () => void; onGoToHub?: () => void }
+type GoToAuth = (mode: 'login' | 'register') => void;
 
-function FadeIn({ children, delay = 0, className = '' }: { children: React.ReactNode; delay?: number; className?: string }) {
+/** Défilement doux vers une ancre de la page. */
+function smoothScrollTo(selector: string) {
+  if (typeof document === 'undefined') return;
+  document.querySelector(selector)?.scrollIntoView({ behavior: 'smooth' });
+}
+
+// ==========================================
+// VISUEL HÉRO PHOTO (v4.73 — remplace le mockup CSS)
+// Photo réelle hôtel de luxe : plaque QR + smartphone + cloche.
+// Parallaxe douce au scroll (rotation légère qui se redresse).
+// ==========================================
+function HeroVisual({ targetRef }: { targetRef: React.RefObject<HTMLElement | null> }) {
+  const { scrollYProgress } = useScroll({
+    target: targetRef,
+    offset: ['start start', 'end start'],
+  });
+
+  // Repos : rotateY(-10°) rotateX(4°) → redressement complet à ~55 % du scroll.
+  const rotateY = useSpring(useTransform(scrollYProgress, [0, 0.55], [-10, 0]), {
+    stiffness: 80,
+    damping: 20,
+  });
+  const rotateX = useSpring(useTransform(scrollYProgress, [0, 0.55], [4, 0]), {
+    stiffness: 80,
+    damping: 20,
+  });
+  const y = useSpring(useTransform(scrollYProgress, [0, 0.55], [0, -28]), {
+    stiffness: 80,
+    damping: 20,
+  });
+  const shadowOpacity = useTransform(scrollYProgress, [0, 0.55], [0.18, 0.30]);
+  const shadowScale = useTransform(scrollYProgress, [0, 0.55], [0.9, 1]);
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-60px' }}
-      transition={{ duration: 0.6, delay, ease: 'easeOut' }}
-      className={className}
-    >
-      {children}
-    </motion.div>
+    <div dir="ltr" className="relative flex justify-center [perspective:1400px]">
+      {/* Ombre au sol dynamique */}
+      <motion.div
+        aria-hidden="true"
+        style={{ opacity: shadowOpacity, scaleX: shadowScale }}
+        className="absolute -bottom-8 h-10 w-3/4 rounded-[100%] bg-slate-900 blur-2xl"
+      />
+
+      <motion.div
+        style={{ rotateY, rotateX, y, transformStyle: 'preserve-3d' }}
+        className="relative w-full max-w-[560px]"
+      >
+        {/* Halo de couleur derrière la photo (voiles bleu logo) */}
+        <div
+          aria-hidden="true"
+          className="absolute -inset-8 rounded-[3.5rem] bg-gradient-to-br from-[#0066EF]/25 via-[#0052C4]/10 to-[#F59E0B]/15 blur-3xl"
+        />
+
+        {/* Carte photo premium */}
+        <div className="relative overflow-hidden rounded-[2.5rem] shadow-2xl ring-1 ring-slate-900/10">
+          <Image
+            src="/brand/hero-concierge.jpg"
+            alt="Plaque QR RoomScan, smartphone et cloche de conciergerie sur un marbre d'hôtel de luxe"
+            width={1152}
+            height={864}
+            priority
+            className="h-auto w-full select-none object-cover"
+          />
+          {/* Reflet diagonal */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 bg-[linear-gradient(115deg,transparent_35%,rgba(255,255,255,0.14)_48%,transparent_62%)]"
+          />
+          {/* Voile bas pour la lisibilité de la pill */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/35 to-transparent"
+          />
+          {/* Pill signature en bas de la photo */}
+          <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between gap-3">
+            <span className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-black/35 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em] text-white backdrop-blur-md">
+              <Wifi className="h-3.5 w-3.5" aria-hidden="true" />
+              1 scan → tout le séjour
+            </span>
+            <span className="hidden items-center gap-1.5 rounded-full bg-white/90 px-3 py-1.5 text-[11px] font-bold text-slate-900 shadow-sm backdrop-blur-md sm:inline-flex">
+              ★ 4,9 · Airbnb
+            </span>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Chips flottantes (hors du plan 3D, positionnées sur le conteneur) */}
+      <div className="absolute -right-2 top-12 hidden animate-float items-center gap-2 rounded-2xl border border-slate-200/70 bg-white/90 px-3.5 py-2.5 shadow-xl backdrop-blur-xl backdrop-saturate-[1.4] transition-shadow hover:shadow-2xl sm:flex lg:-right-8">
+        <span className="text-base text-amber-500" aria-hidden="true">
+          ★
+        </span>
+        <span>
+          <span className="block text-xs font-bold text-slate-900">
+            4,9/5
+          </span>
+          <span className="block text-[10px] text-slate-500">
+            214 avis
+          </span>
+        </span>
+      </div>
+      <div
+        className="absolute -left-2 bottom-16 hidden animate-float items-center gap-2 rounded-2xl border border-slate-200/70 bg-white/90 px-3.5 py-2.5 shadow-xl backdrop-blur-xl backdrop-saturate-[1.4] transition-shadow hover:shadow-2xl sm:flex lg:-left-10"
+        style={{ animationDelay: '-3s' }}
+      >
+        <span aria-hidden="true">🔔</span>
+        <span>
+          <span className="block text-xs font-bold text-slate-900">
+            Nouvelle commande
+          </span>
+          <span className="block text-[10px] text-slate-500">
+            Petit-déjeuner · il y a 2 min
+          </span>
+        </span>
+      </div>
+    </div>
   );
 }
 
-function Navbar({ onGoToDashboard, onGoToSetup, onGoToHub }: { onGoToDashboard: () => void; onGoToSetup?: () => void; onGoToHub?: () => void }) {
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
+// ==========================================
+// HERO SECTION
+// ==========================================
+export function HeroSection({ onGoToAuth }: { onGoToAuth?: GoToAuth }) {
+  const { t } = useLandingLang();
+  const heroRef = useRef<HTMLElement>(null);
 
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
-
-  const links = [
-    { label: 'Accueil', href: '#hero' },
-    { label: 'Fonctionnalités', href: '#avantages' },
-    { label: 'Tarifs', href: '#pricing' },
-    { label: 'Contact', href: '#cta-final' },
+  const stats = [
+    { end: 500, suffix: '+', label: t('Hôtes actifs') },
+    { end: 98, suffix: ' %', label: t('Satisfaction') },
+    { end: 2, suffix: ' min', label: t('Setup moyen') },
   ];
-
-  const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
-    e.preventDefault();
-    setMobileOpen(false);
-    const target = document.querySelector(href);
-    if (target) target.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  return (
-    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-      scrolled
-        ? 'bg-slate-950/80 backdrop-blur-2xl border-b border-white/[0.06] shadow-lg shadow-black/20'
-        : 'bg-transparent'
-    }`}>
-      <div className="max-w-[1600px] mx-auto px-4 md:px-8 flex items-center justify-between h-16">
-        <a href="#hero" onClick={(e) => handleNavClick(e, '#hero')} className="flex items-center gap-2.5 group">
-          <BrandLogo variant="light" size="md" />
-        </a>
-        <div className="hidden md:flex items-center gap-8">
-          {links.map((link) => (
-            <a key={link.href} href={link.href} onClick={(e) => handleNavClick(e, link.href)} className="text-sm text-white/60 hover:text-white transition-colors">
-              {link.label}
-            </a>
-          ))}
-          <button
-            onClick={onGoToDashboard}
-            className="ml-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold transition-all shadow-lg shadow-emerald-600/20 hover:shadow-emerald-600/40 hover:scale-[1.02] cursor-pointer"
-          >
-            Se connecter
-          </button>
-        </div>
-        <button onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden p-2 text-white/70 hover:text-white transition-colors" aria-label="Menu">
-          {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
-      </div>
-      <div className={`md:hidden overflow-hidden transition-all duration-300 ${mobileOpen ? 'max-h-80 opacity-100' : 'max-h-0 opacity-0'}`}>
-        <div className="px-4 pb-4 space-y-1 bg-slate-950/95 backdrop-blur-2xl border-t border-white/[0.06]">
-          {links.map((link) => (
-            <a key={link.href} href={link.href} onClick={(e) => handleNavClick(e, link.href)} className="block py-3 px-3 text-white/60 hover:text-white hover:bg-white/5 rounded-xl transition-colors">
-              {link.label}
-            </a>
-          ))}
-          <button onClick={() => { setMobileOpen(false); onGoToDashboard(); }} className="w-full mt-2 px-5 py-3 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-500 transition-all">
-            Se connecter
-          </button>
-        </div>
-      </div>
-    </nav>
-  );
-}
-
-function HeroSection({ onGoToDashboard, onGoToSetup, onGoToHub }: { onGoToDashboard: () => void; onGoToSetup?: () => void; onGoToHub?: () => void }) {
-  const heroRef = useRef(null);
-  const heroInView = useInView(heroRef, { once: true });
 
   return (
     <section
       id="hero"
       ref={heroRef}
-      className="relative min-h-screen flex items-center overflow-hidden scroll-mt-16"
-      style={{
-        background: 'linear-gradient(135deg, #020617 0%, #0f172a 50%, #020617 100%)',
-      }}
+      className="relative scroll-mt-16 overflow-hidden pb-20 pt-28 sm:pt-32 lg:pb-28"
     >
-      {/* Ambient glow orbs */}
-      <div className="absolute top-1/4 -left-32 w-[500px] h-[500px] bg-emerald-600/[0.06] rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-1/4 -right-32 w-[400px] h-[400px] bg-emerald-500/[0.05] rounded-full blur-[100px] pointer-events-none" />
-
-      {/* Subtle grid pattern */}
+      {/* Voiles d'ambiance bleu logo (fond clair) + particules */}
       <div
-        className="absolute inset-0 opacity-[0.03] pointer-events-none"
-        style={{
-          backgroundImage: 'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)',
-          backgroundSize: '60px 60px',
-        }}
+        aria-hidden="true"
+        className="pointer-events-none absolute -top-36 right-[-12%] h-[440px] w-[640px] rounded-full bg-[#0066EF]/[0.07] blur-[130px]"
       />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute bottom-[-14%] left-[-10%] h-[380px] w-[540px] rounded-full bg-[#3B82F6]/[0.06] blur-[130px]"
+      />
+      <FloatingParticles className="z-0" />
 
-      <div className="max-w-[1600px] mx-auto px-4 md:px-8 w-full pt-24 pb-16 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-8 items-center">
-
-          {/* Left: Text content */}
+      <div className="relative z-10 mx-auto grid max-w-7xl grid-cols-1 items-center gap-16 px-4 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:gap-10">
+        {/* ── Colonne texte ── */}
+        <div className="text-center lg:text-left">
+          {/* Badge « Nouveau » — pill gradient animé + shimmer + ✨ */}
           <motion.div
-            initial={{ opacity: 0, x: -50 }}
-            animate={heroInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -50 }}
-            transition={{ duration: 0.9, ease: 'easeOut' }}
-            className="max-w-xl"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="mb-7 flex justify-center lg:justify-start"
           >
-            {/* Badge */}
-            <motion.span
-              initial={{ opacity: 0, y: 20 }}
-              animate={heroInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 rounded-full px-4 py-1.5 text-sm font-medium mb-8"
-            >
-              <Sparkles className="w-4 h-4" />
-              La conciergerie digitale des hôtes Airbnb
-            </motion.span>
-
-            {/* H1 */}
-            <motion.h1
-              initial={{ opacity: 0, y: 20 }}
-              animate={heroInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-              className="text-4xl sm:text-5xl md:text-[3.4rem] font-extrabold leading-[1.1] mb-6 text-white"
-            >
-              Transformez vos locations en{' '}
-              <span className="bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent">
-                expériences 5 étoiles
+            <span className="shimmer-line animate-gradient inline-flex items-center gap-2 rounded-full border border-white/25 bg-[linear-gradient(93deg,#0052C4,#0066EF,#0047B3)] bg-[length:200%_auto] px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-white shadow-[0_8px_24px_rgba(0,82,196,0.30)]">
+              <span aria-hidden="true" className="animate-spin-slow">
+                ✨
               </span>
-              {' '}
-              <span className="text-white/40 text-3xl sm:text-4xl md:text-5xl font-medium">Sans application.</span>
-            </motion.h1>
-
-            {/* Subtitle */}
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={heroInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-              className="text-lg md:text-xl text-white/50 mb-8 leading-relaxed"
-            >
-              Une seule plaque QR pour vos invités, un tableau de bord pour vous et votre équipe.
-              <span className="text-white/80 font-medium"> Dès 9,90 €/mois.</span>
-            </motion.p>
-
-            {/* CTA Buttons */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={heroInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-              transition={{ duration: 0.6, delay: 0.5 }}
-              className="flex flex-col sm:flex-row gap-4 mb-10"
-            >
-              <button
-                onClick={onGoToDashboard}
-                className="group relative flex items-center justify-center gap-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-8 py-4 rounded-xl transition-all shadow-[0_0_30px_rgba(5,150,105,0.3)] hover:shadow-[0_0_50px_rgba(5,150,105,0.5)] hover:scale-[1.02] cursor-pointer"
-              >
-                Démarrer gratuitement
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                <div className="absolute inset-0 rounded-xl bg-emerald-600 opacity-0 group-hover:opacity-100 blur-xl transition-opacity -z-10" />
-              </button>
-              <a
-                href="#pricing"
-                onClick={(e) => { e.preventDefault(); document.querySelector('#pricing')?.scrollIntoView({ behavior: 'smooth' }); }}
-                className="flex items-center justify-center gap-2 bg-white/[0.05] border border-white/[0.1] text-white/80 hover:text-white font-medium px-8 py-4 rounded-xl transition-all hover:bg-white/[0.1] hover:border-white/[0.2] hover:scale-[1.02]"
-              >
-                Voir les tarifs
-              </a>
-            </motion.div>
-
-            {/* Demo preview buttons */}
-            {(onGoToSetup || onGoToHub) && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={heroInView ? { opacity: 1 } : { opacity: 0 }}
-                transition={{ duration: 0.6, delay: 0.65 }}
-                className="flex flex-wrap gap-3 mb-10"
-              >
-                {onGoToSetup && (
-                  <button
-                    onClick={onGoToSetup}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 text-sm font-medium hover:bg-emerald-500/20 hover:border-emerald-500/40 transition-all cursor-pointer"
-                  >
-                    <Smartphone className="w-4 h-4" />
-                    Voir l&apos;onboarding
-                    <span className="text-[10px] bg-emerald-500/20 px-1.5 py-0.5 rounded-full ml-1">LIVE</span>
-                  </button>
-                )}
-                {onGoToHub && (
-                  <button
-                    onClick={onGoToHub}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 text-sm font-medium hover:bg-emerald-500/20 hover:border-emerald-500/40 transition-all cursor-pointer"
-                  >
-                    <QrCode className="w-4 h-4" />
-                    Voir le hub QR
-                    <span className="text-[10px] bg-emerald-500/20 px-1.5 py-0.5 rounded-full ml-1">LIVE</span>
-                  </button>
-                )}
-              </motion.div>
-            )}
-
-            {/* Trust signals */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={heroInView ? { opacity: 1 } : { opacity: 0 }}
-              transition={{ duration: 0.6, delay: 0.7 }}
-              className="flex flex-wrap items-center gap-6 text-white/30 text-sm"
-            >
-              <div className="flex items-center gap-2">
-                <Shield className="w-4 h-4 text-emerald-500/60" />
-                <span>RGPD conforme</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Zap className="w-4 h-4 text-amber-500/60" />
-                <span>Zéro app requise</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-emerald-500/60 font-bold">2 500+</span>
-                <span>logements gérés</span>
-              </div>
-            </motion.div>
+              {t('Nouveau — Mode White-Label')}
+            </span>
           </motion.div>
 
-          {/* Right: Interactive Demo */}
-          <motion.div
-            initial={{ opacity: 0, x: 60 }}
-            animate={heroInView ? { opacity: 1, x: 0 } : { opacity: 0, x: 60 }}
-            transition={{ duration: 0.9, delay: 0.3, ease: 'easeOut' }}
-            className="flex justify-center lg:justify-end"
+          {/* H1 — serif display, mots staggerés, « 5 étoiles » en lux */}
+          <h1 className="display-title font-serif! mb-6 text-5xl font-bold text-slate-900 sm:text-6xl md:text-7xl lg:text-8xl">
+            <StaggerWords
+              text={t('Transformez chaque séjour en expérience 5 étoiles.')}
+              highlightFrom={5}
+              delay={0.15}
+              highlightClassName="font-serif italic air-gradient-text"
+            />
+          </h1>
+
+          <motion.p
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.55 }}
+            className="mx-auto mb-9 max-w-xl text-lg leading-relaxed text-slate-600 sm:text-xl lg:mx-0"
           >
-            <InteractiveDemo />
-          </motion.div>
-        </div>
-      </div>
-    </section>
-  );
-}
+            {t(
+              'Une seule plaque QR élégante : vos invités accèdent au Wi-Fi, au guidebook et à vos services en 1 scan. Vous pilotez tout depuis un dashboard professionnel.',
+            )}
+          </motion.p>
 
-function CtaFinal({ onGoToDashboard, onGoToSetup, onGoToHub }: { onGoToDashboard: () => void; onGoToSetup?: () => void; onGoToHub?: () => void }) {
-  return (
-    <section id="cta-final" className="relative py-24 md:py-32 px-4 md:px-8 scroll-mt-16 overflow-hidden bg-slate-950"
-    >
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none" />
-      <FadeIn>
-        <div className="max-w-[1000px] mx-auto text-center relative z-10">
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-white">
-            Prêt à passer en mode Hôte ?
-          </h2>
-          <p className="text-white/50 text-lg mb-10">
-            Rejoignez les 2 500+ hôtes qui automatisent déjà leurs locations.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button
-              onClick={onGoToDashboard}
-              className="group relative px-8 py-4 rounded-xl bg-emerald-600 text-white font-semibold hover:bg-emerald-500 transition-all shadow-lg hover:shadow-xl hover:scale-[1.02] cursor-pointer"
+          {/* CTAs */}
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.7 }}
+            className="mb-12 flex flex-col items-center justify-center gap-4 sm:flex-row lg:justify-start"
+          >
+            <MagneticButton
+              onClick={() => smoothScrollTo('#pricing')}
+              className="px-8 py-4 text-base"
             >
-              Démarrer gratuitement
-              <div className="absolute inset-0 rounded-xl bg-emerald-600 opacity-0 group-hover:opacity-100 blur-xl -z-10 transition-opacity" />
+              {t("Commencer l'essai gratuit")}
+              <ArrowRight className="h-5 w-5" />
+            </MagneticButton>
+            <button
+              type="button"
+              onClick={() => smoothScrollTo('#demo')}
+              className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-8 py-4 font-semibold text-slate-900 shadow-sm transition-all hover:scale-[1.03] hover:border-slate-300 hover:shadow-md"
+            >
+              <Play className="h-5 w-5" />
+              {t('Voir la démo')}
             </button>
-          </div>
-        </div>
-      </FadeIn>
-    </section>
-  );
-}
+          </motion.div>
 
-function Footer() {
-  return (
-    <footer className="bg-slate-950 border-t border-white/[0.06] py-12 md:py-16 px-4 md:px-8">
-      <div className="max-w-[1600px] mx-auto">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
-          <div className="col-span-2 md:col-span-1">
-            <div className="flex items-center gap-2.5 mb-4">
-              <BrandLogo variant="light" size="md" />
-            </div>
-            <p className="text-sm text-white/30 leading-relaxed">
-              La plateforme QR qui automatise l&apos;expérience invités de vos locations courte durée.
-            </p>
-          </div>
-          <div>
-            <h4 className="font-semibold mb-4 text-white/80">Produit</h4>
-            <ul className="space-y-2.5">
-              {['Fonctionnalités', 'Hub Central', 'Modules', 'Tarifs'].map((l) => (
-                <li key={l}><a href="#" className="text-sm text-white/30 hover:text-white transition-colors">{l}</a></li>
+          {/* Stats */}
+          <Reveal delay={0.85} y={20} className="mx-auto max-w-md lg:mx-0">
+            <dl className="grid grid-cols-3 gap-6">
+              {stats.map((stat) => (
+                <div key={stat.label} className="text-center lg:text-left">
+                  <dt className="sr-only">{stat.label}</dt>
+                  <dd className="mb-1 font-serif text-3xl font-bold text-slate-900 sm:text-4xl">
+                    <CountUp end={stat.end} suffix={stat.suffix} />
+                  </dd>
+                  <dd className="text-xs text-slate-500 sm:text-sm">
+                    {stat.label}
+                  </dd>
+                </div>
               ))}
-            </ul>
-          </div>
-          <div>
-            <h4 className="font-semibold mb-4 text-white/80">Support</h4>
-            <ul className="space-y-2.5">
-              {['Documentation', 'Contact', 'FAQ'].map((l) => (
-                <li key={l}><a href="#" className="text-sm text-white/30 hover:text-white transition-colors">{l}</a></li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <h4 className="font-semibold mb-4 text-white/80">Légal</h4>
-            <ul className="space-y-2.5">
-              {['CGU', 'Confidentialité', 'Mentions légales'].map((l) => (
-                <li key={l}><a href="#" className="text-sm text-white/30 hover:text-white transition-colors">{l}</a></li>
-              ))}
-            </ul>
-          </div>
+            </dl>
+          </Reveal>
         </div>
-        <div className="border-t border-white/[0.06] pt-8 text-center">
-          <p className="text-sm text-white/20">2025 Conciergerie Hub. La conciergerie digitale des hôtes.</p>
-        </div>
+
+        {/* ── Colonne visuel photo (v4.73) ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.9, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <HeroVisual targetRef={heroRef} />
+        </motion.div>
       </div>
-    </footer>
-  );
-}
 
-export function LandingPage({ onGoToDashboard, onGoToSetup, onGoToHub }: LandingPageProps) {
-  return (
-    <div className="min-h-screen flex flex-col bg-slate-950">
-      <Navbar onGoToDashboard={onGoToDashboard} />
-      <HeroSection onGoToDashboard={onGoToDashboard} onGoToSetup={onGoToSetup} onGoToHub={onGoToHub} />
-      <HowItWorks />
-      <PricingSection />
-      <ModulesShowcase />
-      <CtaFinal onGoToDashboard={onGoToDashboard} onGoToSetup={onGoToSetup} onGoToHub={onGoToHub} />
-      <Footer />
-    </div>
+      {/* Indicateur de scroll */}
+      <motion.div
+        className="absolute bottom-6 left-1/2 hidden -translate-x-1/2 lg:block"
+        animate={{ y: [0, 10, 0] }}
+        transition={{ duration: 2, repeat: Infinity }}
+        aria-hidden="true"
+      >
+        <ChevronRight className="h-6 w-6 rotate-90 text-slate-400" />
+      </motion.div>
+    </section>
   );
 }

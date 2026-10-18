@@ -1,61 +1,53 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 
-async function ensureDemoUser() {
-  let user = await db.user.findFirst({
-    where: { email: 'demo@qrdomotik.roomscan.pro' },
-  });
-
-  if (!user) {
-    user = await db.user.create({
-      data: {
-        email: 'demo@qrdomotik.roomscan.pro',
-        fullName: 'Utilisateur Démo',
-        role: 'user',
-      },
-    });
-
-    const home = await db.property.create({
-      data: {
-        ownerId: user.id,
-        name: 'Ma Maison',
-        address: 'Dakar, Sénégal',
-        isActive: true,
-      },
-    });
-
-    await db.propertyMember.create({
-      data: {
-        propertyId: home.id,
-        userId: user.id,
-        role: 'owner',
-      },
-    });
-  }
-
-  const member = await db.propertyMember.findFirst({
-    where: { userId: user.id },
-    include: { property: true },
-  });
-
-  return { user, home: member?.property };
+/**
+ * Résout la session courante. Retourne null si non authentifié.
+ */
+async function getSessionUser(): Promise<{ id: string } | null> {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) return null;
+  const userId = (session.user as { id?: string }).id;
+  return userId ? { id: userId } : null;
 }
 
-// GET: List QR codes for a home
+/**
+ * PropertyIds accessibles : propriétés possédées + memberships acceptés.
+ */
+async function getAllowedPropertyIds(userId: string): Promise<string[]> {
+  const [owned, memberships] = await Promise.all([
+    db.property.findMany({ where: { ownerId: userId }, select: { id: true } }),
+    db.propertyMember.findMany({
+      where: { userId, acceptedAt: { not: null } },
+      select: { propertyId: true },
+    }),
+  ]);
+  return [...new Set([...owned.map((p) => p.id), ...memberships.map((m) => m.propertyId)])];
+}
+
+// GET: List QR codes — uniquement ceux des propriétés autorisées
 export async function GET(request: NextRequest) {
   try {
+    const user = await getSessionUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+    }
+
+    const allowedPropertyIds = await getAllowedPropertyIds(user.id);
+
     const { searchParams } = new URL(request.url);
     const propertyId = searchParams.get('propertyId');
 
-    if (!propertyId) {
-      return NextResponse.json(
-        { error: 'Le paramètre propertyId est requis' },
-        { status: 400 }
-      );
+    if (propertyId && !allowedPropertyIds.includes(propertyId)) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
     }
 
     const qrCodes = await db.qrCode.findMany({
-      where: { propertyId },
+      where: {
+        propertyId: propertyId ? propertyId : { in: allowedPropertyIds },
+      },
       include: {
         room: {
           select: { id: true, name: true, icon: true },
@@ -85,9 +77,14 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// PATCH: Update a QR code
+// PATCH: Update a QR code (propriété autorisée uniquement)
 export async function PATCH(request: NextRequest) {
   try {
+    const user = await getSessionUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+    }
+
     const body = await request.json();
     const { id, name, isActive, roomId, content } = body as {
       id: string;
@@ -102,6 +99,32 @@ export async function PATCH(request: NextRequest) {
         { error: 'L\'id du QR code est requis' },
         { status: 400 }
       );
+    }
+
+    const qrCode = await db.qrCode.findUnique({ where: { id } });
+    if (!qrCode) {
+      return NextResponse.json(
+        { error: 'QR code introuvable' },
+        { status: 404 }
+      );
+    }
+
+    const allowedPropertyIds = await getAllowedPropertyIds(user.id);
+    if (!allowedPropertyIds.includes(qrCode.propertyId)) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
+    }
+
+    if (roomId) {
+      const room = await db.room.findFirst({
+        where: { id: roomId, propertyId: qrCode.propertyId },
+        select: { id: true },
+      });
+      if (!room) {
+        return NextResponse.json(
+          { error: 'Pièce introuvable dans cette propriété' },
+          { status: 400 }
+        );
+      }
     }
 
     const updateData: Record<string, unknown> = {};
@@ -127,7 +150,7 @@ export async function PATCH(request: NextRequest) {
       }
     }
 
-    const qrCode = await db.qrCode.update({
+    const updated = await db.qrCode.update({
       where: { id },
       data: updateData,
       include: {
@@ -140,7 +163,7 @@ export async function PATCH(request: NextRequest) {
       },
     });
 
-    return NextResponse.json(qrCode);
+    return NextResponse.json(updated);
   } catch (error) {
     console.error('[qr-codes PATCH] Error:', error);
     return NextResponse.json(
@@ -150,14 +173,18 @@ export async function PATCH(request: NextRequest) {
   }
 }
 
-// DELETE: Deactivate a QR code
+// DELETE: Deactivate a QR code (propriété autorisée uniquement)
 export async function DELETE(request: NextRequest) {
   try {
+    const user = await getSessionUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+    }
+
     const body = await request.json();
-    const { id, physicalQrCodeId, userId } = body as {
+    const { id, physicalQrCodeId } = body as {
       id: string;
       physicalQrCodeId: string;
-      userId?: string;
     };
 
     if (!id || !physicalQrCodeId) {
@@ -167,26 +194,21 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Resolve user
-    let user;
-    if (userId) {
-      user = await db.user.findUnique({ where: { id: userId } });
-      if (!user) {
-        return NextResponse.json({ error: 'Utilisateur introuvable' }, { status: 404 });
-      }
-    } else {
-      const demo = await ensureDemoUser();
-      user = demo.user;
+    const qrCode = await db.qrCode.findUnique({ where: { id } });
+    if (!qrCode) {
+      return NextResponse.json(
+        { error: 'QR code introuvable' },
+        { status: 404 }
+      );
+    }
+
+    const allowedPropertyIds = await getAllowedPropertyIds(user.id);
+    if (!allowedPropertyIds.includes(qrCode.propertyId)) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
     }
 
     await db.$transaction(async (tx) => {
-      // 1. Get QR code for propertyId
-      const qrCode = await tx.qrCode.findUnique({ where: { id } });
-      if (!qrCode) {
-        throw new Error('QR code introuvable');
-      }
-
-      // 2. Update PhysicalQrCode — reset to inactive
+      // 1. Update PhysicalQrCode — reset to inactive
       await tx.physicalQrCode.update({
         where: { id: physicalQrCodeId },
         data: {
@@ -197,7 +219,7 @@ export async function DELETE(request: NextRequest) {
         },
       });
 
-      // 3. Create ActivationLog with action 'deactivated'
+      // 2. Create ActivationLog with action 'deactivated'
       await tx.activationLog.create({
         data: {
           physicalQrCodeId,
@@ -206,13 +228,13 @@ export async function DELETE(request: NextRequest) {
         },
       });
 
-      // 4. Soft-delete the QrCode
+      // 3. Soft-delete the QrCode
       await tx.qrCode.update({
         where: { id },
         data: { isActive: false },
       });
 
-      // 5. Create ActivityLog
+      // 4. Create ActivityLog
       await tx.activityLog.create({
         data: {
           propertyId: qrCode.propertyId,

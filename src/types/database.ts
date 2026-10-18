@@ -1,5 +1,5 @@
 /**
- * Conciergerie Hub — Business-logic types & constants
+ * RoomScan — Business-logic types & constants
  *
  * This file defines enums, type aliases and utility types that Prisma
  * cannot express natively (SQLite stores everything as strings / ints /
@@ -287,11 +287,11 @@ export const QR_MODULE_TYPES = {
 } as const;
 
 // ---------------------------------------------------------------------------
-//  Catalogue B2B Conciergerie Hub — 6 modules métier
+//  Catalogue B2B RoomScan — 6 modules métier
 // ---------------------------------------------------------------------------
 
 /**
- * Les 6 modules métier de Conciergerie Hub (spécification B2B).
+ * Les 6 modules métier de RoomScan (spécification B2B).
  * Chaque module est mappé sur un type DB concret (compatibles legacy).
  * Tout nouveau module proposé aux hôtes doit être ajouté ici.
  */
@@ -351,7 +351,7 @@ export type B2BModuleKey = (typeof B2B_MODULES)[number]['key'];
 
 /**
  * Flat, read-only array with every selectable module type.
- * B2B : limité au catalogue Conciergerie Hub (les 6 modules métier).
+ * B2B : limité au catalogue RoomScan (les 6 modules métier).
  */
 export const ALL_QR_MODULE_TYPES: readonly QrModuleType[] = [
   ...B2B_MODULES.map((m) => m.dbType),
@@ -367,7 +367,7 @@ export const ALL_QR_MODULE_TYPES: readonly QrModuleType[] = [
  * déjà en base continuent d'afficher un label lisible.
  */
 export const QR_MODULE_LABELS: Record<string, string> = {
-  // Catalogue B2B Conciergerie Hub
+  // Catalogue B2B RoomScan
   wifi: 'Wi-Fi',
   home_manual: 'Guidebook',
   checklist: 'Check-out',

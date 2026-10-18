@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { AdminLogsContent } from '@/components/admin/admin-logs-content';
 
 export const metadata: Metadata = {
-  title: 'Logs & Tickets — Superadmin Conciergerie Hub',
+  title: 'Logs & Tickets — Superadmin RoomScan',
 };
 
 // Module 8 — Logs : audit, scans, tickets support.

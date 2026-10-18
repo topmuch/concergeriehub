@@ -1,5 +1,5 @@
 // =============================================================
-// Helpers B2B — Conciergerie Hub
+// Helpers B2B — RoomScan
 // Métadonnées prestataires (catégories → emoji/label), modules
 // du dashboard, distance haversine, formats monétaires.
 // (Partagé client + serveur — aucune dépendance DB ici.)
@@ -24,6 +24,8 @@ export const PROVIDER_CATEGORY_META: Record<string, ProviderCategoryMeta> = {
   peinture: { emoji: '🎨', label: 'Peinture & retouches' },
   // --- Expériences Invité (GUEST_EXPERIENCE) ---
   petit_dejeuner: { emoji: '🥐', label: 'Petit-déjeuner' },
+  arrivee: { emoji: '🎁', label: 'Arrivée' },
+  pratique: { emoji: '🧺', label: 'Pratique' },
   sommelier: { emoji: '🍷', label: 'Sommelier' },
   transfert: { emoji: '🚐', label: 'Transferts' },
   chef: { emoji: '👨‍🍳', label: 'Chef à domicile' },

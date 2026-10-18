@@ -3,17 +3,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import {
-  FileDown,
-  Trash2,
-  ChevronDown,
-  ChevronUp,
-  PackageOpen,
-  Loader2,
-  QrCode,
-  X,
-  Download,
-} from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { toast } from 'sonner';
 
@@ -101,15 +90,16 @@ function parseDesign(designConfig: string | null | undefined) {
   }
 }
 
+// Badges de statut « lux » — teintes sémantiques 8-10 % sur fond nuit.
 const STATUS_STYLES: Record<string, { label: string; cls: string }> = {
-  active:     { label: 'Actif',     cls: 'bg-emerald-100 text-emerald-800 border-emerald-200' },
-  inactive:   { label: 'Inactif',   cls: 'bg-gray-100 text-gray-700 border-gray-200' },
-  lost:       { label: 'Perdu',     cls: 'bg-red-100 text-red-700 border-red-200' },
-  cancelled:  { label: 'Annulé',    cls: 'bg-amber-100 text-amber-800 border-amber-200' },
+  active:     { label: 'Actif',     cls: 'border border-[#34d399]/25 bg-[#34d399]/10 text-[#86e9cb]' },
+  inactive:   { label: 'Inactif',   cls: 'border border-white/10 bg-white/[0.05] text-[#8fa0c2]' },
+  lost:       { label: 'Perdu',     cls: 'border border-[#f07d6a]/25 bg-[#f07d6a]/10 text-[#f07d6a]' },
+  cancelled:  { label: 'Annulé',    cls: 'border border-[#fbbf24]/25 bg-[#fbbf24]/10 text-[#fbbf24]' },
 };
 
 function getStatusStyle(status: string) {
-  return STATUS_STYLES[status] ?? { label: status, cls: 'bg-gray-100 text-gray-600 border-gray-200' };
+  return STATUS_STYLES[status] ?? { label: status, cls: 'border border-white/10 bg-white/[0.05] text-[#8fa0c2]' };
 }
 
 /** FIX-11 — badge matériau d'une plaque/lot (designConfig JSON). */
@@ -117,13 +107,16 @@ function MaterialBadge({ designConfig }: { designConfig: string | null | undefin
   const material = parsePlaqueMaterial(designConfig);
   const meta = PLAQUE_MATERIAL_META[material];
   return (
-    <Badge variant="outline" className="text-xs" title={`Matériau : ${meta.label}`}>
-      {meta.emoji} {meta.label}
+    <Badge variant="outline" className="border-white/12 bg-white/[0.03] text-xs text-[#8fa0c2]" title={`Matériau : ${meta.label}`}>
+      {meta.label}
     </Badge>
   );
 }
 
-const APP_URL = 'https://qrdomotik.roomscan.pro';
+// FIX-DOMAINE : domaine courant à l'exécution (avant : qrdomotik.roomscan.pro hardcodé)
+const APP_URL = typeof window !== 'undefined'
+  ? window.location.origin
+  : (process.env.NEXT_PUBLIC_APP_URL || '');
 
 /* ------------------------------------------------------------------ */
 /*  Status Badge (batch level)                                         */
@@ -134,9 +127,9 @@ function StatusBadge({ _count, quantity }: { _count?: BatchListItem['_count']; q
   const allActivated = activated === quantity && quantity > 0;
   const noneActivated = activated === 0;
 
-  if (noneActivated) return <Badge variant="secondary">{activated}/{quantity} activés</Badge>;
-  if (allActivated) return <Badge className="bg-emerald-600 hover:bg-emerald-700 text-white">{activated}/{quantity} activés</Badge>;
-  return <Badge variant="outline" className="border-amber-500 text-amber-700">{activated}/{quantity} activés</Badge>;
+  if (noneActivated) return <Badge variant="secondary" className="border border-white/10 bg-white/[0.05] text-[#8fa0c2]">{activated}/{quantity} activés</Badge>;
+  if (allActivated) return <Badge className="border border-[#34d399]/25 bg-[#34d399]/10 text-[#86e9cb]">{activated}/{quantity} activés</Badge>;
+  return <Badge variant="outline" className="border border-[#fbbf24]/40 bg-[#fbbf24]/10 text-[#fbbf24]">{activated}/{quantity} activés</Badge>;
 }
 
 /* ------------------------------------------------------------------ */
@@ -168,7 +161,7 @@ function QrCard({ qr }: { qr: PhysicalQr }) {
   };
 
   return (
-    <div className="flex flex-col items-center gap-2 rounded-xl border bg-white p-3 shadow-sm hover:shadow-md transition-shadow">
+    <div className="flex flex-col items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] p-3 hover:border-white/20 transition-colors">
       <div id={`qr-svg-${qr.id}`}>
         <QRCodeSVG
           value={url}
@@ -178,7 +171,7 @@ function QrCard({ qr }: { qr: PhysicalQr }) {
           fgColor={design.fgColor}
         />
       </div>
-      <span className="font-mono text-[10px] font-semibold text-center break-all leading-tight text-gray-700">
+      <span className="font-mono text-[10px] font-semibold text-center break-all leading-tight text-[#8fa0c2]">
         {qr.activationCode}
       </span>
       <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${st.cls}`}>
@@ -187,10 +180,9 @@ function QrCard({ qr }: { qr: PhysicalQr }) {
       <Button
         variant="ghost"
         size="sm"
-        className="h-7 text-xs gap-1 text-gray-500 hover:text-gray-800"
+        className="h-7 text-xs text-[#8fa0c2] hover:bg-white/[0.06] hover:text-white"
         onClick={handleDownloadSingle}
       >
-        <Download className="h-3 w-3" />
         PNG
       </Button>
     </div>
@@ -254,13 +246,12 @@ function BatchDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh]">
+      <DialogContent className="max-w-4xl max-h-[90vh] border-white/10 bg-[#0b1226] text-white">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <QrCode className="h-5 w-5" />
+          <DialogTitle className="lux-display text-lg text-white">
             Plaque QR Hub
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-sm text-[#8fa0c2]">
             Plaque <span className="font-mono">{batch.id.slice(0, 8)}</span> —{' '}
             Créée le {format(new Date(batch.createdAt), 'dd MMM yyyy HH:mm', { locale: fr })}
           </DialogDescription>
@@ -268,7 +259,7 @@ function BatchDetailDialog({
 
         <div className="flex items-center justify-between mb-2">
           <div className="flex gap-2">
-            <Badge variant="secondary">Plaque Hub</Badge>
+            <Badge variant="secondary" className="border border-white/10 bg-white/[0.05] text-[#8fa0c2]">Plaque Hub</Badge>
             {/* FIX-11 — matériau du lot */}
             <MaterialBadge designConfig={batch.designConfig} />
             <StatusBadge _count={batch._count} quantity={batch.quantity} />
@@ -277,14 +268,13 @@ function BatchDetailDialog({
             size="sm"
             onClick={handleDownloadPdf}
             disabled={downloading}
-            className="gap-2"
+            className="lux-btn h-8 rounded-full px-3.5 text-xs"
           >
-            {downloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
-            Télécharger PDF
+            {downloading ? 'Export…' : 'Télécharger PDF'}
           </Button>
         </div>
 
-        <ScrollArea className="max-h-[60vh]">
+        <ScrollArea className="lux-scroll max-h-[60vh]">
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 p-1">
             {batch.physicalQrCodes.map((qr) => (
               <QrCard key={qr.id} qr={qr} />
@@ -431,13 +421,12 @@ export function ManageBatches() {
   /* ---- Render ---- */
   return (
     <>
-      <Card>
+      <Card className="lux-card">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <PackageOpen className="h-5 w-5" />
+          <CardTitle className="lux-display text-xl text-white">
             Plaques QR Hub
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-sm text-[#8fa0c2]">
             Toutes les plaques QR Hub générées
           </CardDescription>
         </CardHeader>
@@ -445,25 +434,24 @@ export function ManageBatches() {
           {loading && (
             <div className="space-y-4">
               {Array.from({ length: 3 }).map((_, i) => (
-                <Skeleton key={i} className="h-20 w-full rounded-lg" />
+                <Skeleton key={i} className="h-20 w-full rounded-xl bg-white/8" />
               ))}
             </div>
           )}
 
           {error && (
             <div className="text-center py-12">
-              <p className="text-sm text-destructive">{error}</p>
-              <Button variant="outline" size="sm" className="mt-3" onClick={fetchBatches}>
+              <p className="text-sm text-[#f07d6a]">{error}</p>
+              <Button variant="outline" size="sm" className="lux-btn-ghost mt-3 h-8 rounded-full px-4 text-xs" onClick={fetchBatches}>
                 Réessayer
               </Button>
             </div>
           )}
 
           {!loading && !error && batches.length === 0 && (
-            <div className="text-center py-12">
-              <PackageOpen className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-              <h3 className="text-lg font-medium">Aucune plaque</h3>
-              <p className="mt-1 text-sm text-muted-foreground">
+            <div className="lux-empty rounded-2xl px-4 py-10 text-center">
+              <h3 className="lux-display text-lg text-white">Aucune plaque</h3>
+              <p className="mt-1 text-sm text-[#8fa0c2]">
                 Aucune plaque QR Hub n&apos;a été générée pour le moment.
               </p>
             </div>
@@ -475,29 +463,27 @@ export function ManageBatches() {
                 const isExpanded = expandedBatchId === batch.id;
                 const color = parseDesign(batch.designConfig);
                 return (
-                  <div key={batch.id} className="rounded-xl border bg-card shadow-sm overflow-hidden">
+                  <div key={batch.id} className="lux-card overflow-hidden">
                     {/* Batch header row */}
                     <div className="flex flex-wrap items-center gap-3 p-4">
                       {/* Color dot */}
                       <span
-                        className="h-8 w-8 rounded-lg border flex-shrink-0"
+                        className="h-8 w-8 rounded-lg border border-white/10 flex-shrink-0"
                         style={{ backgroundColor: color.bgColor, borderColor: color.fgColor + '40' }}
-                      >
-                        <QrCode className="h-4 w-4 m-2" style={{ color: color.fgColor }} />
-                      </span>
+                      />
 
                       {/* Info */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-mono text-sm font-semibold">{batch.id.slice(0, 8)}</span>
-                          <Badge variant="outline" className="text-xs">
+                          <span className="font-mono text-sm font-semibold text-white">{batch.id.slice(0, 8)}</span>
+                          <Badge variant="outline" className="border-white/12 text-xs text-[#8fa0c2]">
                             1 plaque
                           </Badge>
                           {/* FIX-11 — matériau du lot (designConfig JSON) */}
                           <MaterialBadge designConfig={batch.designConfig} />
                           <StatusBadge _count={batch._count} quantity={batch.quantity} />
                         </div>
-                        <p className="text-xs text-muted-foreground mt-0.5">
+                        <p className="text-xs text-[#8fa0c2] mt-0.5">
                           Créé le {format(new Date(batch.createdAt), 'dd MMM yyyy à HH:mm', { locale: fr })}
                         </p>
                       </div>
@@ -507,31 +493,28 @@ export function ManageBatches() {
                         <Button
                           variant="outline"
                           size="sm"
-                          className="gap-1.5 text-xs"
+                          className="lux-btn-ghost h-8 rounded-full px-3.5 text-xs"
                           onClick={() => toggleExpand(batch)}
                         >
-                          {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                          {isExpanded ? 'Masquer' : 'Voir les QR'}
+                          {isExpanded ? 'Masquer ↑' : 'Voir les QR ▾'}
                         </Button>
                         <Button
                           variant="outline"
                           size="sm"
-                          className="gap-1.5 text-xs"
+                          className="lux-btn-ghost h-8 rounded-full px-3.5 text-xs"
                           onClick={handleInlinePdfDownload}
                           disabled={!isExpanded || !expandedBatchData}
                           title="Télécharger PDF"
                         >
-                          <FileDown className="h-4 w-4" />
-                          PDF
+                          PDF ↓
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="gap-1.5 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
+                          className="lux-btn-ghost h-8 rounded-full px-3.5 text-xs text-[#f07d6a] hover:bg-[#f07d6a]/10 hover:text-[#f07d6a]"
                           onClick={() => setDeleteTarget(batch)}
                           title="Supprimer cette plaque"
                         >
-                          <Trash2 className="h-4 w-4" />
                           Supprimer
                         </Button>
                       </div>
@@ -539,11 +522,11 @@ export function ManageBatches() {
 
                     {/* Expanded QR grid */}
                     {isExpanded && (
-                      <div className="border-t bg-muted/30 px-4 py-4">
+                      <div className="border-t border-white/8 bg-white/[0.02] px-4 py-4">
                         {loadingDetail ? (
                           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                             {Array.from({ length: batch.quantity > 10 ? 10 : batch.quantity }).map((_, i) => (
-                              <Skeleton key={i} className="h-[180px] rounded-xl" />
+                              <Skeleton key={i} className="h-[180px] rounded-xl bg-white/8" />
                             ))}
                           </div>
                         ) : expandedBatchData ? (
@@ -553,7 +536,7 @@ export function ManageBatches() {
                             ))}
                           </div>
                         ) : (
-                          <p className="text-sm text-muted-foreground text-center py-4">
+                          <p className="text-sm text-[#8fa0c2] text-center py-4">
                             Erreur lors du chargement des QR codes
                           </p>
                         )}
@@ -576,23 +559,22 @@ export function ManageBatches() {
 
       {/* Delete confirmation */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(v) => !v && setDeleteTarget(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="border-white/10 bg-[#0b1226] text-white">
           <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer cette plaque ?</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="lux-display text-lg text-white">Supprimer cette plaque ?</AlertDialogTitle>
+            <AlertDialogDescription className="text-sm text-[#8fa0c2]">
               Cette action est irréversible. La plaque{' '}
               <span className="font-mono font-semibold">{deleteTarget?.id.slice(0, 8)}</span> sera définitivement supprimée.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>Annuler</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleting} className="lux-btn-ghost rounded-full border-white/10 bg-transparent px-4 text-xs text-[#c7d3ec]">Annuler</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               disabled={deleting}
-              className="bg-destructive text-white hover:bg-destructive/90"
+              className="rounded-full bg-[#f07d6a] text-[#2a0e08] hover:bg-[#f07d6a]/90"
             >
-              {deleting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Supprimer
+              {deleting ? 'Suppression…' : 'Supprimer'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

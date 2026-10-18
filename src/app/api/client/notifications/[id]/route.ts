@@ -1,12 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 
-// PUT: Mark a single notification as read
+// PUT: Mark a single notification as read (propriétaire uniquement)
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+    }
+
+    const userId = (session.user as { id?: string }).id;
     const { id } = await params;
     const body = await request.json();
     const { isRead } = body as { isRead?: boolean };
@@ -17,6 +25,10 @@ export async function PUT(
         { error: 'Notification introuvable' },
         { status: 404 }
       );
+    }
+
+    if (notification.userId !== userId) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
     }
 
     const updated = await db.notification.update({
@@ -34,12 +46,18 @@ export async function PUT(
   }
 }
 
-// DELETE: Delete a notification
+// DELETE: Delete a notification (propriétaire uniquement)
 export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+    }
+
+    const userId = (session.user as { id?: string }).id;
     const { id } = await params;
 
     const notification = await db.notification.findUnique({ where: { id } });
@@ -48,6 +66,10 @@ export async function DELETE(
         { error: 'Notification introuvable' },
         { status: 404 }
       );
+    }
+
+    if (notification.userId !== userId) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
     }
 
     await db.notification.delete({ where: { id } });

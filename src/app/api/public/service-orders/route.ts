@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { Prisma } from '@prisma/client';
 import { db } from '@/lib/db';
+
+// Hub démo (vitrine landing) — même convention que /api/public/hub/[slug].
+const DEMO_SLUG = 'demo-hub';
 import {
   parseOrderLines,
   itemsTotal,
@@ -13,6 +16,18 @@ import {
   ensureDefaultRules,
   runAutomationTrigger,
 } from '@/lib/automations-server';
+// AUDIT PRÉ-PROD (Module 5.2) — le PRESTATAIRE est notifié à chaque
+// nouvelle commande + webhooks sortants du bien déclenchés.
+import {
+  sendNotification,
+  sendNotificationToMany,
+  notifySuperadmins,
+  propertyOwnerAndManagers,
+} from '@/lib/notifications';
+// v4.46 — EMAIL hôte structuré pour chaque commande Services & Expériences.
+import { renderHubAlertEmail } from '@/lib/email-template-render';
+import { siteUrl } from '@/lib/site';
+import { dispatchWebhooks } from '@/lib/webhook-dispatcher';
 
 // =============================================================
 // ÉTAPE 17.2 (V3) — Moteur de transaction côté INVITÉ :
@@ -78,6 +93,29 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: false, message: 'Requête invalide.' }, { status: 400 });
     }
 
+    // ── HUB DÉMO (vitrine landing, aucun bien en DB) — REFONTE V4.14 ──
+    // Simulation 100 % autonome : aucune écriture DB, aucun encaissement,
+    // aucune dépendance Stripe. Le visiteur démo voit le parcours complet
+    // (créneau, note, confirmation confettis) sans toucher aux données réelles.
+    if (slug === DEMO_SLUG) {
+      const demoName = typeof body.guestName === 'string' ? body.guestName.trim() : '';
+      if (demoName.length < 2) {
+        return NextResponse.json({ ok: false, message: 'Votre nom est requis.' }, { status: 400 });
+      }
+      return NextResponse.json(
+        {
+          ok: true,
+          mode: 'demo',
+          order: {
+            id: `demo-order-${Date.now()}`,
+            status: 'CONFIRMED',
+            paymentStatus: 'PAID',
+          },
+        },
+        { status: 201 },
+      );
+    }
+
     const property = await resolvePropertyBySlug(slug);
     if (!property) {
       return NextResponse.json(
@@ -107,7 +145,7 @@ export async function POST(req: Request) {
     const provider = providerId
       ? await db.provider.findFirst({
           where: { id: providerId, isActive: true, audience: 'GUEST_EXPERIENCE' },
-          select: { id: true, businessName: true, hourlyRate: true },
+          select: { id: true, businessName: true, hourlyRate: true, userId: true },
         })
       : null;
     if (!provider) {
@@ -200,6 +238,19 @@ export async function POST(req: Request) {
     }
 
     // ── 4. Création (statut initial PENDING — cycle piloté côté hôte) ──
+    // REFONTE SERVICES PREMIUM (V4.11) — créneau de livraison + note
+    // invité : horodatage validé (entre maintenant et +31 jours) et
+    // note bornée (500 car.) — jamais crus au-delà.
+    let deliveryDate: Date | null = null;
+    if (typeof body.deliveryDate === 'string' && body.deliveryDate.trim()) {
+      const d = new Date(body.deliveryDate);
+      if (!Number.isNaN(d.getTime()) && d.getTime() > Date.now() - 60_000 && d.getTime() < Date.now() + 31 * 86_400_000) {
+        deliveryDate = d;
+      }
+    }
+    const guestNote =
+      typeof body.note === 'string' && body.note.trim() ? body.note.trim().slice(0, 500) : null;
+
     const order = await db.serviceOrder.create({
       data: {
         bookingId,
@@ -208,10 +259,12 @@ export async function POST(req: Request) {
         guestName,
         guestEmail: guestEmail || null,
         items: items as unknown as Prisma.InputJsonValue,
+        guestNote,
         totalAmount,
         commission,
         hostEarning,
         status: 'PENDING',
+        ...(deliveryDate ? { deliveryDate } : {}),
       },
       select: { id: true, status: true, createdAt: true },
     });
@@ -235,6 +288,87 @@ export async function POST(req: Request) {
         itemsSummary: itemsSummary || 'commande service',
       },
     });
+
+    // AUDIT PRÉ-PROD (Module 5.2) — notification PRESTATAIRE : le
+    // prestataire (compte lié Provider.userId) apprend qu'une commande
+    // le concerne, avec le détail et la mise en relation.
+    if (provider.userId) {
+      sendNotification(provider.userId, 'host_order', {
+        title: `🥐 Nouvelle commande — ${property.name}`,
+        body:
+          `${guestName} a commandé « ${itemsSummary || 'commande service'} » (${totalAmount.toFixed(2).replace('.', ',')} €) ` +
+          `via le Hub de ${property.name}. Suivez-la depuis vos commandes service.`,
+        propertyId: property.id,
+        propertyName: property.name,
+        url: '/provider/dashboard',
+        meta: { source: 'guest_app', orderId: order.id, providerId: provider.id },
+      }).catch(() => undefined);
+    }
+
+    // AUDIT PRÉ-PROD (Module 5.2) — WEBHOOKS SORTANTS du bien
+    // (lib/webhook-dispatcher, HMAC) : événement 'order' — le code
+    // existait sans aucun call-site (morts).
+    void dispatchWebhooks(property.id, 'order', {
+      event: 'order.created',
+      orderId: order.id,
+      providerId: provider.id,
+      providerName: provider.businessName,
+      guestName,
+      itemsSummary: itemsSummary || 'commande service',
+      totalAmount,
+      propertyName: property.name,
+    });
+
+    // ── v4.46 — EMAIL HÔTE (et managers) + relais SUPERADMIN ──
+    // L'automatisation ORDER_CREATED (cloche + miroir email) reste la
+    // voie principale ; on ajoute un email STRUCTURÉ (hub_alert) à
+    // l'hôte — détail invité / prestataire / articles / créneau / note —
+    // ainsi que le relais Superadmin (audit plateforme).
+    try {
+      const email = await renderHubAlertEmail({
+        heading: '🥐 Nouvelle commande Room Service',
+        propertyName: property.name,
+        guestName,
+        rows: [
+          { label: 'Prestataire', value: provider.businessName },
+          { label: 'Articles', value: itemsSummary || 'commande service' },
+          ...(deliveryDate
+            ? [{ label: 'Créneau souhaité', value: deliveryDate.toLocaleString('fr-FR') }]
+            : []),
+          ...(guestNote ? [{ label: 'Note de l’invité', value: guestNote.slice(0, 200) }] : []),
+        ],
+        totalLabel: 'Montant de la commande',
+        totalValue: `${totalAmount.toFixed(2).replace('.', ',')} €`,
+        introNote:
+          'Confirmez la commande depuis votre tableau de bord (Upselling — Commandes) pour lancer la prestation.',
+        ctaLabel: 'Ouvrir le tableau de bord',
+        ctaUrl: `${siteUrl}/airbnb/dashboard`,
+        footerNote: 'Email envoyé automatiquement depuis le Hub invité.',
+      });
+      const audience = await propertyOwnerAndManagers(property.id);
+      if (audience.length > 0) {
+        await sendNotificationToMany(audience, 'new_order', {
+          title: `🥐 Nouvelle commande — ${property.name}`,
+          body: `${guestName} a commandé « ${itemsSummary || 'commande service'} » (${totalAmount.toFixed(2).replace('.', ',')} €) chez ${provider.businessName}.`,
+          propertyId: property.id,
+          propertyName: property.name,
+          url: '/airbnb/dashboard',
+          email: { subject: email.subject, html: email.html, text: email.text },
+          meta: { source: 'hub', orderId: order.id, providerId: provider.id },
+        });
+      }
+      void notifySuperadmins('new_order', {
+        title: `🥐 [Plateforme] Commande Room Service — ${property.name}`,
+        body: `${guestName} — « ${itemsSummary || 'commande service'} » (${totalAmount.toFixed(2).replace('.', ',')} €) chez ${provider.businessName}.`,
+        propertyId: property.id,
+        propertyName: property.name,
+        url: '/airbnb/dashboard',
+        email: { subject: email.subject, html: email.html, text: email.text },
+        meta: { source: 'hub', relay: 'superadmin', orderId: order.id },
+      }).catch(() => undefined);
+    } catch (error) {
+      console.error('[service-orders] email host failed:', error);
+    }
 
     return NextResponse.json({
       ok: true,

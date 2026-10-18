@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { compare } from 'bcryptjs';
 import { db } from '@/lib/db';
+import { dispatchWebhooks } from '@/lib/webhook-dispatcher';
 import { rateLimit } from '@/lib/rate-limit';
 // FIX-12 — notification SMS hôte (Twilio REST env-gated, fail-closed).
 import { sendSms } from '@/lib/sms';
@@ -8,13 +9,26 @@ import { sendSms } from '@/lib/sms';
 import { captureError } from '@/lib/error-monitor';
 // FIX-15 (C) — zod sur la mutation publique + clientIp (rate-limit IP-scopé).
 import { z } from 'zod';
+// v4.46 — EMAIL hôte + superadmin : « Signaler un problème » notifie
+// désormais l'hôte (et managers) PAR EMAIL en plus de la cloche du
+// Mode Hôte et du SMS, avec relais Superadmin pour audit plateforme.
+import {
+  sendNotificationToMany,
+  notifySuperadmins,
+  propertyOwnerAndManagers,
+} from '@/lib/notifications';
+import { renderHubAlertEmail } from '@/lib/email-template-render';
+import { siteUrl } from '@/lib/site';
+// v4.50 — garde serveur du verrouillage du hub (403 SESSION_EXPIRED).
+import { requireHubAccess } from '@/lib/hub-access';
 
 // =============================================================
 // Réclamations écrites du Hub public — /api/public/hub/[slug]/complaint
 //
 // POST   (invité, libre) : soumettre une réclamation
 //   body: { category, description, photos?: string[], isUrgent?, guestName? }
-//   - category : 'PLUMBING' | 'ELECTRICAL' | 'CLEANING' | 'OTHER'
+//   - category : 'PLUMBING' | 'ELECTRICAL' | 'CLEANING' | 'BREAKAGE' | 'OTHER'
+//                (v4.53 — + 'BREAKAGE' : casse invité → fiche assurance)
 //   - photos   : ≤ 3 images dataURL (png/jpeg/webp), ≤ 500 KB décodé / photo
 //   - Rate limit : 5 / minute / slug+IP (anti spam)
 //
@@ -26,13 +40,14 @@ import { z } from 'zod';
 const DEMO_SLUG = 'demo-hub';
 const isDemo = (slug: string) => slug === DEMO_SLUG;
 
-const CATEGORIES = ['PLUMBING', 'ELECTRICAL', 'CLEANING', 'OTHER'] as const;
+const CATEGORIES = ['PLUMBING', 'ELECTRICAL', 'CLEANING', 'BREAKAGE', 'OTHER'] as const;
 type Category = (typeof CATEGORIES)[number];
 
 const CATEGORY_LABELS: Record<Category, string> = {
   PLUMBING: 'Plomberie',
   ELECTRICAL: 'Électricité',
   CLEANING: 'Ménage',
+  BREAKAGE: 'Casse / objet abîmé',
   OTHER: 'Autre',
 };
 
@@ -68,7 +83,7 @@ async function notifyHostBySms(
     const prefix = data.isUrgent ? '🚨 URGENT — ' : '🔔 ';
     const guest = data.guestName ? ` (${data.guestName})` : '';
     const body =
-      `${prefix}Conciergerie Hub — ${property.name} : nouvelle réclamation ` +
+      `${prefix}RoomScan — ${property.name} : nouvelle réclamation ` +
       `${CATEGORY_LABELS[data.category]}${guest}. « ${data.description.slice(0, 120)} »`;
     const result = await sendSms(phone, body);
     if (!result.sent) {
@@ -215,6 +230,14 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
       });
     }
 
+    // ── v4.50 — GARDE SERVEUR du verrouillage (hubLock) : « ouvrir un
+    // ticket » est une action hub — session valide exigée quand le hub
+    // est protégé par code. ──
+    const access = await requireHubAccess(slug, req);
+    if (!access.ok) {
+      return NextResponse.json({ error: access.code, message: access.message }, { status: access.status });
+    }
+
     const complaint = await db.guestComplaint.create({
       data: {
         propertyId: resolved.propertyId,
@@ -236,6 +259,68 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
       isUrgent,
       guestName,
     }).catch(() => undefined);
+
+    // ── v4.46 — EMAIL hôte (et managers) + relais SUPERADMIN ──
+    // La réclamation écrite (« Signaler un problème ») était notifiée
+    // uniquement par SMS + cloche Mode Hôte : elle part désormais aussi
+    // PAR EMAIL (template structuré hub_alert) et est reléguée au
+    // Superadmin (audit plateforme). Fire-and-forget, jamais bloquant.
+    try {
+      const propertyRow = await db.property.findUnique({
+        where: { id: resolved.propertyId },
+        select: { name: true },
+      });
+      const propertyName = propertyRow?.name ?? 'Votre logement';
+      const catLabel = CATEGORY_LABELS[category];
+      const email = await renderHubAlertEmail({
+        heading: isUrgent ? '🚨 Problème signalé (urgent)' : '📝 Problème signalé',
+        propertyName,
+        guestName,
+        rows: [
+          { label: 'Catégorie', value: catLabel },
+          { label: 'Urgence', value: isUrgent ? '⚠️ Oui' : 'Non' },
+          { label: 'Message', value: description.slice(0, 300) },
+          ...(photos.length > 0 ? [{ label: 'Photos', value: `${photos.length} jointure(s)` }] : []),
+        ],
+        introNote: 'Répondez vite : un problème résolu rapidement évite un avis négatif.',
+        ctaLabel: 'Voir dans le Mode Hôte',
+        ctaUrl: `${siteUrl}/hub/${slug}`,
+        footerNote: 'Email envoyé automatiquement depuis le Hub invité.',
+      });
+      const audience = await propertyOwnerAndManagers(resolved.propertyId);
+      if (audience.length > 0) {
+        await sendNotificationToMany(audience, 'complaint_created', {
+          title: isUrgent ? `🚨 Problème signalé (urgent) — ${propertyName}` : `📝 Problème signalé — ${propertyName}`,
+          body: `${catLabel} — ${guestName ? `${guestName} : ` : ''}« ${description.slice(0, 200)} »`,
+          propertyId: resolved.propertyId,
+          propertyName,
+          url: `/hub/${slug}`,
+          email: { subject: email.subject, html: email.html, text: email.text },
+          meta: { source: 'hub', complaintId: complaint.id, category, isUrgent, hubSlug: slug },
+        });
+      }
+      void notifySuperadmins('complaint_created', {
+        title: `📝 [Plateforme] Problème signalé — ${propertyName}`,
+        body: `${catLabel} — « ${description.slice(0, 200)} »`,
+        propertyId: resolved.propertyId,
+        propertyName,
+        url: `/hub/${slug}`,
+        email: { subject: email.subject, html: email.html, text: email.text },
+        meta: { source: 'hub', relay: 'superadmin', complaintId: complaint.id, hubSlug: slug },
+      }).catch(() => undefined);
+    } catch (error) {
+      console.error('[complaint] email notification failed:', error);
+    }
+
+    // AUDIT PRÉ-PROD (Module 5) — WEBHOOK SORTANT 'complaint' (HMAC).
+    void dispatchWebhooks(resolved.propertyId, 'complaint', {
+      event: 'complaint.created',
+      complaintId: complaint.id,
+      category,
+      isUrgent,
+      guestName,
+      description: description.slice(0, 500),
+    });
 
     return NextResponse.json({
       success: true,
