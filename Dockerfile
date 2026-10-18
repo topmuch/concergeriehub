@@ -28,7 +28,7 @@ WORKDIR /app
 # (symptôme : déployé mais changements invisibles). .gh-sync.mjs
 # remplace CACHEBUST par la version à CHAQUE push → URL différente →
 # couche reconstruite à coup sûr.
-ADD https://raw.githubusercontent.com/topmuch/concergeriehub/main/app-update.tar.xz?cb=v4.126%20(2026-10-18)%20%E2%80%94%20Fusion%20complete%3A%20theme%20luxe%20bleute%20clair%2Fsombre%2C%20boutons%20standardises%2C%20PDF%20nouveau%20design%20partout%20%2B%20fusion%20entree%2Fsortie%2C%20factures%20EDL%2C%20Facturation%20%2B%20G%C3%A9rer%20mon%20abonnement%20(299%2F499%2Fdevis)%2C%20Documents%2C%20Sejours%20(recherche%20date%2Bnom%2C%20encarts%20check-in%2Fout%2C%20WhatsApp%2Bvideo)%2C%20KPIs%20lisibles%20%2B%20revenus%20proteges%20%2B%20temps%20gagne%20%2B%20prochains%20evenements%20%2B%20donut%2C%20cloche%20alertes%2C%20widgets%20Biens%2FBouclier%2C%20Parametres%204%20onglets%20%2B%20Assistance%20%2B%20Mode%20demploi%20(fusion%20v4.125)%2C%20fix%20Inspection%20introuvable /tmp/app-update.tar.xz
+ADD https://raw.githubusercontent.com/topmuch/concergeriehub/main/app-update.tar.xz?cb=v4.126 /tmp/app-update.tar.xz
 
 RUN set -e; tar -xJf /tmp/app-update.tar.xz -C /app; rm /tmp/app-update.tar.xz; test -f /app/package.json; test -f /app/prisma/schema.prisma; test -f /app/scripts/create-admin.cjs; node --check /app/scripts/create-admin.cjs; grep -q "force-dynamic" /app/src/app/page.tsx; test -f "/app/src/app/api/uploads/voice/[file]/route.ts"; test -f /app/src/app/airbnb/messages/page.tsx; echo "[payload] OK version : $(cat /app/VERSION.txt)"
 
