@@ -28,9 +28,9 @@ WORKDIR /app
 # (symptôme : déployé mais changements invisibles). .gh-sync.mjs
 # remplace CACHEBUST par la version à CHAQUE push → URL différente →
 # couche reconstruite à coup sûr.
-ADD https://raw.githubusercontent.com/topmuch/concergeriehub/main/app-update.tar.xz?cb=v4.143 /tmp/app-update.tar.xz
+ADD https://raw.githubusercontent.com/topmuch/concergeriehub/main/app-update.tar.xz?cb=v4.143%20(2026-10-20)%20%E2%80%94%20ARCHITECTURE%203%20dashboards%3A%20%2Fairbnb%2F*%20%3D%20admin%20hote%20V1%20restaure%20(host-shell%20%2B%20zero-state)%20%2F%20%2Fairbnb%2Finspection%2F*%20%3D%20admin%20etats%20des%20lieux%20V2%20BOUCLIER%20(portail%20independant%20%2B%20entree%20nav%20hote)%20%2F%20%2Fadmin%20%3D%20superadmin%20-%20liens%20V2%20recables /tmp/app-update.tar.xz
 
-RUN set -e; tar -xJf /tmp/app-update.tar.xz -C /app; rm /tmp/app-update.tar.xz; test -f /app/package.json; test -f /app/prisma/schema.prisma; test -f /app/scripts/create-admin.cjs; node --check /app/scripts/create-admin.cjs; grep -q "force-dynamic" /app/src/app/page.tsx; test -f "/app/src/app/api/uploads/voice/[file]/route.ts"; test -f /app/src/app/airbnb/messages/page.tsx; echo "[payload] OK version : $(cat /app/VERSION.txt)"
+RUN set -e; tar -xJf /tmp/app-update.tar.xz -C /app; rm /tmp/app-update.tar.xz; test -f /app/package.json; test -f /app/prisma/schema.prisma; test -f /app/scripts/create-admin.cjs; node --check /app/scripts/create-admin.cjs; grep -q "force-dynamic" /app/src/app/page.tsx; test -f "/app/src/app/api/uploads/voice/[file]/route.ts"; test -f "/app/src/app/airbnb/(espace-hote)/messages/page.tsx"; test -f "/app/src/app/airbnb/inspection/dashboard/page.tsx"; echo "[payload] OK version : $(cat /app/VERSION.txt)"
 
 # Install dependencies + Prisma Client
 RUN bun install
