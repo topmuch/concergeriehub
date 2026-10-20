@@ -28,7 +28,7 @@ WORKDIR /app
 # (symptôme : déployé mais changements invisibles). .gh-sync.mjs
 # remplace CACHEBUST par la version à CHAQUE push → URL différente →
 # couche reconstruite à coup sûr.
-ADD https://raw.githubusercontent.com/topmuch/concergeriehub/main/app-update.tar.xz?cb=v4.147%20(2026-10-20)%20%E2%80%94%20v4.147%20-%20VERSION%207%20en%20production%20(clone%20exact%20du%20tag%20v.7%20%3D%20v4.117%2C%20demande%20client) /tmp/app-update.tar.xz
+ADD https://raw.githubusercontent.com/topmuch/concergeriehub/main/app-update.tar.xz?cb=v4.148 /tmp/app-update.tar.xz
 
 RUN set -e; tar -xJf /tmp/app-update.tar.xz -C /app; rm /tmp/app-update.tar.xz; test -f /app/package.json; test -f /app/prisma/schema.prisma; test -f /app/scripts/create-admin.cjs; node --check /app/scripts/create-admin.cjs; grep -q "force-dynamic" /app/src/app/page.tsx; echo "[payload] OK version : $(cat /app/VERSION.txt)"
 
