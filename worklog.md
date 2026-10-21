@@ -5167,3 +5167,21 @@ Stage Summary:
 - Lecon 1 : patterns .gitignore non ancres (upload/) = pertes silencieuses de fichiers shippes — toujours audit tar-vs-git avant deploy (une commande comm).
 - Lecon 2 : composants a marges negatives (-m-4) : documenter le padding parent requis ; les nouvelles pages shield le fournissent.
 - Lecon 3 : le .env local sandbox perd NEXTAUTH_SECRET au resync -> JWEDecryptionFailed au login local ; regenerer + restart dev server.
+
+---
+Task ID: V4159-BADGES-DASHBOARD
+Agent: Z.ai Code (principal)
+Task: Reponse utilisateur « ou se trouve le badge de confiance / le QR code PWA » + les rendre accessibles DANS le dashboard Bouclier /inspection/dashboard, puis deployer en v4.159.
+
+Work Log:
+- EMPLACEMENTS TROUVES (avant v4.159) : Badge de confiance = page Logements hote (/airbnb/properties) bouton « 🏅 Badges » par carte -> MarketingBadgesModal (3 badges Securite/Proprete/Technologie, PNG HD + HTML, QR /verify/<Property ID>) ; QR PWA = Vue d'ensemble hote (/airbnb/dashboard) carte PwaInstallBanner qr-card + bouton /s/[token]. Aucun des deux n'etait dans le dashboard Bouclier ou l'utilisateur les cherchait.
+- CODE 1 — src/app/verify/[propertyId]/page.tsx : restructure loadVerification — bloc Property existant transforme en if (property && property.isActive) { ... return } + NOUVEAU repli ShieldProperty.findUnique (propertyName, city, onboardingRef/Status/At, subscription via relation) -> VerifiedShield + 3 dernieres sessions ; propertyType sentinel 'BOUCLIER' (jamais affiche : shield.city toujours present). Champs publics uniquement.
+- CODE 2 — src/components/inspection/shield/shield-dashboard.tsx : rangée 6 « Aide & Marketing » (3 cartes style design system Bouclier : Mode d'emploi -> /inspection/mode-demploi, FAQ -> /inspection/faq, Badges de confiance bouton rouge Award) ; fetch /api/shield/properties au montage ; openBadges : 1 bien -> modal direct, >1 -> mini-dialog selecteur, 0 -> bouton desactive « Onboarder un bien... » ; PwaInstallBanner qr-card pleine largeur ; MarketingBadgesModal monte au niveau dashboard. Shell Bouclier SANS classe .lux (verifie) -> pas de piege remap text-white.
+- E2E LOCAL : seed temporaire scripts/tmp-e2e-v4159.ts (user e2e-v4159 + InspectionSubscription active + ShieldProperty Villa E2E 159) -> login /login/edl OK, section rendue (3 cartes + QR PWA), modal 3 badges ouverte, /verify/e2e-prop-v4159 = « Logement verifie » vert + ONB-DAK-2026-E2E, lien Mode d'emploi navigue ; TOUT SUPPRIME ensuite (script clean + fichier supprime).
+- DEPLOIEMENT v4.159 : VERSION.txt bump, Dockerfile cb=v4.159, tar reconstruit (1310 entrees = meme composition exacte, verifie dashboard/verify/VERSION dedans), commit bead76a, push origin main fast-forward (bdc90d7..bead76a, verifie ls-remote), Coolify rebuild auto-webhook ~9 min -> /api/health version v4.159 CONFIRMEE 21:25 UTC.
+- E2E PROD (agent-browser, compte couverge@gmail.com) : login OK -> /inspection/dashboard ; rangée 6 + carte QR PWA rendues (screenshot) ; modal badges ouverte avec le VRAI logement « Le Pelican » et QR roomscan.pro/verify/cmvh7taaa0003qt01fhq4p3v7 ; cette URL = « Logement verifie / Le Pelican / Paris / ONB-PAR-2026-001 » avec 3 controles reels ; 0 erreur console ; navigateur ferme.
+
+Stage Summary:
+- v4.159 en production : le dashboard Bouclier /inspection/dashboard contient desormais (1) les 2 raccourcis Aide (Mode d'emploi, FAQ), (2) la carte « Badges de confiance » (3 badges PNG HD + code HTML, QR de verification pointant /verify — marche aussi pour les biens onboardes sans logement hote grace au repli ShieldProperty), (3) la carte QR PWA « Installez l'application Roomscan ».
+- Les badges de confiance restent aussi disponibles dans l'espace hote : Logements (/airbnb/properties) bouton « 🏅 Badges » de chaque carte ; le QR PWA aussi sur la Vue d'ensemble hote (/airbnb/dashboard) et en bouton sur /s/[token].
+- Lecon : la verification /verify etait liee aux IDs Property hote — tout nouvel emplacement de badges doit passer par le repli ShieldProperty (desormais en place).
