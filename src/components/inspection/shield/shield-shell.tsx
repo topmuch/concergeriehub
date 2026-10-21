@@ -5,7 +5,8 @@
 // Sidebar gauche bleu profond bg-[#1e3a8a], texte blanc, icônes
 // Lucide, menu à 8 onglets (Tableau de bord, Ménage à faire,
 // Check-ins, Check-outs, Mes biens, Documents, Bouclier,
-// Abonnement). Contenu : fond gris très clair bg-slate-50.
+// Abonnement) + section Aide à 2 onglets (Mode d'emploi, FAQ —
+// v4.158). Contenu : fond gris très clair bg-slate-50.
 // Mobile-first : topbar + tiroir latéral animé (framer-motion).
 // =============================================================
 import { useState, type ReactNode } from 'react';
@@ -13,7 +14,9 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
+  BookOpen,
   Building2,
+  CircleHelp,
   CreditCard,
   FileText,
   LayoutDashboard,
@@ -30,7 +33,9 @@ export interface ShieldUser {
   email: string | null;
 }
 
-const MENU: { href: string; label: string; icon: typeof LayoutDashboard }[] = [
+type ShieldMenuItem = { href: string; label: string; icon: typeof LayoutDashboard };
+
+const MENU: ShieldMenuItem[] = [
   { href: '/inspection/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
   { href: '/inspection/menage', label: 'Ménage à faire', icon: SprayCan },
   { href: '/inspection/check-ins', label: 'Check-ins', icon: LogIn },
@@ -39,6 +44,14 @@ const MENU: { href: string; label: string; icon: typeof LayoutDashboard }[] = [
   { href: '/inspection/documents', label: 'Documents', icon: FileText },
   { href: '/inspection/bouclier', label: 'Bouclier', icon: ShieldCheck },
   { href: '/inspection/abonnement', label: 'Abonnement', icon: CreditCard },
+];
+
+// v4.158 — section Aide du dashboard Bouclier : même contenu que le
+// groupe Aide du dashboard hôte (Task 42-c). Pages sous la garde du
+// layout (shield) — session + entitlement EDL obligatoires.
+const HELP_MENU: ShieldMenuItem[] = [
+  { href: '/inspection/mode-demploi', label: "Mode d'emploi", icon: BookOpen },
+  { href: '/inspection/faq', label: 'FAQ', icon: CircleHelp },
 ];
 
 export function ShieldShell({
@@ -53,31 +66,41 @@ export function ShieldShell({
 
   const isActive = (href: string) => pathname === href;
 
+  // Rendu d'un onglet — partagé entre le menu principal et la section
+  // Aide (desktop sidebar + tiroir mobile : le même élément `nav`).
+  const renderItem = ({ href, label, icon: Icon }: ShieldMenuItem) => {
+    const active = isActive(href);
+    return (
+      <Link
+        key={href}
+        href={href}
+        onClick={() => setOpen(false)}
+        aria-current={active ? 'page' : undefined}
+        className={`relative flex min-h-[44px] items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors ${
+          active ? 'bg-white/15 text-white' : 'text-blue-100 hover:bg-white/10 hover:text-white'
+        }`}
+      >
+        {active && (
+          <span
+            aria-hidden="true"
+            className="absolute inset-y-1.5 left-0 w-1 rounded-full bg-[#C41E3A]"
+          />
+        )}
+        <Icon className="h-[18px] w-[18px] shrink-0" aria-hidden="true" />
+        {label}
+      </Link>
+    );
+  };
+
   const nav = (
     <nav aria-label="Bouclier — navigation principale" className="flex-1 space-y-1 px-3 py-4">
-      {MENU.map(({ href, label, icon: Icon }) => {
-        const active = isActive(href);
-        return (
-          <Link
-            key={href}
-            href={href}
-            onClick={() => setOpen(false)}
-            aria-current={active ? 'page' : undefined}
-            className={`relative flex min-h-[44px] items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors ${
-              active ? 'bg-white/15 text-white' : 'text-blue-100 hover:bg-white/10 hover:text-white'
-            }`}
-          >
-            {active && (
-              <span
-                aria-hidden="true"
-                className="absolute inset-y-1.5 left-0 w-1 rounded-full bg-[#C41E3A]"
-              />
-            )}
-            <Icon className="h-[18px] w-[18px] shrink-0" aria-hidden="true" />
-            {label}
-          </Link>
-        );
-      })}
+      {MENU.map(renderItem)}
+      {/* v4.158 — section Aide : séparateur + libellé + 2 onglets */}
+      <div aria-hidden="true" className="mx-1 my-2 border-t border-white/10" />
+      <p className="px-3 pb-1 text-[10px] font-bold uppercase tracking-[0.24em] text-blue-200">
+        Aide
+      </p>
+      {HELP_MENU.map(renderItem)}
     </nav>
   );
 
