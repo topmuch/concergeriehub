@@ -5185,3 +5185,26 @@ Stage Summary:
 - v4.159 en production : le dashboard Bouclier /inspection/dashboard contient desormais (1) les 2 raccourcis Aide (Mode d'emploi, FAQ), (2) la carte « Badges de confiance » (3 badges PNG HD + code HTML, QR de verification pointant /verify — marche aussi pour les biens onboardes sans logement hote grace au repli ShieldProperty), (3) la carte QR PWA « Installez l'application Roomscan ».
 - Les badges de confiance restent aussi disponibles dans l'espace hote : Logements (/airbnb/properties) bouton « 🏅 Badges » de chaque carte ; le QR PWA aussi sur la Vue d'ensemble hote (/airbnb/dashboard) et en bouton sur /s/[token].
 - Lecon : la verification /verify etait liee aux IDs Property hote — tout nouvel emplacement de badges doit passer par le repli ShieldProperty (desormais en place).
+
+---
+Task ID: V4160-ONGLETS-FAQ
+Agent: Z.ai Code (principal)
+Task: À la demande « ces onglets doivent être en dessous de FAQ sur le dashboard » — ajouter les onglets Badges de confiance + Application mobile (QR PWA) SOUS « FAQ » dans la sidebar du dashboard Bouclier, avec pages dédiées, puis déployer en v4.160.
+
+Work Log:
+- LECTURE USER : « ces onglets » = badges de confiance + QR PWA (objet des 2 messages précédents) ; « en dessous de FAQ » = dans la sidebar, sous l'onglet FAQ (modèle mental des onglets v4.158).
+- SIDEBAR : shield-shell.tsx — HELP_MENU passe à 4 items (Mode d'emploi, FAQ, + Badges de confiance Award /inspection/badges, Application mobile Smartphone /inspection/application) ; header commenté « 8 + section Aide à 4 onglets » ; renderItem partagé inchangé → desktop + tiroir mobile.
+- NOUVELLE PAGE BADGES : src/components/inspection/shield/shield-badges.tsx ('use client') — fetch /api/shield/properties au montage ; légende des 3 badges ; sélecteur de logement si 2+ (cartes nom + ville + réf ONB) ; 1 seul logement → modal MarketingBadgesModal ouverte directement ; 0 → empty state + CTA « Onboarder un bien » ; modal réutilisée (PNG HD + HTML, QR /verify — IDs ShieldProperty OK depuis v4.159). Page src/app/inspection/(shield)/badges/page.tsx (force-dynamic, metadata, wrapper p-4 sm:p-6 — leçon v4.158).
+- NOUVELLE PAGE APPLICATION : src/app/inspection/(shield)/application/page.tsx (server) — PwaInstallBanner qr-card + guides d'installation manuelle Android (Chrome ⋮ → Installer l'application) et iPhone (Safari Partager → Sur l'écran d'accueil). Même garde layout (shield).
+- RANGÉE 6 DU DASHBOARD v4.159 CONSERVÉE (les cartes restent aussi en bas du Tableau de bord — demande « en plus », pas « à la place »).
+- QUALITÉ : bun run lint 0 erreur ; bunx tsc --noEmit 0 erreur.
+- E2E LOCAL : seed temporaire (e2e-v4160 + 2 logements) → login OK ; sidebar = 12 onglets (8 + Aide 4, vérifié desktop ET tiroir iPhone 14) ; /inspection/badges : légende + sélecteur « Choisir le logement (2) » + clic → modal badges sur le bon logement + note QR publique ; /inspection/application : carte QR + 2 guides + screenshot OK. TOUT SUPPRIMÉ ensuite (0 reste, script tmp supprimé).
+- DÉPLOIEMENT v4.160 — INCIDENT INFRA : VERSION.txt v4.160, Dockerfile cb=v4.160, tar 1315 entrées (2 nouvelles pages + composant dedans, vérifié), commit 6b501bd, push 22:09 UTC (livraison webhook HTTP 200 à 22:09:51) + commit vide 8bd0acd 22:42 (livraison 200 à 22:42:11). MAIS après 50+ min : /api/health toujours v4.159 (baseline : ~9 min pour v4.158/v4.159).
+- DIAGNOSTIC INFRA : instance Coolify UP (http://38.247.134.241:8000 — /api/health "OK", /login 200) ; hook GitHub 694237788 actif, livraisons acceptées ; .github-token SANS scope admin:repo_hook (secret webhook masqué « ******** » 8 chars, payloads de livraison vides) → replay webhook impossible (« Invalid signature » avec le secret masqué) ; .coolify-token et /home/z/.sshtool/coolify.mjs PERDUS lors d'un resync → API Coolify inaccessible (pas de bearer). Code local validé (lint/tsc/dev/E2E) — rien n'indique un échec de build.
+- ÉTAT FINAL : GitHub main = 8bd0acd (source + tar v4.160 + Dockerfile cb=v4.160, byte-exacts) — Coolify doit (re)lancer UN déploiement pour servir v4.160. Action restante : clic « Deploy/Redeploy » dans le panneau Coolify par l'utilisateur (ou nouveau token Coolify fourni pour déclenchement API).
+
+Stage Summary:
+- v4.160 prête et poussée : sidebar du dashboard Bouclier = 8 onglets + section Aide à 4 onglets SOUS « FAQ » (Mode d'emploi, FAQ, Badges de confiance, Application mobile) ; 2 nouvelles pages gardées par le layout (shield).
+- /inspection/badges : page de téléchargement des badges de confiance (sélecteur multi-logements, ouverture directe si 1 logement) ; /inspection/application : QR PWA + guides Android/iOS.
+- Leçon INFRA : les credentials Coolify (.coolify-token, coolify.mjs) ne survivent pas aux resync — les stocker dans un fichier documenté du repo (hors tar) ou chez l'utilisateur ; vérifier le scope du token GitHub (admin:repo_hook requis pour diagnostiquer les webhooks).
+- Leçon : un push GitHub ne garantit PAS le déploiement — toujours poller /api/health jusqu'à la version attendue avant d'annoncer (v4.159 avait mis 9 min, v4.160 bloqué côté Coolify après livraison 200).
