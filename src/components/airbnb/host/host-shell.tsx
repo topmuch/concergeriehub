@@ -52,6 +52,8 @@ const GROUP_DOTS: Record<string, string> = {
   'Mes biens': '#7ce7c8',
   Services: '#9ec1ff',
   Business: '#ffb3c8',
+  // Task 42-c — groupe Aide (Mode d'emploi + FAQ) : vert menthe doux.
+  Aide: '#a7f3d0',
 };
 
 interface NavItem {
@@ -113,6 +115,14 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
       // AUDIT 4-c — ownerOnly : masquée aux managers / membres d'équipe.
       { href: '/airbnb/billing', label: 'Facturation', managementOnly: true, ownerOnly: true },
       { href: '/airbnb/settings', label: 'Paramètres', managementOnly: true },
+    ],
+  },
+  // Task 42-c — nouveau groupe Aide : guide Mode d'emploi + FAQ.
+  {
+    label: 'Aide',
+    items: [
+      { href: '/airbnb/mode-demploi', label: "Mode d'emploi", managementOnly: false },
+      { href: '/airbnb/faq', label: 'FAQ', managementOnly: false },
     ],
   },
 ];
@@ -220,7 +230,7 @@ function ShellRoot({
         if (items.length === 0) return null;
         return (
           <div key={group.label}>
-            <p className="mb-2 flex items-center gap-1.5 px-1 text-[9.5px] font-bold uppercase tracking-[0.3em] text-white/60">
+            <p className="mb-2 flex items-center gap-1.5 px-1 text-[9.5px] font-bold uppercase tracking-[0.3em] text-[#43150a]/75">
               <span
                 className="lux-dot shrink-0"
                 style={{ backgroundColor: GROUP_DOTS[group.label] ?? '#ffffff' }}
@@ -244,8 +254,8 @@ function ShellRoot({
                       className={cn(
                         'group flex min-h-[38px] items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] transition-all duration-200',
                         active
-                          ? 'bg-white text-[#c81e42] shadow-[0_10px_24px_-10px_rgba(20,2,8,0.6)]'
-                          : 'text-white/80 hover:bg-white/15 hover:text-white',
+                          ? 'bg-white text-[#b84a26] shadow-[0_10px_24px_-10px_rgba(90,25,5,0.55)]'
+                          : 'text-[#3a1408]/85 hover:bg-white/25 hover:text-[#2a0d05]',
                       )}
                     >
                       <span className="truncate">{t(item.label)}</span>
@@ -274,8 +284,8 @@ function ShellRoot({
         style={{ height: 40, width: 'auto' }}
       />
       <span className="flex min-w-0 flex-col leading-tight">
-        <span className="lux-display truncate text-[15px] font-semibold text-white">RoomScan</span>
-        <span className="text-[9px] font-semibold uppercase tracking-[0.28em] text-[#e9c47c]">
+        <span className="lux-display truncate text-[15px] font-semibold text-[#2a0d05]">RoomScan</span>
+        <span className="text-[9px] font-semibold uppercase tracking-[0.28em] text-[#5c1d0a]">
           {t('Espace Hôte')}
         </span>
       </span>
@@ -285,25 +295,25 @@ function ShellRoot({
   const profileBlock = (
     <div className="mx-3 mb-4">
       <div className="mb-2 flex items-center justify-end px-1">
-        <ThemeToggle variant="light" />
+        <ThemeToggle variant="ink" />
       </div>
-      <div className="flex items-center gap-2.5 rounded-2xl border border-white/10 bg-white/[0.06] px-3 py-2.5">
+      <div className="flex items-center gap-2.5 rounded-2xl border border-[#2a0d05]/15 bg-white/45 px-3 py-2.5">
         <span
           aria-hidden="true"
-          className="lux-num flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#e9c47c] text-xs font-semibold text-[#1a1206]"
+          className="lux-num flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-xs font-semibold text-[#b84a26] shadow-sm"
         >
           {initialsOf(userName)}
         </span>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold text-white">{userName ?? t('Invité')}</p>
-          <p className="truncate text-[10px] font-medium uppercase tracking-[0.14em] text-white/50">{planName}</p>
+          <p className="truncate text-sm font-semibold text-[#2a0d05]">{userName ?? t('Invité')}</p>
+          <p className="truncate text-[10px] font-medium uppercase tracking-[0.14em] text-[#3a1408]/70">{planName}</p>
         </div>
         <button
           type="button"
           onClick={() => signOut({ callbackUrl: '/' })}
           title={t('Se déconnecter')}
           aria-label={t('Se déconnecter')}
-          className="shrink-0 rounded-lg px-2 py-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-white/60 transition-colors hover:bg-white/10 hover:text-white"
+          className="shrink-0 rounded-lg px-2 py-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#3a1408]/70 transition-colors hover:bg-white/45 hover:text-[#2a0d05]"
         >
           {t('Quitter')}
         </button>
@@ -312,19 +322,19 @@ function ShellRoot({
   );
 
   return (
-    // NB : le scope .lux n'est PAS sur ce wrapper — la sidebar
-    // reste rouge Airbnb #ff385c dans les deux modes (v5.7) ; le
-    // contenu porte lui-même .lux.lux-bg ci-dessous.
+    // NB : le scope .lux n'est PAS sur ce wrapper — la sidebar reste
+    // corail de marque #f58364 dans les deux modes (v6.1 DUO BRAND) ;
+    // le contenu porte lui-même .lux.lux-bg.lux-host ci-dessous.
     <div className="flex min-h-screen">
-      {/* ===================== SIDEBAR DESKTOP (260px, rouge Airbnb) ===================== */}
-      <aside className="lux-sidebar fixed inset-y-0 left-0 z-40 hidden w-[260px] flex-col overflow-hidden md:flex">
+      {/* ===================== SIDEBAR DESKTOP (260px, corail #f58364) ===================== */}
+      <aside className="lux-sidebar lux-sidebar-host fixed inset-y-0 left-0 z-40 hidden w-[260px] flex-col overflow-hidden md:flex">
         <div className="relative z-10 flex h-16 items-center border-b border-white/10">{logo}</div>
         <div className="lux-scroll relative z-10 flex-1 overflow-y-auto py-4">{navList}</div>
         <div className="relative z-10">{profileBlock}</div>
       </aside>
 
       {/* ===================== CONTENU ===================== */}
-      <div className="lux lux-bg flex min-h-screen w-full flex-col md:ml-[260px] md:w-[calc(100%-260px)]">
+      <div className="lux lux-bg lux-host flex min-h-screen w-full flex-col md:ml-[260px] md:w-[calc(100%-260px)]">
         {/* ----- Header glass luxueux ----- */}
         <header className="lux-header sticky top-0 z-30 flex h-16 shrink-0 items-center gap-2 px-4 sm:gap-3 sm:px-6">
           {/* Burger mobile → drawer Sheet (monté après hydratation :
@@ -343,7 +353,7 @@ function ShellRoot({
               </SheetTrigger>
               <SheetContent
                 side="left"
-                className="lux-sidebar w-[290px] overflow-y-auto border-none p-0"
+                className="lux-sidebar lux-sidebar-host w-[290px] overflow-y-auto border-none p-0"
               >
                 <SheetHeader className="border-b border-white/10 pb-2 pt-4">
                   <SheetTitle asChild>

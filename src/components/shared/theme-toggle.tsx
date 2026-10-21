@@ -21,7 +21,7 @@ function useMounted(): boolean {
   );
 }
 
-export function ThemeToggle({ className, variant = 'ghost' }: { className?: string; variant?: 'ghost' | 'light' }) {
+export function ThemeToggle({ className, variant = 'ghost' }: { className?: string; variant?: 'ghost' | 'light' | 'ink' }) {
   const { resolvedTheme, setTheme } = useTheme();
   const mounted = useMounted();
 
@@ -30,8 +30,10 @@ export function ThemeToggle({ className, variant = 'ghost' }: { className?: stri
   const base = 'relative inline-flex h-9 w-9 items-center justify-center rounded-full transition-colors';
   const skin =
     variant === 'light'
-      ? 'text-white/85 hover:bg-white/15 hover:text-white' // sur fond coloré (sidebar)
-      : 'text-muted-foreground hover:bg-muted hover:text-foreground'; // sur header glass
+      ? 'text-white/85 hover:bg-white/15 hover:text-white' // sur fond coloré foncé (sidebar admin)
+      : variant === 'ink'
+        ? 'text-[#3a1408]/80 hover:bg-white/45 hover:text-[#2a0d05]' // sur fond corail clair (sidebar hôte)
+        : 'text-muted-foreground hover:bg-muted hover:text-foreground'; // sur header glass
 
   return (
     <button

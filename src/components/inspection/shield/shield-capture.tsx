@@ -18,7 +18,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode, type RefObjec
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { Camera, CheckCircle2, Eye, EyeOff, FileVideo, Loader2, RotateCcw, Square, X } from 'lucide-react';
+import { Camera, AlertTriangle, CheckCircle2, Eye, EyeOff, FileVideo, ImagePlus, Loader2, RotateCcw, Square, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
@@ -31,8 +31,8 @@ import { blobToBase64, canvasToCompressedDataUrl, fileToShieldPhotoDataUrl } fro
 const VIDEO_TARGET_SEC = 60;
 const VIDEO_MAX_BYTES = 20_000_000; // garde-fou client (< 22 Mo serveur)
 
-/** Métadonnées d'affichage des 3 statuts de zone. */
-const STATUS_META: Record<
+/** Métadonnées d'affichage des 3 statuts de zone (partagées app cleaner). */
+export const STATUS_META: Record<
   ShieldZoneStatus,
   { label: string; selected: string; idle: string }
 > = {
@@ -65,6 +65,291 @@ function pickVideoMimeType(): string | undefined {
 
 function stopStream(stream: MediaStream | null) {
   stream?.getTracks().forEach((t) => t.stop());
+}
+
+// =============================================================
+// FIX-CAPTURE-V38 (Task 38) — traitement vidéo côté client.
+//
+// Les vidéos filmées avec l'appareil photo NATIF du téléphone
+// (voie primaire v4.152) dépassent presque toujours la limite de
+// taille (20 Mo client / 22 Mo serveur) et durent souvent plus
+// longtemps que la cible : l'agent restait alors BLOQUÉ sans
+// bouton de validation. Ces utilitaires lisent la durée réelle,
+// puis si besoin RE-ENCODENT la vidéo dans un canvas (coupe à la
+// cible + compression ~1 Mbps, largeur ≤ 720 px, accélérée ×3) :
+// le flux aboutit TOUJOURS au bouton « Valider », quel que soit
+// le téléphone, et la vidéo délivrée respecte la cible (le
+// « système arrête de filmer » à la cible, comme demandé).
+// =============================================================
+
+/** Format m:ss pour les récaps vidéo. */
+export function fmtDuration(sec: number): string {
+  const s = Math.max(0, Math.round(sec));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+}
+
+/**
+ * FIX-CAPTURE-V38 : mimeType SANS paramètres — MediaRecorder renvoie
+ * « video/webm;codecs=vp8 » mais le serveur (VIDEO_MIME_RE) n'accepte
+ * que video/webm|mp4|quicktime|x-matroska nus.
+ */
+export function cleanVideoMime(m: string | undefined | null): string {
+  const base = (m || '').split(';')[0].trim();
+  return base || 'video/webm';
+}
+
+/** Durée réelle d'un fichier vidéo via ses métadonnées (fallback fourni). */
+export function probeVideoDuration(file: File | Blob, fallbackSec: number): Promise<number> {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const probe = document.createElement('video');
+    probe.preload = 'metadata';
+    probe.onloadedmetadata = () => {
+      const d = Number.isFinite(probe.duration) && probe.duration > 0 ? probe.duration : fallbackSec;
+      URL.revokeObjectURL(url);
+      resolve(Math.max(1, d));
+    };
+    probe.onerror = () => {
+      URL.revokeObjectURL(url);
+      resolve(fallbackSec);
+    };
+    probe.src = url;
+  });
+}
+
+export interface ProcessedVideo {
+  blob: Blob;
+  mimeType: string;
+  durationSec: number;
+  /** true si la vidéo a été coupée à la cible (arrêt automatique). */
+  trimmed: boolean;
+  /** true si la vidéo a été recompressée pour passer sous la limite. */
+  compressed: boolean;
+}
+
+/**
+ * Ré-encode une vidéo dans un canvas : coupe à maxDurationSec,
+ * ~1 Mbps, largeur ≤ 720 px, lecture accélérée ×3 (clampée par
+ * certains navigateurs — seule la vitesse de traitement change).
+ */
+export async function reencodeVideo(
+  file: File | Blob,
+  maxDurationSec: number,
+): Promise<ProcessedVideo> {
+  if (typeof MediaRecorder === 'undefined' || !HTMLCanvasElement.prototype.captureStream) {
+    throw new Error('reencode_unsupported');
+  }
+  const url = URL.createObjectURL(file);
+  try {
+    const video = document.createElement('video');
+    video.muted = true;
+    video.playsInline = true;
+    video.preload = 'auto';
+    video.src = url;
+    await new Promise<void>((resolve, reject) => {
+      const guard = setTimeout(() => reject(new Error('reencode_load_timeout')), 15_000);
+      video.onloadeddata = () => {
+        clearTimeout(guard);
+        resolve();
+      };
+      video.onerror = () => {
+        clearTimeout(guard);
+        reject(new Error('reencode_decode'));
+      };
+    });
+
+    const vw = video.videoWidth || 640;
+    const vh = video.videoHeight || 480;
+    const scale = Math.min(1, 720 / vw);
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(2, Math.round((vw * scale) / 2) * 2);
+    canvas.height = Math.max(2, Math.round((vh * scale) / 2) * 2);
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('reencode_canvas');
+
+    const stream = canvas.captureStream(24);
+    const mimeType = pickVideoMimeType();
+    const recorder = new MediaRecorder(stream, {
+      ...(mimeType ? { mimeType } : {}),
+      videoBitsPerSecond: 1_000_000,
+    });
+    const chunks: BlobPart[] = [];
+    recorder.ondataavailable = (e) => {
+      if (e.data && e.data.size > 0) chunks.push(e.data);
+    };
+    const stopped = new Promise<Blob>((resolve, reject) => {
+      recorder.onstop = () =>
+        resolve(new Blob(chunks, { type: recorder.mimeType || mimeType || 'video/webm' }));
+      recorder.onerror = () => reject(new Error('reencode_recorder'));
+    });
+
+    let finished = false;
+    let stoppedAt = 0;
+    let raf = 0;
+    const draw = () => {
+      if (finished) return;
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      raf = requestAnimationFrame(draw);
+    };
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      stoppedAt = video.currentTime || maxDurationSec;
+      cancelAnimationFrame(raf);
+    };
+
+    try {
+      video.playbackRate = 3; // traitement accéléré (clampé par certains navigateurs)
+    } catch {
+      /* clamp navigateur */
+    }
+    video.ontimeupdate = () => {
+      if (!finished && video.currentTime >= maxDurationSec) finish();
+    };
+    video.onended = finish;
+
+    recorder.start(1000);
+    try {
+      await video.play();
+    } catch {
+      throw new Error('reencode_play');
+    }
+    draw();
+    // Garde-fou : ne jamais traiter plus longtemps que le temps attendu + marge.
+    const rate =
+      Number.isFinite(video.playbackRate) && video.playbackRate > 0 ? video.playbackRate : 1;
+    setTimeout(finish, (maxDurationSec * 1000) / rate + 30_000);
+    await new Promise<void>((resolve) => {
+      const watch = setInterval(() => {
+        if (finished) {
+          clearInterval(watch);
+          resolve();
+        }
+      }, 150);
+    });
+    video.pause();
+    video.ontimeupdate = null;
+    video.onended = null;
+    recorder.stop();
+    const blob = await stopped;
+    if (!blob.size) throw new Error('reencode_empty');
+    return {
+      blob,
+      mimeType: cleanVideoMime(recorder.mimeType || mimeType),
+      durationSec: Math.max(3, Math.round(Math.min(stoppedAt, maxDurationSec))),
+      // Sémantique posée par les appelants (processVideoFile / handleBlob).
+      trimmed: false,
+      compressed: false,
+    };
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+/**
+ * Passe-plat principal : si le fichier est dans les clous (durée ≤ cible
+ * ET taille ≤ maxBytes) il est conservé intact ; sinon re-encodage
+ * (coupe à la cible + compression). Le flux aboutit ainsi toujours à
+ * l'aperçu et au bouton de validation.
+ */
+export async function processVideoFile(
+  file: File | Blob,
+  opts: { targetSec: number; maxBytes: number },
+): Promise<ProcessedVideo> {
+  const duration = await probeVideoDuration(file, opts.targetSec);
+  if (duration > opts.targetSec || file.size > opts.maxBytes) {
+    const out = await reencodeVideo(file, opts.targetSec);
+    return { ...out, trimmed: duration > opts.targetSec, compressed: file.size > opts.maxBytes };
+  }
+  return {
+    blob: file,
+    mimeType: file.type || 'video/webm',
+    durationSec: Math.max(3, Math.round(duration)),
+    trimmed: false,
+    compressed: false,
+  };
+}
+
+// =============================================================
+// ShieldVideoPicker — panneau « video walkthrough » réutilisable.
+//
+// FIX-PROD-MOBILE (v4.152) : les navigateurs intégrés (WhatsApp,
+// Messenger, WebView) bloquent getUserMedia → l'ancien gros bouton
+// REC restait mort. La voie PRIMAIRE est désormais l'INPUT NATIF
+// capture="environment" : il ouvre l'APPAREIL PHOTO du téléphone
+// partout (Chrome, Safari, WebView), sans permission JS. La caméra
+// live (getUserMedia, compte à rebours intégré) devient l'option
+// avancée pour les navigateurs complets.
+// =============================================================
+export function ShieldVideoPicker({
+  targetSec,
+  onPickFile,
+  onStartLive,
+  camUnavailable,
+}: {
+  /** Cible indicative (120 s cleaner / 60 s authentifié). */
+  targetSec: number;
+  /** Fichier vidéo choisi (camera native ou galerie). */
+  onPickFile: (file: File | undefined) => void;
+  /** Démarre l'enregistrement live getUserMedia. */
+  onStartLive: () => void;
+  /** True si getUserMedia a déjà échoué sur cet appareil. */
+  camUnavailable: boolean;
+}) {
+  return (
+    <div className="flex flex-col items-center gap-3.5 rounded-2xl border border-dashed border-gray-300 bg-white px-4 py-7 shadow-sm">
+      <label
+        className="flex min-h-[64px] w-full max-w-sm cursor-pointer flex-col items-center justify-center gap-1 rounded-2xl bg-[#C21F26] px-4 py-3 text-white shadow-sm transition-transform active:scale-[0.99] hover:bg-[#a81a20]"
+        aria-label="Enregistrer la vidéo avec l'appareil photo du téléphone"
+      >
+        <span className="flex items-center gap-2 text-sm font-bold">
+          <FileVideo className="size-5" aria-hidden="true" /> Enregistrer la vidéo
+        </span>
+        <span className="text-[11px] text-white/85">
+          Ouvre l&apos;appareil photo — coupure automatique à {targetSec} s
+        </span>
+        <input
+          type="file"
+          accept="video/*"
+          capture="environment"
+          className="sr-only"
+          onChange={(e) => {
+            onPickFile(e.target.files?.[0]);
+            e.currentTarget.value = '';
+          }}
+        />
+      </label>
+
+      <label className="flex min-h-[44px] cursor-pointer items-center gap-2 rounded-full border border-gray-300 bg-white px-4 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 hover:text-gray-900">
+        <span aria-hidden="true">＋</span> ou choisir une vidéo dans la galerie
+        <input
+          type="file"
+          accept="video/*"
+          className="sr-only"
+          onChange={(e) => {
+            onPickFile(e.target.files?.[0]);
+            e.currentTarget.value = '';
+          }}
+        />
+      </label>
+
+      <button
+        type="button"
+        onClick={onStartLive}
+        className="text-[11px] font-semibold text-gray-500 underline decoration-gray-300 underline-offset-2 transition-colors hover:text-gray-900"
+        aria-label={`Caméra live ${targetSec} secondes (option avancée)`}
+      >
+        Caméra live {targetSec} s avec compte à rebours (avancé)
+      </button>
+
+      {camUnavailable ? (
+        <p className="text-[11px] font-medium text-amber-700" role="note">
+          Caméra live indisponible sur cet appareil — les deux boutons
+          ci-dessus fonctionnent partout.
+        </p>
+      ) : null}
+    </div>
+  );
 }
 
 // =============================================================
@@ -175,25 +460,32 @@ export function ShieldPhotoCapture({
   if (stage === 'idle') {
     return (
       <div className={cn('space-y-2', className)}>
-        <button
-          type="button"
-          onClick={() => void openCamera()}
-          className="flex min-h-[88px] w-full flex-col items-center justify-center gap-1.5 rounded-2xl border border-dashed border-gray-300 bg-white px-4 py-4 text-gray-900 shadow-sm transition-colors hover:border-[#C21F26]/60 hover:bg-red-50"
-          aria-label="Ouvrir la caméra pour prendre la photo"
-        >
-          <Camera className="size-5 text-[#C21F26]" aria-hidden="true" />
-          <span className="text-sm font-semibold">Ouvrir la caméra</span>
-          {hint ? <span className="text-[11px] text-gray-500">{hint}</span> : null}
-        </button>
-
-        {camError ? (
-          <p className="text-[11px] font-medium text-amber-700" role="note">
-            Caméra indisponible — utilisez la sélection de fichier ci-dessous.
-          </p>
+        {/* FIX-PROD-MOBILE (v4.152) : la voie primaire est l'INPUT NATIF
+            capture="environment" (appareil photo du téléphone — marche
+            partout, y compris WhatsApp/WebView) ; getUserMedia devient
+            l'option avancée « caméra live » avec fantôme superposé. */}
+        {ghostPhoto ? (
+          <div className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white p-2 shadow-sm">
+            <img
+              src={ghostPhoto}
+              alt="Photo de référence — angle à reproduire"
+              className="h-16 w-16 shrink-0 rounded-xl object-cover"
+            />
+            <p className="text-[11px] leading-snug text-gray-500">
+              Photo de référence : reproduisez ce même angle au moment de
+              prendre la photo.
+            </p>
+          </div>
         ) : null}
 
-        <label className="flex min-h-[44px] cursor-pointer items-center justify-center gap-2 rounded-full border border-gray-300 bg-white px-4 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 hover:text-gray-900">
-          <span aria-hidden="true">＋</span> ou choisir une photo du téléphone
+        <label
+          className="flex min-h-[72px] w-full cursor-pointer flex-col items-center justify-center gap-1 rounded-2xl bg-[#C21F26] px-4 py-3 text-white shadow-sm transition-transform active:scale-[0.99] hover:bg-[#a81a20]"
+          aria-label="Prendre la photo avec l'appareil photo du téléphone"
+        >
+          <span className="flex items-center gap-2 text-sm font-bold">
+            <Camera className="size-5" aria-hidden="true" /> Prendre la photo
+          </span>
+          {hint ? <span className="text-[11px] text-white/85">{hint}</span> : null}
           <input
             type="file"
             accept="image/*"
@@ -206,6 +498,37 @@ export function ShieldPhotoCapture({
             }}
           />
         </label>
+
+        <label className="flex min-h-[44px] cursor-pointer items-center justify-center gap-2 rounded-full border border-gray-300 bg-white px-4 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 hover:text-gray-900">
+          <ImagePlus className="size-4" aria-hidden="true" /> Choisir dans la galerie
+          <input
+            type="file"
+            accept="image/*"
+            className="sr-only"
+            disabled={busy}
+            onChange={(e) => {
+              void onPickFile(e.target.files?.[0]);
+              e.currentTarget.value = '';
+            }}
+          />
+        </label>
+
+        <button
+          type="button"
+          onClick={() => void openCamera()}
+          className="mx-auto block text-[11px] font-semibold text-gray-500 underline decoration-gray-300 underline-offset-2 transition-colors hover:text-gray-900"
+          aria-label="Caméra live avec fantôme superposé (option avancée)"
+        >
+          Caméra live avec fantôme superposé (avancé)
+        </button>
+
+        {camError ? (
+          <p className="text-[11px] font-medium text-amber-700" role="note">
+            Caméra live indisponible ici — les boutons photo et galerie
+            fonctionnent partout.
+          </p>
+        ) : null}
+
         {busy ? (
           <p className="flex items-center justify-center gap-2 text-[11px] text-gray-500" role="status">
             <Loader2 className="size-3.5 animate-spin" aria-hidden="true" /> Compression de la photo…
@@ -446,9 +769,12 @@ export function ShieldCapture({
     dataBase64: string;
     previewUrl: string;
   } | null>(null);
-  const [recState, setRecState] = useState<'idle' | 'recording' | 'preview'>('idle');
+  const [recState, setRecState] = useState<'idle' | 'recording' | 'processing' | 'preview'>('idle');
   const [remaining, setRemaining] = useState(VIDEO_TARGET_SEC);
   const [camUnavailable, setCamUnavailable] = useState(false);
+  // FIX-CAPTURE-V38 : à mi-temps (cible/2), l'utilisateur peut arrêter
+  // tout de suite ou continuer jusqu'à l'arrêt automatique.
+  const [halfPrompt, setHalfPrompt] = useState(false);
 
   // Invité optionnel — le certificat PDF final lui sera aussi envoyé
   // par email (pièce jointe) dès la fin de la session.
@@ -460,12 +786,17 @@ export function ShieldCapture({
   const chunksRef = useRef<BlobPart[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // FIX-CAPTURE-V38 : arrêt automatique DUR (setTimeout) en plus du
+  // décompte — immunisé contre le throttling des setInterval.
+  const stopTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const startedAtRef = useRef(0);
   const previewUrlRef = useRef<string | null>(null);
 
   const clearVideoTimer = () => {
     if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = null;
+    if (stopTimeoutRef.current) clearTimeout(stopTimeoutRef.current);
+    stopTimeoutRef.current = null;
   };
 
   const teardownVideo = useCallback(() => {
@@ -485,19 +816,32 @@ export function ShieldCapture({
   useEffect(() => teardownVideo, [teardownVideo]);
 
   const handleBlob = async (blob: Blob, mimeType: string, elapsed: number) => {
-    if (blob.size > VIDEO_MAX_BYTES) {
-      toast.error('Vidéo trop lourde, refaites-la (60 s max).');
-      setRecState('idle');
-      return;
-    }
+    setRecState('processing');
     try {
-      const base64 = await blobToBase64(blob);
-      const url = URL.createObjectURL(blob);
+      let cur = {
+        blob,
+        mimeType: cleanVideoMime(mimeType || blob.type),
+        durationSec: Math.max(3, Math.round(elapsed)),
+      };
+      // FIX-CAPTURE-V38 : trop lourde → ré-encodage automatique au lieu
+      // d'un refus sec qui laissait l'agent sans bouton de validation.
+      if (cur.blob.size > VIDEO_MAX_BYTES) {
+        toast.info('Vidéo compressée automatiquement…');
+        const out = await reencodeVideo(cur.blob, VIDEO_TARGET_SEC);
+        cur = { blob: out.blob, mimeType: out.mimeType, durationSec: out.durationSec };
+      }
+      if (cur.blob.size > VIDEO_MAX_BYTES) {
+        toast.error('Vidéo toujours trop lourde — refaites-la plus courte.');
+        setRecState('idle');
+        return;
+      }
+      const base64 = await blobToBase64(cur.blob);
+      const url = URL.createObjectURL(cur.blob);
       if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
       previewUrlRef.current = url;
       setVideoState({
-        mimeType: mimeType || blob.type || 'video/webm',
-        durationSec: Math.max(3, Math.round(elapsed)),
+        mimeType: cur.mimeType,
+        durationSec: cur.durationSec,
         dataBase64: base64,
         previewUrl: url,
       });
@@ -526,7 +870,12 @@ export function ShieldCapture({
       });
       streamRef.current = stream;
       const mimeType = pickVideoMimeType();
-      const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+      // FIX-CAPTURE-V38 : bitrate plafonné (~1 Mbps → 60 s ≈ 8 Mo) pour
+      // que la vidéo live reste toujours sous la limite de taille.
+      const recorder = new MediaRecorder(stream, {
+        ...(mimeType ? { mimeType } : {}),
+        videoBitsPerSecond: 1_000_000,
+      });
       chunksRef.current = [];
       recorder.ondataavailable = (e) => {
         if (e.data && e.data.size > 0) chunksRef.current.push(e.data);
@@ -542,12 +891,18 @@ export function ShieldCapture({
       recorder.start(1000);
       setRecState('recording');
       setRemaining(VIDEO_TARGET_SEC);
+      setHalfPrompt(false);
+      stopTimeoutRef.current = setTimeout(
+        () => stopRecording(),
+        (VIDEO_TARGET_SEC + 1.5) * 1000,
+      );
       timerRef.current = setInterval(() => {
         const left = VIDEO_TARGET_SEC - Math.round((Date.now() - startedAtRef.current) / 1000);
         if (left <= 0) {
           stopRecording();
           return;
         }
+        if (left <= Math.floor(VIDEO_TARGET_SEC / 2)) setHalfPrompt(true);
         setRemaining(left);
       }, 1000);
     } catch {
@@ -572,32 +927,30 @@ export function ShieldCapture({
   const onPickVideoFile = async (file: File | undefined) => {
     if (!file) return;
     setInlineError(null);
-    if (file.size > VIDEO_MAX_BYTES) {
-      toast.error('Vidéo trop lourde, refaites-la (60 s max).');
+    const duration = await probeVideoDuration(file, VIDEO_TARGET_SEC);
+    if (duration > 180) {
+      toast.error('Vidéo trop longue (max 3 minutes) — refaites-la plus courte.');
       return;
     }
-    // Durée réelle via les métadonnées (fallback 60 s).
-    let duration = 60;
+    // FIX-CAPTURE-V38 (v4.153) : plus aucun refus sec pour taille/durée —
+    // la vidéo est coupée à la cible et compressée automatiquement, le flux
+    // aboutit toujours au bouton de validation.
+    setRecState('processing');
     try {
-      duration = await new Promise<number>((resolve) => {
-        const url = URL.createObjectURL(file);
-        const probe = document.createElement('video');
-        probe.preload = 'metadata';
-        probe.onloadedmetadata = () => {
-          const d = Number.isFinite(probe.duration) ? probe.duration : 60;
-          URL.revokeObjectURL(url);
-          resolve(Math.max(3, Math.round(d)));
-        };
-        probe.onerror = () => {
-          URL.revokeObjectURL(url);
-          resolve(60);
-        };
-        probe.src = url;
+      const out = await processVideoFile(file, {
+        targetSec: VIDEO_TARGET_SEC,
+        maxBytes: VIDEO_MAX_BYTES,
       });
+      if (out.trimmed) {
+        toast.info(`Vidéo ajustée à ${fmtDuration(out.durationSec)} — cible ${VIDEO_TARGET_SEC} s.`);
+      } else if (out.compressed) {
+        toast.info('Vidéo compressée automatiquement.');
+      }
+      await handleBlob(out.blob, out.mimeType, out.durationSec);
     } catch {
-      duration = 60;
+      toast.error('Vidéo illisible sur cet appareil — refaites-la avec le bouton « Enregistrer la vidéo ».');
+      setRecState('idle');
     }
-    await handleBlob(file, file.type, duration);
   };
 
   // ---------- Envoi ----------
@@ -632,7 +985,7 @@ export function ShieldCapture({
             comment: shots[z.id].comment.trim() ? shots[z.id].comment.trim() : null,
           })),
           video: {
-            mimeType: videoState.mimeType,
+            mimeType: cleanVideoMime(videoState.mimeType),
             durationSec: videoState.durationSec,
             dataBase64: videoState.dataBase64,
           },
@@ -882,55 +1235,78 @@ export function ShieldCapture({
 
               <div className="mt-4">
                 {recState === 'idle' ? (
-                  <div className="flex flex-col items-center gap-4 rounded-2xl border border-dashed border-gray-300 bg-white px-4 py-8 shadow-sm">
-                    <button
-                      type="button"
-                      onClick={() => void startRecording()}
-                      className="flex size-20 items-center justify-center rounded-full bg-[#C21F26] shadow-[0_0_0_8px_rgba(194,31,38,0.18)] transition-transform active:scale-95"
-                      aria-label="Démarrer l'enregistrement vidéo (jusqu'à 60 secondes)"
-                    >
-                      <span aria-hidden="true" className="size-7 rounded-sm bg-white" />
-                    </button>
-                    <p className="text-sm font-semibold text-gray-900">REC — appuyez pour démarrer</p>
-                    <p className="text-[11px] text-gray-500">Arrêt automatique à 60 s</p>
-                    <label className="flex min-h-[44px] cursor-pointer items-center gap-2 rounded-full border border-gray-300 bg-white px-4 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 hover:text-gray-900">
-                      <FileVideo className="size-4" aria-hidden="true" /> ou choisir une vidéo
-                      <input
-                        type="file"
-                        accept="video/*"
-                        className="sr-only"
-                        onChange={(e) => {
-                          void onPickVideoFile(e.target.files?.[0]);
-                          e.currentTarget.value = '';
-                        }}
-                      />
-                    </label>
-                    {camUnavailable ? (
-                      <p className="text-[11px] font-medium text-amber-700" role="note">
-                        Caméra vidéo indisponible sur cet appareil — la sélection de fichier est la
-                        voie à suivre.
-                      </p>
+                  <ShieldVideoPicker
+                    targetSec={VIDEO_TARGET_SEC}
+                    onPickFile={(f) => void onPickVideoFile(f)}
+                    onStartLive={() => void startRecording()}
+                    camUnavailable={camUnavailable}
+                  />
+                ) : null}
+
+                {recState === 'recording' ? (
+                  <div className="space-y-3">
+                    <div className="relative overflow-hidden rounded-2xl border border-red-300 bg-black shadow-sm">
+                      <VideoLivePreview streamRef={streamRef} />
+                      {/* Compte à rebours circulaire */}
+                      <div className="absolute right-3 top-3">
+                        <CountdownCircle remaining={remaining} total={VIDEO_TARGET_SEC} />
+                      </div>
+                      <div className="absolute inset-x-0 bottom-3 flex justify-center">
+                        <button
+                          type="button"
+                          onClick={stopRecording}
+                          className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-white px-5 text-xs font-bold uppercase tracking-[0.1em] text-black transition-colors hover:bg-white/90"
+                          aria-label="Arrêter l'enregistrement"
+                        >
+                          <Square className="size-4 fill-black" aria-hidden="true" /> Stop
+                        </button>
+                      </div>
+                    </div>
+                    {/* FIX-CAPTURE-V38 : choix « arrêter ou continuer » à mi-temps */}
+                    {halfPrompt ? (
+                      <div
+                        className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-amber-300 bg-amber-50 p-3"
+                        role="status"
+                      >
+                        <p className="min-w-0 flex-1 text-xs font-semibold leading-relaxed text-amber-800">
+                          {Math.floor(VIDEO_TARGET_SEC / 2)} s atteintes — vous pouvez arrêter ici,
+                          ou continuer jusqu&apos;à {VIDEO_TARGET_SEC} s (arrêt automatique).
+                        </p>
+                        <div className="flex shrink-0 gap-2">
+                          <button
+                            type="button"
+                            onClick={stopRecording}
+                            className="inline-flex min-h-[44px] items-center rounded-full bg-amber-600 px-4 text-xs font-bold text-white transition-colors hover:bg-amber-700"
+                            aria-label="Arrêter l'enregistrement maintenant"
+                          >
+                            Arrêter
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setHalfPrompt(false)}
+                            className="inline-flex min-h-[44px] items-center rounded-full border border-amber-300 bg-white px-4 text-xs font-bold text-amber-800 transition-colors hover:bg-amber-100"
+                            aria-label={`Continuer jusqu'à ${VIDEO_TARGET_SEC} secondes`}
+                          >
+                            Continuer
+                          </button>
+                        </div>
+                      </div>
                     ) : null}
                   </div>
                 ) : null}
 
-                {recState === 'recording' ? (
-                  <div className="relative overflow-hidden rounded-2xl border border-red-300 bg-black shadow-sm">
-                    <VideoLivePreview streamRef={streamRef} />
-                    {/* Compte à rebours circulaire */}
-                    <div className="absolute right-3 top-3">
-                      <CountdownCircle remaining={remaining} total={VIDEO_TARGET_SEC} />
-                    </div>
-                    <div className="absolute inset-x-0 bottom-3 flex justify-center">
-                      <button
-                        type="button"
-                        onClick={stopRecording}
-                        className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-white px-5 text-xs font-bold uppercase tracking-[0.1em] text-black transition-colors hover:bg-white/90"
-                        aria-label="Arrêter l'enregistrement"
-                      >
-                        <Square className="size-4 fill-black" aria-hidden="true" /> Stop
-                      </button>
-                    </div>
+                {/* FIX-CAPTURE-V38 : traitement (coupure + compression) visible */}
+                {recState === 'processing' ? (
+                  <div
+                    className="flex flex-col items-center gap-2.5 rounded-2xl border border-gray-200 bg-white px-4 py-8 shadow-sm"
+                    role="status"
+                  >
+                    <Loader2 className="size-7 animate-spin text-[#C21F26]" aria-hidden="true" />
+                    <p className="text-sm font-semibold text-gray-900">Préparation de la vidéo…</p>
+                    <p className="max-w-xs text-center text-[11px] leading-relaxed text-gray-500">
+                      Coupure à la cible et compression automatique — gardez l&apos;app ouverte
+                      quelques instants.
+                    </p>
                   </div>
                 ) : null}
 
@@ -945,12 +1321,56 @@ export function ShieldCapture({
                         aria-label="Aperçu de la vidéo walkthrough"
                       />
                     </div>
+                    {/* FIX-CAPTURE-V38 : récap de validation photos + vidéo */}
+                    {(() => {
+                      const photosOK = zones.filter((z) => shots[z.id]?.photo).length;
+                      const complete = photosOK === zones.length;
+                      return (
+                        <div
+                          className={cn(
+                            'rounded-2xl border p-3.5',
+                            complete ? 'border-emerald-200 bg-emerald-50' : 'border-amber-300 bg-amber-50',
+                          )}
+                          role="status"
+                        >
+                          <p
+                            className={cn(
+                              'flex items-center gap-2 text-xs font-bold',
+                              complete ? 'text-emerald-800' : 'text-amber-800',
+                            )}
+                          >
+                            {complete ? (
+                              <CheckCircle2 className="size-4 shrink-0" aria-hidden="true" />
+                            ) : (
+                              <AlertTriangle className="size-4 shrink-0" aria-hidden="true" />
+                            )}
+                            {photosOK}/{zones.length} zones photographiées · vidéo{' '}
+                            {fmtDuration(videoState.durationSec)} prête
+                          </p>
+                          <p
+                            className={cn(
+                              'mt-1 text-[11px] leading-relaxed',
+                              complete ? 'text-emerald-700' : 'text-amber-700',
+                            )}
+                          >
+                            {complete
+                              ? 'Vérifiez l\u2019aperçu puis validez : photos + vidéo seront scellées (SHA-256) et envoyées.'
+                              : 'Il manque des photos : « Revoir les zones » ci-dessous pour compléter avant validation.'}
+                          </p>
+                        </div>
+                      );
+                    })()}
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <button
                         type="button"
-                        onClick={() => void startRecording()}
+                        onClick={() => {
+                          if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+                          previewUrlRef.current = null;
+                          setVideoState(null);
+                          setRecState('idle');
+                        }}
                         className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-gray-300 bg-white px-4 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 hover:text-gray-900"
-                        aria-label="Refaire la vidéo walkthrough"
+                        aria-label="Refaire ou changer la vidéo walkthrough"
                       >
                         <RotateCcw className="size-3.5" aria-hidden="true" /> Refaire
                       </button>
@@ -959,8 +1379,8 @@ export function ShieldCapture({
                         size="sm"
                         onClick={() => void submit()}
                         disabled={sending}
-                        className="min-h-[44px] rounded-full bg-[#C21F26] px-6 font-bold text-white hover:bg-[#a81a20] disabled:opacity-60"
-                        aria-label="Terminer et générer le certificat"
+                        className="min-h-[52px] w-full rounded-full bg-[#C21F26] px-6 font-bold text-white hover:bg-[#a81a20] disabled:opacity-60 sm:w-auto"
+                        aria-label="Valider les photos et la vidéo, terminer et générer le certificat"
                       >
                         {sending ? (
                           <>
@@ -968,7 +1388,7 @@ export function ShieldCapture({
                             cours…
                           </>
                         ) : (
-                          'Terminer et générer le certificat'
+                          'Valider photos & vidéo ✓'
                         )}
                       </Button>
                     </div>
@@ -1163,8 +1583,8 @@ export function ShieldCapture({
 
 // ---------- Sous-composants vidéo ----------
 
-/** Flux caméra live monté pendant l'enregistrement. */
-function VideoLivePreview({ streamRef }: { streamRef: RefObject<MediaStream | null> }) {
+/** Flux caméra live monté pendant l'enregistrement. Partagé app cleaner. */
+export function VideoLivePreview({ streamRef }: { streamRef: RefObject<MediaStream | null> }) {
   const ref = useRef<HTMLVideoElement | null>(null);
   useEffect(() => {
     const video = ref.current;
@@ -1186,8 +1606,8 @@ function VideoLivePreview({ streamRef }: { streamRef: RefObject<MediaStream | nu
   );
 }
 
-/** Cercle de compte à rebours (jusqu'à 60 s) — SVG sans dépendance. */
-function CountdownCircle({ remaining, total }: { remaining: number; total: number }) {
+/** Cercle de compte à rebours (jusqu'à N s) — SVG sans dépendance. Partagé app cleaner. */
+export function CountdownCircle({ remaining, total }: { remaining: number; total: number }) {
   const r = 26;
   const c = 2 * Math.PI * r;
   const pct = Math.max(0, Math.min(1, remaining / total));

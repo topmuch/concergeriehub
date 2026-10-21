@@ -37,10 +37,14 @@ export function deviceDateCode(date: Date): string {
   return `${dd}${m}${yy}`;
 }
 
-/** REF-{KIND}-{code} */
+/** REF-{KIND}-{code}-{rnd4} — v4.154 : suffixe aléatoire OBLIGATOIRE.
+ *  Bug latent corrigé (Task 39) : le code était purement date-based
+ *  (REF-FRIGO-21106) → 2 biens avec le même appareil créés le même
+ *  jour = collision @unique (P2002) → onboarding 500. */
 export function deviceRefCode(kind: string, date: Date): string {
   const k = (kind || 'CUSTOM').replace(/[^A-Z0-9]/gi, '').toUpperCase() || 'CUSTOM';
-  return `REF-${k}-${deviceDateCode(date)}`;
+  const rnd = Math.random().toString(36).slice(2, 6).toUpperCase().padEnd(4, '0');
+  return `REF-${k}-${deviceDateCode(date)}-${rnd}`;
 }
 
 /** CHK-{VIL}-{JJMMAAAA}-{nnn} */

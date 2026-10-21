@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Inter, Playfair_Display } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import "./globals.css";
@@ -106,16 +106,30 @@ export const metadata: Metadata = {
       'max-video-preview': -1,
     },
   },
-  manifest: '/manifest.json',
+  // PWA (Task 42-a) — manifest « Roomscan Bouclier » généré par
+  // src/app/manifest.ts (convention App Router → /manifest.webmanifest).
+  manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,
-    statusBarStyle: "black-translucent",
-    title: siteName,
+    statusBarStyle: "default",
+    title: "Roomscan",
   },
+  // PWA (Task 42-a) — icônes dynamiques src/app/icon.tsx :
+  // /icon/192 (192×192) + /icon/512 (512×512) ; l'apple-touch-icon
+  // réutilise /icon/512 (public/icon-512.png reste servi pour le SW).
   icons: {
-    icon: "/icon-512.png",
-    apple: "/icon-512.png",
+    icon: [
+      { url: "/icon/192", sizes: "192x192", type: "image/png" },
+      { url: "/icon/512", sizes: "512x512", type: "image/png" },
+    ],
+    apple: "/icon/512",
   },
+};
+
+// PWA (Task 42-a) — thème couleur bleu marque pour la barre système
+// (mobile) et l'écran de démarrage Android/Chrome installé.
+export const viewport: Viewport = {
+  themeColor: "#1e3a8a",
 };
 
 export default function RootLayout({
@@ -126,7 +140,10 @@ export default function RootLayout({
   return (
     <html lang="fr" suppressHydrationWarning className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} ${inter.variable}`}>
       <body className="antialiased bg-background text-foreground">
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+        {/* v6.1 — thème CLAIR par défaut : police noire sur les pages
+            (demande client) ; le mode sombre reste actif via les
+            bascules soleil/lune des deux dashboards. */}
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
           {/* FIX-14 — monitoring d'erreurs client (invisible, 1 seul rendu racine) */}
           <GlobalErrorReporter />
           {children}

@@ -8,17 +8,24 @@
 // Le serveur dérive pieces / equipementsCoches / nbPhotosMenage des
 // choix réels → le PDF ne contient AUCUNE case vide « N/A ».
 //
+//   Question 0 (TASK 39) : « Avez-vous les photos de référence avec
+//   vous ? » — OUI → parcours complet (upload + PDF). NON → MODE
+//   DÉLÉGATION : configuration textuelle seule → écran de délégation
+//   (lien magique /upload/[token] + partage WhatsApp / Email / Copier),
+//   bien en PENDING_PHOTOS jusqu'à la réception des photos de l'équipe.
+//
 //   Étape 1 : chambres (Studio/1/2/3+) + pièces supplémentaires
 //   Étape 2 : équipements présents (14 kinds, 4 catégories)
 //   Étape 3 : récapitulatif + infos logement
-//   Capture : 1 photo par pièce, puis 1 photo par équipement
-//   Succès  : bibliothèque verrouillée + certificat PDF
+//   Capture : 1 photo par pièce, puis 1 photo par équipement (OUI)
+//   Succès  : bibliothèque verrouillée + certificat PDF (OUI)
+//             ou écran de délégation (NON)
 // =============================================================
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowLeft, Check, ChevronRight, Loader2, Lock } from 'lucide-react';
+import { ArrowLeft, Check, ChevronRight, Copy, Loader2, Lock, Mail } from 'lucide-react';
 import {
   SHIELD_DEVICE_CATEGORIES,
   SHIELD_DEVICE_KINDS,
@@ -65,6 +72,8 @@ const stepVariants = {
 export default function OnboardingWizard() {
   // ── État du formulaire ──
   const [step, setStep] = useState(1);
+  // TASK 39 — Question 0 pivot : null = pas encore répondu.
+  const [hasPhotos, setHasPhotos] = useState<boolean | null>(null);
   const [nbChambres, setNbChambres] = useState<number | null>(null);
   const [extras, setExtras] = useState<Set<string>>(new Set());
   const [equipements, setEquipements] = useState<Set<string>>(new Set());
@@ -82,7 +91,17 @@ export default function OnboardingWizard() {
   const [error, setError] = useState<string | null>(null);
   const [errorKind, setErrorKind] = useState<'none' | 'auth' | 'abonnement'>('none');
   const [loggedIn, setLoggedIn] = useState<boolean | null>(null);
-  const [result, setResult] = useState<{ id: string; onboardingRef: string } | null>(null);
+  const [result, setResult] = useState<{
+    id: string;
+    onboardingRef: string;
+    onboardingStatus?: string;
+    delegationToken?: string;
+    delegationTokenExpiresAt?: string;
+  } | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  // TASK 39 — mode délégation actif (photos pas avec l'hôte).
+  const delegation = hasPhotos === false;
 
   // Session NextAuth → préremplit « Votre nom ».
   useEffect(() => {
@@ -140,7 +159,8 @@ export default function OnboardingWizard() {
   };
 
   // ── Validation par étape ──
-  const step1Valid = nbChambres !== null;
+  const step0Valid = hasPhotos !== null; // Question 0 pivot (TASK 39)
+  const step1Valid = hasPhotos !== null && nbChambres !== null;
   const step2Valid = equipements.size >= 1; // bibliothèque vide = PDF amateur → ≥ 1
   const step3Valid =
     propertyName.trim().length > 0 &&
@@ -193,11 +213,12 @@ export default function OnboardingWizard() {
             city: city.trim() || 'DAKAR',
             ownerName: ownerName.trim(),
             nbChambres: nbChambres ?? 0,
-            zones: zones.map((name) => ({ name, photo: zonePhotos[name] })),
+            delegation,
+            zones: zones.map((name) => ({ name, photo: zonePhotos[name] ?? '' })),
             devices: devices.map((d) => ({
               name: d.name,
               kind: d.kind,
-              photo: devicePhotos[d.kind],
+              photo: devicePhotos[d.kind] ?? '',
             })),
           }),
         });
@@ -215,7 +236,13 @@ export default function OnboardingWizard() {
         }
         const json = (await res.json().catch(() => ({}))) as {
           ok?: boolean;
-          property?: { id: string; onboardingRef: string };
+          property?: {
+            id: string;
+            onboardingRef: string;
+            onboardingStatus?: string;
+            delegationToken?: string;
+            delegationTokenExpiresAt?: string;
+          };
           error?: string;
         };
         if (!res.ok || !json.ok || !json.property) {
@@ -224,7 +251,7 @@ export default function OnboardingWizard() {
               ? 'Trop de tentatives — réessayez dans une minute.'
               : "Erreur lors de l'enregistrement — vérifiez toutes les photos puis réessayez.",
           );
-          setPhase('capture');
+          setPhase(delegation ? 'form' : 'capture');
           return;
         }
         setResult(json.property);
@@ -232,14 +259,118 @@ export default function OnboardingWizard() {
       } catch (e) {
         if ((e as Error)?.name === 'AbortError') return;
         setError('Connexion interrompue — réessayez.');
-        setPhase('capture');
+        setPhase(delegation ? 'form' : 'capture');
       }
     };
     void run();
     return () => controller.abort();
-  }, [phase, propertyName, propertyAddress, city, ownerName, nbChambres, zones, devices, zonePhotos, devicePhotos]);
+  }, [phase, delegation, propertyName, propertyAddress, city, ownerName, nbChambres, zones, devices, zonePhotos, devicePhotos]);
 
-  // ── Écran de succès ──
+  // ── Écran de succès : DÉLÉGATION (TASK 39) ──
+  if (phase === 'success' && result && result.delegationToken) {
+    const magicLink = `${window.location.origin}/upload/${result.delegationToken}`;
+    const shareText = `📸 Photos de référence à prendre — « ${propertyName.trim()} » (RoomScan Bouclier)\n\nOuvrez ce lien et suivez le guide, photo par photo :\n${magicLink}\n\nLien valable 7 jours. Merci !`;
+    const mailSubject = `Photos de référence à prendre — ${propertyName.trim()} (RoomScan Bouclier)`;
+    const expiresLabel = result.delegationTokenExpiresAt
+      ? new Date(result.delegationTokenExpiresAt).toLocaleDateString('fr-FR', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+        })
+      : '';
+    const copyLink = async () => {
+      try {
+        await navigator.clipboard.writeText(magicLink);
+      } catch {
+        const ta = document.createElement('textarea');
+        ta.value = magicLink;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        ta.remove();
+      }
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2500);
+    };
+    return (
+      <div className="flex min-h-screen flex-col bg-slate-50 text-gray-900">
+        <main className="mx-auto flex w-full max-w-xl flex-1 flex-col px-4 py-10 sm:py-12">
+          <motion.div
+            initial={{ scale: 0.6, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: 'spring', stiffness: 220, damping: 16 }}
+            className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[#C21F26] shadow-lg"
+          >
+            <Check className="h-10 w-10 text-white" strokeWidth={3} aria-hidden="true" />
+          </motion.div>
+          <h1 className="mt-6 text-center text-2xl font-black sm:text-3xl">Configuration enregistrée ✅</h1>
+          <p className="mt-2 text-center text-sm leading-relaxed text-gray-600">
+            Envoyez ce lien à votre équipe pour qu&apos;ils prennent les photos.
+            Dès réception, la bibliothèque sera verrouillée et votre certificat PDF généré.
+          </p>
+
+          {/* Lien magique */}
+          <div className="mt-6 rounded-3xl border border-gray-200 bg-white p-5 shadow-sm">
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-[#C21F26]">Lien magique de votre équipe</p>
+            <p className="mt-2 break-all rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-3 font-mono text-sm font-bold text-gray-900" aria-label="Lien de délégation">
+              {magicLink}
+            </p>
+            {expiresLabel && (
+              <p className="mt-2 text-xs text-gray-500">⏳ Valable jusqu&apos;au {expiresLabel} (7 jours).</p>
+            )}
+            <p className="mt-1 text-xs text-gray-500">Référence du bien : <span className="font-mono font-bold text-gray-700">{result.onboardingRef}</span></p>
+
+            {/* 3 boutons d'action rapide */}
+            <div className="mt-4 grid grid-cols-1 gap-2.5 sm:grid-cols-3">
+              <button
+                type="button"
+                onClick={copyLink}
+                className="flex min-h-[52px] items-center justify-center gap-2 rounded-2xl border-2 border-gray-300 bg-white px-4 font-bold text-gray-800 transition-colors hover:bg-gray-50"
+              >
+                {copied ? <Check className="h-5 w-5 text-emerald-600" aria-hidden="true" /> : <Copy className="h-5 w-5" aria-hidden="true" />}
+                {copied ? 'Copié !' : '📋 Copier le lien'}
+              </button>
+              <a
+                href={`https://wa.me/?text=${encodeURIComponent(shareText)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex min-h-[52px] items-center justify-center gap-2 rounded-2xl bg-[#25D366] px-4 font-bold text-white transition-opacity hover:opacity-90"
+              >
+                🟢 Envoyer par WhatsApp
+              </a>
+              <a
+                href={`mailto:?subject=${encodeURIComponent(mailSubject)}&body=${encodeURIComponent(shareText)}`}
+                className="flex min-h-[52px] items-center justify-center gap-2 rounded-2xl border-2 border-gray-300 bg-white px-4 font-bold text-gray-800 transition-colors hover:bg-gray-50"
+              >
+                <Mail className="h-5 w-5" aria-hidden="true" /> 📧 Envoyer par Email
+              </a>
+            </div>
+          </div>
+
+          <div className="mt-6 rounded-3xl border border-amber-200 bg-amber-50 p-5 text-sm leading-relaxed text-amber-800">
+            <p className="font-bold">Ce qui se passe ensuite :</p>
+            <ol className="mt-2 list-decimal space-y-1 pl-5">
+              <li>Votre équipe ouvre le lien et prend les {zones.length} photos de référence (+ équipements).</li>
+              <li>Chaque image est sécurisée (hash SHA-256) et la bibliothèque est verrouillée automatiquement.</li>
+              <li>Vous recevez un email de confirmation avec votre PDF de conformité (ONB).</li>
+            </ol>
+          </div>
+
+          <Link
+            href="/inspection/dashboard"
+            className="mt-6 block w-full rounded-2xl border border-gray-300 bg-white px-8 py-4 text-center font-bold text-gray-700 transition-colors hover:bg-gray-50"
+          >
+            Aller au tableau de bord →
+          </Link>
+        </main>
+        <footer className="mt-auto border-t border-gray-200 px-4 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] text-center text-xs text-gray-500">
+          © RoomScan — Certificat Anti-Dégâts • Document sécurisé SHA-256
+        </footer>
+      </div>
+    );
+  }
+
+  // ── Écran de succès : bibliothèque verrouillée (OUI) ──
   if (phase === 'success' && result) {
     return (
       <div className="flex min-h-screen flex-col bg-slate-50 text-gray-900">
@@ -302,7 +433,9 @@ export default function OnboardingWizard() {
     phase === 'capture'
       ? `Capture ${Math.min(captureIndex + 1, totalCapture)}/${totalCapture}`
       : phase === 'submitting'
-        ? 'Verrouillage de la bibliothèque…'
+        ? delegation
+          ? 'Enregistrement de la configuration…'
+          : 'Verrouillage de la bibliothèque…'
         : `Étape ${step}/3`;
 
   return (
@@ -353,6 +486,43 @@ export default function OnboardingWizard() {
               <p className="mt-1.5 text-sm text-gray-600">
                 2 questions — on ne configure QUE ce que vous avez réellement.
               </p>
+
+              {/* Question 0 (TASK 39) — pivot photos avec vous / délégation */}
+              <fieldset className="mt-6">
+                <legend className="text-base font-bold">Avez-vous les photos de référence de ce logement avec vous ?</legend>
+                <p className="mt-1 text-xs text-gray-500">
+                  Oui → vous les ajoutez maintenant (bibliothèque verrouillée immédiatement). Non →
+                  vous terminez la configuration et déléguez la prise de photos à votre équipe sur place.
+                </p>
+                <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={() => setHasPhotos(true)}
+                    aria-pressed={hasPhotos === true}
+                    className={`min-h-[72px] rounded-2xl border-2 px-4 py-3 text-left transition-all ${
+                      hasPhotos === true
+                        ? 'border-[#C21F26] bg-red-50 text-gray-900 shadow-lg shadow-[#C21F26]/10'
+                        : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    <span className="block font-bold">📷 Oui — je les upload maintenant</span>
+                    <span className="text-xs text-gray-500">Parcours complet avec photos + PDF immédiat</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setHasPhotos(false)}
+                    aria-pressed={hasPhotos === false}
+                    className={`min-h-[72px] rounded-2xl border-2 px-4 py-3 text-left transition-all ${
+                      hasPhotos === false
+                        ? 'border-[#C21F26] bg-red-50 text-gray-900 shadow-lg shadow-[#C21F26]/10'
+                        : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    <span className="block font-bold">👥 Non — je délègue à mon équipe</span>
+                    <span className="text-xs text-gray-500">Lien magique envoyé à l&apos;équipe sur place</span>
+                  </button>
+                </div>
+              </fieldset>
 
               {/* Q1 : chambres */}
               <fieldset className="mt-6">
@@ -437,7 +607,9 @@ export default function OnboardingWizard() {
                 Suivant <ChevronRight className="h-5 w-5" aria-hidden="true" />
               </button>
               {!step1Valid && (
-                <p className="mt-2 text-center text-xs text-gray-500">Choisissez d&apos;abord le nombre de chambres.</p>
+                <p className="mt-2 text-center text-xs text-gray-500">
+                  Répondez d&apos;abord à la question photos, puis choisissez le nombre de chambres.
+                </p>
               )}
             </motion.section>
           )}
@@ -527,12 +699,12 @@ export default function OnboardingWizard() {
                   et <strong className="text-[#C21F26]">{devices.length} équipement{devices.length > 1 ? 's' : ''}</strong>.
                 </p>
                 <p className="mt-3 text-[15px] leading-relaxed">
-                  Photos ménage à prendre :{' '}
+                  {delegation ? 'Photos que votre équipe prendra sur place : ' : 'Photos ménage à prendre : '}
                   <strong className="text-[#C21F26]">{nbPhotosMenage}</strong>{' '}
                   <span className="text-gray-600">({zones.join(' · ')})</span>
                 </p>
                 <p className="mt-3 text-[15px] leading-relaxed">
-                  📦 Équipements à photographier :{' '}
+                  📦 Équipements à photographier{delegation ? ' (par votre équipe)' : ''} :{' '}
                   <strong className="text-[#C21F26]">{devices.map((d) => d.name).join(' · ')}</strong>
                 </p>
               </div>
@@ -610,6 +782,14 @@ export default function OnboardingWizard() {
                 </p>
               )}
 
+              {delegation && (
+                <p className="mt-4 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-800">
+                  👥 <strong>Mode délégation</strong> : pas besoin des photos maintenant. À l&apos;étape
+                  suivante, un lien magique sera généré pour votre équipe — dès qu&apos;ils auront envoyé
+                  les photos, la bibliothèque sera verrouillée et le PDF généré automatiquement.
+                </p>
+              )}
+
               <div className="mt-6 flex gap-3">
                 <button
                   type="button"
@@ -623,12 +803,16 @@ export default function OnboardingWizard() {
                   disabled={!step3Valid}
                   onClick={() => {
                     setError(null);
-                    setCaptureIndex(0);
-                    setPhase('capture');
+                    if (delegation) {
+                      setPhase('submitting'); // TASK 39 — pas de capture : envoi direct de la config
+                    } else {
+                      setCaptureIndex(0);
+                      setPhase('capture');
+                    }
                   }}
                   className="flex min-h-[56px] flex-1 items-center justify-center gap-2 rounded-2xl bg-[#C21F26] px-8 text-lg font-bold text-white shadow-sm transition-all hover:bg-[#a81a20] disabled:cursor-not-allowed disabled:opacity-40"
                 >
-                  COMMENCER LA CAPTURE →
+                  {delegation ? 'ENVOYER LA CONFIGURATION →' : 'COMMENCER LA CAPTURE →'}
                 </button>
               </div>
               {!step3Valid && (
@@ -682,13 +866,17 @@ export default function OnboardingWizard() {
             </motion.section>
           )}
 
-          {/* ═══════════ ENVOI (verrouillage) ═══════════ */}
+          {/* ═══════════ ENVOI (verrouillage ou délégation) ═══════════ */}
           {phase === 'submitting' && (
             <motion.section key="submitting" variants={stepVariants} initial="initial" animate="animate" exit="exit" className="flex flex-col items-center py-16 text-center">
               <Loader2 className="h-12 w-12 animate-spin text-[#C21F26]" aria-hidden="true" />
-              <h2 className="mt-5 text-xl font-black">Verrouillage de la bibliothèque…</h2>
+              <h2 className="mt-5 text-xl font-black">
+                {delegation ? 'Enregistrement de la configuration…' : 'Verrouillage de la bibliothèque…'}
+              </h2>
               <p className="mt-2 text-sm text-gray-600">
-                Hash SHA-256 par photo, QR codes, certificat — quelques secondes.
+                {delegation
+                  ? 'Génération du lien magique pour votre équipe — quelques secondes.'
+                  : 'Hash SHA-256 par photo, QR codes, certificat — quelques secondes.'}
               </p>
             </motion.section>
           )}

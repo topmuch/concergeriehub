@@ -111,7 +111,7 @@ export function LoginGate({
             <Button
               type="submit"
               disabled={loading}
-              className="w-full h-11 bg-slate-900 hover:bg-slate-800 text-white font-semibold"
+              className="w-full h-11 bg-[#f58364] hover:bg-[#e06a44] text-white font-semibold"
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <LockKeyhole className="h-4 w-4" />}
               {loading ? 'Connexion…' : buttonLabel}

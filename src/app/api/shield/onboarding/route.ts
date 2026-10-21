@@ -11,15 +11,19 @@
 //   propertyName, propertyAddress, city, ownerName,
 //   nbChambres?: number (0-8),
 //   zones:   [{ name, photo(dataURL) } × 1..12],
-//   devices: [{ name, kind, photo(dataURL) } × 1..20]
+//   devices: [{ name, kind, photo(dataURL) } × 1..20],
+//   delegation?: boolean (TASK 39 — photos déléguées à l'équipe)
 // }
 // CONFIG DYNAMIQUE (wizard post-paiement) : pieces, equipementsCoches
 // et nbPhotosMenage sont DÉRIVÉS CÔTÉ SERVEUR des zones/devices réels
 // (source de vérité) — jamais de case vide « N/A » dans le PDF.
+// delegation=true : zones/devices envoyés SANS photo → bien en
+// PENDING_PHOTOS + lien magique /upload/[delegationToken] (7 jours).
 // Réponse 201 : { ok:true, property:{ id, onboardingRef } }
+//   (+ onboardingStatus, delegationToken, delegationTokenExpiresAt en délégation)
 // =============================================================
 import { NextRequest, NextResponse } from 'next/server';
-import { createHash } from 'crypto';
+import { createHash, randomBytes } from 'crypto';
 import { db } from '@/lib/db';
 import { rateLimit } from '@/lib/rate-limit';
 import { resolveShieldAccess, decodePhotoDataUrl } from '@/lib/shield-access';
@@ -27,6 +31,12 @@ import { onboardingRef, deviceRefCode, SHIELD_DEVICE_KINDS } from '@/lib/shield-
 
 const MAX_ZONES = 12;
 const MAX_DEVICES = 20; // 14 équipements du wizard + marges (kinds CUSTOM)
+const DELEGATION_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000; // lien magique valable 7 jours
+
+/** Token url-safe (32 car.) pour le lien magique /upload/[token]. */
+function newDelegationToken(): string {
+  return randomBytes(24).toString('base64url');
+}
 
 function bad(error: string, status = 400, message?: string) {
   return NextResponse.json({ error, message }, { status });
@@ -53,8 +63,20 @@ export async function POST(req: NextRequest) {
       nbChambres?: unknown;
       zones?: unknown;
       devices?: unknown;
+      delegation?: unknown;
     } | null;
     if (!body) return bad('corps_invalide');
+
+    // ── MODE DÉLÉGATION (TASK 39) ──
+    // delegation=true → l'hôte n'a PAS les photos avec lui : le wizard
+    // n'envoie que la configuration textuelle (zones + appareils SANS
+    // photo). Le bien passe en PENDING_PHOTOS avec un lien magique
+    // /upload/[token] (7 jours) pour l'équipe sur place.
+    const delegation = body.delegation === true;
+    const dToken = delegation ? newDelegationToken() : null;
+    const delegationExpires = delegation
+      ? new Date(Date.now() + DELEGATION_TOKEN_TTL_MS)
+      : null;
 
     const propertyName = typeof body.propertyName === 'string' ? body.propertyName.trim() : '';
     const propertyAddress =
@@ -72,6 +94,8 @@ export async function POST(req: NextRequest) {
         : 0;
 
     // ── Zones (6 fixes attendues) ──
+    // En délégation : nom seul (photo absente → '' = en attente, la
+    // bibliothèque reste verrouillée à la réception des photos).
     const zonesRaw = Array.isArray(body.zones) ? body.zones : [];
     if (zonesRaw.length < 1 || zonesRaw.length > MAX_ZONES) return bad('zones_invalide');
     const zones: { name: string; photo: string }[] = [];
@@ -80,8 +104,8 @@ export async function POST(req: NextRequest) {
       const name = typeof zt?.name === 'string' ? zt.name.trim().slice(0, 60) : '';
       const photo = typeof zt?.photo === 'string' ? zt.photo : '';
       if (!name) return bad('zone_sans_nom');
-      if (!decodePhotoDataUrl(photo)) return bad(`photo_zone_invalide:${name}`);
-      zones.push({ name: name.toUpperCase(), photo });
+      if (!delegation && !decodePhotoDataUrl(photo)) return bad(`photo_zone_invalide:${name}`);
+      zones.push({ name: name.toUpperCase(), photo: delegation ? '' : photo });
     }
 
     // ── Appareils (bibliothèque de référence) ──
@@ -96,8 +120,8 @@ export async function POST(req: NextRequest) {
       const kind = validKinds.has(kindRaw) ? kindRaw : 'CUSTOM';
       const photo = typeof dt?.photo === 'string' ? dt.photo : '';
       if (!name) return bad('appareil_sans_nom');
-      if (!decodePhotoDataUrl(photo)) return bad(`photo_appareil_invalide:${name}`);
-      devices.push({ name, kind, photo });
+      if (!delegation && !decodePhotoDataUrl(photo)) return bad(`photo_appareil_invalide:${name}`);
+      devices.push({ name, kind, photo: delegation ? '' : photo });
     }
 
     // ── Référence onboarding (séquence par ville + année) ──
@@ -107,7 +131,13 @@ export async function POST(req: NextRequest) {
     });
 
     const referenceDate = new Date();
-    let property: { id: string; onboardingRef: string } | null = null;
+    let property: {
+      id: string;
+      onboardingRef: string;
+      onboardingStatus?: string;
+      delegationToken?: string;
+      delegationTokenExpiresAt?: string;
+    } | null = null;
     // Création avec retry sur collision de référence (P2002).
     for (let attempt = 0; attempt < 4; attempt++) {
       const ref = onboardingRef(city, count + 1 + attempt);
@@ -126,6 +156,11 @@ export async function POST(req: NextRequest) {
               pieces: JSON.stringify(zones.map((z) => z.name)),
               equipementsCoches: JSON.stringify(devices.map((d) => d.kind)),
               nbPhotosMenage: zones.length,
+              // TASK 39 — délégation : bien en attente des photos de
+              // l'équipe (+ lien magique 7 jours) ; sinon COMPLETED.
+              onboardingStatus: delegation ? 'PENDING_PHOTOS' : 'COMPLETED',
+              delegationToken: dToken,
+              delegationTokenExpiresAt: delegationExpires,
             },
           });
           await tx.shieldZone.createMany({
@@ -138,8 +173,10 @@ export async function POST(req: NextRequest) {
           });
           for (let i = 0; i < devices.length; i++) {
             const d = devices[i];
-            const buf = Buffer.from(d.photo.replace(/^data:image\/\w+;base64,/, ''), 'base64');
-            const hash = createHash('sha256').update(buf).digest('hex');
+            const buf = d.photo
+              ? Buffer.from(d.photo.replace(/^data:image\/\w+;base64,/, ''), 'base64')
+              : Buffer.alloc(0);
+            const hash = buf.length ? createHash('sha256').update(buf).digest('hex') : '';
             await tx.shieldDevice.create({
               data: {
                 propertyId: prop.id,
@@ -155,7 +192,17 @@ export async function POST(req: NextRequest) {
           }
           return prop;
         });
-        property = { id: created.id, onboardingRef: created.onboardingRef };
+        property = {
+          id: created.id,
+          onboardingRef: created.onboardingRef,
+          ...(delegation
+            ? {
+                onboardingStatus: created.onboardingStatus,
+                delegationToken: created.delegationToken ?? '',
+                delegationTokenExpiresAt: created.delegationTokenExpiresAt?.toISOString() ?? '',
+              }
+            : {}),
+        };
         break;
       } catch (e) {
         const code = (e as { code?: string })?.code;

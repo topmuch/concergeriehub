@@ -1,0 +1,1 @@
+v4.157 (2026-10-21) — Task 42 : onglets Mode emploi + FAQ (dashboard hote), PWA cleaner (manifest.webmanifest, icones 192/512, sw.js v4-cleaner, banniere install + QR), Badges Marketing (3 badges QR + PNG HD + copie HTML), page publique /verify/[propertyId]

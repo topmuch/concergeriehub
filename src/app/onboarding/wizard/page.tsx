@@ -2,6 +2,13 @@ import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import OnboardingWizard from '@/components/inspection/shield/onboarding-wizard';
 
+// FIX-CSP-PROD (v4.151) : rendu dynamique exigé par la CSP à nonce (même
+// logique que la landing et /legal). Sans ce marqueur la page est pré-rendue
+// au build → ses <script> n'ont AUCUN nonce → la CSP 'strict-dynamic' les
+// bloque tous → zéro hydratation → le contenu framer-motion reste figé à
+// opacity:0 (« YA JUSTE RoomScan — Onboarding / Étape 1/3 »).
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Onboarding 5 minutes — Certificat Anti-Dégâts | RoomScan',
   description:

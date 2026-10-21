@@ -152,7 +152,7 @@ export function AdminAppSidebar({ adminName, adminEmail }: AdminAppSidebarProps)
   return (
     <Sidebar
       collapsible="icon"
-      className="lux-sidebar border-none"
+      className="lux-sidebar lux-sidebar-admin border-none"
       style={{ ['--sidebar' as string]: 'transparent' }}
     >
       {/* ----- En-tête : marque + badge contrôle ----- */}

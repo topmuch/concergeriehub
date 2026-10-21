@@ -82,6 +82,15 @@ export async function POST(req: NextRequest) {
     // ── Logement + zones ──
     const property = await shieldPropertyOwned(propertyId, access.subscriptionId);
     if (!property) return bad('not_found', 404);
+    // TASK 39 — bien en délégation : bibliothèque pas encore verrouillée
+    // → aucune session (les photos fantômes de référence n'existent pas).
+    if (property.onboardingStatus === 'PENDING_PHOTOS') {
+      return bad(
+        'photos_en_attente',
+        409,
+        'Les photos de référence de ce logement ne sont pas encore reçues (délégation en cours).',
+      );
+    }
 
     // ── LECTURE SEULE (v4.120) : document généré = logement verrouillé ──
     // Dès qu'un certificat est généré, on ne peut plus refaire le même

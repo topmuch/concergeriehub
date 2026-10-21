@@ -58,7 +58,7 @@ export function AdminLoginGate({
       <main className="flex-1 flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-md">
           <div className="flex flex-col items-center text-center mb-6">
-            <span className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-900 shadow-sm mb-4" aria-hidden="true">
+            <span className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-[#d32141] shadow-sm mb-4" aria-hidden="true">
               <ShieldCheck className="h-7 w-7 text-white" />
             </span>
             <BrandLogo size="lg" />
@@ -118,7 +118,7 @@ export function AdminLoginGate({
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full h-11 bg-slate-900 hover:bg-slate-800 text-white font-semibold"
+                className="w-full h-11 bg-[#d32141] hover:bg-[#b81b38] text-white font-semibold"
               >
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
                 {loading ? 'Vérification…' : 'Accéder à la console'}

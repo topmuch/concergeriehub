@@ -688,12 +688,56 @@
   color: var(--foreground);
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   v6.1 « DUO BRAND » — identité de marque PAR DASHBOARD (demande
+   client) : Espace Hôte = corail #f58364 · Console Superadmin =
+   rouge #d32141. Ces scopes posent les variables consommées par
+   les boutons, KPI, chips, filets, auras et anneaux de focus :
+   chaque dashboard respire SA couleur sans toucher aux 37 pages.
+   ═══════════════════════════════════════════════════════════════ */
+.lux-host {
+  --brand: #f58364;
+  --brand-deep: #d0552f;
+  --brand-btn-from: #f58364;
+  --brand-btn-to: #d0552f;
+  --brand-kpi-from: #f58364;
+  --brand-kpi-mid: #e86b45;
+  --brand-kpi-to: #cf5433;
+  --brand-soft: rgba(245, 131, 100, 0.1);
+  --brand-line: rgba(208, 85, 47, 0.38);
+  --brand-glow: rgba(208, 85, 47, 0.5);
+  --brand-eyebrow: #b8502b;
+  --brand-aura: rgba(245, 131, 100, 0.17);
+  --brand-aura-day: rgba(245, 131, 100, 0.13);
+  --brand-hero: rgba(245, 131, 100, 0.44);
+  --brand-hero-day: rgba(245, 131, 100, 0.15);
+  --brand-ring: #d0552f;
+}
+.lux-admin {
+  --brand: #d32141;
+  --brand-deep: #a3132f;
+  --brand-btn-from: #d32141;
+  --brand-btn-to: #a3132f;
+  --brand-kpi-from: #d32141;
+  --brand-kpi-mid: #c01c3a;
+  --brand-kpi-to: #9c1430;
+  --brand-soft: rgba(211, 33, 65, 0.09);
+  --brand-line: rgba(211, 33, 65, 0.4);
+  --brand-glow: rgba(211, 33, 65, 0.5);
+  --brand-eyebrow: #b01635;
+  --brand-aura: rgba(255, 56, 92, 0.16);
+  --brand-aura-day: rgba(255, 56, 92, 0.11);
+  --brand-hero: rgba(255, 56, 92, 0.48);
+  --brand-hero-day: rgba(255, 56, 92, 0.14);
+  --brand-ring: #d32141;
+}
+
 /* ----- Fond de page : nuit saphir + AURORES COLORÉES (v6.0) -----
    v6.0 « LUXE AURA » — demande client : pages trop grises/ternes →
    halos corail Airbnb + or + saphir + améthyste sur toute la nuit. */
 .lux-bg {
   background:
-    radial-gradient(1100px 520px at 88% -14%, rgba(255, 56, 92, 0.16), transparent 60%),
+    radial-gradient(1100px 520px at 88% -14%, var(--brand-aura, rgba(255, 56, 92, 0.16)), transparent 60%),
     radial-gradient(820px 440px at -8% 2%, rgba(233, 196, 124, 0.11), transparent 58%),
     radial-gradient(900px 620px at 50% 118%, rgba(61, 111, 224, 0.22), transparent 60%),
     radial-gradient(640px 420px at 28% 44%, rgba(139, 92, 246, 0.09), transparent 62%),
@@ -736,10 +780,10 @@
 }
 .lux-card-hover:hover {
   transform: translateY(-2px);
-  border-color: rgba(255, 56, 92, 0.36);
+  border-color: var(--brand-line, rgba(255, 56, 92, 0.36));
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.08) inset,
-    0 26px 60px -26px rgba(196, 31, 62, 0.5);
+    0 26px 60px -26px var(--brand-glow, rgba(196, 31, 62, 0.5));
 }
 
 /* ----- Typographie sans icônes -----
@@ -776,9 +820,9 @@
   font-weight: 600;
   letter-spacing: 0.02em;
   color: #ffffff;
-  background: linear-gradient(135deg, #ff385c, #d92b4b);
+  background: linear-gradient(135deg, var(--brand-btn-from, #ff385c), var(--brand-btn-to, #d92b4b));
   border: 1px solid rgba(255, 138, 158, 0.4);
-  box-shadow: 0 10px 28px -12px rgba(255, 56, 92, 0.6);
+  box-shadow: 0 10px 28px -12px var(--brand-glow, rgba(255, 56, 92, 0.6));
   transition: filter 0.16s ease, transform 0.16s ease;
 }
 .lux-btn:hover { filter: brightness(1.12); }
@@ -799,8 +843,8 @@
   transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease;
 }
 .lux-btn-ghost:hover {
-  background: rgba(255, 56, 92, 0.12);
-  border-color: rgba(255, 56, 92, 0.42);
+  background: var(--brand-soft, rgba(255, 56, 92, 0.12));
+  border-color: var(--brand-line, rgba(255, 56, 92, 0.42));
   color: #ffffff;
 }
 .lux-btn-gold {
@@ -892,7 +936,8 @@
 
 /* v5.7 — demande client : identité unique #FF385C (rouge Airbnb).
    Les 6 anciennes tonalités (or/saphir/améthyste/émeraude/corail/rose)
-   pointent désormais toutes sur le même fond rouge, encre blanche. */
+   pointent désormais toutes sur le même fond rouge, encre blanche.
+   v6.1 — le fond suit la marque du dashboard (corail hôte / rouge admin). */
 .luxkpi-gold,
 .luxkpi-sapphire,
 .luxkpi-violet,
@@ -901,39 +946,59 @@
 .luxkpi-rose {
   background:
     radial-gradient(300px 140px at 92% -10%, rgba(255, 255, 255, 0.24), transparent 60%),
-    linear-gradient(150deg, #ff385c 0%, #e22d4e 58%, #c11f3e 100%);
+    linear-gradient(150deg, var(--brand-kpi-from, #ff385c) 0%, var(--brand-kpi-mid, #e22d4e) 58%, var(--brand-kpi-to, #c11f3e) 100%);
   color: #ffffff;
   border-color: rgba(255, 255, 255, 0.30);
 }
 
 /* ----- Sidebar luxueuse (nav typographique sans icônes) -----
-   v6.0 — gradient rouge plus profond + éclat supérieur ; l'onglet
-   ACTIF devient une PILULE BLANCHE à encre rouge : contraste max et
-   navigation vive, lisible dans les deux modes. */
+   v6.1 « DUO BRAND » — fond de sidebar PARAMÉTRABLE par dashboard
+   (demande client) : Espace Hôte = .lux-sidebar-host (corail #f58364) ·
+   Console Superadmin = .lux-sidebar-admin (rouge #d32141). Défaut sans
+   variante = rouge Superadmin. L'onglet ACTIF reste une PILULE BLANCHE
+   à encre de marque : contraste max, lisible dans les deux modes. */
 .lux-sidebar {
+  --sb-from: #d32141;
+  --sb-mid: #c01c3a;
+  --sb-to: #a3132f;
+  --sb-active-ink: #c01c3a;
   background:
     radial-gradient(420px 240px at 88% -8%, rgba(255, 255, 255, 0.16), transparent 62%),
-    radial-gradient(360px 300px at -12% 106%, rgba(94, 8, 26, 0.5), transparent 62%),
-    linear-gradient(180deg, #ff4d68 0%, #f03055 44%, #c81e42 100%);
+    radial-gradient(360px 300px at -12% 106%, rgba(94, 8, 26, 0.45), transparent 62%),
+    linear-gradient(180deg, var(--sb-from) 0%, var(--sb-mid) 44%, var(--sb-to) 100%);
   border-right: 1px solid rgba(255, 255, 255, 0.18);
+}
+/* Espace Hôte — corail #f58364 (demande client v6.1) */
+.lux-sidebar-host {
+  --sb-from: #f58364;
+  --sb-mid: #ec6f4d;
+  --sb-to: #d0552f;
+  --sb-active-ink: #b84a26;
+}
+/* Console Superadmin — rouge #d32141 (demande client v6.1) */
+.lux-sidebar-admin {
+  --sb-from: #d32141;
+  --sb-mid: #c01c3a;
+  --sb-to: #a3132f;
+  --sb-active-ink: #c01c3a;
 }
 .lux-sidebar [data-sidebar='menu-button'] {
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.82);
+  color: rgba(255, 255, 255, 0.92);
   border-radius: 0.6rem;
   transition: color 0.16s ease, background 0.16s ease;
 }
 .lux-sidebar [data-sidebar='menu-button']:hover {
   color: #ffffff;
-  background: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.18);
 }
 .lux-sidebar [data-sidebar='menu-button'][data-active='true'],
 .lux-sidebar [data-sidebar='menu-button'][data-active='true']:hover {
   background: #ffffff;
-  color: #c81e42;
+  color: var(--sb-active-ink, #c01c3a);
   box-shadow: 0 12px 26px -12px rgba(20, 2, 8, 0.55);
 }
 .lux-sidebar [data-sidebar='menu-label'] {
@@ -941,40 +1006,40 @@
   font-weight: 700;
   letter-spacing: 0.3em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.75);
 }
-/* Scrollbar blanche à l'intérieur de la sidebar rouge */
+/* Scrollbar claire à l'intérieur de la sidebar colorée */
 .lux-sidebar .lux-scroll { scrollbar-color: rgba(255, 255, 255, 0.4) transparent; }
 .lux-sidebar .lux-scroll::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.35); }
 .lux-sidebar .lux-scroll::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.55); }
 /* Drawer mobile de la Console Superadmin : le Sheet portail ne reçoit
    pas la classe .lux-sidebar (shadcn) et --sidebar=transparent le rend
-   translucide → fond rouge Airbnb plein + mêmes styles de navigation
-   que le desktop (pilule blanche sur l'onglet actif). */
+   translucide → fond de marque plein (variables, défaut Superadmin) +
+   mêmes styles de navigation que le desktop (pilule blanche). */
 [data-slot='sidebar'][data-mobile='true'] {
   background:
     radial-gradient(420px 240px at 88% -8%, rgba(255, 255, 255, 0.16), transparent 62%),
-    linear-gradient(180deg, #ff4d68 0%, #f03055 44%, #c81e42 100%) !important;
+    linear-gradient(180deg, var(--sb-from, #d32141) 0%, var(--sb-mid, #c01c3a) 44%, var(--sb-to, #a3132f) 100%) !important;
 }
 [data-slot='sidebar'][data-mobile='true'] [data-sidebar='menu-button'] {
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(255, 255, 255, 0.92);
 }
 [data-slot='sidebar'][data-mobile='true'] [data-sidebar='menu-button']:hover {
   color: #ffffff;
-  background: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.18);
 }
 [data-slot='sidebar'][data-mobile='true'] [data-sidebar='menu-button'][data-active='true'],
 [data-slot='sidebar'][data-mobile='true'] [data-sidebar='menu-button'][data-active='true']:hover {
   background: #ffffff;
-  color: #c81e42;
+  color: var(--sb-active-ink, #c01c3a);
   box-shadow: 0 12px 26px -12px rgba(20, 2, 8, 0.55);
 }
 [data-slot='sidebar'][data-mobile='true'] [data-sidebar='menu-label'] {
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.75);
 }
 
 /* ----- KPICard (cartes « verre ») en fond plein #FF385C -----
@@ -986,7 +1051,7 @@
 html:not(.dark) .lux-card.kpi-solid {
   background:
     radial-gradient(220px 130px at 92% -12%, rgba(255, 255, 255, 0.24), transparent 60%),
-    linear-gradient(150deg, #ff385c 0%, #e22d4e 58%, #c11f3e 100%);
+    linear-gradient(150deg, var(--brand-kpi-from, #ff385c) 0%, var(--brand-kpi-mid, #e22d4e) 58%, var(--brand-kpi-to, #c11f3e) 100%);
   border-color: rgba(255, 255, 255, 0.30);
   color: #ffffff;
 }
@@ -1023,9 +1088,9 @@ html:not(.dark) .lux .lux-keep-dark [class*='bg-white/'] { background-color: rgb
   pointer-events: none;
 }
 
-/* ----- Tableaux teintés (v6.0) : en-têtes corail + survol doux ----- */
-.lux [data-slot='table-header'] { background: rgba(255, 56, 92, 0.07); }
-.lux [data-slot='table-row']:hover { background: rgba(255, 56, 92, 0.05); }
+/* ----- Tableaux teintés (v6.1) : en-tête de marque + survol doux ----- */
+.lux [data-slot='table-header'] { background: var(--brand-soft, rgba(255, 56, 92, 0.07)); }
+.lux [data-slot='table-row']:hover { background: var(--brand-soft, rgba(255, 56, 92, 0.05)); }
 
 /* ----- Chips de statut (remplacent les badges à icônes) -----
    v6.0 — teinte corail très légère pour rester vivant sans altérer
@@ -1040,7 +1105,7 @@ html:not(.dark) .lux .lux-keep-dark [class*='bg-white/'] { background-color: rgb
   font-weight: 600;
   letter-spacing: 0.04em;
   border: 1px solid rgba(255, 138, 158, 0.22);
-  background: rgba(255, 56, 92, 0.06);
+  background: var(--brand-soft, rgba(255, 56, 92, 0.06));
   color: rgba(255, 226, 232, 0.9);
 }
 
@@ -1063,50 +1128,51 @@ html:not(.dark) .lux .lux-keep-dark [class*='bg-white/'] { background-color: rgb
 .lux-scroll::-webkit-scrollbar-thumb:hover { background: rgba(255, 120, 145, 0.6); }
 
 /* ═══════════════════════════════════════════════════════════════
-   v5.3 « SAPHIR LUXE · JOUR » — le scope .lux suit désormais le
-   bouton thème : html.dark (défaut) = nuit saphir ci-dessus ;
-   html:not(.dark) = jour ivoire ci-dessous. Deux couches :
-   1) tokens & composants .lux réinterprétés en clair ;
+   v6.1 « SAPHIR LUXE · JOUR NOIR » — le scope .lux suit le bouton
+   thème : html.dark = nuit saphir ci-dessus ; html:not(.dark) = jour
+   à POLICE NOIRE (demande client v6.1) ci-dessous. Deux couches :
+   1) tokens & composants .lux réinterprétés en clair (encres noires
+      neutres #101012 — plus de navy bleuté) ;
    2) correspondance des utilitaires blanchâtres codés en dur par
-      la refonte v5.2 (bg-white/[0.04] → encre saphir translucide,
-      text-white → encre marine, #8fa0c2 → ardoise…).
-   Volontairement NAVY dans les deux modes (signature luxe) :
-   la sidebar (.lux-sidebar) et les portails Radix (Dialog/Sheet/
-   Select/Popover explicitement #0b1226) — ils ne sont pas touchés
-   par ces règles. Aucune donnée ni logique : design uniquement.
+      la refonte v5.2 (bg-white/[0.04] → encre noire translucide,
+      text-white → noir, #8fa0c2 → gris neutre foncé…).
+   Volontairement SANS TEINTE dans les encres (signature v6.1) :
+   la sidebar (.lux-sidebar, variables --sb-*) et les portails Radix
+   (Dialog/Sheet/Select/Popover explicitement sombres) ne sont pas
+   touchés par ces règles. Aucune donnée ni logique : design only.
    ═══════════════════════════════════════════════════════════════ */
 
 /* ----- 1 · Tokens & composants en clair ----- */
 html:not(.dark) .lux {
   color-scheme: light;
   --background: #f7f6f3;
-  --foreground: #101b36;
+  --foreground: #101012;
   --card: #ffffff;
-  --card-foreground: #101b36;
+  --card-foreground: #101012;
   --popover: #ffffff;
-  --popover-foreground: #101b36;
-  --primary: #101b36;
+  --popover-foreground: #101012;
+  --primary: #18181b;
   --primary-foreground: #f7f6f3;
-  --secondary: #eef0f5;
-  --secondary-foreground: #101b36;
-  --muted: #eef0f5;
-  --muted-foreground: #5d6b8a;
-  --accent: #e9eefb;
-  --accent-foreground: #101b36;
-  --destructive: #c2410c;
-  --border: rgba(16, 27, 54, 0.12);
-  --input: rgba(16, 27, 54, 0.16);
-  --ring: #2f5fd0;
+  --secondary: #eef0f3;
+  --secondary-foreground: #101012;
+  --muted: #eef0f3;
+  --muted-foreground: #52525b;
+  --accent: var(--brand-soft, #e9eefb);
+  --accent-foreground: #101012;
+  --destructive: #be123c;
+  --border: rgba(17, 17, 19, 0.12);
+  --input: rgba(17, 17, 19, 0.16);
+  --ring: var(--brand-ring, #2f5fd0);
   --chart-1: #2f5fd0;
   --chart-2: #8a6215;
   --chart-3: #0c7a5e;
   --chart-4: #6d28d9;
-  --chart-5: #5d6b8a;
+  --chart-5: #52525b;
 }
 
 html:not(.dark) .lux-bg {
   background:
-    radial-gradient(1100px 520px at 88% -12%, rgba(255, 56, 92, 0.11), transparent 60%),
+    radial-gradient(1100px 520px at 88% -12%, var(--brand-aura-day, rgba(255, 56, 92, 0.11)), transparent 60%),
     radial-gradient(900px 460px at -8% 2%, rgba(233, 176, 90, 0.15), transparent 58%),
     radial-gradient(760px 430px at 50% 116%, rgba(61, 111, 224, 0.11), transparent 60%),
     radial-gradient(620px 380px at 24% 38%, rgba(52, 211, 153, 0.06), transparent 62%),
@@ -1115,61 +1181,61 @@ html:not(.dark) .lux-bg {
 
 html:not(.dark) .lux-card {
   background: #ffffff;
-  border: 1px solid rgba(16, 27, 54, 0.08);
+  border: 1px solid rgba(17, 17, 19, 0.08);
   box-shadow:
-    0 1px 2px rgba(16, 27, 54, 0.05),
-    0 16px 36px -24px rgba(16, 27, 54, 0.22);
+    0 1px 2px rgba(17, 17, 19, 0.05),
+    0 16px 36px -24px rgba(17, 17, 19, 0.22);
 }
 /* Liseré lumen en jour : corail → or → saphir plus visibles sur blanc */
 html:not(.dark) .lux-card::before {
   background: linear-gradient(90deg, transparent, rgba(255, 56, 92, 0.5) 22%, rgba(224, 164, 70, 0.48) 52%, rgba(61, 111, 224, 0.42) 78%, transparent);
 }
 html:not(.dark) .lux-card-hover:hover {
-  border-color: rgba(255, 56, 92, 0.38);
+  border-color: var(--brand-line, rgba(255, 56, 92, 0.38));
   box-shadow:
-    0 2px 4px rgba(16, 27, 54, 0.06),
-    0 22px 48px -24px rgba(196, 31, 62, 0.32);
+    0 2px 4px rgba(17, 17, 19, 0.06),
+    0 22px 48px -24px var(--brand-glow, rgba(196, 31, 62, 0.32));
 }
 
-html:not(.dark) .lux-eyebrow { color: #b01635; }
+html:not(.dark) .lux-eyebrow { color: var(--brand-eyebrow, #b01635); }
 
 html:not(.dark) .lux-header {
   background: rgba(255, 255, 255, 0.85);
-  border-bottom: 1px solid rgba(16, 27, 54, 0.08);
+  border-bottom: 1px solid rgba(17, 17, 19, 0.08);
 }
 
 html:not(.dark) .lux-btn-ghost {
-  color: rgba(16, 27, 54, 0.8);
-  background: rgba(16, 27, 54, 0.03);
-  border: 1px solid rgba(16, 27, 54, 0.16);
+  color: rgba(17, 17, 19, 0.8);
+  background: rgba(17, 17, 19, 0.03);
+  border: 1px solid rgba(17, 17, 19, 0.16);
 }
 html:not(.dark) .lux-btn-ghost:hover {
-  background: rgba(255, 56, 92, 0.07);
-  border-color: rgba(193, 31, 62, 0.35);
-  color: #b01635;
+  background: var(--brand-soft, rgba(255, 56, 92, 0.07));
+  border-color: var(--brand-line, rgba(193, 31, 62, 0.35));
+  color: var(--brand-eyebrow, #b01635);
 }
 
-html:not(.dark) .lux-rule { background: linear-gradient(90deg, transparent, rgba(16, 27, 54, 0.22), transparent); }
-html:not(.dark) .lux-hairline { border-color: rgba(16, 27, 54, 0.12); }
-html:not(.dark) .lux-dot { box-shadow: 0 0 0 3px rgba(16, 27, 54, 0.06); }
+html:not(.dark) .lux-rule { background: linear-gradient(90deg, transparent, rgba(17, 17, 19, 0.22), transparent); }
+html:not(.dark) .lux-hairline { border-color: rgba(17, 17, 19, 0.12); }
+html:not(.dark) .lux-dot { box-shadow: 0 0 0 3px rgba(17, 17, 19, 0.06); }
 html:not(.dark) .lux-chip {
-  border: 1px solid rgba(193, 31, 62, 0.2);
-  background: rgba(255, 56, 92, 0.045);
-  color: #8f1233;
+  border: 1px solid var(--brand-line, rgba(193, 31, 62, 0.2));
+  background: var(--brand-soft, rgba(255, 56, 92, 0.045));
+  color: var(--brand-eyebrow, #8f1233);
 }
 html:not(.dark) .lux-empty {
-  border: 1px dashed rgba(193, 31, 62, 0.32);
+  border: 1px dashed var(--brand-line, rgba(193, 31, 62, 0.32));
   background:
-    radial-gradient(320px 160px at 50% 0%, rgba(255, 56, 92, 0.055), transparent 65%),
+    radial-gradient(320px 160px at 50% 0%, var(--brand-soft, rgba(255, 56, 92, 0.055)), transparent 65%),
     rgba(255, 56, 92, 0.015);
 }
-html:not(.dark) .lux-scroll { scrollbar-color: rgba(193, 31, 62, 0.3) transparent; }
-html:not(.dark) .lux-scroll::-webkit-scrollbar-thumb { background: rgba(193, 31, 62, 0.3); }
-html:not(.dark) .lux-scroll::-webkit-scrollbar-thumb:hover { background: rgba(193, 31, 62, 0.45); }
+html:not(.dark) .lux-scroll { scrollbar-color: var(--brand-line, rgba(193, 31, 62, 0.3)) transparent; }
+html:not(.dark) .lux-scroll::-webkit-scrollbar-thumb { background: var(--brand-line, rgba(193, 31, 62, 0.3)); }
+html:not(.dark) .lux-scroll::-webkit-scrollbar-thumb:hover { background: var(--brand-glow, rgba(193, 31, 62, 0.45)); }
 
-/* Tableaux en jour : en-tête corail pâle + survol doux */
-html:not(.dark) .lux [data-slot='table-header'] { background: rgba(255, 56, 92, 0.055); }
-html:not(.dark) .lux [data-slot='table-row']:hover { background: rgba(255, 56, 92, 0.04); }
+/* Tableaux en jour : en-tête de marque pâle + survol doux */
+html:not(.dark) .lux [data-slot='table-header'] { background: var(--brand-soft, rgba(255, 56, 92, 0.055)); }
+html:not(.dark) .lux [data-slot='table-row']:hover { background: var(--brand-soft, rgba(255, 56, 92, 0.04)); }
 
 /* ═══════════════════════════════════════════════════════════════
    v6.0 « LUXE AURA » — HERO COLORÉ (host + admin dashboards)
@@ -1182,7 +1248,7 @@ html:not(.dark) .lux [data-slot='table-row']:hover { background: rgba(255, 56, 9
   border-radius: 1.25rem;
   border: 1px solid rgba(255, 255, 255, 0.16);
   background:
-    radial-gradient(640px 280px at 88% -20%, rgba(255, 56, 92, 0.48), transparent 62%),
+    radial-gradient(640px 280px at 88% -20%, var(--brand-hero, rgba(255, 56, 92, 0.48)), transparent 62%),
     radial-gradient(520px 260px at -8% 118%, rgba(233, 196, 124, 0.28), transparent 58%),
     radial-gradient(460px 260px at 55% 130%, rgba(61, 111, 224, 0.3), transparent 58%),
     linear-gradient(135deg, #141b3d 0%, #1c1240 54%, #2a1030 100%);
@@ -1204,7 +1270,7 @@ html:not(.dark) .lux [data-slot='table-row']:hover { background: rgba(255, 56, 9
 html:not(.dark) .lux .lux-hero {
   border-color: rgba(255, 56, 92, 0.2);
   background:
-    radial-gradient(640px 280px at 88% -20%, rgba(255, 56, 92, 0.14), transparent 62%),
+    radial-gradient(640px 280px at 88% -20%, var(--brand-hero-day, rgba(255, 56, 92, 0.14)), transparent 62%),
     radial-gradient(520px 260px at -8% 118%, rgba(233, 176, 90, 0.17), transparent 58%),
     radial-gradient(460px 260px at 55% 130%, rgba(61, 111, 224, 0.12), transparent 58%),
     linear-gradient(135deg, #ffffff 0%, #fff7f2 55%, #fff3f5 100%);
@@ -1218,10 +1284,10 @@ html:not(.dark) .lux .lux-hero::before {
 
 /* ----- KPI « joyaux » en jour : identité unique #FF385C (v5.7) ----- */
 html:not(.dark) .luxkpi {
-  border: 1px solid rgba(16, 27, 54, 0.1);
+  border: 1px solid rgba(17, 17, 19, 0.1);
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.85) inset,
-    0 18px 40px -26px rgba(16, 27, 54, 0.3);
+    0 18px 40px -26px rgba(17, 17, 19, 0.3);
 }
 html:not(.dark) .luxkpi::after {
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.95), transparent);
@@ -1229,7 +1295,7 @@ html:not(.dark) .luxkpi::after {
 html:not(.dark) .luxkpi::before { background: rgba(255, 255, 255, 0.55); }
 html:not(.dark) .luxkpi .luxkpi-chip {
   background: rgba(255, 255, 255, 0.55);
-  border: 1px solid rgba(16, 27, 54, 0.1);
+  border: 1px solid rgba(17, 17, 19, 0.1);
 }
 /* v5.7 — même fond #FF385C en mode Jour (demande client : rouge partout) */
 html:not(.dark) .luxkpi-gold,
@@ -1240,7 +1306,7 @@ html:not(.dark) .luxkpi-coral,
 html:not(.dark) .luxkpi-rose {
   background:
     radial-gradient(300px 140px at 92% -10%, rgba(255, 255, 255, 0.30), transparent 60%),
-    linear-gradient(135deg, #ff385c 0%, #e22d4e 100%);
+    linear-gradient(135deg, var(--brand-kpi-from, #ff385c) 0%, var(--brand-kpi-mid, #e22d4e) 100%);
   color: #ffffff;
   border-color: rgba(255, 255, 255, 0.34);
 }
@@ -1254,48 +1320,48 @@ html:not(.dark) .luxkpi .luxkpi-chip {
 /* Remplissages blancs translucides → encre saphir */
 html:not(.dark) .lux [class*="bg-white/[0.015]"],
 html:not(.dark) .lux [class*="bg-white/[0.02]"],
-html:not(.dark) .lux [class*="bg-white/[0.03]"] { background-color: rgba(16, 27, 54, 0.03) !important; }
+html:not(.dark) .lux [class*="bg-white/[0.03]"] { background-color: rgba(17, 17, 19, 0.03) !important; }
 html:not(.dark) .lux [class*="bg-white/[0.04]"],
-html:not(.dark) .lux [class*="bg-white/[0.05]"] { background-color: rgba(16, 27, 54, 0.045) !important; }
+html:not(.dark) .lux [class*="bg-white/[0.05]"] { background-color: rgba(17, 17, 19, 0.045) !important; }
 html:not(.dark) .lux [class*="bg-white/[0.06]"],
 html:not(.dark) .lux [class*="bg-white/[0.07]"],
 html:not(.dark) .lux [class*="bg-white/[0.08]"],
-html:not(.dark) .lux [class*="bg-white/[0.09]"] { background-color: rgba(16, 27, 54, 0.06) !important; }
+html:not(.dark) .lux [class*="bg-white/[0.09]"] { background-color: rgba(17, 17, 19, 0.06) !important; }
 html:not(.dark) .lux [class*="bg-white/5"],
-html:not(.dark) .lux [class*="bg-white/6"] { background-color: rgba(16, 27, 54, 0.05) !important; }
-html:not(.dark) .lux [class*="bg-white/8"] { background-color: rgba(16, 27, 54, 0.06) !important; }
+html:not(.dark) .lux [class*="bg-white/6"] { background-color: rgba(17, 17, 19, 0.05) !important; }
+html:not(.dark) .lux [class*="bg-white/8"] { background-color: rgba(17, 17, 19, 0.06) !important; }
 html:not(.dark) .lux [class*="bg-white/10"],
-html:not(.dark) .lux [class*="bg-white/12"] { background-color: rgba(16, 27, 54, 0.08) !important; }
+html:not(.dark) .lux [class*="bg-white/12"] { background-color: rgba(17, 17, 19, 0.08) !important; }
 html:not(.dark) .lux [class*="bg-white/15"],
-html:not(.dark) .lux [class*="bg-white/20"] { background-color: rgba(16, 27, 54, 0.12) !important; }
+html:not(.dark) .lux [class*="bg-white/20"] { background-color: rgba(17, 17, 19, 0.12) !important; }
 
 /* Texte blanc → encre marine (par paliers d'opacité) */
 html:not(.dark) .lux [class*="text-white/85"],
 html:not(.dark) .lux [class*="text-white/90"],
-html:not(.dark) .lux [class*="text-white/80"] { color: rgba(16, 27, 54, 0.88) !important; }
+html:not(.dark) .lux [class*="text-white/80"] { color: rgba(17, 17, 19, 0.88) !important; }
 html:not(.dark) .lux [class*="text-white/70"],
-html:not(.dark) .lux [class*="text-white/60"] { color: rgba(16, 27, 54, 0.64) !important; }
+html:not(.dark) .lux [class*="text-white/60"] { color: rgba(17, 17, 19, 0.64) !important; }
 html:not(.dark) .lux [class*="text-white/50"],
-html:not(.dark) .lux [class*="text-white/55"] { color: rgba(16, 27, 54, 0.52) !important; }
+html:not(.dark) .lux [class*="text-white/55"] { color: rgba(17, 17, 19, 0.52) !important; }
 html:not(.dark) .lux [class*="text-white/25"],
-html:not(.dark) .lux [class*="text-white/30"] { color: rgba(16, 27, 54, 0.42) !important; }
-html:not(.dark) .lux [class*="text-white"]:not([class*="text-white/"]) { color: #101b36 !important; }
+html:not(.dark) .lux [class*="text-white/30"] { color: rgba(17, 17, 19, 0.42) !important; }
+html:not(.dark) .lux [class*="text-white"]:not([class*="text-white/"]) { color: #101012 !important; }
 
 /* Bordures / séparateurs / anneaux blancs → encre saphir */
 html:not(.dark) .lux [class*="border-white/8"],
 html:not(.dark) .lux [class*="border-white/10"],
 html:not(.dark) .lux [class*="border-white/12"],
-html:not(.dark) .lux [class*="border-white/14"] { border-color: rgba(16, 27, 54, 0.1) !important; }
+html:not(.dark) .lux [class*="border-white/14"] { border-color: rgba(17, 17, 19, 0.1) !important; }
 html:not(.dark) .lux [class*="border-white/15"],
 html:not(.dark) .lux [class*="border-white/20"],
 html:not(.dark) .lux [class*="border-white/25"],
-html:not(.dark) .lux [class*="border-white/40"] { border-color: rgba(16, 27, 54, 0.18) !important; }
-html:not(.dark) .lux [class*="divide-white/"] > * { border-color: rgba(16, 27, 54, 0.09) !important; }
-html:not(.dark) .lux [class*="ring-white/"] { --tw-ring-color: rgba(16, 27, 54, 0.14) !important; }
+html:not(.dark) .lux [class*="border-white/40"] { border-color: rgba(17, 17, 19, 0.18) !important; }
+html:not(.dark) .lux [class*="divide-white/"] > * { border-color: rgba(17, 17, 19, 0.09) !important; }
+html:not(.dark) .lux [class*="ring-white/"] { --tw-ring-color: rgba(17, 17, 19, 0.14) !important; }
 
 /* Ardoise bleutée #8fa0c2 → gris-ardoise lisible sur blanc */
-html:not(.dark) .lux [class*="text-[#8fa0c2]"] { color: #5d6b8a !important; }
-html:not(.dark) .lux [class*="bg-[#8fa0c2]"] { background-color: rgba(93, 107, 138, 0.4) !important; }
+html:not(.dark) .lux [class*="text-[#8fa0c2]"] { color: #52525b !important; }
+html:not(.dark) .lux [class*="bg-[#8fa0c2]"] { background-color: rgba(82, 82, 91, 0.4) !important; }
 
 /* Tons clairs pensés pour la nuit → encres profondes sur blanc */
 html:not(.dark) .lux [class*="text-[#a9c4ff]"] { color: #274b9f !important; }
@@ -1342,18 +1408,18 @@ html:not(.dark) .lux .air-gradient { color: #ffffff !important; }
    scope .lux dans le DOM, restent navy. */
 html:not(.dark) .lux [class*="bg-[#0b1226]"] { background-color: #ffffff !important; }
 html:not(.dark) .lux [class*="bg-[#0d1530]"] { background-color: #f1f3f9 !important; }
-html:not(.dark) .lux [class*="bg-[#060a17]"] { background-color: rgba(16, 27, 54, 0.05) !important; }
+html:not(.dark) .lux [class*="bg-[#060a17]"] { background-color: rgba(17, 17, 19, 0.05) !important; }
 
 /* Placeholders des champs sombres → encre saphir */
 html:not(.dark) .lux input::placeholder,
-html:not(.dark) .lux textarea::placeholder { color: rgba(16, 27, 54, 0.38) !important; opacity: 1; }
+html:not(.dark) .lux textarea::placeholder { color: rgba(17, 17, 19, 0.38) !important; opacity: 1; }
 
 /* Graphiques recharts (attributs SVG #8fa0c2 / halos nuit) → jour */
-html:not(.dark) .lux .recharts-cartesian-axis-tick text { fill: #5d6b8a !important; }
+html:not(.dark) .lux .recharts-cartesian-axis-tick text { fill: #52525b !important; }
 html:not(.dark) .lux .recharts-cartesian-axis-line,
-html:not(.dark) .lux .recharts-cartesian-axis-tick line { stroke: rgba(16, 27, 54, 0.14) !important; }
-html:not(.dark) .lux .recharts-cartesian-grid line { stroke: rgba(16, 27, 54, 0.08) !important; }
-html:not(.dark) .lux .recharts-legend-item-text { color: #5d6b8a !important; }
+html:not(.dark) .lux .recharts-cartesian-axis-tick line { stroke: rgba(17, 17, 19, 0.14) !important; }
+html:not(.dark) .lux .recharts-cartesian-grid line { stroke: rgba(17, 17, 19, 0.08) !important; }
+html:not(.dark) .lux .recharts-legend-item-text { color: #52525b !important; }
 
 /* Aperçu invité (miroir fidèle de la carte téléphone) : reste tel
    que rendu côté invité — texte blanc re-reservé à l'intérieur. */
@@ -1395,7 +1461,7 @@ html:not(.dark) .lux .lux-keep-dark [class*="ring-white/"] { --tw-ring-color: rg
 html:not(.dark) .tl-weekend {
   background-image: repeating-linear-gradient(
     135deg,
-    rgba(16, 27, 54, 0.05) 0 5px,
+    rgba(17, 17, 19, 0.05) 0 5px,
     transparent 5px 11px
   );
 }
@@ -1421,3 +1487,18 @@ html:not(.dark) .tl-sticky-left { background: #ffffff; }
 /* Barre de séjour : hover lumineux (aucune transformation de layout) */
 .tl-bar { transition: filter 0.15s ease, box-shadow 0.15s ease; }
 .tl-bar:hover { filter: brightness(1.08); }
+
+/* Utilitaires scroll du module Bouclier V2 (restaure v4.156) */
+.shield-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(30, 58, 138, 0.30) transparent;
+}
+.shield-scrollbar::-webkit-scrollbar { width: 7px; height: 7px; }
+.shield-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.shield-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(30, 58, 138, 0.28);
+  border-radius: 9999px;
+}
+.shield-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(30, 58, 138, 0.45);
+}

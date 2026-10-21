@@ -33,6 +33,14 @@ export async function GET(
     if (!property) {
       return NextResponse.json({ error: 'not_found' }, { status: 404 });
     }
+    // TASK 39 — bien en délégation : photos de référence pas encore
+    // reçues → aucun PDF (les zones n'ont pas d'image à afficher).
+    if (property.onboardingStatus === 'PENDING_PHOTOS') {
+      return NextResponse.json(
+        { error: 'pending_photos', message: 'Photos de référence pas encore reçues — PDF indisponible.' },
+        { status: 409 },
+      );
+    }
 
     const data: ShieldOnboardingPdfData = {
       property: {

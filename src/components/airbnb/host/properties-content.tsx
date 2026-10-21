@@ -26,6 +26,8 @@ import {
 } from '@/components/ui/dialog';
 import { StatusBadge } from '@/components/airbnb/host/status-badge';
 import { useHostContext, type HostProperty } from '@/components/airbnb/host/host-context';
+// Task 42-b — modal des badges marketing (PNG HD + code HTML)
+import { MarketingBadgesModal } from '@/components/airbnb/host/marketing-badges-modal';
 import { useCreateProperty, type CreatePropertyResult } from '@/hooks/use-properties';
 import { PROPERTY_TYPE_META, propertyTypeMeta } from '@/lib/b2b';
 import { cn } from '@/lib/utils';
@@ -85,6 +87,8 @@ export function PropertiesContent({ openWizardOnInit = false }: { openWizardOnIn
 
   const [wizardOpen, setWizardOpen] = useState(openWizardOnInit);
   const [editTarget, setEditTarget] = useState<HostProperty | null>(null);
+  // Task 42-b — propriete dont on ouvre les badges marketing
+  const [badgesProperty, setBadgesProperty] = useState<HostProperty | null>(null);
 
   const openWizard = useCallback(() => setWizardOpen(true), []);
 
@@ -215,6 +219,7 @@ export function PropertiesContent({ openWizardOnInit = false }: { openWizardOnIn
                 router.push('/airbnb/dashboard');
               }}
               onTeam={() => router.push(`/airbnb/team?property=${p.id}`)}
+              onBadges={() => setBadgesProperty(p)}
             />
           ))}
         </motion.section>
@@ -228,6 +233,13 @@ export function PropertiesContent({ openWizardOnInit = false }: { openWizardOnIn
         onOpenChange={(open) => {
           if (!open) setEditTarget(null);
         }}
+      />
+      {/* Task 42-b — badges marketing (PNG HD + code HTML) */}
+      <MarketingBadgesModal
+        propertyId={badgesProperty?.id ?? ''}
+        propertyName={badgesProperty?.name ?? ''}
+        open={badgesProperty !== null}
+        onClose={() => setBadgesProperty(null)}
       />
     </div>
   );
@@ -243,9 +255,10 @@ interface PropertyCardProps {
   onView: () => void;
   onEdit: () => void;
   onTeam: () => void;
+  onBadges: () => void;
 }
 
-function PropertyCard({ property: p, index, onView, onEdit, onTeam }: PropertyCardProps) {
+function PropertyCard({ property: p, index, onView, onEdit, onTeam, onBadges }: PropertyCardProps) {
   const typeMeta = propertyTypeMeta(p.propertyType);
   const canManage = p.isOwner || p.myRole === 'OWNER' || p.myRole === 'MANAGER';
 
@@ -331,8 +344,8 @@ function PropertyCard({ property: p, index, onView, onEdit, onTeam }: PropertyCa
         </div>
       </div>
 
-      {/* Actions */}
-      <div className="mt-auto flex gap-2 p-3">
+      {/* Actions — Task 42-b : grille 2x2 sur mobile (4 boutons), rangee unique a partir de sm */}
+      <div className="mt-auto grid grid-cols-2 gap-2 p-3 sm:flex">
         <Button
           variant="outline"
           className="h-9 flex-1 rounded-full border-white/12 bg-white/[0.04] text-xs font-semibold text-[#d5def0] hover:bg-white/8 hover:text-white"
@@ -358,6 +371,14 @@ function PropertyCard({ property: p, index, onView, onEdit, onTeam }: PropertyCa
           aria-label={`Gérer l'équipe de ${p.name}`}
         >
           Équipe
+        </Button>
+        <Button
+          variant="outline"
+          className="h-9 flex-1 rounded-full border-white/12 bg-white/[0.04] text-xs font-semibold text-[#d5def0] hover:bg-white/8 hover:text-white"
+          onClick={onBadges}
+          aria-label={`Badges marketing de ${p.name}`}
+        >
+          🏅 Badges
         </Button>
       </div>
     </motion.article>

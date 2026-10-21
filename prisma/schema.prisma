@@ -2832,6 +2832,15 @@ model ShieldProperty {
   pieces            String @default("[]") @map("pieces") // JSON: pièces réelles du logement
   equipementsCoches String @default("[]") @map("equipements_coches") // JSON: kinds d'équipements présents
   nbPhotosMenage    Int    @default(4) @map("nb_photos_menage") // nb de photos par check-in = nb de zones
+  // ── TASK 39 (v4.154) — DÉLÉGATION ONBOARDING ──
+  // Le wizard demande « Avez-vous les photos de référence avec vous ? ».
+  // NON → configuration textuelle seule, bien en PENDING_PHOTOS, et un
+  // lien magique /upload/[delegationToken] (7 jours) permet à l'équipe
+  // sur place de photographier zones + appareils. Réception → COMPLETED
+  // (bibliothèque verrouillée + PDF ONB disponible + email au propriétaire).
+  onboardingStatus         String    @default("COMPLETED") @map("onboarding_status") // 'COMPLETED' | 'PENDING_PHOTOS'
+  delegationToken          String?   @unique @map("delegation_token") // token du lien magique (24-32 car. url-safe)
+  delegationTokenExpiresAt DateTime? @map("delegation_token_expires_at") // +7 jours (lien expiré = écran dédié)
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
@@ -2851,7 +2860,8 @@ model ShieldZone {
   id             String @id @default(cuid())
   propertyId     String @map("property_id")
   name           String
-  referencePhoto String @map("reference_photo") // dataURL JPEG compressée
+  referencePhoto String @map("reference_photo") // dataURL JPEG compressée ('' = en attente de délégation TASK 39)
+  referenceHash  String? @map("reference_hash") // SHA-256 hex de la photo de référence (rempli à la réception délégation)
   sortOrder      Int    @default(0) @map("sort_order")
 
   property ShieldProperty   @relation(fields: [propertyId], references: [id], onDelete: Cascade)
@@ -2898,6 +2908,19 @@ model ShieldSession {
   linkedSessionId String?  @map("linked_session_id") // dernier CHECK_IN lié
   completedAt     DateTime @default(now()) @map("completed_at")
   createdAt       DateTime @default(now()) @map("created_at")
+
+  // ── PLANIFICATION « Ménage à faire » (Bouclier V2 — master prompt
+  // client) : un séjour est créé À L'AVANCE par l'hôte (formulaire
+  // nom/email invité + dates + téléphone cleaner). La session naît
+  // A_VENIR avec un lien magique /s/[publicToken] pour l'agent ;
+  // EN_RETARD est calculé à la volée (A_VENIR + date dépassée) ;
+  // la capture complète (photos fantômes + vidéo, API session v5.1
+  // existante) fera passer TERMINE — défaut 'TERMINE' = sessions
+  // créées directement à la capture (rétro-compatible).
+  status        String    @default("TERMINE") // A_VENIR | EN_RETARD | TERMINE | ANNULE
+  scheduledDate DateTime? @map("scheduled_date") // date prévue du check-in / check-out
+  cleanerPhone  String?   @map("cleaner_phone") // téléphone du cleaner (partage du lien)
+  publicToken   String?   @unique @map("public_token") // lien magique cleaner (24 car.)
 
   property ShieldProperty   @relation(fields: [propertyId], references: [id], onDelete: Cascade)
   shots    ShieldZoneShot[]

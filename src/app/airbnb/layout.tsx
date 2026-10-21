@@ -30,7 +30,9 @@ export default async function AirbnbLayout({
   const user = session?.user as { id?: string; role?: string; name?: string | null } | undefined;
 
   if (!session?.user || !user?.id) {
-    redirect('/');
+    // ÉTAPE 1 (V4) — porte DÉDIÉE de l'espace : plus de renvoi vers la
+    // landing, chaque dashboard a sa page de connexion séparée.
+    redirect('/login/hote');
   }
   if (user.role === 'superadmin') {
     // La console Superadmin vit dans /admin — pas de double espace.

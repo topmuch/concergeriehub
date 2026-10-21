@@ -18,6 +18,7 @@ import { useHostContext } from '@/components/airbnb/host/host-context';
 import { useOverview, type ActivityItem } from '@/hooks/use-overview';
 import { OnboardingWizard } from '@/components/airbnb/onboarding-wizard';
 import { CoachWidget } from '@/components/airbnb/host/coach-widget';
+import { PwaInstallBanner } from '@/components/pwa/pwa-install-banner';
 import { relativeFrTime } from '@/lib/automations';
 import { cn } from '@/lib/utils';
 
@@ -858,6 +859,9 @@ export function OverviewContent() {
               ))}
             </div>
           </section>
+
+          {/* ═══════════ PWA (Task 42-a) — carte QR d'installation de l'app ═══════════ */}
+          <PwaInstallBanner variant="qr-card" />
 
           {/* ═══════════ Modules actifs (aperçu QR — conservé) ═══════════ */}
           {!loading && data && data.modules.length > 0 && (

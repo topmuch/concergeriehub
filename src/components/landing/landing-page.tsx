@@ -38,7 +38,13 @@
 import { useEffect, useState, type MouseEvent } from 'react';
 import Image from 'next/image';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Menu, X } from 'lucide-react';
+import {
+  ClipboardCheck,
+  Home,
+  Menu,
+  ShieldCheck,
+  X,
+} from 'lucide-react';
 import { SmoothScroll } from '@/components/premium/smooth-scroll';
 import { AnimatedMeshGradient } from '@/components/premium/animated-mesh-gradient';
 import { Reveal } from '@/components/premium/reveal';
@@ -278,7 +284,7 @@ function Footer() {
       className="mt-auto scroll-mt-24 border-t border-slate-200 bg-white px-4 pb-[max(3rem,env(safe-area-inset-bottom))] pt-16 text-slate-600 sm:px-6"
     >
       <div className="mx-auto max-w-7xl">
-        <div className="mb-12 grid gap-12 md:grid-cols-4">
+        <div className="mb-12 grid gap-12 sm:grid-cols-2 lg:grid-cols-5">
           {/* Logo & Description */}
           <div className="md:col-span-1">
             <div className="mb-4 flex items-center gap-2.5">
@@ -389,6 +395,58 @@ function Footer() {
               </li>
             </ul>
           </div>
+
+          {/* Vos espaces (Task 30) — les 3 dashboards, chacun aux
+              couleurs de SA porte de connexion (Étape 1 V4) : un
+              visiteur déconnecté est reçu par la garde du dashboard
+              et redirigé vers la page de connexion de son espace. */}
+          <nav aria-label={t('Vos espaces')}>
+            <h4 className="mb-4 font-bold text-slate-900">{t('Vos espaces')}</h4>
+            <ul className="space-y-3 text-sm">
+              <li>
+                <a
+                  href="/airbnb/dashboard"
+                  className="flex items-center gap-2.5 transition-colors hover:text-[#c81e42]"
+                >
+                  <span
+                    aria-hidden="true"
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#c81e42] to-[#8f1230] text-white shadow-[0_6px_16px_-6px_rgba(200,30,66,0.7)]"
+                  >
+                    <Home className="h-3.5 w-3.5" />
+                  </span>
+                  {t('Espace Hôte')}
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/inspection/dashboard"
+                  className="flex items-center gap-2.5 transition-colors hover:text-[#C21F26]"
+                >
+                  <span
+                    aria-hidden="true"
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#C21F26] text-white shadow-[0_6px_16px_-6px_rgba(194,31,38,0.6)]"
+                  >
+                    <ClipboardCheck className="h-3.5 w-3.5" />
+                  </span>
+                  {t('États des Lieux')}
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/admin/dashboard"
+                  className="flex items-center gap-2.5 transition-colors hover:text-[#8a6d1f]"
+                >
+                  <span
+                    aria-hidden="true"
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#e9c47c] text-[#1a1206] shadow-[0_6px_16px_-6px_rgba(233,196,124,0.6)]"
+                  >
+                    <ShieldCheck className="h-3.5 w-3.5" />
+                  </span>
+                  {t('Console Superadmin')}
+                </a>
+              </li>
+            </ul>
+          </nav>
         </div>
 
         <div className="flex flex-col items-center justify-between gap-4 border-t border-slate-200 pt-8 md:flex-row">

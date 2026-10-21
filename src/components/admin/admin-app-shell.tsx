@@ -52,7 +52,7 @@ export function AdminAppShell({ children, adminName, adminEmail }: AdminAppShell
   return (
     <SidebarProvider>
       <AdminAppSidebar adminName={adminName} adminEmail={adminEmail} />
-      <SidebarInset className="lux lux-bg min-h-screen flex flex-col">
+      <SidebarInset className="lux lux-bg lux-admin min-h-screen flex flex-col">
         {/* ----- Header glass luxueux ----- */}
         <header className="lux-header sticky top-0 z-40 flex h-16 shrink-0 items-center gap-2 px-3 sm:gap-3 sm:px-6">
           <SidebarTrigger

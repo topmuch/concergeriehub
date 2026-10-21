@@ -4,29 +4,52 @@
    Objectif : le Guidebook, les règles de la maison et le Wi-Fi
    restent disponibles SANS RÉSEAU dans le logement.
 
-   Périmètre STRICTEMENT limité à l'expérience invitée :
-     • navigations  /app/hub/**          (l'app guest PWA)
+   Task 42-a (PWA cleaner) — extension du périmètre à l'APP
+   CLEANER (agents de ménage sur mauvaise 4G) : les liens magiques
+   /s/[token] (capture check-in/out) et /upload/[token] (photos de
+   délégation) doivent s'ouvrir même quand le réseau tombe, grâce
+   au repli cache. Les POST (envoi des captures) ne sont JAMAIS
+   interceptés — seules les navigations/GET le sont.
+
+   Périmètre : app invitée + app cleaner :
+     • navigations  /app/hub/**, /s/**, /upload/**  (PWA)
      • GET          /api/public/**       (payloads hub + guidebook)
-     • GET          /_next/static/**     (chunks de l'app)
-     • icônes PWA   /api/public/app-icon, /icon-*, favicon
+     • GET          /api/shield/cleaner/** + /api/shield/delegation/**
+                    (état de session cleaner — network-first, jamais
+                    mis en cache : fraîcheur garantie)
+     • GET          /_next/static/** + /fonts/**  (cache-first : les
+                    chunks sont hachés/immuables, les polices fixes)
+     • icônes PWA   /api/public/app-icon, /icon, /icon-*, favicon
    Tout le reste (Espace Hôte, dashboard, landing, POST…) n'est
    JAMAIS intercepté → zéro régression possible ailleurs.
    Stratégie : network-first (toujours frais en ligne) avec
-   repli cache hors-ligne → pas de contenu périmé.
+   repli cache hors-ligne sur les navigations → pas de contenu
+   périmé ; statiques = cache-first (rapide + économe en data).
    ============================================================= */
 
 // v4.119 — bump : purge immédiate des caches legacy chez les clients
 // (l'ancien SW « qr-domotik-v2 » et ses caches ne sont plus filtrés par
 // préfixe : TOUT cache inconnu est supprimé à l'activation → un client
 // ne peut plus se retrouver sur l'ancien code servi depuis un vieux cache).
-const VERSION = 'v3-guest-3';
+// Task 42-a — bump « v4-cleaner-1 » : ajout des scopes cleaner (/s/,
+// /upload/, API shield cleaner/delegation) + statiques en cache-first.
+const VERSION = 'v4-cleaner-1';
 const RUNTIME_CACHE = `ch-guest-runtime-${VERSION}`;
 const ASSET_CACHE = `ch-guest-assets-${VERSION}`;
 const OFFLINE_URL = '/offline.html';
 const RUNTIME_MAX_ENTRIES = 80;
 
-const APP_PREFIXES = ['/app/hub/', '/api/public/', '/_next/static/', '/icon-', '/favicon'];
-const ICON_PATHS = ['/api/public/app-icon', '/icon-', '/favicon'];
+const APP_PREFIXES = [
+  // App invitée (existante, intacte)
+  '/app/hub/', '/api/public/',
+  // Task 42-a — app cleaner (mauvaise 4G)
+  '/s/', '/upload/', '/api/shield/cleaner/', '/api/shield/delegation/',
+  // Statiques + icônes (communs aux deux apps)
+  '/_next/static/', '/fonts/', '/icon-', '/icon/', '/favicon',
+];
+const ICON_PATHS = ['/api/public/app-icon', '/icon-', '/icon/', '/favicon'];
+// Statiques immuables (chunks hachés, polices) → cache-first.
+const ASSET_PREFIXES = ['/_next/static/', '/fonts/'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -90,11 +113,18 @@ function isIcon(url) {
 }
 
 /** Network-first avec repli cache. Assets (icônes, favicon) :
-    cache-first car immuables par nature (URL signée par slug+size). */
+    cache-first car immuables par nature (URL signée par slug+size).
+    Task 42-a : /_next/static/ + /fonts/ passent aussi en cache-first
+    (chunks hachés = immuables, polices fixes) — l'app cleaner et la
+    PWA invitée démarrent même sans réseau une fois la 1re visite faite. */
 async function handle(request, url) {
   const cacheable = url.pathname.startsWith('/api/public/guest-app') ||
     url.pathname.startsWith('/app/hub/') ||
-    url.pathname.startsWith('/api/public/app-manifest');
+    url.pathname.startsWith('/api/public/app-manifest') ||
+    // Task 42-a — navigations cleaner mises en cache pour le repli
+    // hors-ligne (les API shield restent network-only : fraîcheur).
+    url.pathname.startsWith('/s/') ||
+    url.pathname.startsWith('/upload/');
 
   // Icônes PWA : cache-first (déterministes)
   if (isIcon(url)) {
@@ -112,8 +142,10 @@ async function handle(request, url) {
     }
   }
 
-  // Chunks Next : network-first → cache (offline)
-  if (url.pathname.startsWith('/_next/static/')) {
+  // Chunks Next + polices : cache-first (immuables) → réseau
+  if (ASSET_PREFIXES.some((p) => url.pathname.startsWith(p))) {
+    const cached = await caches.match(request);
+    if (cached) return cached;
     try {
       const res = await fetch(request);
       if (res.ok) {
@@ -122,8 +154,6 @@ async function handle(request, url) {
       }
       return res;
     } catch (_) {
-      const cached = await caches.match(request);
-      if (cached) return cached;
       return new Response('', { status: 504 });
     }
   }
