@@ -1,13 +1,16 @@
 'use client';
 
 // =============================================================
-// BOUCLIER V2 — TABLEAU DE BORD (onglet 1/8).
+// BOUCLIER V2 — TABLEAU DE BORD (onglet 1/10).
 // Design calqué sur le visuel « dashboard premium » validé par le
 // client (image de référence) : rangée de 5 cartes KPI à mini
 // donuts, grande aire d'activité 14 jours + donut de répartition
 // avec total central, 4 cartes gradient colorées à vague, barres
 // empilées hebdo + timeline des prochains événements, tableau des
 // derniers séjours. Données RÉELLES via /api/shield/stats.
+// v4.159 : rangée 6 « Aide & Marketing » — raccourcis Mode
+// d'emploi / FAQ, Badges de confiance (modal + QR /verify) et
+// carte QR d'installation PWA, tous DANS le dashboard.
 // =============================================================
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -28,15 +31,22 @@ import {
 } from 'recharts';
 import {
   AlertTriangle,
+  Award,
+  BookOpen,
   Building2,
   CalendarClock,
+  ChevronRight,
+  CircleHelp,
   FileDown,
   Loader2,
   LogIn,
   LogOut,
   Plus,
   ShieldCheck,
+  X,
 } from 'lucide-react';
+import { MarketingBadgesModal } from '@/components/airbnb/host/marketing-badges-modal';
+import { PwaInstallBanner } from '@/components/pwa/pwa-install-banner';
 import {
   CardTitle,
   fetchJson,
@@ -148,15 +158,40 @@ const GRADIENTS = {
   violet: 'bg-gradient-to-br from-[#8b5cf6] to-[#6d28d9]',
 } as const;
 
+/** Bien Bouclier minimal pour le sélecteur de badges marketing. */
+interface ShieldPropertyLite {
+  id: string;
+  propertyName: string;
+  city: string;
+}
+
 export function ShieldDashboard() {
   const [stats, setStats] = useState<StatsResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // v4.159 — Aide & Marketing DANS le dashboard : logements Bouclier
+  // (badges de confiance) + QR PWA + raccourcis Mode d'emploi / FAQ.
+  const [shieldProperties, setShieldProperties] = useState<ShieldPropertyLite[] | null>(null);
+  const [badgesTarget, setBadgesTarget] = useState<ShieldPropertyLite | null>(null);
+  const [chooserOpen, setChooserOpen] = useState(false);
 
   useEffect(() => {
     fetchJson<StatsResponse>('/api/shield/stats')
       .then(setStats)
       .catch((e: Error) => setError(e.message));
   }, []);
+
+  useEffect(() => {
+    fetchJson<{ properties: ShieldPropertyLite[] }>('/api/shield/properties')
+      .then((d) => setShieldProperties(d.properties ?? []))
+      .catch(() => setShieldProperties([]));
+  }, []);
+
+  /** Ouverture des badges : 1 bien → direct, plusieurs → sélecteur. */
+  function openBadges() {
+    const list = shieldProperties ?? [];
+    if (list.length === 1) setBadgesTarget(list[0]);
+    else if (list.length > 1) setChooserOpen(true);
+  }
 
   if (error) {
     return (
@@ -533,6 +568,142 @@ export function ShieldDashboard() {
           </div>
         )}
       </ShieldCard>
+
+      {/* ── Rangée 6 : Aide & Marketing (v4.159 — tout est désormais ici) ── */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <Link
+          href="/inspection/mode-demploi"
+          aria-label="Ouvrir le mode d'emploi"
+          className="group flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-colors hover:border-[#1e3a8a]/30 hover:bg-slate-50/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1e3a8a]"
+        >
+          <span
+            aria-hidden="true"
+            className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-[#1e3a8a]/10 text-[#1e3a8a]"
+          >
+            <BookOpen className="size-5" />
+          </span>
+          <span className="min-w-0">
+            <span className="block text-sm font-bold text-slate-900">Mode d&apos;emploi</span>
+            <span className="mt-0.5 block text-xs leading-relaxed text-slate-500">
+              Onboarding, séjours et certificats pas à pas
+            </span>
+          </span>
+          <ChevronRight
+            aria-hidden="true"
+            className="ml-auto size-4 shrink-0 text-slate-300 transition-transform group-hover:translate-x-0.5"
+          />
+        </Link>
+
+        <Link
+          href="/inspection/faq"
+          aria-label="Ouvrir la FAQ"
+          className="group flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-colors hover:border-[#1e3a8a]/30 hover:bg-slate-50/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1e3a8a]"
+        >
+          <span
+            aria-hidden="true"
+            className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-[#1e3a8a]/10 text-[#1e3a8a]"
+          >
+            <CircleHelp className="size-5" />
+          </span>
+          <span className="min-w-0">
+            <span className="block text-sm font-bold text-slate-900">FAQ</span>
+            <span className="mt-0.5 block text-xs leading-relaxed text-slate-500">
+              Réponses aux questions fréquentes du Bouclier
+            </span>
+          </span>
+          <ChevronRight
+            aria-hidden="true"
+            className="ml-auto size-4 shrink-0 text-slate-300 transition-transform group-hover:translate-x-0.5"
+          />
+        </Link>
+
+        <button
+          type="button"
+          onClick={openBadges}
+          disabled={!shieldProperties || shieldProperties.length === 0}
+          aria-label="Ouvrir les badges de confiance"
+          className="group flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-5 text-left shadow-sm transition-colors hover:border-[#C41E3A]/30 hover:bg-slate-50/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C41E3A] disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          <span
+            aria-hidden="true"
+            className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-[#C41E3A]/10 text-[#C41E3A]"
+          >
+            <Award className="size-5" />
+          </span>
+          <span className="min-w-0">
+            <span className="block text-sm font-bold text-slate-900">Badges de confiance</span>
+            <span className="mt-0.5 block text-xs leading-relaxed text-slate-500">
+              {shieldProperties && shieldProperties.length > 0
+                ? '3 visuels PNG + QR de vérification pour votre annonce'
+                : 'Onboarder un bien pour activer vos badges'}
+            </span>
+          </span>
+          <ChevronRight
+            aria-hidden="true"
+            className="ml-auto size-4 shrink-0 text-slate-300 transition-transform group-hover:translate-x-0.5"
+          />
+        </button>
+      </div>
+
+      {/* v4.159 — carte QR d'installation de l'app mobile (PWA) */}
+      <PwaInstallBanner variant="qr-card" />
+
+      {/* v4.159 — sélecteur de bien (badges) quand plusieurs logements */}
+      {chooserOpen && shieldProperties && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Choisir le logement pour les badges"
+          onClick={() => setChooserOpen(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-xl bg-white p-5 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="text-sm font-bold text-slate-900">
+                Badges de confiance — choisir le logement
+              </h3>
+              <button
+                type="button"
+                onClick={() => setChooserOpen(false)}
+                aria-label="Fermer"
+                className="flex size-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100"
+              >
+                <X className="size-4" aria-hidden="true" />
+              </button>
+            </div>
+            <ul className="shield-scrollbar mt-4 max-h-72 space-y-2 overflow-y-auto">
+              {shieldProperties.map((p) => (
+                <li key={p.id}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setChooserOpen(false);
+                      setBadgesTarget(p);
+                    }}
+                    className="w-full rounded-lg border border-slate-200 px-4 py-3 text-left transition-colors hover:border-[#1e3a8a]/40 hover:bg-slate-50"
+                  >
+                    <span className="block text-sm font-semibold text-slate-900">
+                      {p.propertyName}
+                    </span>
+                    <span className="mt-0.5 block text-xs text-slate-500">{p.city}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
+
+      {/* v4.159 — modal badges marketing (PNG HD + code HTML, QR /verify) */}
+      <MarketingBadgesModal
+        propertyId={badgesTarget?.id ?? ''}
+        propertyName={badgesTarget?.propertyName ?? ''}
+        open={badgesTarget !== null}
+        onClose={() => setBadgesTarget(null)}
+      />
     </div>
   );
 }

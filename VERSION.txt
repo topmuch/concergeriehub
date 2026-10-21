@@ -1,1 +1,1 @@
-v4.158 (2026-10-21) — onglets Mode d emploi + FAQ dans le dashboard Bouclier (/inspection/mode-demploi, /inspection/faq, section Aide du shield-shell, composants Task 42-c reutilises)
+v4.159 (2026-10-21) — Badges de confiance + QR PWA + raccourcis Aide DANS le dashboard Bouclier (/inspection/dashboard rangée 6), fallback /verify pour les IDs ShieldProperty

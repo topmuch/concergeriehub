@@ -58,7 +58,7 @@ async function loadVerification(propertyId: string): Promise<VerificationData> {
       where: { id: propertyId },
       select: { name: true, propertyType: true, isActive: true, ownerId: true, createdAt: true },
     });
-    if (!property || !property.isActive) return { found: false };
+    if (property && property.isActive) {
 
     // 2) Enrichissement Bouclier via l'abonnement du propriétaire
     //    (InspectionSubscription.userId @unique → 1 fiche ShieldProperty).
@@ -114,6 +114,58 @@ async function loadVerification(propertyId: string): Promise<VerificationData> {
       createdAt: property.createdAt.toISOString(),
       shield,
     };
+    }
+
+    // 3) REPLI BOUCLIER (v4.159) — les badges marketing du dashboard
+    //    Bouclier encodent l'ID ShieldProperty (biens onboardés sans
+    //    logement hôte associé). Résolution publique directe : nom,
+    //    ville, référence d'onboarding + abonnement relié + 3 derniers
+    //    contrôles. Aucune donnée sensible (adresse, propriétaire).
+    const shieldOnly = await db.shieldProperty.findUnique({
+      where: { id: propertyId },
+      select: {
+        id: true,
+        propertyName: true,
+        city: true,
+        onboardingRef: true,
+        onboardingStatus: true,
+        onboardedAt: true,
+        subscription: { select: { status: true, endDate: true } },
+      },
+    });
+
+    if (shieldOnly) {
+      const lastSessions = await db.shieldSession.findMany({
+        where: { propertyId: shieldOnly.id },
+        orderBy: { completedAt: 'desc' },
+        take: 3,
+        select: { type: true, status: true, completedAt: true },
+      });
+
+      return {
+        found: true,
+        propertyName: shieldOnly.propertyName,
+        propertyType: 'BOUCLIER',
+        createdAt: shieldOnly.onboardedAt.toISOString(),
+        shield: {
+          active:
+            shieldOnly.subscription.status === 'active' &&
+            shieldOnly.subscription.endDate.getTime() > Date.now(),
+          subscriptionStatus: shieldOnly.subscription.status,
+          onboardingRef: shieldOnly.onboardingRef,
+          onboardingStatus: shieldOnly.onboardingStatus,
+          onboardedAt: shieldOnly.onboardedAt.toISOString(),
+          city: shieldOnly.city,
+          lastSessions: lastSessions.map((session) => ({
+            type: session.type,
+            status: session.status,
+            completedAt: session.completedAt.toISOString(),
+          })),
+        },
+      };
+    }
+
+    return { found: false };
   } catch (error) {
     console.error('[verify] erreur de lecture :', error);
     return { found: false };
