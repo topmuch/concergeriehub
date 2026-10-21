@@ -1,1 +1,1 @@
-v4.159 (2026-10-21) — Badges de confiance + QR PWA + raccourcis Aide DANS le dashboard Bouclier (/inspection/dashboard rangée 6), fallback /verify pour les IDs ShieldProperty
+v4.160 (2026-10-21) — onglets « Badges de confiance » (/inspection/badges) + « Application mobile » (/inspection/application) sous FAQ dans la sidebar du dashboard Bouclier

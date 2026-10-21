@@ -5,8 +5,9 @@
 // Sidebar gauche bleu profond bg-[#1e3a8a], texte blanc, icônes
 // Lucide, menu à 8 onglets (Tableau de bord, Ménage à faire,
 // Check-ins, Check-outs, Mes biens, Documents, Bouclier,
-// Abonnement) + section Aide à 2 onglets (Mode d'emploi, FAQ —
-// v4.158). Contenu : fond gris très clair bg-slate-50.
+// Abonnement) + section Aide à 4 onglets (Mode d'emploi, FAQ —
+// v4.158 ; Badges de confiance, Application mobile — v4.160).
+// Contenu : fond gris très clair bg-slate-50.
 // Mobile-first : topbar + tiroir latéral animé (framer-motion).
 // =============================================================
 import { useState, type ReactNode } from 'react';
@@ -14,6 +15,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
+  Award,
   BookOpen,
   Building2,
   CircleHelp,
@@ -24,6 +26,7 @@ import {
   LogOut,
   Menu,
   ShieldCheck,
+  Smartphone,
   SprayCan,
   X,
 } from 'lucide-react';
@@ -49,9 +52,14 @@ const MENU: ShieldMenuItem[] = [
 // v4.158 — section Aide du dashboard Bouclier : même contenu que le
 // groupe Aide du dashboard hôte (Task 42-c). Pages sous la garde du
 // layout (shield) — session + entitlement EDL obligatoires.
+// v4.160 — 2 onglets ajoutés SOUS « FAQ » à la demande utilisateur :
+// Badges de confiance (/inspection/badges) + Application mobile
+// (/inspection/application, QR PWA).
 const HELP_MENU: ShieldMenuItem[] = [
   { href: '/inspection/mode-demploi', label: "Mode d'emploi", icon: BookOpen },
   { href: '/inspection/faq', label: 'FAQ', icon: CircleHelp },
+  { href: '/inspection/badges', label: 'Badges de confiance', icon: Award },
+  { href: '/inspection/application', label: 'Application mobile', icon: Smartphone },
 ];
 
 export function ShieldShell({
