@@ -5128,3 +5128,21 @@ Stage Summary:
 - v4.157 : (1) 2 nouveaux onglets dashboard hote « Mode d emploi » (6 etapes + notifications Bouclier) et « FAQ » (10 Q/R) ; (2) PWA : manifest webmanifest marque, icones dynamiques 192/512, SW v4-cleaner (offline /s/ et /upload/), carte QR sur la Vue d ensemble hote, bouton « Installer l app » dans l app cleaner ; (3) Badges Marketing : 3 badges (Securite bleu / Propriete vert / Technologie rouge) avec QR de verification, export PNG HD (html2canvas scale 3, texte blanc corrige via .lux-keep-dark) et copie du code HTML autonome ; (4) page publique /verify/[propertyId] (3 etats, aucune donnee sensible).
 - LECON : le remap globals.css v6.1 « text-white -> #101012 » s applique a TOUT nouveau composant dans le scope .lux — utiliser .lux-keep-dark sur les zones devant rester blanches (badges, captures).
 - LECON : apres resync tar, penser a bunx prisma generate + prisma db push (client/schema locaux perimes).
+
+---
+Task ID: PUSH-SRC-v4157
+Agent: Z.ai Code (principal)
+Task: Pousse le code — committer et pousser le code source complet v4.157 sur GitHub (origin/main), sur demande utilisateur.
+
+Work Log:
+- DIAGNOSTIC PREALABLE : depot local en detached HEAD sur 005fbcf (= tag v.8, v4.128) — TOUT le travail v4.129 -> v4.157 n'avait jamais ete commite (le pipeline .gh-sync.mjs ne pousse que Dockerfile + app-update.tar.xz via API Contents, jamais de git push). Remote main = 3ea99ea (chain de ~29 commits API de tar). Depot shallow, boundary = HEAD.
+- SECURITE verifiee AVANT commit : .env (145 o, NEXTAUTH_SECRET local) NON tracke et ignore (.gitignore .env*) ; aucun db/*.db tracke ; seuls .env.example (template) et fichiers src [token] (routes, sans secrets) — grep sur les 73 fichiers stages : 0 secret.
+- Commit : branche main creee sur le detached HEAD (git checkout -b main), git add -A (73 fichiers : 44 A, 1 D = ancien src/app/inspection/dashboard/page.tsx remplace par le route group (shield), 28 M), commit 7adc39c puis amend b78b2db.
+- ALIGNEMENT ARTEFACTS DE DEPLOIEMENT : git fetch --depth=1 origin main -> diff vs notre commit : Dockerfile IDENTIQUE, VERSION.txt absente du remote (elle vit dans le tar — notre commit l'ajoute au depot, amelioration), app-update.tar.xz DIFFERENT (le tar local du 18:19 avait ete reconstruit APRES le push API, il embarque le worklog mis a jour). Remede conservateur : git checkout FETCH_HEAD -- app-update.tar.xz puis amend -> tar + Dockerfile byte-identiques a ceux qui ont construit la production v4.157 actuelle. Un eventuel rebuild Coolify declenche par le push reproduit donc EXACTEMENT l'image en production (aucun risque de regression, URL ADD cb=v4.157 inchangee).
+- PUSH : git push --force origin main (justifie : l'historique intermediaire GitHub n'etait que des remplacements de blob tar sans valeur, tout son contenu utile est preserve) -> 3ea99ea...b78b2db main -> main (forced update). VERIFIE : git ls-remote origin main = b78b2dba = HEAD local.
+
+Stage Summary:
+- GitHub main = b78b2db : snapshot source complet v4.157 (dashboard Bouclier en route group inspection/(shield), app cleaner PWA, Badges Marketing, onglets Mode d'emploi + FAQ, page publique /verify, delegation cleaner) + tar v4.157 et Dockerfile byte-identiques au deploy + VERSION.txt versionnee au racine du repo pour la premiere fois.
+- Le repo GitHub reflete enfin l'etat reel de production roomscan.pro (v4.157) — la cause racine de la regression /inspection/dashboard (Coolify rebuild sur un GitHub perime) est structurellement corrigee.
+- Hygiene : aucun secret pousse (.env et db ignores et verifies hors du commit) ; tags v.1 -> v.8 intacts sur le remote.
+- NOTE : le push peut declencher un rebuild Coolify — sans objet (meme Dockerfile, meme tar, meme image). Aucune action requise.
