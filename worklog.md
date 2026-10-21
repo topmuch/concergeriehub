@@ -5146,3 +5146,24 @@ Stage Summary:
 - Le repo GitHub reflete enfin l'etat reel de production roomscan.pro (v4.157) — la cause racine de la regression /inspection/dashboard (Coolify rebuild sur un GitHub perime) est structurellement corrigee.
 - Hygiene : aucun secret pousse (.env et db ignores et verifies hors du commit) ; tags v.1 -> v.8 intacts sur le remote.
 - NOTE : le push peut declencher un rebuild Coolify — sans objet (meme Dockerfile, meme tar, meme image). Aucune action requise.
+
+---
+Task ID: V4158-SHIELD-AIDE
+Agent: Z.ai Code (principal)
+Task: Ajouter les onglets Mode d'emploi + FAQ dans le dashboard Bouclier (/inspection/dashboard) a la demande utilisateur, puis deployer en v4.158.
+
+Work Log:
+- CONTEXTE : utilisateur (couverge@gmail.com, E2E prod fait avec ses identifiants via agent-browser) voulait les onglets Aide dans le dashboard Bouclier, pas seulement la sidebar hote.
+- CODE : src/components/inspection/shield/shield-shell.tsx — type ShieldMenuItem, HELP_MENU (2 items : mode-demploi BookOpen, faq CircleHelp), helper renderItem extrait (meme markup, desktop sidebar + tiroir mobile via le meme `nav`), section Aide = separateur border-white/10 + libelle AIDE text-blue-200 + HELP_MENU.map(renderItem). Header commente a jour (10 onglets).
+- NOUVELLES PAGES : src/app/inspection/(shield)/mode-demploi/page.tsx + faq/page.tsx — dynamic force-dynamic (FIX-CSP-PROD), metadata dediees, reutilisent ModeDEmploiContent/FaqContent (composants Task 42-c 100% statiques, aucune dependance au contexte hote). PIEGE RENDU : ces composants ont des marges negatives -m-4 sm:-m-6 concues pour neutraliser le padding p-4 sm:p-6 du shell hote — le shell Bouclier n'a AUCUN padding -> chaque nouvelle page enveloppe le composant dans <div className="p-4 sm:p-6"> pour un rendu flush identique (verifie par screenshot).
+- E2E LOCAL : compte de test e2e-shield@roomscan.test + InspectionSubscription active crees en db locale, login via /login/edl, sidebar 10 onglets, mode-demploi 6 etapes OK, FAQ accordions OK, tiroir mobile iPhone 14 OK (screenshot). TOUT SUPPRIME ensuite (0 user, 0 sub restants). NOTE INFRA : le .env local avait perdu NEXTAUTH_SECRET (resync) -> JWEDecryptionFailed au login -> secret + NEXTAUTH_URL regeneres, dev server restart.
+- FIX CRITIQUE AVANT DEPLOI : diff des entrees tar v4.157 vs nouveau tar -> src/app/upload/[token]/page.tsx (delegation onboarding Task 39, page PUBLIQUE) present dans le tar v4.157 mais ABSENT du disque et de git : le pattern .gitignore 'upload/' (non ancre) matchait src/app/upload/ — le fichier n'a JAMAIS ete tracke et a disparu du disque lors d'un resync. Prod servait 200 via le tar ; deployer le nouveau tar l'aurait casse (404). Restaure depuis git show b78b2db:app-update.tar.xz, .gitignore ancre '/upload/', audit complet tar-files-vs-git-ls-files : plus AUCUN fichier shipe non tracke.
+- QUALITE : bun run lint 0 erreur (note BABEL hub-content preexistante), bunx tsc --noEmit 0 erreur ; routes locales 307 -> /login/edl sans session (garde heritee OK).
+- DEPLOIEMENT v4.158 : VERSION.txt bump, Dockerfile cb=v4.158, tar reconstruit (1310 entrees, verifications : VERSION + sw.js + 2 nouvelles pages + upload/[token] dedans) -> git commit bdc90d7 -> git push origin main FAST-FORWARD (l'historique source est maintenant propre depuis le sync b78b2db) -> Coolify rebuild ~9 min -> /api/health version v4.158 CONFIRMEE.
+- E2E PROD (agent-browser, compte couverge) : /upload/test-token -> 200 (fichier restaure) ; login OK ; /inspection/dashboard sidebar = 10 onglets avec section Aide ; clic Mode d'emploi -> /inspection/mode-demploi rend les 6 etapes (screenshot) ; /inspection/faq rend Questions frequentes + accordions ; sans session -> /login/edl (garde OK) ; 0 erreur console.
+
+Stage Summary:
+- v4.158 en production : le dashboard Bouclier (/inspection/dashboard) possede une section Aide a 2 onglets (Mode d'emploi + FAQ) dans sa sidebar, meme contenu que le groupe Aide hote, garde session+entitlement identique au reste du Bouclier.
+- Lecon 1 : patterns .gitignore non ancres (upload/) = pertes silencieuses de fichiers shippes — toujours audit tar-vs-git avant deploy (une commande comm).
+- Lecon 2 : composants a marges negatives (-m-4) : documenter le padding parent requis ; les nouvelles pages shield le fournissent.
+- Lecon 3 : le .env local sandbox perd NEXTAUTH_SECRET au resync -> JWEDecryptionFailed au login local ; regenerer + restart dev server.
