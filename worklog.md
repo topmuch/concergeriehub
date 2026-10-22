@@ -5228,3 +5228,31 @@ Stage Summary:
 - Cause racine de l'echec v4.160 corrigee structurellement : scripts/build.sh mesure MemAvailable de l'hote a chaque build — si < 2400 Mo, tsc skipe (avertissement fort) + heap webpack 1024 Mo ; sinon profil complet. Un build qui passe sans check vaut mieux qu'un build mort (la garantie types reste assuree pre-push).
 - Lecon : le cache-buster Dockerfile doit etre STRICTEMENT croissant — reutiliser cb d'un build mort reutiliserait la couche ADD cachee (vieux tar = vieux build.sh = re-OOM).
 - Lecon : tsc est la brique la plus fragile du build (pic ~1,9 Go) — penser OOM d'abord quand un build meurt a ~2 min sur un hote multi-tenants.
+
+---
+Task ID: V4162-EDL-EMAILS
+Agent: Z.ai Code (principal)
+Task: Utilisateur — « ni l'hôte ni l'invité n'a reçu l'email de confirmation avec le PDF d'état des lieux ; les notifications par mail ne marchent pas ; regarder toutes les notifications par mail du dashboard état des lieux ». Piste fournie par l'utilisateur : « Invalid login: 535 Incorrect authentication data ».
+
+Work Log:
+- CAUSE RACINE CONFIRMÉE (535) : le serveur SMTP REFUSE les identifiants (auth invalide) — CHAQUE queueEmail → deliverEmail → SMTP → 535 → FAILED. Le health check « smtp: up » ne teste QUE la connexion TCP (health-check.ts), jamais l'AUTH → statut trompeur. Le health SMTP reste TCP-only (rapide) ; le vrai test = bouton « Envoyer un email de test » de la Console /admin/emails.
+- AUDIT COMPLET des emails du « dashboard état des lieux » (2 modules) :
+  • Module EDL standalone (inspection-emails.ts v4.103) : (1) création → invité invitation + hôte confirmation [OK] ; (2) signature → hôte SEULEMENT, lien PDF SANS pièce jointe, invité OUBLIÉ [GAP].
+  • Module Bouclier (shield-emails.ts v5.3, sessions check-in/out) : fin de session → hôte + invité, PDF 2 pages EN PIÈCE JOINTE [complet, aucun changement].
+  • Achat/activation module (edl-fulfillment.ts) : email de bienvenue [OK].
+- CORRECTIF CODE v4.162 :
+  • NOUVEAU src/lib/inspection-pdf-builder.ts — buildInspectionPdfFromDb(publicToken) → { ok, buffer, type } | { ok, reason 'not_found'|'render_error' } ; mapping UNIQUE (avant dupliqué dans la route) → le PDF joint aux emails est strictement identique au téléchargement public ; + inspectionPdfFilename() canonique.
+  • Route /api/inspection/pdf/[token] refactorée sur le builder (rate limit + 404/500 conservés).
+  • inspection-emails.ts : sendInspectionCompletedEmail → sendInspectionCompletedEmails — à la signature : PDF généré UNE fois, attaché aux DEUX emails (hôte : « État des lieux signé » ; NOUVEAU invité : « Votre copie de l'état des lieux signé ») ; garde MAX 7 Mo (photos dataURL) → au-delà ou échec de rendu, emails partent QUAND MÊME sans PJ (liens conservés) ; meta pdfAttached.
+  • Submit route mis à jour (nouveau nom de fonction, données inchangées).
+- E2E LOCAL (scripts/tmp-e2e-v4162.ts, créé puis SUPPRIMÉ — 0 reste) : user + subscription + inspection COMPLETED seedés → sendInspectionCompletedEmails → outbox = 2 emails (inspection_host_completed + inspection_guest_completed), tous deux PIECE JOINTE PDF valide (%PDF-, 47 053 o) ; route PDF refactorée = HTTP 200 %PDF- 47 151 o ; cleanup 0 reste. TSC 0 erreur, lint 0 erreur.
+- DÉPLOIEMENT v4.162 : VERSION.txt bump, Dockerfile cb=v4.162, tar 1313 entrées (vérifié : builder + inspection-emails + submit + route PDF dedans), commit 7d0cc94, push 0dc2444..7d0cc94, POST /deploy force (Coolify API, deployment sokvxq7u43xklc78xnzcawv1) → queued + in_progress → finished 13:06:46 UTC (~11 min total). /api/health = v4.162 ; route PDF token inconnu → 404 propre.
+- E2E PROD (agent-browser, couverge@gmail.com) : login OK ; dashboard EDL charge (headings, stats) ; Documents/Check-ins = PDFs Bouclier via /api/shield/pdf/session/<id> ; pas de liste d'EDL standalone sur ce compte (l'utilisateur a fait une session Bouclier → emails shield_certificate, déjà complets hôte+invité+PJ, tués par le 535). 0 erreur console. Navigateur fermé.
+- RÉPARATION SMTP (action utilisateur) : Console Superadmin https://roomscan.pro/admin/emails → onglet Configuration → provider SMTP + host/port/user/pass corrects → Enregistrer (config DB > env Coolify, cache 30 s invalidé) → bouton « Envoyer un email de test ». Une fois réparé : les emails FAILED des 24 dernières heures avec < 3 tentatives repartent SEULS (tick Tour de Contrôle, retryFailedOutboxEmails) ; les autres via bouton « Réessayer » de la Console. Aucun redeploy nécessaire.
+
+Stage Summary:
+- v4.162 en production : à la SIGNATURE d'un état des lieux (module EDL), l'HÔTE ET L'INVITÉ reçoivent chacun un email de confirmation avec le PDF signé EN PIÈCE JOINTE (identique au PDF public, builder partagé) — l'invité n'était jamais notifié avant v4.162.
+- Audit des notifications du dashboard état des lieux : EDL standalone (création : 2 emails ✓ ; signature : hôte + invité + PDF joint ← corrigé) ; Bouclier sessions (hôte + invité + PDF joint ✓ déjà complet) ; bienvenue activation module (✓).
+- AUCUNE donnée n'a pu partir : la cause unique est le 535 (identifiants SMTP refusés) — la réparation se fait dans /admin/emails → Configuration (sans déploiement), puis la file se vide seule.
+- Leçon : le health SMTP TCP-only masque une auth cassée — le test d'envoi réel de la Console est la seule vérification de bout en bout.
+- Leçon : le token Coolify fourni n'a NI read:sensitive (logs) NI l'endpoint /env sur cette version → les secrets/identifiants SMTP restent dans la Console Superadmin, seul l'utilisateur peut les corriger.
