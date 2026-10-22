@@ -5442,3 +5442,26 @@ Stage Summary:
 - Nouvelles routes API : DELETE /api/shield/sessions/[id], GET /api/shield/mode-demploi/pdf
 - Prisma inchangé (cascade onDelete déjà en place) ; VERSION.txt = v5.0
 - Prod en cours de build (deployment xg6yutakjosvybuij0wlloez) — vérifier https://roomscan.pro/api/health version v5.0
+
+---
+Task ID: 7
+Agent: Z.ai Code (main)
+Task: Débogage du déploiement v5.0→v5.8 (9 tentatives, cause racine triple) + mise en production
+
+Work Log:
+- 7 déploiements échoués (xg6yutak, srolurtuiowrlala, acvdvn586, lb0pzbe2, lrtij380, rez7b6eu, tlcc9wl0, z1kdyrzk, iekwpdrk, dvpf8q8, tvobnnmh) — API Coolify n'expose AUCUN log de build (logs:null)
+- Télémétrie inventée : scripts/step.sh (wrapper par couche Dockerfile : bun-install / prisma-generate / db-push / next-build) + scripts/report-build-failure.mjs (POST /api/errors de l'ancien conteneur — encore UP pendant le build — + canal webhook.site lu depuis la sandbox). Chaîne validée bout en bout (test manuel → /admin/logs)
+- BUG 1 (v5.4/v5.5) : step.sh faisait `sh -c "$*"` avec `$*` = « -- bun install » → « sh: bad option '-- bun install' » exit 2. FIX : exécution directe "$@" sans sh -c
+- BUG 2 (v5.0→v5.7, LA vraie cause racine) : 3 erreurs TypeScript dans src/lib/mode-demploi-pdf.ts — (a) .fill('#ffffff', 0.14) : le 2e paramètre de fill() est RuleValue (« even-odd »/« nonzero », règle de winding PDF) PAS une opacité → couleur pré-mélangée #3e559a ; (b/c) options maxLines/ellipsis inexistantes dans TextOptions @types/pdfkit → troncature amont clamp()
+- Leurre pendant 2 h : le tsc LOCAL « passait » — en réalité il était OOM-killed (exit 137) et le pipe avalait le code de sortie ($? = code de head). tsc réel : 0 erreur avec dev server stoppé (3 Go dispo) ; killé avec dev server actif (1,5 Go)
+- Leurre n°2 : heap webpack 1024 FORCÉE (v5.2) → abort V8 exit 134 (le code v5.x dépasse le live set de 1024) — télémétrie : « [build] Mémoire disponible (hôte) : 13 811 Mo » → l'hôte était large, PAS d'OOM hôte
+- v5.7 : barème adaptatif mesuré (≥6000 Mo → tsc + heap 1792 ; 3000-5999 → heap 1536 ; <3000 → 1024)
+- BISECTION décisive : tar v4.167 connu-bon (commit a6e9139, cb=v5.4-goodtest) → build PASSE (12,5 min) → environnement sain, code fautif
+- v5.8 (74bfe75) : build COMPLET RÉUSSI (tsc + next build, 12 min) → déployée et vérifiée : health v5.8, manifest « Roomscan Inventaire », accueil 200, login/edl 200, PDF mode d'emploi 401 sans session (garde OK), sw.js 200, logo brand 200, 0 erreur console
+- Rollback disposition : tag git v5.8 ; le tar v4.167 reste dans git (commit a6e9139) comme point de restauration
+- Nettoyage : webhook.site token supprimé ; dev local relancé
+
+Stage Summary:
+- v5.8 EN PRODUCTION : renommage Inventaire, design Luxe Bleuté clair/sombre, logo, suppression+partage check-ins/outs, PDF mode d'emploi, PWA réelle
+- LEÇONS CRITIQUES : (1) tsc local peut être OOM-killed silencieusement via pipe — toujours rediriger vers fichier et lire $? SANS pipe ; (2) la télémétrie de build (step.sh + /api/errors + webhook.site) rend les builds Coolify diagnostiquables sans SSH — LA CONSERVER ; (3) heap webpack ≥1536 requise pour le code v5.x ; (4) un push déclenche le webhook Coolify → ne jamais déployer en rafale (builds concurrents, concurrent_builds=2)
+- Prod : https://roomscan.pro en v5.8, tag git v5.8 poussé
