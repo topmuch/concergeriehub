@@ -6182,12 +6182,20 @@ function GuestView({
     {
       // v4.80 « ÉTAT DES LIEUX DE DÉPART » — minibar (consommations
       // déclarées par article) + 5 pièces + inventaire rendu + signature :
-      // PDF « sortie » envoyé à l'invité ET à l'hôte. Visible le jour du
-      // départ (et la veille au soir via isCheckoutDay/moment), disparaît
-      // une fois signé — clé par séjour + sync serveur.
+      // PDF « sortie » envoyé à l'invité ET à l'hôte. Disparaît une fois
+      // signé — clé par séjour + sync serveur.
+      // v4.166 « COHÉRENCE CHECK-IN / CHECK-OUT » (demande client : « le
+      // lien du checkin est généré et activé mais si la personne veut
+      // faire le checkout le lien n'apparaît pas ») — la carte était
+      // limitée à (moment === 'departure' || isCheckoutDay) : invisible
+      // pendant tout le séjour, elle ne pouvait PAS être remplie en
+      // avance. Elle est désormais visible DÈS L'ARRIVÉE, au même titre
+      // que l'EDL d'entrée (même règle !checkoutDone && !stayOver) ;
+      // la remontée en tête de section + la mise en évidence le jour J
+      // restent gérées par sec2Order (isCheckoutDay / eveningBefore).
       key: 'checkoutinspection',
       node:
-        (moment === 'departure' || isCheckoutDay) && !checkoutDone && !stayOver ? (
+        !checkoutDone && !stayOver ? (
           <div id="hub-card-checkout-inspection" key="checkoutinspection" className="flex h-full flex-col">
             <CheckOutInspectionCard
               slug={slug}
