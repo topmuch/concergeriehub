@@ -1,1 +1,1 @@
-v4.160 (2026-10-21) — onglets « Badges de confiance » (/inspection/badges) + « Application mobile » (/inspection/application) sous FAQ dans la sidebar du dashboard Bouclier
+v4.161 (2026-10-22) — correctif déploiement : build adaptatif (mesure RAM hôte, tsc skippé + heap webpack 1024 Mo si RAM basse) ; contenu fonctionnel v4.160 (onglets « Badges de confiance » + « Application mobile » sous FAQ dans la sidebar du dashboard Bouclier)

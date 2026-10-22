@@ -12,12 +12,15 @@ import { type ReactNode } from 'react';
 export function ShieldCard({
   children,
   className = '',
+  role,
 }: {
   children: ReactNode;
   className?: string;
+  role?: string;
 }) {
   return (
     <div
+      role={role}
       className={`rounded-xl border border-slate-200 bg-white shadow-sm ${className}`}
     >
       {children}
