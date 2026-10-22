@@ -4,7 +4,7 @@ import { db } from '@/lib/db';
 import { rateLimit } from '@/lib/rate-limit';
 import { clientIp } from '@/lib/audit';
 import { captureError } from '@/lib/error-monitor';
-import { sendInspectionCompletedEmail } from '@/lib/inspection-emails';
+import { sendInspectionCompletedEmails } from '@/lib/inspection-emails';
 import { isElectronicItem } from '@/lib/inspection-template';
 import { computeInspectionSha256 } from '@/lib/inspection-hash';
 
@@ -330,10 +330,11 @@ export async function POST(
       // ignorer — l'empreinte est un plus, jamais un bloqueur.
     }
 
-    // v4.103 — Email de confirmation HÔTE : le document est signé
-    // (lien PDF direct). Fire-and-forget : la file EmailOutbox
-    // journalise puis tente le SMTP — jamais bloquant, jamais levant.
-    void sendInspectionCompletedEmail(
+    // v4.103 → v4.162 — Emails de confirmation : HÔTE (document signé,
+    // PDF EN PIÈCE JOINTE) + INVITÉ (copie signée, PDF joint). Fire-
+    // and-forget : la file EmailOutbox journalise puis tente le SMTP —
+    // jamais bloquant, jamais levant.
+    void sendInspectionCompletedEmails(
       {
         propertyName: inspection.propertyName,
         propertyAddress: inspection.propertyAddress,

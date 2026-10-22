@@ -1,14 +1,21 @@
 // =============================================================
-// MODULE STANDALONE « ÉTAT DES LIEUX » — EMAILS (v4.103)
+// MODULE STANDALONE « ÉTAT DES LIEUX » — EMAILS (v4.103 → v4.162)
 //
-// Trois emails transactionnels du module 299 €/an, envoyés via la
+// Quatre emails transactionnels du module 299 €/an, envoyés via la
 // file EmailOutbox (queueEmail — SMTP, fire-and-forget, retry auto) :
 //   1. sendInspectionCreatedEmails() — à la CRÉATION :
 //        • INVITÉ (si son email est connu) : invitation à compléter
 //          l'état des lieux en ligne (lien public /i/<token>) ;
 //        • HÔTE : confirmation de création + rappel du lien de partage.
-//   2. sendInspectionCompletedEmail() — à la SIGNATURE (submit) :
-//        • HÔTE : document signé, lien PDF direct + lien dashboard.
+//   2. sendInspectionCompletedEmails() — à la SIGNATURE (submit) :
+//        • HÔTE : document signé, PDF EN PIÈCE JOINTE (v4.162) + lien ;
+//        • INVITÉ (v4.162, si son email est connu) : copie du document
+//          signé, PDF EN PIÈCE JOINTE + lien.
+//
+// v4.162 — Le PDF signé est généré par le builder partagé
+// (inspection-pdf-builder.ts) : strictement identique au téléchargement
+// public. Garde-fous : échec de rendu ou PDF > 7 Mo → les emails partent
+// QUAND MÊME, sans pièce jointe (les liens directs restent).
 //
 // Style strict du produit : sobre, juridique, zéro émoji, palette
 // RoomScan (#101b36 / #f7f6f3) — même famille que le rapport Coach.
@@ -20,6 +27,15 @@ import { db } from '@/lib/db';
 import { queueEmail } from '@/lib/email';
 import { inspectionShareUrl } from '@/lib/inspection-template';
 import { siteUrl } from '@/lib/site';
+import {
+  buildInspectionPdfFromDb,
+  inspectionPdfFilename,
+} from '@/lib/inspection-pdf-builder';
+
+// Garde anti-rejet SMTP : au-delà de 7 Mo, pièce jointe omise
+// (la plupart des serveurs refusent entre 10 et 25 Mo ; les photos
+// dataURL d'un EDL photo-riches peuvent gonfler vite).
+const MAX_ATTACHMENT_BYTES = 7 * 1024 * 1024;
 
 // ---------- Helpers ----------
 
@@ -236,17 +252,19 @@ export async function sendInspectionCreatedEmails(
 }
 
 // -------------------------------------------------------------
-// 2. SIGNATURE — email hôte (document complété)
+// 2. SIGNATURE — emails hôte + invité (document complété)
 // -------------------------------------------------------------
 
 /**
- * Hôte : l'invité a signé — lien PDF direct + lien dashboard.
+ * Hôte : l'invité a signé — PDF EN PIÈCE JOINTE (v4.162) + lien PDF
+ * direct + lien dashboard.
  * `hostEmail` : email du compte hôte propriétaire de l'abonnement.
  */
 async function sendHostCompletedEmail(
   inspection: InspectionEmailData,
   hostEmail: string,
   signedAt: Date,
+  attachment: { filename: string; mime: string; data: Buffer } | null,
 ): Promise<void> {
   const pdfUrl = `${siteUrl}/api/inspection/pdf/${inspection.publicToken}`;
   const subject = `État des lieux signé — ${inspection.propertyName}`;
@@ -262,7 +280,9 @@ async function sendHostCompletedEmail(
           Télécharger le PDF signé →
         </a>
         <p style="margin:14px 0 0;font-size:12px;color:#8a94ad">
-          Le document est consultable en ligne à vie et vérifiable par QR code.
+          ${attachment
+            ? 'Le document signé est joint à cet email (PDF) — consultable en ligne à vie et vérifiable par QR code.'
+            : 'Le document est consultable en ligne à vie et vérifiable par QR code.'}
         </p>
       </div>`,
     footerHtml: `
@@ -280,21 +300,80 @@ async function sendHostCompletedEmail(
       ``,
       `${inspection.guestName} a signé l'état des lieux ${typeLabel(inspection.type)} le ${frDateTime(signedAt)}.`,
       ``,
+      attachment ? `Le PDF signé est joint à cet email.` : ``,
       `PDF signé : ${pdfUrl}`,
       `Tableau de bord : ${siteUrl}/inspection/dashboard`,
-    ].join('\n'),
+    ].filter(Boolean).join('\n'),
     template: 'inspection_host_completed',
     referenceType: 'inspection',
     referenceId: inspection.publicToken,
-    meta: { module: 'inspection', kind: 'host_completed', type: inspection.type },
+    attachment,
+    meta: { module: 'inspection', kind: 'host_completed', type: inspection.type, pdfAttached: Boolean(attachment) },
   });
 }
 
 /**
- * Point d'entrée signature — jamais bloquant, jamais levant.
- * Remonte l'email du hôte via l'abonnement au module.
+ * v4.162 — Invité : copie du document signé — PDF EN PIÈCE JOINTE +
+ * lien direct. Envoyé uniquement si l'email de l'invité est connu.
  */
-export async function sendInspectionCompletedEmail(
+async function sendGuestCompletedEmail(
+  inspection: InspectionEmailData,
+  guestEmail: string,
+  signedAt: Date,
+  attachment: { filename: string; mime: string; data: Buffer } | null,
+): Promise<void> {
+  const pdfUrl = `${siteUrl}/api/inspection/pdf/${inspection.publicToken}`;
+  const subject = `Votre copie de l'état des lieux signé — ${inspection.propertyName}`;
+  const html = emailShell({
+    eyebrow: 'RoomScan · États des Lieux',
+    title: 'Votre copie signée',
+    intro: `Vous venez de signer l'état des lieux ${typeLabel(inspection.type)} du logement <strong>${escapeHtml(inspection.propertyName)}</strong> — voici votre copie du document, datée du ${frDateTime(signedAt)}.`,
+    bodyHtml: `
+      ${recapBox(inspection)}
+      <div style="text-align:center;margin-top:24px">
+        <a href="${pdfUrl}"
+           style="display:inline-block;padding:12px 26px;border-radius:9999px;background:#101b36;color:#ffffff;font-size:13px;font-weight:600;text-decoration:none">
+          Ouvrir mon document signé →
+        </a>
+        <p style="margin:14px 0 0;font-size:12px;color:#8a94ad">
+          ${attachment
+            ? 'Le document signé est joint à cet email (PDF). Conservez-le : il a valeur juridique et protège votre dépôt de garantie.'
+            : 'Conservez ce document : il a valeur juridique et protège votre dépôt de garantie.'}
+        </p>
+      </div>`,
+    footerHtml: `
+      <p style="margin:0;font-size:11px;color:#8a94ad">
+        Vous recevez cet email parce que vous avez signé un état des lieux sur roomscan.pro.
+      </p>`,
+  });
+
+  await queueEmail({
+    to: guestEmail,
+    subject,
+    html,
+    text: [
+      `Votre copie de l'état des lieux signé — ${inspection.propertyName}`,
+      ``,
+      `Vous avez signé l'état des lieux ${typeLabel(inspection.type)} le ${frDateTime(signedAt)}.`,
+      ``,
+      attachment ? `Le PDF signé est joint à cet email.` : ``,
+      `Document : ${pdfUrl}`,
+    ].filter(Boolean).join('\n'),
+    template: 'inspection_guest_completed',
+    referenceType: 'inspection',
+    referenceId: inspection.publicToken,
+    attachment,
+    meta: { module: 'inspection', kind: 'guest_completed', type: inspection.type, pdfAttached: Boolean(attachment) },
+  });
+}
+
+/**
+ * Point d'entrée signature — jamais bloquant, jamais levant (v4.162).
+ * Remonte l'email du hôte via l'abonnement au module, génère le PDF
+ * signé UNE fois (builder partagé) et l'attache aux deux emails :
+ * HÔTE (confirmation) + INVITÉ (copie, si son email est connu).
+ */
+export async function sendInspectionCompletedEmails(
   inspection: InspectionEmailData,
   signedAt: Date,
 ): Promise<void> {
@@ -306,8 +385,33 @@ export async function sendInspectionCompletedEmail(
     });
     const hostEmail = subscription?.user.email;
     if (!hostEmail) return;
-    await sendHostCompletedEmail(inspection, hostEmail, signedAt);
+
+    // PDF joint (v4.162) : généré UNE fois, partagé hôte + invité.
+    // Échec de rendu ou PDF > 7 Mo → attachment null (emails sans
+    // pièce jointe, liens conservés — jamais de blocage du flux).
+    let attachment: { filename: string; mime: string; data: Buffer } | null = null;
+    const built = await buildInspectionPdfFromDb(inspection.publicToken);
+    if (built.ok) {
+      if (built.buffer.byteLength <= MAX_ATTACHMENT_BYTES) {
+        attachment = {
+          filename: inspectionPdfFilename(inspection.publicToken, inspection.type),
+          mime: 'application/pdf',
+          data: built.buffer,
+        };
+      } else {
+        console.warn(
+          `[inspection-emails] PDF ${built.buffer.byteLength} o > ${MAX_ATTACHMENT_BYTES} o — envoi sans pièce jointe (${inspection.publicToken})`,
+        );
+      }
+    }
+
+    await Promise.allSettled([
+      sendHostCompletedEmail(inspection, hostEmail, signedAt, attachment),
+      inspection.guestEmail
+        ? sendGuestCompletedEmail(inspection, inspection.guestEmail, signedAt, attachment)
+        : Promise.resolve(),
+    ]);
   } catch (error) {
-    console.error('[inspection-emails] completed email failed:', error);
+    console.error('[inspection-emails] completed emails failed:', error);
   }
 }

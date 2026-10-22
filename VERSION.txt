@@ -1,1 +1,1 @@
-v4.161 (2026-10-22) — correctif déploiement : build adaptatif (mesure RAM hôte, tsc skippé + heap webpack 1024 Mo si RAM basse) ; contenu fonctionnel v4.160 (onglets « Badges de confiance » + « Application mobile » sous FAQ dans la sidebar du dashboard Bouclier)
+v4.162 (2026-10-22) — emails EDL : à la signature, l'HÔTE et l'INVITÉ reçoivent chacun la confirmation avec le PDF signé EN PIÈCE JOINTE (builder PDF partagé, garde 7 Mo avec repli liens) ; diagnostic SMTP inchangé (réparation identifiants via Console Superadmin /admin/emails)
