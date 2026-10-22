@@ -7,6 +7,12 @@ import { resolveHubPropertyId } from '@/lib/hub-resolve';
 import { queueEmail } from '@/lib/email';
 import { siteUrl } from '@/lib/site';
 import { requireHubAccess } from '@/lib/hub-access';
+// v4.164 — PDF EN PIÈCE JOINTE des emails EDL (flux HUB actif).
+// Même rendu que /api/public/inspection/[token]/pdf (v4.162 l'avait
+// livré sur l'ancien flux V1, hors service — le hub est le seul flux
+// EDL réel depuis la refonte Bouclier V2).
+import { renderCheckOutInspectionPdf } from '@/lib/inspection-pdf';
+import { parseBranding } from '@/lib/branding';
 // v4.81 (AUDIT QA) — notification unifiée (in-app + email + push) pour
 // l'état des lieux signé : avant, la route créait la cloche en direct
 // SANS push et sans couvrir les managers.
@@ -403,6 +409,106 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
       }
     }
 
+    // ── v4.164 — PDF EN PIÈCE JOINTE des emails (flux HUB) ──
+    // Relecture complète de l'inspection (mêmes données que la route
+    // PDF publique) + rendu PDFKit partagé. Garde-fous : échec de
+    // rendu ou PDF > 7 Mo → emails SANS pièce jointe (les liens
+    // directs restent) — jamais bloquant, jamais levant.
+    const MAX_PDF_ATTACHMENT_BYTES = 7 * 1024 * 1024;
+    let pdfAttachment: { filename: string; mime: string; data: Buffer } | null = null;
+    try {
+      const row = await db.checkOutInspection.findUnique({
+        where: { publicToken },
+        select: {
+          id: true,
+          publicToken: true,
+          guestName: true,
+          guestEmail: true,
+          ipAddress: true,
+          signedAt: true,
+          type: true,
+          selfAssessment: true,
+          issues: true,
+          damages: true,
+          roomsData: true,
+          inventoryCheck: true,
+          minibarData: true,
+          damagePhotos: true,
+          guestSignature: true,
+          property: {
+            select: {
+              name: true,
+              address: true,
+              propertyType: true,
+              branding: true,
+              owner: {
+                select: {
+                  fullName: true,
+                  email: true,
+                  profile: { select: { phone: true } },
+                },
+              },
+            },
+          },
+          booking: { select: { checkIn: true, checkOut: true } },
+        },
+      });
+      if (row) {
+        const buffer = await renderCheckOutInspectionPdf({
+          id: row.id,
+          publicToken: row.publicToken,
+          guestName: row.guestName,
+          guestEmail: row.guestEmail,
+          ipAddress: row.ipAddress,
+          signedAt: row.signedAt,
+          type: row.type === 'checkin' ? 'checkin' : 'checkout',
+          selfAssessment: row.selfAssessment,
+          issues: row.issues,
+          damages: row.damages,
+          roomsData: row.roomsData,
+          inventoryCheck: row.inventoryCheck,
+          minibarData: row.minibarData,
+          damagePhotos: row.damagePhotos,
+          guestSignature: row.guestSignature,
+          booking: row.booking
+            ? { checkIn: row.booking.checkIn, checkOut: row.booking.checkOut }
+            : null,
+          property: {
+            name: row.property.name,
+            address: row.property.address,
+            propertyType: row.property.propertyType,
+            branding: parseBranding(row.property.branding),
+            host: {
+              name: row.property.owner?.fullName ?? null,
+              email: row.property.owner?.email ?? null,
+              phone: row.property.owner?.profile?.phone ?? null,
+            },
+          },
+        });
+        if (buffer.byteLength <= MAX_PDF_ATTACHMENT_BYTES) {
+          const guestSlug = row.guestName
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-zA-Z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '')
+            .toLowerCase()
+            .slice(0, 60);
+          pdfAttachment = {
+            filename: `etat-des-lieux-${row.type === 'checkin' ? 'entree' : 'sortie'}-${guestSlug || 'invite'}-${row.id.slice(-6)}.pdf`,
+            mime: 'application/pdf',
+            data: buffer,
+          };
+        } else {
+          console.warn(
+            `[checkout-inspection] PDF ${buffer.byteLength} o > 7 Mo — emails sans pièce jointe (${publicToken})`,
+          );
+        }
+      }
+    } catch (error) {
+      console.error('[checkout-inspection] PDF joint échoué (emails sans pièce jointe) :', error);
+      pdfAttachment = null;
+    }
+
     // ── Emails (outbox, fire-and-forget — jamais bloquant) ──
     const frDate = (d: Date) =>
       d.toLocaleString('fr-FR', {
@@ -456,14 +562,18 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
           (stayLabel ? `<p style="color:#64748b;font-size:13px">${stayLabel}</p>` : '') +
           `<table style="border-collapse:collapse;margin:16px 0">${guestRowsHtml}${minibarHtml}` +
           `</table>` +
+          (pdfAttachment
+            ? `<p style="color:#334155;font-size:13px">📎 Le document PDF signé est <strong>joint à cet email</strong> — conservez-le : il a valeur juridique.</p>`
+            : '') +
           linksHtml +
           `<p style="color:#94a3b8;font-size:12px">Document horodaté et signé électroniquement — preuve publique : ${publicUrl}</p>` +
           `</div>`,
-        text: `${docTitle} enregistré pour ${property.name}. Preuve publique : ${publicUrl} — PDF : ${pdfUrl}`,
+        text: `${docTitle} enregistré pour ${property.name}.${pdfAttachment ? ' Le PDF signé est joint à cet email.' : ''} Preuve publique : ${publicUrl} — PDF : ${pdfUrl}`,
         template: 'custom',
         propertyId: property.id,
         referenceType: 'check_out_inspection',
         referenceId: inspection.id,
+        attachment: pdfAttachment,
       });
     }
 
@@ -486,14 +596,18 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
           (data.comments
             ? `<p style="color:#334155;background:#f8fafc;padding:10px;border-radius:8px">« ${data.comments.replace(/</g, '&lt;')} »</p>`
             : '') +
+          (pdfAttachment
+            ? `<p style="color:#334155;font-size:13px">📎 Le document PDF signé est <strong>joint à cet email</strong>.</p>`
+            : '') +
           linksHtml +
           `<p style="color:#94a3b8;font-size:12px">Retrouvez la liste dans le Dashboard → Invités → États des lieux.</p>` +
           `</div>`,
-        text: `${hasDamages ? 'Dégâts signalés' : `${docTitle} reçu`} — ${property.name} (${data.guestName}). Preuve : ${publicUrl}`,
+        text: `${hasDamages ? 'Dégâts signalés' : `${docTitle} reçu`} — ${property.name} (${data.guestName}).${pdfAttachment ? ' Le PDF signé est joint à cet email.' : ''} Preuve : ${publicUrl}`,
         template: 'custom',
         propertyId: property.id,
         referenceType: 'check_out_inspection',
         referenceId: inspection.id,
+        attachment: pdfAttachment,
       });
     }
 
