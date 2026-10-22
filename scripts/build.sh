@@ -120,21 +120,7 @@ BUILD_EXIT=$?
 if [ "$BUILD_EXIT" -ne 0 ]; then
   echo "[build] ══ NEXT BUILD ÉCHOUÉ (exit $BUILD_EXIT) — 60 dernières lignes ══"
   tail -n 60 "$BUILD_LOG" || true
-  node -e "
-const fs = require('fs');
-try {
-  const log = fs.readFileSync('/tmp/build-next.log', 'utf8');
-  const payload = JSON.stringify({
-    source: 'coolify-build',
-    message: 'next build echec (exit ' + process.env.BUILD_EXIT_X + ', log ' + log.length + ' chars)',
-    stack: log.slice(-3500),
-    url: 'https://roomscan.pro/_diagnostic/build'
-  });
-  fs.writeFileSync('/tmp/build-payload.json', payload);
-} catch (e) {}
-" BUILD_EXIT_X="$BUILD_EXIT" || true
-  curl -s -m 10 -X POST -H 'Content-Type: application/json' \
-    --data-binary @/tmp/build-payload.json https://roomscan.pro/api/errors || true
+  node /app/scripts/report-build-failure.mjs next-build "$BUILD_EXIT" "$BUILD_LOG" || true
   echo "[build] Log de build téléversé vers /api/errors (lisible /admin/logs)."
   exit "$BUILD_EXIT"
 fi
