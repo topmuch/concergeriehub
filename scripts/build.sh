@@ -38,15 +38,25 @@
 # MESURE maintenant à chaque build (/proc/meminfo du conteneur =
 # mémoire de l'HÔTE, c'est exactement ce que regarde l'OOM
 # killer) et on adapte le pipeline :
-#   - MemAvailable ≥ 2400 Mo → profil complet : tsc --noEmit
+#   - MemAvailable ≥ SEUIL_TSC → profil complet : tsc --noEmit
 #     (garantie de types) + heap webpack 1536 (historique).
-#   - MemAvailable < 2400 Mo → profil basse RAM : tsc SKIPPÉ
+#   - MemAvailable < SEUIL_TSC → profil basse RAM : tsc SKIPPÉ
 #     (AVERTISSEMENT fort dans les logs) + heap webpack 1024 Mo
 #     (profil v4.97 qui passait). La garantie de types reste
 #     assurée par la discipline pré-push : `bunx tsc --noEmit`
 #     + `bun run lint` + E2E (0 erreur exigée avant tout push).
 #   - Mesure impossible → profil basse RAM par défaut (un build
 #     qui passe sans check vaut mieux qu'un build mort).
+#
+# ── v5.1 « ANTI-OOM RENFORCÉ (5 builds morts en soirée) ─────
+# Le 22/10 au soir, 5 déploiements v5.0 sont morts à 2-9 min
+# (OOM hôte : 21 apps, concurrent_builds=2, RAM 4 Go partagée).
+# Le seuil 2400 Mo laissait passer tsc (pic 1,9 Go) alors que la
+# RAM tombait pendant la mesure → kill. Correctifs :
+#   - SEUIL_TSC porté à 3000 Mo (marge au-dessus du pic tsc) ;
+#   - heap webpack abaissée à 1280 Mo même avec tsc (le tsc est
+#     SÉQUENTIEL, mais l'OS garde les caches pendant le build) ;
+#   - heap 1024 Mo inchangée en profil basse RAM.
 # =============================================================
 
 set -e
@@ -67,11 +77,12 @@ AVAILABLE_MB=$(awk '/MemAvailable/ {printf "%d", $2/1024}' /proc/meminfo 2>/dev/
 echo "[build] Mémoire disponible (hôte) : ${AVAILABLE_MB} Mo"
 
 RUN_TYPECHECK=1
-WEBPACK_HEAP=1536
-if [ "$AVAILABLE_MB" -lt 2400 ]; then
+WEBPACK_HEAP=1280
+SEUIL_TSC=3000
+if [ "$AVAILABLE_MB" -lt "$SEUIL_TSC" ]; then
   RUN_TYPECHECK=0
   WEBPACK_HEAP=1024
-  echo "[build] RAM basse détectée (< 2400 Mo) : profil basse mémoire."
+  echo "[build] RAM basse détectée (< ${SEUIL_TSC} Mo) : profil basse mémoire."
 fi
 
 if [ "$RUN_TYPECHECK" = "1" ]; then
