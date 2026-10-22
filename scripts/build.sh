@@ -76,18 +76,27 @@ npx prisma generate
 AVAILABLE_MB=$(awk '/MemAvailable/ {printf "%d", $2/1024}' /proc/meminfo 2>/dev/null || echo 0)
 echo "[build] Mémoire disponible (hôte) : ${AVAILABLE_MB} Mo"
 
-# v5.2 — PROFIL BASSE MÉMOIRE FORCÉ : 6 déploiements morts ce soir
-# (OOM hôte 4 Go / 21 apps / concurrent_builds=2). Le tsc est
-# garanti pré-push (bunx tsc --noEmit + lint + E2E locaux, 0 erreur)
-# → on construit TOUJOURS avec le profil éprouvé v4.97 : pas de tsc,
-# heap webpack 1024 Mo (celle qui passait en v4.97 → v4.167).
-# Mesure conservée pour le log de diagnostic.
+# v5.7 — PROFIL ADAPTATIF RÉEL (télémétrie du 22/10 au soir) :
+# l'hôte dispose de ~13 800 Mo libres (mesure télémétrie webhook.site).
+# Les échecs v5.0→v5.5 venaient du heap webpack 1024 Mo FORCÉ —
+# le code v5.0 (refonte design + nouveaux modules) dépasse le live
+# set que 1024 Mo peut contenir → abort V8 (exit 134), PAS un OOM
+# hôte. Barème mémoire mesuré :
+#   ≥ 6000 Mo → tsc --noEmit (heap 2048) + webpack heap 1792 ;
+#   3000–5999 → tcs skippé + webpack heap 1536 (profil v4.161) ;
+#    < 3000   → tsc skippé + webpack heap 1024 (profil v4.97).
 RUN_TYPECHECK=0
 WEBPACK_HEAP=1024
-echo "[build] Profil basse mémoire FORCÉ (v5.2) : tsc skippé, heap ${WEBPACK_HEAP} Mo, RAM hôte ${AVAILABLE_MB} Mo."
 if [ "$AVAILABLE_MB" -ge 3000 ]; then
-  echo "[build] (RAM suffisante pour tsc, mais on la réserve à webpack.)"
+  WEBPACK_HEAP=1536
+  echo "[build] RAM confortable : heap webpack 1536 Mo, tsc skippé (garantie pré-push)."
 fi
+if [ "$AVAILABLE_MB" -ge 6000 ]; then
+  RUN_TYPECHECK=1
+  WEBPACK_HEAP=1792
+  echo "[build] RAM large : type-check activé + heap webpack 1792 Mo."
+fi
+echo "[build] RAM hôte : ${AVAILABLE_MB} Mo → tsc=${RUN_TYPECHECK}, heap=${WEBPACK_HEAP} Mo."
 
 if [ "$RUN_TYPECHECK" = "1" ]; then
   # ── Type check SÉQUENTIEL (remplace le type-check in-build) ──
