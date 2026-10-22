@@ -5319,3 +5319,24 @@ Stage Summary:
 - Le flux hub envoie désormais le PDF signé EN PIÈCE JOINTE (hôte + invité) — la promesse v4.162 est tenue sur le VRAI flux
 - Procédure resync : vérifier git cat-file HEAD:src/app/upload/[token]/page.tsx à chaque session ; si absent → git checkout depuis dernier commit qui le contient ; le composant protégé src/components/upload/ rend la restauration triviale
 - À vérifier par le client : réception des 2 emails du test E2E (hôte + invité, couverge@gmail.com) et du renvoi des échecs
+
+---
+Task ID: V4165-PDF-ROUGE-HUB
+Agent: Z.ai Code (main)
+Task: Incohérence modèle PDF EDL — emails joignaient l'ancien modèle bleu, le site génère le modèle rouge ATTESTATION
+
+Work Log:
+- Client : « le 1er pdf est le pdf recu, le 2eme est le pdf original sur le site, ce modèle n'existe plus » → l'email (v4.164) joint le modèle BLEU (renderCheckOutInspectionPdf, lib/inspection-pdf.ts) alors que le site actuel = modèle ROUGE « ATTESTATION D'ÉTAT DES LIEUX D'ENTRÉE / CERTIFICAT ROOMSCAN BOUCLIER » (CHK-PAR…)
+- Cartographie des 4 builders PDF : inspection-pdf.ts (bleu, actif hub), inspection-pdf-builder.ts (V1 non montée), shield-pdf.ts (rouge CHK- Bouclier — emails Bouclier déjà corrects), inspection-standalone-pdf.ts (rouge ATTESTATION — ORPHELIN, jamais câblé)
+- Choix : le flux hub adopte inspection-standalone-pdf.ts (renderer rouge ATTESTATION, rendu « Attestation d'état des lieux d'entrée » / « Rapport de sortie ») avec mapping des données hub
+- Extension du renderer (orphan-safe) : champs optionnels guestNotes (encart « Remarques de l'invité »), inventory + minibar (section « INVENTAIRE & CONSOMMATIONS ») ; icône 'sofa'
+- Nouveau module src/lib/hub-inspection-pdf.ts : buildHubInspectionPdfBuffer(publicToken) — relecture DB complète, mapping rooms hub (statut good→BON/dirty→MOYEN/damaged→MAUVAIS, 1 item « État de la pièce » + 1 item par photo), selfAssessment→cleanlinessScore, SHA-256 canonique, filename attestation-entree/rapport-sortie ; jamais levant (null → repli)
+- checkout-inspection : bloc v4.164 remplacé par appel au module + garde 7 Mo
+- Route PDF publique /api/public/inspection/[token]/pdf : cas CheckOutInspection → rendu ROUGE (repli legacy bleu si échec) ; cas MinibarCheck inchangé
+- Test local bun : PDF 3 pages généré, vérifié visuellement (pdftoppm) — bandeau ATTESTATION, QR vérification, SHA-256, encadrés parties, remarques invité, cartes pièces avec photos, inventaire/minibar, déclaration légale + 2 signatures
+- Livraison : tar racine, cb=v4.166, commit 6e7d733, push, deploy a5ckflqynixdjwnodijs4h2i
+
+Stage Summary:
+- Email ET site montrent désormais le MÊME document au modèle rouge actuel (route PDF publique + pièces jointes)
+- Ancien modèle bleu conservé en repli automatique si le rendu rouge échoue
+- Procédure anti-resync fonctionnelle : shim upload/[token] + composant protégé revérifiés avant chaque tar
