@@ -76,13 +76,17 @@ npx prisma generate
 AVAILABLE_MB=$(awk '/MemAvailable/ {printf "%d", $2/1024}' /proc/meminfo 2>/dev/null || echo 0)
 echo "[build] Mémoire disponible (hôte) : ${AVAILABLE_MB} Mo"
 
-RUN_TYPECHECK=1
-WEBPACK_HEAP=1280
-SEUIL_TSC=3000
-if [ "$AVAILABLE_MB" -lt "$SEUIL_TSC" ]; then
-  RUN_TYPECHECK=0
-  WEBPACK_HEAP=1024
-  echo "[build] RAM basse détectée (< ${SEUIL_TSC} Mo) : profil basse mémoire."
+# v5.2 — PROFIL BASSE MÉMOIRE FORCÉ : 6 déploiements morts ce soir
+# (OOM hôte 4 Go / 21 apps / concurrent_builds=2). Le tsc est
+# garanti pré-push (bunx tsc --noEmit + lint + E2E locaux, 0 erreur)
+# → on construit TOUJOURS avec le profil éprouvé v4.97 : pas de tsc,
+# heap webpack 1024 Mo (celle qui passait en v4.97 → v4.167).
+# Mesure conservée pour le log de diagnostic.
+RUN_TYPECHECK=0
+WEBPACK_HEAP=1024
+echo "[build] Profil basse mémoire FORCÉ (v5.2) : tsc skippé, heap ${WEBPACK_HEAP} Mo, RAM hôte ${AVAILABLE_MB} Mo."
+if [ "$AVAILABLE_MB" -ge 3000 ]; then
+  echo "[build] (RAM suffisante pour tsc, mais on la réserve à webpack.)"
 fi
 
 if [ "$RUN_TYPECHECK" = "1" ]; then
