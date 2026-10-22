@@ -28,15 +28,13 @@ WORKDIR /app
 # (symptôme : déployé mais changements invisibles). .gh-sync.mjs
 # remplace CACHEBUST par la version à CHAQUE push → URL différente →
 # couche reconstruite à coup sûr.
-ADD https://raw.githubusercontent.com/topmuch/concergeriehub/main/app-update.tar.xz?cb=v5.4 /tmp/app-update.tar.xz
+ADD https://raw.githubusercontent.com/topmuch/concergeriehub/main/app-update.tar.xz?cb=v5.4-goodtest /tmp/app-update.tar.xz
 
 RUN set -e; tar -xJf /tmp/app-update.tar.xz -C /app; rm /tmp/app-update.tar.xz; test -f /app/package.json; test -f /app/prisma/schema.prisma; test -f /app/scripts/create-admin.cjs; node --check /app/scripts/create-admin.cjs; grep -q "force-dynamic" /app/src/app/page.tsx; test -f "/app/src/app/api/uploads/voice/[file]/route.ts"; test -f /app/src/app/airbnb/messages/page.tsx; echo "[payload] OK version : $(cat /app/VERSION.txt)"
 
-# Install dependencies + Prisma Client (v5.3 : chaque couche est
-# instrumentée — en cas d'échec le log est téléversé vers /api/errors
-# de l'ancien conteneur, lisible dans /admin/logs).
-RUN sh scripts/step.sh bun-install -- bun install
-RUN sh scripts/step.sh prisma-generate -- npx prisma generate
+# Install dependencies + Prisma Client
+RUN bun install
+RUN npx prisma generate
 
 # Build the application
 ENV NEXT_TELEMETRY_DISABLED=1
@@ -44,13 +42,13 @@ ENV DATABASE_URL=file:/app/data/concergeriehub.db
 ENV NEXT_PUBLIC_APP_URL=https://roomscan.pro
 
 # Create data directory + sync schema BEFORE build
-RUN mkdir -p /app/data && sh scripts/step.sh db-push -- npx prisma db push --skip-generate --accept-data-loss
+RUN mkdir -p /app/data && npx prisma db push --skip-generate --accept-data-loss
 
 # AUDIT 24-e (P0-3) — l'ancien RUN qui écrivait NEXTAUTH_SECRET dans
 # /app/.env.docker-secret (secret de session CUIT DANS L'IMAGE) est
 # SUPPRIMÉ. Génération + persistance déplacées dans le CMD (volume).
 
-RUN sh scripts/step.sh next-build -- bun run build
+RUN bun run build
 
 EXPOSE 3000
 
