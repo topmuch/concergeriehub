@@ -5416,3 +5416,29 @@ Work Log:
 Stage Summary:
 - v4.167 EN PRODUCTION. À vérifier par le client (connexion couverge@gmail.com) : cloche 🔔 en haut à droite (badge rouge + panneau), Tableau de bord (widgets Revenus protégés / Temps gagné), Ménage à faire (filtres, retards rouges, email invité, bouton Rappeler, champ caution au formulaire), Check-ins/Check-outs (badge Anomalie, caution, « Agent non renseigné », Export CSV), Mes biens (badge Protégé + icônes + Prochain séjour), Documents (recherche + filtres + « Généré le … »)
 - Rollback possible si problème : redéployer le tar précédent (commit bab4b70, v4.166, cb=v4.168) via Coolify
+
+---
+Task ID: 6
+Agent: Z.ai Code (main)
+Task: v5.0 — Refonte design « Luxe Bleuté », renommage Bouclier→Inventaire, logo header, mode sombre/clair, suppression+partage check-ins/outs, PDF mode d'emploi, installation PWA réelle
+
+Work Log:
+- Design system « Luxe Bleuté » ajouté dans globals.css (classes .shield-page, .luxe-card, .luxe-input/.luxe-select, .luxe-btn-primary/ghost/whatsapp/mail/danger, .luxe-chip, .luxe-tile, .luxe-table, .shield-sidebar, .shield-overlay) — clair bleuté + sombre bleu nuit luxueux (halo doré)
+- shield-ui.tsx refondu : ShieldCard/PageHeader/boutons/badges dark automatique + WhatsAppButton/MailButton/DangerButton + icône WhatsApp SVG inline
+- shield-shell.tsx : logo RoomScan réel (public/brand/roomscan-icon-white.png) dans sidebar + topbar desktop + header mobile, marque « RoomScan Inventaire », sidebar dégradé .shield-sidebar, ThemeToggle (theme-toggle.tsx) desktop+mobile, onglet Bouclier→Inventaire (icône Boxes)
+- shield-dashboard.tsx : PageHeader, gradients 3-tons, widgets emerald/violet dark, graphiques Recharts adaptatifs via useTheme (isDark), table .luxe-table, cartes Aide en tuiles dégradées, modales dark
+- shield-history.tsx (Check-ins/Check-outs) : boutons WhatsApp/Email/SUPPRIMER par séjour ; shareText pré-rédigé (invité, bien, date, PDF certifié, vidéo, caution) ; wa.me générique + mailto:guestEmail pré-rempli ; suppression DELETE /api/shield/sessions/[id] (scope session|pair, cascade Prisma shots+video, ownership par abonnement) avec confirm
+- shield-visits.tsx / shield-documents.tsx / shield-properties.tsx / shield-subscription.tsx / shield-badges.tsx / shield-library.tsx : dark + luxe (chips, inputs, tuiles dégradées) ; recherche Documents déjà en v4.167 conservée
+- Renommage Bouclier→Inventaire : 10 pages (shield) metadata, manifest.ts (name « Roomscan Inventaire »), faq-content, mode-demploi-content, shield-manager/onboarding/library/badges/subscription/capture/cleaner-capture/properties, s/[token], shield/video/[token], inspection-dashboard (« Inventaire automatisé »), airbnb-dispute, onboarding-wizard (partages), shield-emails (eyebrow, footer, filename PDF), shield-pdf (Title, mentions légales, titres pages), inspection-standalone-pdf. « Bouclier d'avis » (Review Shield du Hub) NON touché
+- Mode d'emploi PDF : src/lib/mode-demploi-pdf.ts (pdfkit, DejaVu, bandeau bleu/rouge, intro, 6 étapes cartes numérotées, 7 notifications, footer + numérotation ; sauts de page manuels anti-page-blanche) + GET /api/shield/mode-demploi/pdf (resolveShieldAccess, Content-Disposition attachment) + bouton « Télécharger le PDF » sur la page
+- Onglet Application : PwaInstallButton (pwa-install-button.tsx) — capture beforeinstallprompt → GROS bouton « Installer maintenant », état installé (display-mode standalone), fallback consignes iOS ; page refonte dark + astuce ; PwaInstallBanner qr-card dark
+- shield-bell.tsx : panneau + icônes dark
+- theme-toggle : icônes Moon/Sun en CSS pur (dark:hidden) — zéro mismatch hydratation (fix lint react-hooks/set-state-in-effect + title statique)
+- Tests navigateur (agent-browser) : login demo → dashboard clair+sombre OK, check-ins (boutons visibles, DELETE confirm → ligne supprimée + DB vérifiée), WhatsApp share URL correcte, PDF mode d'emploi %PDF- 35 Ko 2 pages sans page blanche, Documents/Ménage/Biens/Abonnement/Application/Mode d'emploi dark+clair OK, mobile iPhone 14 + tiroir OK, 0 erreur console
+- Déploiement : commit 9dbccc2 (46 fichiers, +tar 862 fichiers incluant upload/[token] vérifié) pushé ; Dockerfile cb=v4.169→v5.0 ; POST /deploy force=true → deployment_uuid xg6yutakjosvybuij0wlloez
+
+Stage Summary:
+- v5.0 livrée : produit renommé « RoomScan Inventaire », design refait (luxe bleuté clair/sombre avec bascule), logo réel partout, suppression+partage sur check-ins/outs, PDF mode d'emploi téléchargeable, installation PWA réelle sur l'onglet Application
+- Nouvelles routes API : DELETE /api/shield/sessions/[id], GET /api/shield/mode-demploi/pdf
+- Prisma inchangé (cascade onDelete déjà en place) ; VERSION.txt = v5.0
+- Prod en cours de build (deployment xg6yutakjosvybuij0wlloez) — vérifier https://roomscan.pro/api/health version v5.0
