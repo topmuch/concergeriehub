@@ -5256,3 +5256,43 @@ Stage Summary:
 - AUCUNE donnée n'a pu partir : la cause unique est le 535 (identifiants SMTP refusés) — la réparation se fait dans /admin/emails → Configuration (sans déploiement), puis la file se vide seule.
 - Leçon : le health SMTP TCP-only masque une auth cassée — le test d'envoi réel de la Console est la seule vérification de bout en bout.
 - Leçon : le token Coolify fourni n'a NI read:sensitive (logs) NI l'endpoint /env sur cette version → les secrets/identifiants SMTP restent dans la Console Superadmin, seul l'utilisateur peut les corriger.
+
+---
+Task ID: V4163-EMAIL-RESEND-RETRY
+Agent: Z.ai Code (main)
+Task: Diagnostic "clé API Resend non copiable sur le dashboard" + renvoi des mails EDL en échec (535) + audit notifications dashboard état des lieux
+
+Work Log:
+- Diagnostic prod : env vars Coolify (endpoint /envs) = SMTP_HOST/PORT/USER/PASS présents, AUCUNE RESEND_API_KEY → provider par défaut = SMTP (d'où 535 Invalid login)
+- Confirme l'architecture email : DB > env (resolveEmailProvider), choix 'resend' en DB gagne toujours sur l'env SMTP
+- Cause du blocage utilisateur confirmée : Resend n'affiche une clé API qu'UNE SEULE FOIS à sa création → il faut recréer une clé (comportement normal, documenté dans l'UI désormais)
+- v4.162 déjà déployée avant la coupure de contexte (healthcheck prod = v4.162, origin/main = 7d0cc94) : PDF signé en pièce jointe hôte + invité OK
+- Audit notifications EDL : 4 emails transactionnels (invitation invité, confirmation hôte à la création ; hôte + invité à la signature avec PDF) via queueEmail → EmailOutbox, fire-and-forget, garde 7 Mo
+- Trou : retry auto self-healing (v4.98) limité à 3 tentatives / 24 h / 8 emails par tick → les mails 535 au-delà ne repartent JAMAIS seuls
+- v4.163 livrée : retryFailedEmails() bulk (max 100, plus anciens d'abord) + POST /api/admin/emails/retry?all=failed + bouton « Renvoyer tous les échecs (N) » dans la Console + aide Resend complète + chips provider dynamiques (config.provider désormais exposé par GET /api/admin/emails)
+- Piège .gitignore upload/ REPRODUIT : commit resync Coolify 39cb1ac a re-supprimé src/app/upload/[token]/page.tsx → prod v4.162 en 404 sur /upload/[token] (vérifié) → restauré depuis 0dc2444 et committé dans v4.163
+- Livraison : tar (page upload vérifiée dedans), commit 5f6ee63, push, deploy API Coolify deployment_uuid=o7x0f6pfkkzzuitflvt0qk8j
+
+Stage Summary:
+- Réponse au problème « on peut plus copier la clé » : NORMAL → créer une NOUVELLE clé (resend.com → API Keys → Create) puis la coller dans Console Superadmin → Emails → Configuration → effet immédiat sans redéploiement
+- Vérification domaine roomscan.pro dans Resend → Domains OBLIGATOIRE sinon envois bloqués aux tiers (compte restreint)
+- Bouton « Renvoyer tous les échecs » permet de récupérer en un clic tous les mails bloqués (EDL hôte/invité 535) une fois le provider réparé
+- Page publique /upload/[token] restaurée (elle était 404 en prod depuis v4.162)
+- Rappel : la Console Superadmin a sa propre auth (/login/superadmin) — le compte superadmin est requis pour coller la clé
+
+---
+Task ID: V4163-DEPLOY-VERIFY
+Agent: Z.ai Code (main)
+Task: Livraison v4.163 — déploiement et vérification E2E
+
+Work Log:
+- 1er deploy (o7x0f6pfkkzzuitflvt0qk8j) finished MAIS prod restée en v4.162 : cause = tar créé dans /tmp au lieu de la racine (app-update.tar.xz tracké dans git, téléchargé par le Dockerfile via raw.githubusercontent.com)
+- Correction : tar racine remplacé (payload v4.163), commit b9804d1, cache-buster bumpé cb=v4.163 → cb=v4.164 (l'URL ?cb=v4.163 avait déjà alimenté le cache Docker du 1er build avec l'ANCIEN tar), commit a49769b, push
+- 2e deploy (ozexzqyatbgmllseky20u3zx) finished 14:47:29 UTC
+- Vérifications prod : /api/health → v4.163 + status OK ; /upload/test-token → 200 (page restaurée, état « Lien invalide » propre au lieu du 404) ; accueil 200
+- E2E agent-browser : connexion couverge@gmail.com OK → /airbnb/dashboard (sidebar complète, 40+ éléments interactifs) → module /inspection/dashboard (RoomScan Bouclier, tous les onglets) ; 0 erreur console ; screenshots /tmp/prod-upload-v4163.png, /tmp/prod-dashboard-v4163.png, /tmp/prod-edl-v4163.png
+- Non vérifiable : Console Superadmin (identifiants superadmin non détenus) — le bouton « Renvoyer tous les échecs » reste à valider par l'utilisateur
+
+Stage Summary:
+- v4.163 EN PRODUCTION : renvoi en masse des emails échoués, aide Resend complète, chips provider dynamiques, page /upload/[token] restaurée
+- Pipeline tar : toujours écrire app-update.tar.xz À LA RACINE du repo (pas /tmp) et bumper le cache-buster Dockerfile à CHAQUE push du tar
