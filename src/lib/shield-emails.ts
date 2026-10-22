@@ -52,7 +52,7 @@ function emailShell(opts: { eyebrow: string; title: string; intro: string; bodyH
           <tr>
             <td style="text-align:center;padding:16px;border-top:1px solid #e8edf6">
               ${opts.footerHtml}
-              <p style="margin:12px 0 0;font-size:11px;color:#b6bdd0">RoomScan — Roomscan Bouclier, états des lieux automatisés.</p>
+              <p style="margin:12px 0 0;font-size:11px;color:#b6bdd0">RoomScan — Roomscan Inventaire, états des lieux automatisés.</p>
             </td>
           </tr>
         </table>
@@ -168,7 +168,7 @@ export async function sendShieldSessionCertificateEmails(
     if (!ctx) return;
 
     const pdf = await renderShieldSessionPdf(ctx.data);
-    const filename = `Roomscan_Bouclier_${ctx.sessionRef}.pdf`;
+    const filename = `Roomscan_Inventaire_${ctx.sessionRef}.pdf`;
     const pdfUrl = `${siteUrl}/api/shield/pdf/session/${sessionId}`;
     const videoUrl = ctx.data.video ? `${siteUrl}/shield/video/${ctx.data.video.publicToken}` : null;
     const propertyName = ctx.data.property.propertyName;
@@ -203,7 +203,7 @@ export async function sendShieldSessionCertificateEmails(
         to,
         subject: `Certificat ${typeLabel(ctx.sessionType)} — ${propertyName} (${ctx.sessionRef})`,
         html: emailShell({
-          eyebrow: 'RoomScan · Roomscan Bouclier',
+          eyebrow: 'RoomScan · Roomscan Inventaire',
           title: isHost ? 'Certificat généré' : 'Votre état des lieux',
           intro: isHost
             ? `Le document ${typeLabel(ctx.sessionType)} certifié du logement <strong>${escapeHtml(propertyName)}</strong> est prêt. Il est joint à cet email (PDF 2 pages : bibliothèque de référence + ${ctx.sessionType === 'CHECK_OUT' ? 'rapport de sortie comparatif' : "attestation d'entrée"}).`
@@ -221,7 +221,7 @@ export async function sendShieldSessionCertificateEmails(
               </p>
             </div>`,
           footerHtml: isHost
-            ? `<p style="margin:0;font-size:11px;color:#8a94ad">Toutes vos sessions : <a href="${siteUrl}/inspection/dashboard" style="color:#5d6b8a">tableau de bord Bouclier</a>.</p>`
+            ? `<p style="margin:0;font-size:11px;color:#8a94ad">Toutes vos sessions : <a href="${siteUrl}/inspection/dashboard" style="color:#5d6b8a">tableau de bord Inventaire</a>.</p>`
             : `<p style="margin:0;font-size:11px;color:#8a94ad">Vous recevez cet email parce que votre séjour est concerné par un état des lieux sur roomscan.pro.</p>`,
         }),
         text: [

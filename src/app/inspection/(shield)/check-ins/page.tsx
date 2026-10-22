@@ -3,7 +3,7 @@ import { ShieldHistory } from '@/components/inspection/shield/shield-history';
 
 // BOUCLIER V2 — Onglet 3 : Check-ins (historique TERMINE).
 export const metadata: Metadata = {
-  title: 'Bouclier — Check-ins | RoomScan',
+  title: 'Inventaire — Check-ins | RoomScan',
   description: 'Historique des entrées validées avec photos, vidéo hachée et PDF certifié.',
 };
 

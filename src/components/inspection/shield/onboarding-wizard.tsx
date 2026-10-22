@@ -269,8 +269,8 @@ export default function OnboardingWizard() {
   // ── Écran de succès : DÉLÉGATION (TASK 39) ──
   if (phase === 'success' && result && result.delegationToken) {
     const magicLink = `${window.location.origin}/upload/${result.delegationToken}`;
-    const shareText = `📸 Photos de référence à prendre — « ${propertyName.trim()} » (RoomScan Bouclier)\n\nOuvrez ce lien et suivez le guide, photo par photo :\n${magicLink}\n\nLien valable 7 jours. Merci !`;
-    const mailSubject = `Photos de référence à prendre — ${propertyName.trim()} (RoomScan Bouclier)`;
+    const shareText = `📸 Photos de référence à prendre — « ${propertyName.trim()} » (RoomScan Inventaire)\n\nOuvrez ce lien et suivez le guide, photo par photo :\n${magicLink}\n\nLien valable 7 jours. Merci !`;
+    const mailSubject = `Photos de référence à prendre — ${propertyName.trim()} (RoomScan Inventaire)`;
     const expiresLabel = result.delegationTokenExpiresAt
       ? new Date(result.delegationTokenExpiresAt).toLocaleDateString('fr-FR', {
           day: 'numeric',

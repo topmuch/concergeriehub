@@ -1502,3 +1502,276 @@ html:not(.dark) .tl-sticky-left { background: #ffffff; }
 .shield-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(30, 58, 138, 0.45);
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   ROOMSCAN INVENTAIRE — DESIGN SYSTEM « LUXE BLEUTÉ » (v5.0)
+   Refonte demandée par le client : pages plus jolies et plus
+   colorées + mode clair bleuté / mode sombre bleu nuit luxueux.
+   Classes applicatives centralisées → chaque onglet du dashboard
+   (/inspection/*) hérite du thème clair ET sombre automatiquement.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── Fond de page : dégradé bleuté clair / bleu nuit profond ── */
+.shield-page {
+  background:
+    radial-gradient(1100px 500px at 88% -6%, rgba(37, 99, 235, 0.09), transparent 60%),
+    radial-gradient(900px 420px at -8% 4%, rgba(196, 30, 58, 0.05), transparent 55%),
+    linear-gradient(180deg, #eef4ff 0%, #f8fafc 45%, #f2f6fb 100%);
+}
+.dark .shield-page {
+  background:
+    radial-gradient(1100px 560px at 88% -8%, rgba(59, 130, 246, 0.17), transparent 62%),
+    radial-gradient(900px 480px at -8% 2%, rgba(217, 180, 91, 0.05), transparent 55%),
+    radial-gradient(1200px 780px at 50% 118%, rgba(30, 58, 138, 0.28), transparent 62%),
+    #070c1c;
+}
+
+/* ── Cartes : blanc nacré / ardoise bleu nuit ── */
+.luxe-card {
+  border-radius: 1rem;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  background: rgba(255, 255, 255, 0.93);
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.05),
+    0 14px 34px -20px rgba(30, 58, 138, 0.28);
+  backdrop-filter: blur(8px);
+}
+.dark .luxe-card {
+  border-color: rgba(56, 76, 128, 0.45);
+  background: rgba(13, 21, 48, 0.86);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.45),
+    0 18px 44px -22px rgba(0, 0, 0, 0.65);
+}
+
+/* ── Typographie ── */
+.luxe-title { color: #0f172a; }
+.dark .luxe-title { color: #eef2ff; }
+.luxe-muted { color: #64748b; }
+.dark .luxe-muted { color: #97a6c4; }
+.luxe-faint { color: #94a3b8; }
+.dark .luxe-faint { color: #64748b; }
+
+/* ── Champs de formulaire ── */
+.luxe-input,
+.luxe-select {
+  min-height: 44px;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(203, 213, 225, 1);
+  background: rgba(255, 255, 255, 0.95);
+  color: #0f172a;
+  font-size: 0.875rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.luxe-input::placeholder { color: #94a3b8; }
+.luxe-input:focus,
+.luxe-select:focus {
+  outline: none;
+  border-color: #1e3a8a;
+  box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.15);
+}
+.dark .luxe-input,
+.dark .luxe-select {
+  border-color: rgba(56, 76, 128, 0.6);
+  background: rgba(9, 15, 36, 0.85);
+  color: #e2e8f0;
+}
+.dark .luxe-input::placeholder { color: #64748b; }
+.dark .luxe-input:focus,
+.dark .luxe-select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.22);
+}
+
+/* ── Boutons ── */
+.luxe-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  border-radius: 0.75rem;
+  padding: 0 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: linear-gradient(135deg, #d92049 0%, #a01830 100%);
+  box-shadow: 0 6px 18px -8px rgba(196, 30, 58, 0.55);
+  transition: filter 0.15s ease, transform 0.15s ease;
+}
+.luxe-btn-primary:hover { filter: brightness(1.08); }
+.luxe-btn-primary:active { transform: translateY(1px); }
+.luxe-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.luxe-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  min-height: 40px;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(203, 213, 225, 1);
+  padding: 0 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #334155;
+  background: rgba(255, 255, 255, 0.9);
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.luxe-btn-ghost:hover { background: #f1f5f9; border-color: #cbd5e1; }
+.luxe-btn-ghost:disabled { opacity: 0.5; cursor: not-allowed; }
+.dark .luxe-btn-ghost {
+  border-color: rgba(56, 76, 128, 0.55);
+  color: #cbd5e1;
+  background: rgba(15, 24, 54, 0.9);
+}
+.dark .luxe-btn-ghost:hover { background: rgba(23, 34, 70, 0.95); border-color: rgba(88, 112, 168, 0.7); }
+
+.luxe-btn-whatsapp {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  min-height: 40px;
+  border-radius: 0.75rem;
+  padding: 0 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
+  box-shadow: 0 6px 16px -8px rgba(18, 140, 126, 0.55);
+  transition: filter 0.15s ease;
+}
+.luxe-btn-whatsapp:hover { filter: brightness(1.08); }
+.luxe-btn-whatsapp:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.luxe-btn-mail {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  min-height: 40px;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(203, 213, 225, 1);
+  padding: 0 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #334155;
+  background: rgba(255, 255, 255, 0.9);
+  transition: background 0.15s ease;
+}
+.luxe-btn-mail:hover { background: #f1f5f9; }
+.dark .luxe-btn-mail {
+  border-color: rgba(56, 76, 128, 0.55);
+  color: #cbd5e1;
+  background: rgba(15, 24, 54, 0.9);
+}
+.luxe-btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  min-height: 40px;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(254, 202, 202, 1);
+  padding: 0 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #b91c1c;
+  background: rgba(255, 241, 242, 0.95);
+  transition: background 0.15s ease;
+}
+.luxe-btn-danger:hover { background: #fee2e2; }
+.dark .luxe-btn-danger {
+  border-color: rgba(127, 29, 29, 0.6);
+  color: #fca5a5;
+  background: rgba(50, 12, 20, 0.6);
+}
+.dark .luxe-btn-danger:hover { background: rgba(80, 17, 29, 0.75); }
+
+/* ── Tuiles d'icônes colorées (badges, en-têtes de cartes) ── */
+.luxe-tile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.875rem;
+  box-shadow: 0 8px 18px -10px rgba(15, 23, 42, 0.4);
+}
+
+/* ── Bandeau d'en-tête de page (titre + sous-titre) ── */
+.luxe-header-title {
+  font-size: 1.5rem;
+  line-height: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #0f172a;
+}
+.dark .luxe-header-title { color: #eef2ff; }
+
+/* ── Ligne de séparation ── */
+.luxe-divider { border-color: rgba(226, 232, 240, 1); }
+.dark .luxe-divider { border-color: rgba(56, 76, 128, 0.4); }
+
+/* ── Tableaux (dashboard : derniers séjours) ── */
+.luxe-table th { color: #64748b; }
+.dark .luxe-table th { color: #8fa0c0; }
+.luxe-table tbody tr { border-bottom: 1px solid rgba(241, 245, 249, 1); }
+.luxe-table tbody tr:hover { background: rgba(238, 242, 255, 0.6); }
+.dark .luxe-table tbody tr { border-bottom: 1px solid rgba(56, 76, 128, 0.28); }
+.dark .luxe-table tbody tr:hover { background: rgba(23, 34, 70, 0.5); }
+.luxe-table tbody tr:last-child { border-bottom: 0; }
+
+/* ── Scrollbar sombre ── */
+.dark .shield-scrollbar { scrollbar-color: rgba(88, 112, 168, 0.45) transparent; }
+.dark .shield-scrollbar::-webkit-scrollbar-thumb { background: rgba(88, 112, 168, 0.4); }
+.dark .shield-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(88, 112, 168, 0.6); }
+
+/* ── Boutons de filtre (chips) ── */
+.luxe-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-height: 36px;
+  border-radius: 9999px;
+  padding: 0 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid rgba(203, 213, 225, 1);
+  background: rgba(255, 255, 255, 0.9);
+  color: #475569;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.luxe-chip:hover { background: #f1f5f9; }
+.luxe-chip[aria-pressed='true'] {
+  background: linear-gradient(135deg, #1e3a8a 0%, #16307a 100%);
+  border-color: transparent;
+  color: #ffffff;
+  box-shadow: 0 8px 18px -10px rgba(30, 58, 138, 0.7);
+}
+.dark .luxe-chip {
+  border-color: rgba(56, 76, 128, 0.55);
+  background: rgba(15, 24, 54, 0.9);
+  color: #cbd5e1;
+}
+.dark .luxe-chip:hover { background: rgba(23, 34, 70, 0.95); }
+.dark .luxe-chip[aria-pressed='true'] {
+  background: linear-gradient(135deg, #2456c8 0%, #1d3f9e 100%);
+  color: #ffffff;
+}
+
+/* ── Sidebar « luxe bleuté » : dégradé bleu profond (clair) et
+      bleu nuit (sombre) avec halo doré discret ── */
+.shield-sidebar {
+  background: linear-gradient(180deg, #16307a 0%, #12296a 42%, #0c1c4e 100%);
+}
+.dark .shield-sidebar {
+  background:
+    radial-gradient(420px 240px at 100% 0%, rgba(217, 180, 91, 0.07), transparent 60%),
+    linear-gradient(180deg, #0b1533 0%, #091026 55%, #060b1c 100%);
+}
+
+/* ── Overlay du tiroir mobile en mode sombre ── */
+.dark .shield-overlay { background: rgba(2, 6, 18, 0.72); }

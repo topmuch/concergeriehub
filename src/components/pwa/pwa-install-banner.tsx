@@ -110,10 +110,10 @@ export function PwaInstallBanner({ variant = 'qr-card' }: { variant?: 'qr-card' 
     return (
       <section
         aria-label="Installer l'application Roomscan"
-        className="rounded-2xl border border-blue-100 bg-white p-5 shadow-sm sm:p-6"
+        className="luxe-card p-5 sm:p-6"
       >
         <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-center sm:gap-6">
-          <div className="w-fit shrink-0 rounded-xl border border-blue-100 bg-[#f8fafc] p-3">
+          <div className="w-fit shrink-0 rounded-xl border border-blue-100 bg-white p-3 dark:border-[#283a66] dark:bg-[#f8fafc]">
             <QRCodeSVG
               value={qrUrl}
               size={124}
@@ -124,17 +124,17 @@ export function PwaInstallBanner({ variant = 'qr-card' }: { variant?: 'qr-card' 
             />
           </div>
           <div className="text-center sm:text-left">
-            <p className="text-[10.5px] font-bold uppercase tracking-[0.22em] text-[#1e3a8a]/70">
+            <p className="text-[10.5px] font-bold uppercase tracking-[0.22em] text-[#1e3a8a]/70 dark:text-[#3b82f6]">
               Application mobile
             </p>
-            <h3 className="mt-1 text-base font-bold text-[#1e3a8a] sm:text-lg">
+            <h3 className="mt-1 text-base font-bold text-[#1e3a8a] sm:text-lg dark:text-[#60a5fa]">
               📱 Installez l&apos;application Roomscan
             </h3>
-            <p className="mt-2 text-sm leading-relaxed text-gray-600">
+            <p className="mt-2 text-sm leading-relaxed text-gray-600 dark:text-slate-400">
               Ouvrez l&apos;appareil photo de votre téléphone, scannez ce code, puis touchez
               «&nbsp;Ajouter à l&apos;écran d&apos;accueil&nbsp;».
             </p>
-            <p className="mt-2 text-xs text-gray-500">
+            <p className="mt-2 text-xs text-gray-500 dark:text-slate-500">
               L&apos;app fonctionne même en mauvaise connexion — idéal pour vos interventions
               sur le terrain.
             </p>

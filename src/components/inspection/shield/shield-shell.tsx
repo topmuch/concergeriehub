@@ -1,22 +1,32 @@
 'use client';
 
 // =============================================================
-// BOUCLIER V2 — Shell du dashboard (master prompt client §1) :
-// Sidebar gauche bleu profond bg-[#1e3a8a], texte blanc, icônes
-// Lucide, menu à 8 onglets (Tableau de bord, Ménage à faire,
-// Check-ins, Check-outs, Mes biens, Documents, Bouclier,
-// Abonnement) + section Aide à 4 onglets (Mode d'emploi, FAQ —
-// v4.158 ; Badges de confiance, Application mobile — v4.160).
-// Contenu : fond gris très clair bg-slate-50.
+// ROOMSCAN INVENTAIRE V2 (ex-Bouclier) — Shell du dashboard.
+// v5.0 — refonte « Luxe Bleuté » (demande client) :
+//   · LOGO RoomScan réel (public/brand/roomscan-icon-white.png)
+//     dans la sidebar ET dans les en-têtes (mobile + desktop) ;
+//   · renommage « Bouclier » → « Inventaire » (sidebar, marque,
+//     libellés accessibles) ;
+//   · sidebar dégradé bleu profond (.shield-sidebar) + halo doré
+//     discret en mode sombre — ambiance luxe ;
+//   · MODE SOMBRE / CLAIR : bascule soleil/lune dans la topbar
+//     desktop et le header mobile (theme-toggle.tsx) ;
+//   · contenu : fond dégradé bleuté .shield-page — cartes .luxe-card.
+// Menu à 8 onglets (Tableau de bord, Ménage à faire, Check-ins,
+// Check-outs, Mes biens, Documents, Inventaire, Abonnement) +
+// section Aide à 4 onglets (Mode d'emploi, FAQ — v4.158 ; Badges
+// de confiance, Application mobile — v4.160).
 // Mobile-first : topbar + tiroir latéral animé (framer-motion).
 // =============================================================
 import { useState, type ReactNode } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   Award,
   BookOpen,
+  Boxes,
   Building2,
   CircleHelp,
   CreditCard,
@@ -25,12 +35,12 @@ import {
   LogIn,
   LogOut,
   Menu,
-  ShieldCheck,
   Smartphone,
   SprayCan,
   X,
 } from 'lucide-react';
 import { ShieldBell } from './shield-bell';
+import { ThemeToggle } from './theme-toggle';
 
 export interface ShieldUser {
   name: string | null;
@@ -46,11 +56,11 @@ const MENU: ShieldMenuItem[] = [
   { href: '/inspection/check-outs', label: 'Check-outs', icon: LogOut },
   { href: '/inspection/biens', label: 'Mes biens', icon: Building2 },
   { href: '/inspection/documents', label: 'Documents', icon: FileText },
-  { href: '/inspection/bouclier', label: 'Bouclier', icon: ShieldCheck },
+  { href: '/inspection/bouclier', label: 'Inventaire', icon: Boxes },
   { href: '/inspection/abonnement', label: 'Abonnement', icon: CreditCard },
 ];
 
-// v4.158 — section Aide du dashboard Bouclier : même contenu que le
+// v4.158 — section Aide du dashboard Inventaire : même contenu que le
 // groupe Aide du dashboard hôte (Task 42-c). Pages sous la garde du
 // layout (shield) — session + entitlement EDL obligatoires.
 // v4.160 — 2 onglets ajoutés SOUS « FAQ » à la demande utilisateur :
@@ -62,6 +72,9 @@ const HELP_MENU: ShieldMenuItem[] = [
   { href: '/inspection/badges', label: 'Badges de confiance', icon: Award },
   { href: '/inspection/application', label: 'Application mobile', icon: Smartphone },
 ];
+
+// Logo RoomScan (marque réelle, demande client v5.0 — header).
+const LOGO = '/brand/roomscan-icon-white.png';
 
 export function ShieldShell({
   user,
@@ -86,13 +99,15 @@ export function ShieldShell({
         onClick={() => setOpen(false)}
         aria-current={active ? 'page' : undefined}
         className={`relative flex min-h-[44px] items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors ${
-          active ? 'bg-white/15 text-white' : 'text-blue-100 hover:bg-white/10 hover:text-white'
+          active
+            ? 'bg-white/15 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]'
+            : 'text-blue-100 hover:bg-white/10 hover:text-white'
         }`}
       >
         {active && (
           <span
             aria-hidden="true"
-            className="absolute inset-y-1.5 left-0 w-1 rounded-full bg-[#C41E3A]"
+            className="absolute inset-y-1.5 left-0 w-1 rounded-full bg-gradient-to-b from-[#ff5a76] to-[#C41E3A]"
           />
         )}
         <Icon className="h-[18px] w-[18px] shrink-0" aria-hidden="true" />
@@ -102,9 +117,9 @@ export function ShieldShell({
   };
 
   const nav = (
-    <nav aria-label="Bouclier — navigation principale" className="flex-1 space-y-1 px-3 py-4">
+    <nav aria-label="RoomScan Inventaire — navigation principale" className="flex-1 space-y-1 overflow-y-auto px-3 py-4 shield-scrollbar">
       {MENU.map(renderItem)}
-      {/* v4.158 — section Aide : séparateur + libellé + 2 onglets */}
+      {/* v4.158 — section Aide : séparateur + libellé + 4 onglets */}
       <div aria-hidden="true" className="mx-1 my-2 border-t border-white/10" />
       <p className="px-3 pb-1 text-[10px] font-bold uppercase tracking-[0.24em] text-blue-200">
         Aide
@@ -113,16 +128,22 @@ export function ShieldShell({
     </nav>
   );
 
+  // v5.0 — marque : VRAI logo RoomScan (tuile blanche) + nom produit
+  // renommé « RoomScan Inventaire ».
   const brand = (
     <div className="flex items-center gap-3 border-b border-white/10 px-5 py-4">
-      <span
-        aria-hidden="true"
-        className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#C41E3A] text-white shadow-md"
-      >
-        <ShieldCheck className="h-5 w-5" />
+      <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white shadow-md ring-1 ring-black/5">
+        <Image
+          src={LOGO}
+          alt="Logo RoomScan"
+          width={40}
+          height={40}
+          className="h-10 w-10 object-contain p-0.5"
+          priority
+        />
       </span>
-      <div>
-        <p className="text-sm font-bold tracking-tight text-white">RoomScan Bouclier</p>
+      <div className="min-w-0">
+        <p className="truncate text-sm font-bold tracking-tight text-white">RoomScan Inventaire</p>
         <p className="text-[11px] uppercase tracking-wider text-blue-200">États des lieux V2</p>
       </div>
     </div>
@@ -142,16 +163,16 @@ export function ShieldShell({
   );
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen">
       {/* ── Sidebar desktop ── */}
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col bg-[#1e3a8a] shadow-xl lg:flex">
+      <aside className="shield-sidebar fixed inset-y-0 left-0 z-40 hidden w-64 flex-col shadow-xl lg:flex">
         {brand}
         {nav}
         {userBlock}
       </aside>
 
       {/* ── Topbar mobile ── */}
-      <header className="sticky top-0 z-40 flex h-14 items-center justify-between bg-[#1e3a8a] px-4 lg:hidden">
+      <header className="shield-sidebar sticky top-0 z-40 flex h-14 items-center justify-between px-4 lg:hidden">
         <button
           type="button"
           onClick={() => setOpen(true)}
@@ -161,16 +182,16 @@ export function ShieldShell({
         >
           <Menu className="h-6 w-6" aria-hidden="true" />
         </button>
-        <p className="text-sm font-bold text-white">RoomScan Bouclier</p>
-        <div className="flex items-center gap-1">
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white shadow-sm">
+            <Image src={LOGO} alt="Logo RoomScan" width={28} height={28} className="h-7 w-7 object-contain p-0.5" />
+          </span>
+          <p className="truncate text-sm font-bold text-white">RoomScan Inventaire</p>
+        </div>
+        <div className="flex items-center gap-0.5">
+          <ThemeToggle variant="dark" />
           {/* v4.167 — cloche de notifications (Problème 12) */}
           <ShieldBell variant="dark" />
-          <span
-            aria-hidden="true"
-            className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#C41E3A] text-white"
-          >
-            <ShieldCheck className="h-4 w-4" />
-          </span>
         </div>
       </header>
 
@@ -185,15 +206,15 @@ export function ShieldShell({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setOpen(false)}
-              className="fixed inset-0 z-40 bg-slate-900/50 lg:hidden"
+              className="shield-overlay fixed inset-0 z-40 bg-slate-900/50 lg:hidden"
             />
             <motion.aside
               initial={{ x: -300 }}
               animate={{ x: 0 }}
               exit={{ x: -300 }}
               transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-              className="fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col bg-[#1e3a8a] shadow-2xl lg:hidden"
-              aria-label="Menu Bouclier"
+              className="shield-sidebar fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col shadow-2xl lg:hidden"
+              aria-label="Menu Inventaire"
             >
               <div className="flex items-center justify-between border-b border-white/10 pr-3">
                 <div className="flex-1">{brand}</div>
@@ -215,12 +236,25 @@ export function ShieldShell({
 
       {/* ── Contenu ── */}
       <div className="lg:ml-64">
-        {/* v4.167 — topbar desktop : cloche de notifications en haut à
-            droite (Problème 12), visible sur toutes les pages. */}
-        <div className="sticky top-0 z-30 hidden h-14 items-center justify-end border-b border-slate-200 bg-white/90 px-6 backdrop-blur lg:flex">
-          <ShieldBell variant="light" />
+        {/* v5.0 — topbar desktop : LOGO + nom produit à gauche,
+            bascule thème + cloche de notifications à droite.
+            Fond translucide adapté au dégradé de page (clair/sombre). */}
+        <div className="sticky top-0 z-30 hidden h-14 items-center justify-between border-b border-slate-200/70 bg-white/70 px-6 backdrop-blur-md dark:border-[#22305a] dark:bg-[#0a1226]/70 lg:flex">
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-black/5 dark:ring-white/10">
+              <Image src={LOGO} alt="Logo RoomScan" width={32} height={32} className="h-8 w-8 object-contain p-0.5" />
+            </span>
+            <span className="text-sm font-bold tracking-tight text-slate-900 dark:text-slate-100">
+              RoomScan <span className="text-[#C41E3A] dark:text-[#ff5a76]">Inventaire</span>
+            </span>
+          </div>
+          <div className="flex items-center gap-0.5">
+            <ThemeToggle variant="light" />
+            <ShieldBell variant="light" />
+          </div>
         </div>
-        <main className="min-h-[calc(100vh-3.5rem)]">{children}</main>
+        {/* v5.0 — fond de page dégradé « bleuté luxe » (clair & sombre) */}
+        <main className="shield-page min-h-[calc(100vh-3.5rem)]">{children}</main>
       </div>
     </div>
   );

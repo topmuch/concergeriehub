@@ -95,14 +95,14 @@ export function ShieldBadgesContent() {
       {/* ── Chargement ── */}
       {!properties && !error && (
         <div className="flex min-h-[30vh] items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-[#1e3a8a]" aria-label="Chargement" />
+          <Loader2 className="h-8 w-8 animate-spin text-[#1e3a8a] dark:text-[#3b82f6]" aria-label="Chargement" />
         </div>
       )}
 
       {/* ── Aucun logement → repiquer vers l'onboarding ── */}
       {properties && properties.length === 0 && (
         <ShieldCard className="p-8 text-center">
-          <Award className="mx-auto h-10 w-10 text-slate-300" aria-hidden="true" />
+          <Award className="mx-auto h-10 w-10 text-slate-300 dark:text-slate-600" aria-hidden="true" />
           <p className="mt-3 text-sm text-slate-600">
             Onboarder votre premier bien pour générer vos badges de confiance.
           </p>
@@ -127,7 +127,7 @@ export function ShieldBadgesContent() {
                 <button
                   type="button"
                   onClick={() => setTarget(p)}
-                  className="group flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm transition-colors hover:border-[#C41E3A]/40 hover:bg-slate-50/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C41E3A]"
+                  className="group flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm dark:bg-[#0d1530]/90 dark:border-[#22305a] transition-colors hover:border-[#C41E3A]/40 hover:bg-slate-50/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C41E3A]"
                 >
                   <span
                     aria-hidden="true"
@@ -160,7 +160,7 @@ export function ShieldBadgesContent() {
           <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-[#1e3a8a]" aria-hidden="true" />
           <p className="text-xs leading-relaxed text-slate-500">
             Le QR de chaque badge affiche la page publique de vérification du logement : statut
-            Bouclier, référence d&apos;onboarding et derniers contrôles photo/vidéo — aucune donnée
+            Inventaire, référence d&apos;onboarding et derniers contrôles photo/vidéo — aucune donnée
             sensible (adresse exacte, coordonnées) n&apos;est jamais exposée.
           </p>
         </ShieldCard>

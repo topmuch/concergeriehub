@@ -392,7 +392,7 @@ export default function CleanerCapture({ data }: { data: CleanerSessionView }) {
       <header className="border-b border-gray-200 bg-white px-4 py-3 sm:px-6">
         <div className="mx-auto flex max-w-2xl flex-wrap items-center gap-2.5">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-[#1e3a8a] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-white">
-            <ShieldCheck className="size-3.5" aria-hidden="true" /> Bouclier
+            <ShieldCheck className="size-3.5" aria-hidden="true" /> Inventaire
           </span>
           <span
             className={cn(

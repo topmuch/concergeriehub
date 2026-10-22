@@ -3,8 +3,8 @@ import { ShieldSubscription } from '@/components/inspection/shield/shield-subscr
 
 // BOUCLIER V2 — Onglet 8 : Abonnement (plan + formules).
 export const metadata: Metadata = {
-  title: 'Bouclier — Abonnement | RoomScan',
-  description: 'Votre protection Bouclier : plan actuel, jours restants et formules 299 € / 499 €.',
+  title: 'Inventaire — Abonnement | RoomScan',
+  description: 'Votre protection Inventaire : plan actuel, jours restants et formules 299 € / 499 €.',
 };
 
 export default function ShieldAbonnementPage() {

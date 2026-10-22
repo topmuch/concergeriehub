@@ -30,7 +30,7 @@ interface FaqEntry {
 
 const FAQ_ITEMS: FaqEntry[] = [
   {
-    q: 'Qu’est-ce que le Bouclier RoomScan ?',
+    q: 'Qu’est-ce que l’Inventaire RoomScan ?',
     a: 'C’est un état des lieux photo automatisé : les pièces sont photographiées à l’entrée et à la sortie, comparées par l’IA, puis le séjour est certifié par un PDF scellé. Fini les désaccords sur l’origine des dégradations.',
   },
   {
@@ -81,19 +81,19 @@ const fadeUp = {
 export function FaqContent() {
   return (
     // Bande claire pleine largeur : neutralise le fond du shell pour un
-    // rendu theme clair premium independant du toggle de theme.
-    <div className="-m-4 min-h-[calc(100vh-4rem)] bg-[#f8fafc] p-4 pb-10 sm:-m-6 sm:p-6 sm:pb-12">
+    // rendu theme premium independant (clair + sombre v5.0).
+    <div className="-m-4 min-h-[calc(100vh-4rem)] bg-[#f8fafc] p-4 pb-10 dark:bg-[#070c1c] sm:-m-6 sm:p-6 sm:pb-12">
       <div className="mx-auto w-full max-w-3xl">
         {/* ---------- En-tete de page ---------- */}
         <motion.header {...fadeUp}>
-          <p className="text-[10.5px] font-bold uppercase tracking-[0.24em] text-[#C41E3A]">
+          <p className="text-[10.5px] font-bold uppercase tracking-[0.24em] text-[#C41E3A] dark:text-[#ff5a76]">
             Espace Hôte — Aide
           </p>
-          <h1 className="mt-1.5 text-2xl font-bold tracking-tight text-gray-900 sm:text-[26px]">
+          <h1 className="mt-1.5 text-2xl font-bold tracking-tight text-gray-900 dark:text-slate-100 sm:text-[26px]">
             Questions fréquentes
           </h1>
-          <p className="mt-1.5 max-w-2xl text-sm text-gray-500">
-            Tout ce qu’il faut savoir sur le Bouclier RoomScan : photos
+          <p className="mt-1.5 max-w-2xl text-sm text-gray-500 dark:text-slate-400">
+            Tout ce qu’il faut savoir sur l’Inventaire RoomScan : photos
             sécurisées, connexion, ménage vérifié, certificat et litiges.
           </p>
         </motion.header>
@@ -102,20 +102,20 @@ export function FaqContent() {
         <motion.div
           {...fadeUp}
           transition={{ ...fadeUp.transition, delay: 0.05 }}
-          className="mt-6 rounded-2xl border border-gray-200 bg-white p-2 shadow-sm sm:p-4"
+          className="mt-6 rounded-2xl border border-gray-200 bg-white p-2 shadow-sm dark:border-[#22305a] dark:bg-[#0d1530]/90 sm:p-4"
         >
           <Accordion type="single" collapsible className="w-full">
             {FAQ_ITEMS.map((item, index) => (
               <AccordionItem
                 key={item.q}
                 value={`faq-${index + 1}`}
-                className="border-gray-200"
+                className="border-gray-200 dark:border-[#1a2749]"
               >
-                <AccordionTrigger className="min-h-[44px] gap-3 rounded-xl px-3 py-4 text-left text-[15px] font-semibold text-gray-900 hover:no-underline hover:text-[#1e3a8a] sm:px-4 [&>svg]:shrink-0 [&>svg]:text-[#1e3a8a]">
+                <AccordionTrigger className="min-h-[44px] gap-3 rounded-xl px-3 py-4 text-left text-[15px] font-semibold text-gray-900 hover:no-underline hover:text-[#1e3a8a] dark:text-slate-100 dark:hover:text-[#60a5fa] sm:px-4 [&>svg]:shrink-0 [&>svg]:text-[#1e3a8a] dark:[&>svg]:text-[#60a5fa]">
                   <span className="flex items-start gap-3">
                     <span
                       aria-hidden="true"
-                      className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-50 text-xs font-bold text-[#1e3a8a]"
+                      className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-50 text-xs font-bold text-[#1e3a8a] dark:bg-[#2f6fed]/20 dark:text-[#60a5fa]"
                     >
                       {index + 1}
                     </span>
@@ -123,7 +123,7 @@ export function FaqContent() {
                   </span>
                 </AccordionTrigger>
                 <AccordionContent className="px-3 pb-4 pt-0 sm:pl-[52px] sm:pr-4">
-                  <p className="max-w-2xl text-sm leading-relaxed text-gray-600">
+                  <p className="max-w-2xl text-sm leading-relaxed text-gray-600 dark:text-slate-400">
                     {item.a}
                   </p>
                 </AccordionContent>
@@ -137,21 +137,21 @@ export function FaqContent() {
           {...fadeUp}
           transition={{ ...fadeUp.transition, delay: 0.1 }}
           href="mailto:support@roomscan.pro"
-          className="mt-6 flex min-h-[64px] items-center gap-3.5 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm transition-colors hover:border-blue-200 hover:bg-blue-50/40 sm:px-5"
+          className="mt-6 flex min-h-[64px] items-center gap-3.5 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm transition-colors hover:border-blue-200 hover:bg-blue-50/40 dark:border-[#22305a] dark:bg-[#0d1530]/90 dark:hover:border-[#2f6fed]/40 dark:hover:bg-[#13204a] sm:px-5"
         >
           <span
             aria-hidden="true"
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#1e3a8a] text-white shadow-sm"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#1e3a8a] to-[#2f6fed] text-white shadow-sm"
           >
             <Mail className="h-4 w-4" />
           </span>
           <span className="min-w-0">
-            <span className="block text-sm font-semibold text-gray-900">
+            <span className="block text-sm font-semibold text-gray-900 dark:text-slate-100">
               Une autre question ?
             </span>
-            <span className="block text-sm text-gray-500">
+            <span className="block text-sm text-gray-500 dark:text-slate-400">
               Écrivez à{' '}
-              <span className="font-mono text-[13px] font-semibold text-[#1e3a8a]">
+              <span className="font-mono text-[13px] font-semibold text-[#1e3a8a] dark:text-[#60a5fa]">
                 support@roomscan.pro
               </span>{' '}
               — réponse sous 24 h ouvrées.

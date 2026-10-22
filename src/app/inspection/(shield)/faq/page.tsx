@@ -7,9 +7,9 @@ import { FaqContent } from '@/components/airbnb/host/faq-content';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'FAQ — Bouclier | RoomScan',
+  title: 'FAQ — Inventaire | RoomScan',
   description:
-    'Questions fréquentes sur le Bouclier RoomScan : photos sécurisées, connexion, ménage vérifié, certificat anti-dégâts et support.',
+    'Questions fréquentes sur l’Inventaire RoomScan : photos sécurisées, connexion, ménage vérifié, certificat anti-dégâts et support.',
 };
 
 // v4.158 — onglet « FAQ » du dashboard Bouclier

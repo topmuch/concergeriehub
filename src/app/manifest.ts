@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next';
 
 // =============================================================
-// PWA (Task 42-a) — Manifest Web App « Roomscan Bouclier »
+// PWA (Task 42-a) — Manifest Web App « Roomscan Inventaire »
 //
 // Servi par Next sur /manifest.webmanifest (convention App Router).
 // Référencé depuis src/app/layout.tsx (metadata.manifest).
@@ -13,7 +13,7 @@ import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Roomscan Bouclier',
+    name: 'Roomscan Inventaire',
     short_name: 'Roomscan',
     description:
       'Roomscan — interventions de ménage, captures photo/vidéo et vérification des logements, même en mauvaise connexion.',

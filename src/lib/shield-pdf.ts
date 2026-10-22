@@ -828,7 +828,7 @@ export async function renderShieldOnboardingPdf(data: ShieldOnboardingPdfData): 
     margin: MARGIN,
     bufferPages: true,
     info: {
-      Title: 'Onboarding une fois — Roomscan Bouclier',
+      Title: 'Onboarding une fois — Roomscan Inventaire',
       Author: 'RoomScan',
       Subject: `Certificat d'onboarding ${data?.property?.onboardingRef ?? ''}`.trim(),
     },
@@ -1386,7 +1386,7 @@ function drawVideoPendingBox(doc: PdfDoc, fontsOk: boolean): void {
 /** Mentions légales grises, positionnées juste au-dessus du pied noir. */
 function drawLegalMentions(doc: PdfDoc, fontsOk: boolean): void {
   const text =
-    'Mentions légales : Ce document est généré automatiquement par Roomscan Bouclier. ' +
+    'Mentions légales : Ce document est généré automatiquement par Roomscan Inventaire. ' +
     'Les données sont conservées 12 mois conformément à la réglementation en vigueur. ' +
     'Toute contestation sous 48h via support@roomscan.pro. Signature numérique: VERIFIED';
   const bodyFont = fname('body', fontsOk);
@@ -1408,8 +1408,8 @@ export async function renderShieldSessionPdf(data: ShieldSessionPdfData): Promis
     bufferPages: true,
     info: {
       Title: isOut
-        ? 'Rapport de sortie — comparatif entrée/sortie (Roomscan Bouclier)'
-        : "Attestation d'état des lieux d'entrée (Roomscan Bouclier)",
+        ? 'Rapport de sortie — comparatif entrée/sortie (Roomscan Inventaire)'
+        : "Attestation d'état des lieux d'entrée (Roomscan Inventaire)",
       Author: 'RoomScan',
       Subject: `Dossier certifié ${String(data?.session?.sessionRef || '')}`.trim(),
     },

@@ -28,8 +28,8 @@ export async function generateMetadata({
   const session = await loadCleanerSession(token);
   return {
     title: session
-      ? `Intervention Bouclier — ${session.propertyName}`
-      : 'Intervention Bouclier — lien invalide',
+      ? `Intervention Inventaire — ${session.propertyName}`
+      : 'Intervention Inventaire — lien invalide',
     robots: { index: false, follow: false },
   };
 }
@@ -63,7 +63,7 @@ function SoberScreen({
         <h1 className="mt-4 text-xl font-bold text-zinc-900">{title}</h1>
         <div className="mt-2 text-sm leading-relaxed text-zinc-500">{children}</div>
         <p className="mt-6 text-xs font-semibold uppercase tracking-widest text-zinc-400">
-          RoomScan · Bouclier
+          RoomScan · Inventaire
         </p>
       </section>
     </main>

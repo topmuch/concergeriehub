@@ -117,7 +117,7 @@ export function ShieldOnboarding({ sessionName, onDone }: ShieldOnboardingProps)
       if (!res.ok || !json?.ok || !json.property) {
         if (res.status === 403 && json?.error === 'abonnement_requis') {
           setSubRequired(true);
-          setInlineError(json.message ?? 'Abonnement requis pour lancer le Bouclier.');
+          setInlineError(json.message ?? 'Abonnement requis pour lancer l\'Inventaire.');
           return;
         }
         const msg = json?.message ?? json?.error ?? `Verrouillage impossible (HTTP ${res.status}).`;
@@ -126,7 +126,7 @@ export function ShieldOnboarding({ sessionName, onDone }: ShieldOnboardingProps)
         return;
       }
       setCreated(json.property);
-      toast.success('Bibliothèque verrouillée — le Bouclier est actif.');
+      toast.success('Bibliothèque verrouillée — l\'Inventaire est actif.');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch {
       const msg = 'Verrouillage impossible — vérifiez votre connexion puis réessayez.';
@@ -164,9 +164,9 @@ export function ShieldOnboarding({ sessionName, onDone }: ShieldOnboardingProps)
           type="button"
           onClick={() => onDone(created.id, created.onboardingRef)}
           className="min-h-[44px] rounded-full bg-[#C21F26] px-6 font-bold text-white hover:bg-[#a81a20]"
-          aria-label="Accéder au tableau de bord Bouclier"
+          aria-label="Accéder au tableau de bord Inventaire"
         >
-          Accéder au Bouclier →
+          Accéder à l&apos;Inventaire →
         </Button>
       </div>
     );
@@ -177,7 +177,7 @@ export function ShieldOnboarding({ sessionName, onDone }: ShieldOnboardingProps)
     <div className="mx-auto w-full max-w-3xl">
       {/* En-tête + fil d'étapes */}
       <div className="text-center">
-        <p className="lux-eyebrow text-[#f87171]">Bouclier automatisé — configuration unique</p>
+        <p className="lux-eyebrow text-[#f87171]">Inventaire automatisé — configuration unique</p>
         <h1 className="lux-display mt-1 text-2xl font-semibold text-white sm:text-3xl">
           Onboarding — 10 minutes, une seule fois
         </h1>

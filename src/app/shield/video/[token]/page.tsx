@@ -5,7 +5,7 @@ import { db } from '@/lib/db';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Preuve vidéo — Roomscan Bouclier',
+  title: 'Preuve vidéo — Roomscan Inventaire',
   description:
     'Vidéo walkthrough certifiée SHA-256 — preuve de re-validation globale de la bibliothèque de référence.',
   robots: { index: false, follow: false },
@@ -183,7 +183,7 @@ export default async function ShieldVideoPage({
 
         <footer className="rounded-xl bg-black/40 px-4 py-3 text-center">
           <p className="text-[11px] text-white/60">
-            Document automatisé <span className="font-bold text-white/85">Roomscan Bouclier</span> ·
+            Document automatisé <span className="font-bold text-white/85">Roomscan Inventaire</span> ·
             Conforme RGPD · Toute contestation sous 48 h
           </p>
         </footer>

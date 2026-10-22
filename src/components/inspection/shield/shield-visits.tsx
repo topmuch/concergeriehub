@@ -34,6 +34,7 @@ import {
   formatDateTime,
   formatMoney,
   GhostButton,
+  PageHeader,
   RedButton,
   ShieldCard,
   StatusBadge,
@@ -86,7 +87,7 @@ interface CreatedSession {
 }
 
 const inputClass =
-  'min-h-[44px] w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#1e3a8a] focus:outline-none focus:ring-2 focus:ring-[#1e3a8a]/20 dark:border-slate-200 dark:bg-white dark:text-slate-900';
+  'luxe-input w-full px-3';
 
 function toDatetimeLocal(d: Date): string {
   const pad = (n: number) => String(n).padStart(2, '0');
@@ -276,23 +277,24 @@ export function ShieldVisits() {
   return (
     <div className="mx-auto w-full max-w-7xl space-y-5 p-4 sm:p-6">
       {/* ── En-tête + GROS bouton ── */}
-      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">Ménage à faire</h1>
-          <p className="mt-0.5 text-sm text-slate-500">
-            {visits === null
-              ? 'Chargement…'
-              : `${visits.length} séjour${visits.length > 1 ? 's' : ''} planifié${visits.length > 1 ? 's' : ''}${enRetard > 0 ? ` — ${enRetard} en retard 🔴` : ''}`}
-          </p>
-        </div>
-        <RedButton onClick={() => { setFormOpen(true); setCreated(null); setFormError(null); }}>
-          <Plus className="h-5 w-5" aria-hidden="true" />
-          Nouveau Séjour
-        </RedButton>
-      </div>
+      <PageHeader
+        icon={<CalendarDays className="h-5 w-5" />}
+        title="Ménage à faire"
+        subtitle={
+          visits === null
+            ? 'Chargement…'
+            : `${visits.length} séjour${visits.length > 1 ? 's' : ''} planifié${visits.length > 1 ? 's' : ''}${enRetard > 0 ? ` — ${enRetard} en retard 🔴` : ''}`
+        }
+        actions={
+          <RedButton onClick={() => { setFormOpen(true); setCreated(null); setFormError(null); }}>
+            <Plus className="h-5 w-5" aria-hidden="true" />
+            Nouveau Séjour
+          </RedButton>
+        }
+      />
 
       {error && (
-        <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300">
           <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
           {error}
         </div>
@@ -306,12 +308,12 @@ export function ShieldVisits() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
           >
-            <ShieldCard className="border-emerald-200 bg-emerald-50/60 p-4 sm:p-5">
-              <p className="flex items-center gap-2 text-sm font-semibold text-emerald-800">
+            <ShieldCard className="border-emerald-200 bg-emerald-50/60 p-4 dark:border-emerald-500/30 dark:bg-emerald-500/10 sm:p-5">
+              <p className="flex items-center gap-2 text-sm font-semibold text-emerald-800 dark:text-emerald-300">
                 <Check className="h-4 w-4" aria-hidden="true" />
                 Séjour créé — 2 sessions planifiées
               </p>
-              <p className="mt-1 text-xs text-emerald-700">
+              <p className="mt-1 text-xs text-emerald-700 dark:text-emerald-400/90">
                 Les liens de capture de votre cleaner sont générés ci-dessous —
                 partagez-les en un clic ou ouvrez-les pour vérifier.
               </p>
@@ -321,9 +323,9 @@ export function ShieldVisits() {
                   return (
                     <li
                       key={c.sessionRef}
-                      className="rounded-xl border border-emerald-200 bg-white p-3"
+                      className="rounded-xl border border-emerald-200 bg-white p-3 dark:border-emerald-500/30 dark:bg-[#0d1530]/90"
                     >
-                      <p className="flex flex-wrap items-center gap-2 text-sm font-semibold text-emerald-900">
+                      <p className="flex flex-wrap items-center gap-2 text-sm font-semibold text-emerald-900 dark:text-emerald-200">
                         {c.type === 'CHECK_IN' ? (
                           <LogIn className="h-3.5 w-3.5" aria-hidden="true" />
                         ) : (
@@ -340,7 +342,7 @@ export function ShieldVisits() {
                       {url ? (
                         <>
                           <p
-                            className="mt-2 break-all rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 font-mono text-[11px] text-slate-600"
+                            className="mt-2 break-all rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 font-mono text-[11px] text-slate-600 dark:border-[#283a66] dark:bg-[#091024] dark:text-slate-300"
                             aria-label="Lien cleaner public"
                           >
                             {url}
@@ -349,7 +351,7 @@ export function ShieldVisits() {
                             <button
                               type="button"
                               onClick={() => shareWhatsApp(c)}
-                              className="inline-flex min-h-[40px] items-center gap-1.5 rounded-lg border border-emerald-300 bg-emerald-50 px-3 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-100"
+                              className="luxe-btn-whatsapp"
                               aria-label="Partager le lien cleaner par WhatsApp"
                             >
                               <MessageCircle className="h-3.5 w-3.5" aria-hidden="true" /> WhatsApp
@@ -357,7 +359,7 @@ export function ShieldVisits() {
                             <button
                               type="button"
                               onClick={() => shareEmail(c)}
-                              className="inline-flex min-h-[40px] items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+                              className="luxe-btn-mail"
                               aria-label="Partager le lien cleaner par email"
                             >
                               <Mail className="h-3.5 w-3.5" aria-hidden="true" /> Email
@@ -366,7 +368,7 @@ export function ShieldVisits() {
                               href={url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex min-h-[40px] items-center gap-1.5 rounded-lg bg-[#1e3a8a] px-3 text-xs font-semibold text-white transition-colors hover:bg-[#15295e]"
+                              className="luxe-btn-primary min-h-[40px] px-3 text-xs"
                               aria-label="Ouvrir le lien public de capture"
                             >
                               <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" /> Ouvrir le lien
@@ -375,11 +377,11 @@ export function ShieldVisits() {
                             <button
                               type="button"
                               onClick={() => copyLink(c.publicToken)}
-                              className="inline-flex min-h-[40px] items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+                              className="luxe-btn-mail"
                               aria-label="Copier le lien cleaner"
                             >
                               {copied === c.publicToken ? (
-                                <Check className="h-3.5 w-3.5 text-emerald-600" aria-hidden="true" />
+                                <Check className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
                               ) : (
                                 <Copy className="h-3.5 w-3.5" aria-hidden="true" />
                               )}
@@ -423,11 +425,7 @@ export function ShieldVisits() {
                 type="button"
                 onClick={() => setFilter(f.key)}
                 aria-pressed={active}
-                className={`inline-flex min-h-[36px] items-center gap-1.5 rounded-full px-3 text-xs font-semibold transition-colors ${
-                  active
-                    ? 'bg-[#1e3a8a] text-white'
-                    : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
-                }`}
+                className="luxe-chip"
               >
                 {f.label}
                 {count !== null && count > 0 && (
@@ -437,7 +435,7 @@ export function ShieldVisits() {
                         ? 'bg-red-500 text-white'
                         : active
                           ? 'bg-white/20 text-white'
-                          : 'bg-slate-100 text-slate-500'
+                          : 'bg-slate-100 text-slate-500 dark:bg-[#22305a] dark:text-slate-300'
                     }`}
                   >
                     {count}
@@ -452,13 +450,13 @@ export function ShieldVisits() {
       {/* ── Liste des séjours planifiés ── */}
       {visits === null ? (
         <div className="flex min-h-[40vh] items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-[#1e3a8a]" aria-label="Chargement" />
+          <Loader2 className="h-8 w-8 animate-spin text-[#1e3a8a] dark:text-[#3b82f6]" aria-label="Chargement" />
         </div>
       ) : visits.length === 0 ? (
         <ShieldCard className="p-8 text-center sm:p-12">
-          <CalendarDays className="mx-auto h-12 w-12 text-slate-300" aria-hidden="true" />
-          <h2 className="mt-4 text-lg font-semibold text-slate-900">Aucun séjour planifié</h2>
-          <p className="mx-auto mt-1 max-w-md text-sm text-slate-500">
+          <CalendarDays className="mx-auto h-12 w-12 text-slate-300 dark:text-slate-600" aria-hidden="true" />
+          <h2 className="mt-4 text-lg font-semibold text-slate-900 dark:text-slate-100">Aucun séjour planifié</h2>
+          <p className="mx-auto mt-1 max-w-md text-sm text-slate-500 dark:text-slate-400">
             Créez votre premier séjour : le check-in et le check-out seront planifiés automatiquement,
             avec un lien magique pour votre cleaner.
           </p>
@@ -468,9 +466,9 @@ export function ShieldVisits() {
           </RedButton>
         </ShieldCard>
       ) : filteredVisits !== null && filteredVisits.length === 0 ? (
-        <ShieldCard className="p-6 text-center text-sm text-slate-500">
+        <ShieldCard className="p-6 text-center text-sm text-slate-500 dark:text-slate-400">
           Aucun séjour dans ce filtre —{' '}
-          <button type="button" onClick={() => setFilter('TOUS')} className="font-semibold text-[#C41E3A] underline underline-offset-2">
+          <button type="button" onClick={() => setFilter('TOUS')} className="font-semibold text-[#C41E3A] underline underline-offset-2 dark:text-[#ff5a76]">
             voir tous les séjours
           </button>
           .
@@ -482,14 +480,16 @@ export function ShieldVisits() {
             return (
             <ShieldCard
               key={v.id}
-              className={`p-4 ${late ? 'border-red-200 bg-red-50/50 ring-1 ring-red-100' : ''}`}
+              className={`p-4 transition-shadow hover:shadow-lg ${late ? 'border-red-200 bg-red-50/50 ring-1 ring-red-100 dark:border-red-500/30 dark:bg-red-500/10 dark:ring-red-500/20' : ''}`}
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <span
                       className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${
-                        v.type === 'CHECK_IN' ? 'bg-blue-50 text-blue-700' : 'bg-rose-50 text-rose-700'
+                        v.type === 'CHECK_IN'
+                          ? 'bg-blue-50 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300'
+                          : 'bg-rose-50 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300'
                       }`}
                     >
                       {v.type === 'CHECK_IN' ? (
@@ -502,21 +502,21 @@ export function ShieldVisits() {
                     <StatusBadge status={v.effectiveStatus} />
                     <span className="font-mono text-[11px] text-slate-400">{v.sessionRef}</span>
                   </div>
-                  <p className="mt-2 text-sm font-semibold text-slate-900">
-                    {v.guestName ?? 'Invité'} <span className="font-normal text-slate-500">— {v.property.propertyName}</span>
+                  <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                    {v.guestName ?? 'Invité'} <span className="font-normal text-slate-500 dark:text-slate-400">— {v.property.propertyName}</span>
                   </p>
                   {/* v4.167 — email de l'invité (Problème 4) : l'hôte en a
                       souvent besoin pour communiquer directement. */}
                   {v.guestEmail && (
-                    <p className="mt-0.5 flex items-center gap-1 text-xs text-slate-500">
+                    <p className="mt-0.5 flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
                       <Mail className="h-3 w-3 shrink-0" aria-hidden="true" />
-                      <a href={`mailto:${v.guestEmail}`} className="truncate hover:text-[#1e3a8a] hover:underline">
+                      <a href={`mailto:${v.guestEmail}`} className="truncate hover:text-[#1e3a8a] hover:underline dark:hover:text-[#3b82f6]">
                         {v.guestEmail}
                       </a>
                     </p>
                   )}
-                  <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
-                    <span className={`inline-flex items-center gap-1 ${late ? 'font-semibold text-red-600' : ''}`}>
+                  <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
+                    <span className={`inline-flex items-center gap-1 ${late ? 'font-semibold text-red-600 dark:text-red-400' : ''}`}>
                       <CalendarDays className="h-3.5 w-3.5" aria-hidden="true" />
                       Prévu le {formatDateTime(v.scheduledDate)}
                     </span>
@@ -551,7 +551,7 @@ export function ShieldVisits() {
                     type="button"
                     onClick={() => cancel(v)}
                     disabled={busy}
-                    className="inline-flex min-h-[40px] items-center gap-1.5 rounded-xl border border-red-200 bg-white px-3 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50"
+                    className="luxe-btn-danger"
                   >
                     <X className="h-3.5 w-3.5" aria-hidden="true" />
                     Annuler
@@ -572,7 +572,7 @@ export function ShieldVisits() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 bg-slate-900/50"
+              className="shield-overlay fixed inset-0 z-50 bg-slate-900/50"
               onClick={() => !busy && setFormOpen(false)}
               aria-hidden="true"
             />
@@ -588,8 +588,8 @@ export function ShieldVisits() {
               <ShieldCard className="max-h-[88vh] overflow-y-auto p-5 shield-scrollbar sm:p-6">
                 <div className="flex items-start justify-between">
                   <div>
-                    <h2 className="text-lg font-bold tracking-tight text-slate-900">Nouveau Séjour</h2>
-                    <p className="mt-0.5 text-sm text-slate-500">
+                    <h2 className="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100">Nouveau Séjour</h2>
+                    <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
                       Check-in + check-out planifiés automatiquement.
                     </p>
                   </div>
@@ -597,7 +597,7 @@ export function ShieldVisits() {
                     type="button"
                     onClick={() => !busy && setFormOpen(false)}
                     aria-label="Fermer"
-                    className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                    className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-white/10 dark:hover:text-slate-200"
                   >
                     <X className="h-5 w-5" aria-hidden="true" />
                   </button>
@@ -605,7 +605,7 @@ export function ShieldVisits() {
 
                 <div className="mt-4 space-y-3.5">
                   <div>
-                    <label htmlFor="v-property" className="mb-1 block text-sm font-medium text-slate-700">
+                    <label htmlFor="v-property" className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
                       Logement *
                     </label>
                     <select
@@ -622,7 +622,7 @@ export function ShieldVisits() {
                       ))}
                     </select>
                     {properties.length === 0 && (
-                      <p className="mt-1 text-xs text-amber-700">
+                      <p className="mt-1 text-xs text-amber-700 dark:text-amber-400">
                         Aucun bien onboardé —{' '}
                         <Link href="/inspection/biens" className="font-semibold underline">
                           onboarder un bien d'abord
@@ -632,7 +632,7 @@ export function ShieldVisits() {
                     )}
                   </div>
                   <div>
-                    <label htmlFor="v-guest" className="mb-1 block text-sm font-medium text-slate-700">
+                    <label htmlFor="v-guest" className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
                       Nom de l'invité *
                     </label>
                     <input
@@ -645,7 +645,7 @@ export function ShieldVisits() {
                     />
                   </div>
                   <div>
-                    <label htmlFor="v-email" className="mb-1 block text-sm font-medium text-slate-700">
+                    <label htmlFor="v-email" className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
                       Email de l'invité <span className="text-slate-400">(reçoit le PDF)</span>
                     </label>
                     <input
@@ -659,7 +659,7 @@ export function ShieldVisits() {
                     />
                   </div>
                   <div>
-                    <label htmlFor="v-phone" className="mb-1 block text-sm font-medium text-slate-700">
+                    <label htmlFor="v-phone" className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
                       Téléphone du cleaner
                     </label>
                     <input
@@ -676,7 +676,7 @@ export function ShieldVisits() {
                       le badge « 💰 caution sécurisée » + widget « Revenus
                       protégés » du tableau de bord. */}
                   <div>
-                    <label htmlFor="v-deposit" className="mb-1 block text-sm font-medium text-slate-700">
+                    <label htmlFor="v-deposit" className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
                       Montant de la caution <span className="text-slate-400">(€, optionnel)</span>
                     </label>
                     <input
@@ -691,13 +691,13 @@ export function ShieldVisits() {
                       className={inputClass}
                       autoComplete="off"
                     />
-                    <p className="mt-1 text-xs text-slate-400">
+                    <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
                       Affiché comme « caution sécurisée » sur les rapports et le tableau de bord.
                     </p>
                   </div>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div>
-                      <label htmlFor="v-in" className="mb-1 block text-sm font-medium text-slate-700">
+                      <label htmlFor="v-in" className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
                         Date check-in *
                       </label>
                       <input
@@ -709,7 +709,7 @@ export function ShieldVisits() {
                       />
                     </div>
                     <div>
-                      <label htmlFor="v-out" className="mb-1 block text-sm font-medium text-slate-700">
+                      <label htmlFor="v-out" className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
                         Date check-out *
                       </label>
                       <input
@@ -724,7 +724,7 @@ export function ShieldVisits() {
                 </div>
 
                 {formError && (
-                  <p role="alert" className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+                  <p role="alert" className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-500/10 dark:text-red-300">
                     {formError}
                   </p>
                 )}

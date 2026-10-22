@@ -3,7 +3,7 @@ import { ShieldDocuments } from '@/components/inspection/shield/shield-documents
 
 // BOUCLIER V2 — Onglet 6 : Documents (archive des PDF).
 export const metadata: Metadata = {
-  title: 'Bouclier — Documents | RoomScan',
+  title: 'Inventaire — Documents | RoomScan',
   description: 'Archive de tous vos PDF certifiés : onboarding et rapports de séjour.',
 };
 

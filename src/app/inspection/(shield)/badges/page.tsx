@@ -7,7 +7,7 @@ import { ShieldBadgesContent } from '@/components/inspection/shield/shield-badge
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Badges de confiance — Bouclier | RoomScan',
+  title: 'Badges de confiance — Inventaire | RoomScan',
   description:
     'Téléchargez vos 3 badges de confiance RoomScan (Sécurité, Propreté, Technologie) en PNG HD ou en code HTML, avec QR de vérification publique.',
 };

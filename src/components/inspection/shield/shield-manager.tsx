@@ -249,7 +249,7 @@ export function ShieldManager({
       setLoadError(null);
       setProperties(json?.properties ?? []);
     } catch {
-      setLoadError('Chargement du Bouclier impossible. Vérifiez votre connexion.');
+      setLoadError('Chargement de l\'Inventaire impossible. Vérifiez votre connexion.');
     }
   }, []);
 
@@ -312,7 +312,7 @@ export function ShieldManager({
       });
       const { copied, popupBlocked } = await prepareAirbnbDispute({
         pdfUrl: `/api/shield/pdf/session/${s.id}`,
-        pdfFilename: `Roomscan_Bouclier_${sanitizeFilePart(property.propertyName)}_${sanitizeFilePart(s.sessionRef)}.pdf`,
+        pdfFilename: `Roomscan_Inventaire_${sanitizeFilePart(property.propertyName)}_${sanitizeFilePart(s.sessionRef)}.pdf`,
         message,
       });
       if (copied) {
@@ -352,7 +352,7 @@ export function ShieldManager({
           <h2 className="lux-display text-xl font-semibold text-gray-900">Abonnement requis</h2>
           <p className="max-w-md text-sm text-gray-500">
             {subMessage ??
-              "Le module Bouclier est inclus dans l'offre États des Lieux (299 €/an, PDF illimités)."}
+              "Le module Inventaire est inclus dans l'offre États des Lieux (299 €/an, PDF illimités)."}
           </p>
           <Link
             href="/edl/abonnement"
@@ -374,7 +374,7 @@ export function ShieldManager({
         onDone={(_propertyId, onboardingRef) => {
           setOnboardingOpen(false);
           void loadList();
-          toast.success(`Bouclier actif — bibliothèque ${onboardingRef} verrouillée.`);
+          toast.success(`Inventaire actif — bibliothèque ${onboardingRef} verrouillée.`);
         }}
       />
     );
@@ -734,7 +734,7 @@ export function ShieldManager({
   return (
     <div className="mx-auto w-full max-w-5xl">
       {properties === null && !loadError ? (
-        <div className="mt-2 space-y-3" role="status" aria-label="Chargement du Bouclier">
+        <div className="mt-2 space-y-3" role="status" aria-label="Chargement de l'Inventaire">
           <Skeleton className="h-24 w-full rounded-2xl bg-gray-200 dark:bg-gray-200" />
           <Skeleton className="h-40 w-full rounded-2xl bg-gray-200 dark:bg-gray-200" />
         </div>
@@ -801,7 +801,7 @@ export function ShieldManager({
             type="button"
             onClick={() => setOnboardingOpen(true)}
             className="mt-3 min-h-[44px] rounded-full bg-[#C21F26] px-6 text-sm font-bold text-white shadow-[0_14px_36px_-14px_rgba(194,31,38,0.8)] hover:bg-[#a81a20]"
-            aria-label="Lancer l'onboarding du Bouclier (10 minutes, une seule fois)"
+            aria-label="Lancer l'onboarding de l'Inventaire (10 minutes, une seule fois)"
           >
             Lancer l&apos;onboarding (10 min — une seule fois)
           </Button>

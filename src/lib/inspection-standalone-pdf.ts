@@ -446,7 +446,7 @@ function drawSectionIcon(doc: PdfDoc, kind: IconKind, cx: number, cy: number, s:
 
 /**
  * Titre métier du document (v4.123 — demande client : plus de
- * « ROOMSCAN BOUCLIER » ; les titres sont ceux du modèle Bouclier) :
+ * « ROOMSCAN INVENTAIRE » ; les titres sont ceux du modèle Inventaire) :
  *   ENTREE → « ATTESTATION D'ÉTAT DES LIEUX D'ENTRÉE »
  *   SORTIE → « RAPPORT DE SORTIE — COMPARATIF ENTRÉE / SORTIE »
  */

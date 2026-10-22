@@ -3,7 +3,7 @@ import { ShieldProperties } from '@/components/inspection/shield/shield-properti
 
 // BOUCLIER V2 — Onglet 5 : Mes biens (FLUX A — onboarding).
 export const metadata: Metadata = {
-  title: 'Bouclier — Mes biens | RoomScan',
+  title: 'Inventaire — Mes biens | RoomScan',
   description: 'Logements protégés : bibliothèque de référence, zones fantômes et appareils.',
 };
 

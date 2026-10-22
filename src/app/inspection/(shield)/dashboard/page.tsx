@@ -6,7 +6,7 @@ import { ShieldDashboard } from '@/components/inspection/shield/shield-dashboard
 // (session + entitlement EDL) est appliquée par le layout du
 // route group (shield).
 export const metadata: Metadata = {
-  title: 'Bouclier — Tableau de bord | RoomScan',
+  title: 'Inventaire — Tableau de bord | RoomScan',
   description: 'Vue d’ensemble de vos états des lieux certifiés : séjours, biens protégés, activité et prochains événements.',
 };
 

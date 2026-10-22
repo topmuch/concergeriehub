@@ -1045,7 +1045,7 @@ export function ShieldCapture({
         aria-describedby={undefined}
       >
         <DialogTitle className="sr-only">
-          Session Bouclier — {isCheckIn ? 'check-in' : 'check-out'} de {property.propertyName}
+          Session Inventaire — {isCheckIn ? 'check-in' : 'check-out'} de {property.propertyName}
         </DialogTitle>
         <div
           ref={scrollRef}

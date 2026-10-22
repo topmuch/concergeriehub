@@ -63,13 +63,11 @@ const TYPE_FILTERS: { value: TypeFilter; label: string }[] = [
   { value: 'ONB', label: 'ONB' },
 ];
 
-/** Même style que la recherche de shield-history.tsx (Problème 6). */
-const searchClass =
-  'min-h-[44px] w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#1e3a8a] focus:outline-none focus:ring-2 focus:ring-[#1e3a8a]/20 dark:border-slate-200 dark:bg-white dark:text-slate-900';
+/** Design system « Luxe Bleuté » — recherche + filtres (v5.0). */
+const searchClass = 'luxe-input w-full pl-9 pr-3';
 
-/** Même style que l'inputClass de shield-visits.tsx (Problème 7). */
-const selectClass =
-  'min-h-[44px] rounded-xl border border-slate-200 bg-white px-3 pr-8 text-sm text-slate-900 focus:border-[#1e3a8a] focus:outline-none focus:ring-2 focus:ring-[#1e3a8a]/20 dark:border-slate-200 dark:bg-white dark:text-slate-900';
+/** Même style que les selects de shield-visits.tsx (v5.0). */
+const selectClass = 'luxe-select px-3 pr-8';
 
 /** Clé de mois « YYYY-MM » (completedAt des rapports / onboardedAt des certificats). */
 function monthKey(iso: string): string {
@@ -150,7 +148,7 @@ export function ShieldDocuments() {
   if (error) {
     return (
       <div className="mx-auto w-full max-w-7xl p-4 sm:p-6">
-        <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300">
           <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
           {error}
         </div>
@@ -169,15 +167,15 @@ export function ShieldDocuments() {
   return (
     <div className="mx-auto w-full max-w-7xl space-y-5 p-4 sm:p-6">
       <div>
-        <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">Documents</h1>
-        <p className="mt-0.5 text-sm text-slate-500">
+        <h1 className="luxe-header-title">Documents</h1>
+        <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
           Archive de tous vos PDF certifiés — certificats d'onboarding et rapports de séjour.
         </p>
       </div>
 
       {loading ? (
         <div className="flex min-h-[40vh] items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-[#1e3a8a]" aria-label="Chargement" />
+          <Loader2 className="h-8 w-8 animate-spin text-[#1e3a8a] dark:text-[#3b82f6]" aria-label="Chargement" />
         </div>
       ) : (
         <>
@@ -205,11 +203,7 @@ export function ShieldDocuments() {
                     type="button"
                     onClick={() => setTypeFilter(f.value)}
                     aria-pressed={typeFilter === f.value}
-                    className={
-                      typeFilter === f.value
-                        ? 'inline-flex min-h-[36px] items-center rounded-full bg-[#1e3a8a] px-3 text-xs font-semibold text-white transition-colors hover:bg-[#15295e] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1e3a8a]'
-                        : 'inline-flex min-h-[36px] items-center rounded-full border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1e3a8a]'
-                    }
+                    className="luxe-chip"
                   >
                     {f.label}
                   </button>
@@ -255,11 +249,11 @@ export function ShieldDocuments() {
           {noneVisible ? (
             /* ── 0 résultat avec filtres actifs (v4.167) ── */
             <ShieldCard className="p-6 text-center sm:p-8">
-              <SearchX className="mx-auto h-10 w-10 text-slate-300" aria-hidden="true" />
-              <p className="mt-3 text-sm font-medium text-slate-900">
+              <SearchX className="mx-auto h-10 w-10 text-slate-300 dark:text-slate-600" aria-hidden="true" />
+              <p className="mt-3 text-sm font-medium text-slate-900 dark:text-slate-100">
                 Aucun document ne correspond à vos filtres.
               </p>
-              <p className="mx-auto mt-1 max-w-sm text-xs text-slate-500">
+              <p className="mx-auto mt-1 max-w-sm text-xs text-slate-500 dark:text-slate-400">
                 Élargissez la recherche, le type, le bien ou le mois pour retrouver un document.
               </p>
               <GhostButton className="mt-4" onClick={resetFilters}>
@@ -271,11 +265,11 @@ export function ShieldDocuments() {
               {/* ── Certificats d'onboarding ── */}
               {showCertificates && (
                 <section aria-label="Certificats d'onboarding">
-                  <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
+                  <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                     Certificats d'onboarding ({certificates.length})
                   </h2>
                   {certificates.length === 0 ? (
-                    <ShieldCard className="p-6 text-center text-sm text-slate-500">
+                    <ShieldCard className="p-6 text-center text-sm text-slate-500 dark:text-slate-400">
                       {hasActiveFilters
                         ? 'Aucun certificat ne correspond à vos filtres.'
                         : 'Aucun certificat — onboarder un bien pour générer le premier.'}
@@ -283,16 +277,16 @@ export function ShieldDocuments() {
                   ) : (
                     <div className="grid gap-3 md:grid-cols-2">
                       {certificates.map((p) => (
-                        <ShieldCard key={p.id} className="flex items-center gap-3 p-4">
+                        <ShieldCard key={p.id} className="flex items-center gap-3 p-4 transition-shadow hover:shadow-lg">
                           <span
                             aria-hidden="true"
-                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#1e3a8a]/10 text-[#1e3a8a]"
+                            className="luxe-tile bg-gradient-to-br from-[#1e3a8a] to-[#2f6fed] text-white"
                           >
                             <Building2 className="h-5 w-5" />
                           </span>
                           <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-semibold text-slate-900">{p.propertyName}</p>
-                            <p className="truncate text-xs text-slate-500">
+                            <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">{p.propertyName}</p>
+                            <p className="truncate text-xs text-slate-500 dark:text-slate-400">
                               {p.onboardingRef} · onboardé le {formatDate(p.onboardedAt)}
                             </p>
                           </div>
@@ -317,11 +311,11 @@ export function ShieldDocuments() {
               {/* ── Rapports de séjour ── */}
               {showReports && (
                 <section aria-label="Rapports de séjour">
-                  <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
+                  <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                     Rapports de séjour ({reports.length})
                   </h2>
                   {reports.length === 0 ? (
-                    <ShieldCard className="p-6 text-center text-sm text-slate-500">
+                    <ShieldCard className="p-6 text-center text-sm text-slate-500 dark:text-slate-400">
                       {hasActiveFilters
                         ? 'Aucun rapport ne correspond à vos filtres.'
                         : 'Aucun rapport — les PDF apparaissent dès le premier check-in / check-out validé.'}
@@ -329,21 +323,23 @@ export function ShieldDocuments() {
                   ) : (
                     <div className="max-h-[32rem] space-y-3 overflow-y-auto pr-1 shield-scrollbar">
                       {reports.map((s) => (
-                        <ShieldCard key={s.id} className="flex flex-wrap items-center gap-3 p-4">
+                        <ShieldCard key={s.id} className="flex flex-wrap items-center gap-3 p-4 transition-shadow hover:shadow-lg">
                           <span
                             aria-hidden="true"
-                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
-                              s.type === 'CHECK_IN' ? 'bg-blue-50 text-blue-700' : 'bg-rose-50 text-rose-700'
+                            className={`luxe-tile ${
+                              s.type === 'CHECK_IN'
+                                ? 'bg-gradient-to-br from-[#2f6fed] to-[#1d4ed8] text-white'
+                                : 'bg-gradient-to-br from-[#ef2f5b] to-[#C41E3A] text-white'
                             }`}
                           >
                             {s.type === 'CHECK_IN' ? <LogIn className="h-5 w-5" /> : <LogOut className="h-5 w-5" />}
                           </span>
                           <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-semibold text-slate-900">
+                            <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
                               {s.type === 'CHECK_IN' ? 'Check-in' : 'Check-out'} — {s.guestName ?? 'Invité'}
                             </p>
                             {/* v4.167, Problème 8 — date de création complète */}
-                            <p className="truncate text-xs text-slate-500">
+                            <p className="truncate text-xs text-slate-500 dark:text-slate-400">
                               {s.property.propertyName} · Généré le {formatDateTimeFull(s.completedAt)} ·{' '}
                               <span className="font-mono">{s.sessionRef}</span>
                             </p>

@@ -86,7 +86,7 @@ export function ShieldLibrary({ initialPropertyId }: { initialPropertyId?: strin
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <div>
           <h1 className="flex items-center gap-2 text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
-            Bouclier
+            Inventaire
             <span className="inline-flex items-center gap-1 rounded-full bg-[#1e3a8a]/10 px-2.5 py-1 text-xs font-semibold text-[#1e3a8a]">
               <Lock className="h-3 w-3" aria-hidden="true" />
               Bibliothèque verrouillée
@@ -123,11 +123,11 @@ export function ShieldLibrary({ initialPropertyId }: { initialPropertyId?: strin
 
       {list === null ? (
         <div className="flex min-h-[40vh] items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-[#1e3a8a]" aria-label="Chargement" />
+          <Loader2 className="h-8 w-8 animate-spin text-[#1e3a8a] dark:text-[#3b82f6]" aria-label="Chargement" />
         </div>
       ) : list.length === 0 ? (
         <ShieldCard className="p-8 text-center sm:p-12">
-          <ShieldCheck className="mx-auto h-12 w-12 text-slate-300" aria-hidden="true" />
+          <ShieldCheck className="mx-auto h-12 w-12 text-slate-300 dark:text-slate-600" aria-hidden="true" />
           <h2 className="mt-4 text-lg font-semibold text-slate-900">Aucune bibliothèque</h2>
           <p className="mx-auto mt-1 max-w-md text-sm text-slate-500">
             La bibliothèque de référence se crée pendant l'onboarding d'un bien
@@ -139,7 +139,7 @@ export function ShieldLibrary({ initialPropertyId }: { initialPropertyId?: strin
         </ShieldCard>
       ) : detail === null || detail.property.id !== selected ? (
         <div className="flex min-h-[40vh] items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-[#1e3a8a]" aria-label="Chargement" />
+          <Loader2 className="h-8 w-8 animate-spin text-[#1e3a8a] dark:text-[#3b82f6]" aria-label="Chargement" />
         </div>
       ) : (
         <>

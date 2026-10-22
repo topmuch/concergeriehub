@@ -216,7 +216,7 @@ export function InspectionDashboard({ sessionUser }: { sessionUser: SessionUser 
       });
       const { copied, popupBlocked } = await prepareAirbnbDispute({
         pdfUrl: `/api/inspection/pdf/${row.publicToken}`,
-        pdfFilename: `Roomscan_Bouclier_${sanitizeFilePart(row.propertyName)}_${sanitizeFilePart(row.guestName)}.pdf`,
+        pdfFilename: `Roomscan_Inventaire_${sanitizeFilePart(row.propertyName)}_${sanitizeFilePart(row.guestName)}.pdf`,
         message,
       });
       if (copied) {
@@ -500,7 +500,7 @@ export function InspectionDashboard({ sessionUser }: { sessionUser: SessionUser 
         </span>
       </header>
 
-      {/* ----- Segmented control : Bouclier automatisé / EDL classique ----- */}
+      {/* ----- Segmented control : Inventaire automatisé / EDL classique ----- */}
       {/* v4.121 — client : « tout est flou, met couleur rouge en fond, écriture en blanc »
           → fond rouge PLEIN (plus de translucide/backdrop-blur), textes blancs. */}
       <div className="sticky top-16 z-20 border-b border-[#8f1418] bg-[#C21F26]">
@@ -554,7 +554,7 @@ export function InspectionDashboard({ sessionUser }: { sessionUser: SessionUser 
                 : 'text-white hover:bg-[#a81a20] hover:text-white',
             )}
           >
-            Bouclier automatisé
+            Inventaire automatisé
           </button>
           <button
             type="button"
@@ -579,7 +579,7 @@ export function InspectionDashboard({ sessionUser }: { sessionUser: SessionUser 
         transition={{ duration: 0.25, ease: 'easeOut' }}
         className="mx-auto w-full max-w-6xl flex-1 p-4 sm:p-6"
       >
-        {/* ----- Onglet « Bouclier automatisé » (v5.1) ----- */}
+        {/* ----- Onglet « Inventaire automatisé » (v5.1) ----- */}
         {tab === 'shield' ? (
           <ShieldManager sessionUser={sessionUser} />
         ) : (
