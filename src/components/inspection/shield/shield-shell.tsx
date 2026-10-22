@@ -30,6 +30,7 @@ import {
   SprayCan,
   X,
 } from 'lucide-react';
+import { ShieldBell } from './shield-bell';
 
 export interface ShieldUser {
   name: string | null;
@@ -161,12 +162,16 @@ export function ShieldShell({
           <Menu className="h-6 w-6" aria-hidden="true" />
         </button>
         <p className="text-sm font-bold text-white">RoomScan Bouclier</p>
-        <span
-          aria-hidden="true"
-          className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#C41E3A] text-white"
-        >
-          <ShieldCheck className="h-4 w-4" />
-        </span>
+        <div className="flex items-center gap-1">
+          {/* v4.167 — cloche de notifications (Problème 12) */}
+          <ShieldBell variant="dark" />
+          <span
+            aria-hidden="true"
+            className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#C41E3A] text-white"
+          >
+            <ShieldCheck className="h-4 w-4" />
+          </span>
+        </div>
       </header>
 
       {/* ── Tiroir mobile ── */}
@@ -209,7 +214,14 @@ export function ShieldShell({
       </AnimatePresence>
 
       {/* ── Contenu ── */}
-      <main className="min-h-[calc(100vh-3.5rem)] lg:ml-64">{children}</main>
+      <div className="lg:ml-64">
+        {/* v4.167 — topbar desktop : cloche de notifications en haut à
+            droite (Problème 12), visible sur toutes les pages. */}
+        <div className="sticky top-0 z-30 hidden h-14 items-center justify-end border-b border-slate-200 bg-white/90 px-6 backdrop-blur lg:flex">
+          <ShieldBell variant="light" />
+        </div>
+        <main className="min-h-[calc(100vh-3.5rem)]">{children}</main>
+      </div>
     </div>
   );
 }

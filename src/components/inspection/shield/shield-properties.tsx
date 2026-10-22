@@ -2,6 +2,9 @@
 
 // =============================================================
 // BOUCLIER V2 — MES BIENS (onglet 5/8).
+// v4.167 (Problèmes 1 & 2) : badge de statut du bien en haut à
+// droite (« Protégé » / « Onboarding partiel »), icônes Lucide sur
+// les 3 compteurs et ligne « Prochain séjour » (1er A_VENIR).
 // Liste des logements onboardés (API /api/shield/properties
 // existante) : adresse, ville, référence d'onboarding, compteurs
 // zones / appareils / sessions, dernière activité. FLUX A :
@@ -14,12 +17,16 @@ import {
   AlertTriangle,
   ArrowRight,
   Building2,
+  CalendarClock,
   Camera,
+  ClipboardList,
+  DoorOpen,
   Loader2,
   MapPin,
+  Plug,
   Plus,
 } from 'lucide-react';
-import { fetchJson, formatDate, GhostButton, RedButton, ShieldCard } from './shield-ui';
+import { fetchJson, formatDate, formatDateTime, GhostButton, RedButton, ShieldCard } from './shield-ui';
 
 interface ShieldPropertyRow {
   id: string;
@@ -29,11 +36,19 @@ interface ShieldPropertyRow {
   ownerName: string;
   onboardingRef: string;
   onboardedAt: string;
+  /** v4.167 — COMPLETED = bibliothèque verrouillée · PENDING_PHOTOS = en attente des photos de référence. */
+  onboardingStatus: 'COMPLETED' | 'PENDING_PHOTOS';
   /** Format APLATI de l'API existante (/api/shield/properties). */
   devicesCount: number;
   zonesCount: number;
   sessionsCount: number;
   lastSessionAt: string | null;
+  /** v4.167 — 1er séjour planifié du bien (check-in ou check-out). */
+  nextVisit: {
+    type: 'CHECK_IN' | 'CHECK_OUT';
+    guestName: string | null;
+    scheduledDate: string;
+  } | null;
 }
 
 interface PropertiesResponse {
@@ -99,8 +114,10 @@ export function ShieldProperties() {
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {data.properties.map((p) => {
             const last = p.lastSessionAt;
+            const isProtected = p.onboardingStatus === 'COMPLETED';
             return (
               <ShieldCard key={p.id} className="flex flex-col p-5">
+                {/* ── En-tête : icône bien + badge de statut (v4.167, Problème 1) ── */}
                 <div className="flex items-start justify-between gap-3">
                   <span
                     aria-hidden="true"
@@ -108,9 +125,20 @@ export function ShieldProperties() {
                   >
                     <Building2 className="h-5 w-5" />
                   </span>
-                  <span className="rounded-full bg-slate-100 px-2.5 py-1 font-mono text-[11px] text-slate-500">
-                    {p.onboardingRef}
-                  </span>
+                  {isProtected ? (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+                      <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                      Protégé
+                    </span>
+                  ) : (
+                    <span
+                      title="En attente des photos de référence de l'équipe"
+                      className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-800"
+                    >
+                      <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+                      Onboarding partiel
+                    </span>
+                  )}
                 </div>
                 <h2 className="mt-3 text-base font-bold tracking-tight text-slate-900">{p.propertyName}</h2>
                 <p className="mt-1 flex items-start gap-1.5 text-xs text-slate-500">
@@ -120,24 +148,50 @@ export function ShieldProperties() {
                   </span>
                 </p>
 
+                {/* ── Compteurs avec icônes (v4.167, Problème 2) ── */}
                 <dl className="mt-4 grid grid-cols-3 gap-2 text-center">
                   <div className="rounded-lg bg-slate-50 px-2 py-2.5">
-                    <dt className="text-[11px] font-medium text-slate-500">Zones</dt>
+                    <dt className="flex items-center justify-center gap-1 text-[11px] font-medium text-slate-500">
+                      <DoorOpen className="h-3.5 w-3.5 text-slate-400" aria-hidden="true" />
+                      Zones
+                    </dt>
                     <dd className="text-lg font-bold text-slate-900">{p.zonesCount}</dd>
                   </div>
                   <div className="rounded-lg bg-slate-50 px-2 py-2.5">
-                    <dt className="text-[11px] font-medium text-slate-500">Appareils</dt>
+                    <dt className="flex items-center justify-center gap-1 text-[11px] font-medium text-slate-500">
+                      <Plug className="h-3.5 w-3.5 text-slate-400" aria-hidden="true" />
+                      Appareils
+                    </dt>
                     <dd className="text-lg font-bold text-slate-900">{p.devicesCount}</dd>
                   </div>
                   <div className="rounded-lg bg-slate-50 px-2 py-2.5">
-                    <dt className="text-[11px] font-medium text-slate-500">Sessions</dt>
+                    <dt className="flex items-center justify-center gap-1 text-[11px] font-medium text-slate-500">
+                      <ClipboardList className="h-3.5 w-3.5 text-slate-400" aria-hidden="true" />
+                      Sessions
+                    </dt>
                     <dd className="text-lg font-bold text-slate-900">{p.sessionsCount}</dd>
                   </div>
                 </dl>
 
-                <p className="mt-3 text-xs text-slate-400">
-                  Onboardé le {formatDate(p.onboardedAt)}
-                  {last ? ` · Dernière session le ${formatDate(last)}` : ' · Aucune session encore'}
+                {/* ── Prochain séjour planifié (v4.167) ── */}
+                {p.nextVisit && (
+                  <p className="mt-3 flex items-start gap-1.5 rounded-lg border border-blue-100 bg-blue-50/60 px-3 py-2 text-xs text-slate-600">
+                    <CalendarClock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#1e3a8a]" aria-hidden="true" />
+                    <span>
+                      Prochain {p.nextVisit.type === 'CHECK_IN' ? 'check-in' : 'check-out'} :{' '}
+                      {p.nextVisit.guestName ?? 'Invité'} — {formatDateTime(p.nextVisit.scheduledDate)}
+                    </span>
+                  </p>
+                )}
+
+                <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-400">
+                  <span>
+                    Onboardé le {formatDate(p.onboardedAt)}
+                    {last ? ` · Dernière session le ${formatDate(last)}` : ' · Aucune session encore'}
+                  </span>
+                  <span className="rounded-full bg-slate-100 px-2 py-0.5 font-mono text-[10px] text-slate-500">
+                    {p.onboardingRef}
+                  </span>
                 </p>
 
                 <div className="mt-auto flex items-center gap-2 pt-4">

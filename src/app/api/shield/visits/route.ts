@@ -57,6 +57,7 @@ export async function GET() {
         scheduledDate: true,
         sessionRef: true,
         publicToken: true,
+        depositAmount: true,
         createdAt: true,
         linkedSessionId: true,
         property: { select: { id: true, propertyName: true, city: true, propertyAddress: true } },
@@ -75,6 +76,7 @@ export async function GET() {
         sessionRef: s.sessionRef,
         publicToken: s.publicToken,
         linkedSessionId: s.linkedSessionId,
+        depositAmount: s.depositAmount ?? null,
         property: s.property,
       })),
     });
@@ -98,6 +100,7 @@ export async function POST(req: NextRequest) {
       cleanerPhone?: unknown;
       checkInDate?: unknown;
       checkOutDate?: unknown;
+      depositAmount?: unknown;
     } | null;
     if (!body) return bad('corps_invalide');
 
@@ -129,6 +132,16 @@ export async function POST(req: NextRequest) {
     const cleanerPhoneRaw = typeof body.cleanerPhone === 'string' ? body.cleanerPhone.trim().slice(0, 20) : '';
     if (cleanerPhoneRaw && !PHONE_RE.test(cleanerPhoneRaw)) {
       return bad('telephone_invalide', 400, 'Le téléphone du cleaner est invalide.');
+    }
+
+    // v4.167 — montant de la caution protégée (€ entier, optionnel).
+    let depositAmount: number | null = null;
+    if (body.depositAmount !== undefined && body.depositAmount !== null && body.depositAmount !== '') {
+      const n = Number(body.depositAmount);
+      if (!Number.isFinite(n) || n < 0 || n > 100_000) {
+        return bad('caution_invalide', 400, 'Le montant de la caution doit être un nombre entre 0 et 100 000 €.');
+      }
+      depositAmount = Math.round(n);
     }
 
     const checkInDate = typeof body.checkInDate === 'string' ? new Date(body.checkInDate) : null;
@@ -165,17 +178,21 @@ export async function POST(req: NextRequest) {
     const [checkInRef, checkOutRef] = await Promise.all([makeRef(checkInDate), makeRef(checkOutDate)]);
 
     // ── FLUX B : création des 2 sessions planifiées liées ──
+    // v4.167 — BUG « Agent À venir / 0 photos » : les sessions planifiées
+    // ne naissent PLUS avec un faux nom d'agent — agentName reste vide
+    // jusqu'à la capture du cleaner (qui le renseigne de manière fiable).
     const checkIn = await db.shieldSession.create({
       data: {
         propertyId: property.id,
         type: 'CHECK_IN',
-        agentName: 'À venir',
+        agentName: '',
         guestName,
         guestEmail: guestEmailRaw || null,
         cleanerPhone: cleanerPhoneRaw || null,
         sessionRef: checkInRef,
         status: 'A_VENIR',
         scheduledDate: checkInDate,
+        depositAmount,
         publicToken: randomPublicToken(),
         completedAt: now,
       },
@@ -185,13 +202,14 @@ export async function POST(req: NextRequest) {
       data: {
         propertyId: property.id,
         type: 'CHECK_OUT',
-        agentName: 'À venir',
+        agentName: '',
         guestName,
         guestEmail: guestEmailRaw || null,
         cleanerPhone: cleanerPhoneRaw || null,
         sessionRef: checkOutRef,
         status: 'A_VENIR',
         scheduledDate: checkOutDate,
+        depositAmount,
         publicToken: randomPublicToken(),
         linkedSessionId: checkIn.id,
         completedAt: now,

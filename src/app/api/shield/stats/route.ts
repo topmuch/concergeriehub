@@ -58,7 +58,7 @@ export async function GET() {
           status: { not: 'ANNULE' },
           property: { subscriptionId: access.subscriptionId },
         },
-        select: { type: true, status: true, scheduledDate: true, completedAt: true },
+        select: { type: true, status: true, scheduledDate: true, completedAt: true, depositAmount: true },
       }),
     ]);
 
@@ -79,6 +79,19 @@ export async function GET() {
     const sessionsCeMois = allSessions.filter(
       (s) => s.status === 'TERMINE' && s.completedAt.getTime() >= monthStart.getTime(),
     ).length;
+
+    // v4.167 — « Revenus protégés » : somme des cautions des séjours
+    // terminés ce mois-ci (comptées UNE fois par séjour → côté CHECK_IN,
+    // la caution est répliquée sur les 2 sessions du pair).
+    const cautionsCeMois = allSessions
+      .filter(
+        (s) =>
+          s.status === 'TERMINE' &&
+          s.type === 'CHECK_IN' &&
+          s.completedAt.getTime() >= monthStart.getTime() &&
+          typeof s.depositAmount === 'number',
+      )
+      .reduce((acc, s) => acc + (s.depositAmount ?? 0), 0);
 
     // Taux de protection : part des séjours planifiés effectivement
     // terminés (KPI donut « protection » du tableau de bord).
@@ -171,12 +184,26 @@ export async function GET() {
           agentName: true,
           completedAt: true,
           sessionRef: true,
+          depositAmount: true,
           _count: { select: { shots: true } },
           video: { select: { publicToken: true } },
           property: { select: { propertyName: true } },
         },
       }),
     ]);
+
+    // v4.167 — anomalies (zones signalées) par session récente.
+    const recentAnomalyShots =
+      recent.length > 0
+        ? await db.shieldZoneShot.groupBy({
+            by: ['sessionId'],
+            where: { sessionId: { in: recent.map((s) => s.id) }, status: { not: 'IMPECCABLE' } },
+            _count: { _all: true },
+          })
+        : [];
+    const recentAnomalies = new Map<string, number>(
+      recentAnomalyShots.map((g) => [g.sessionId, g._count._all]),
+    );
 
     return NextResponse.json({
       kpis: {
@@ -187,6 +214,7 @@ export async function GET() {
         checkInsTotal,
         checkOutsTotal,
         sessionsCeMois,
+        cautionsCeMois,
         tauxProtection,
       },
       repartition: [
@@ -213,6 +241,8 @@ export async function GET() {
         completedAt: s.completedAt.toISOString(),
         sessionRef: s.sessionRef,
         shots: s._count.shots,
+        anomalies: recentAnomalies.get(s.id) ?? 0,
+        depositAmount: s.depositAmount ?? null,
         videoToken: s.video?.publicToken ?? null,
         propertyName: s.property.propertyName,
       })),

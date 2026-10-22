@@ -47,6 +47,7 @@ export async function GET(req: NextRequest) {
         scheduledDate: true,
         completedAt: true,
         sessionRef: true,
+        depositAmount: true,
         _count: { select: { shots: true } },
         video: { select: { publicToken: true, sha256: true, durationSec: true } },
         property: { select: { id: true, propertyName: true, city: true } },
@@ -65,6 +66,22 @@ export async function GET(req: NextRequest) {
       return true; // TOUS
     });
 
+    // v4.167 — compte des ANOMALIES par session (zones « À nettoyer »
+    // ou « Dégradation ») : alimente le badge rouge « Anomalie » des
+    // historiques Check-ins / Check-outs / Documents.
+    const sessionIds = filtered.map((s) => s.id);
+    const anomalyShots =
+      sessionIds.length > 0
+        ? await db.shieldZoneShot.groupBy({
+            by: ['sessionId'],
+            where: { sessionId: { in: sessionIds }, status: { not: 'IMPECCABLE' } },
+            _count: { _all: true },
+          })
+        : [];
+    const anomaliesBySession = new Map<string, number>(
+      anomalyShots.map((g) => [g.sessionId, g._count._all]),
+    );
+
     return NextResponse.json({
       sessions: filtered.slice(0, take).map((s) => ({
         id: s.id,
@@ -81,6 +98,8 @@ export async function GET(req: NextRequest) {
         completedAt: s.completedAt.toISOString(),
         sessionRef: s.sessionRef,
         shots: s._count.shots,
+        anomalies: anomaliesBySession.get(s.id) ?? 0,
+        depositAmount: s.depositAmount ?? null,
         videoToken: s.video?.publicToken ?? null,
         videoSha256: s.video?.sha256 ?? null,
         property: s.property,

@@ -14,6 +14,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import {
   AlertTriangle,
   CalendarDays,
+  BellRing,
   Check,
   Copy,
   ExternalLink,
@@ -31,10 +32,12 @@ import {
   fetchJson,
   formatDate,
   formatDateTime,
+  formatMoney,
   GhostButton,
   RedButton,
   ShieldCard,
   StatusBadge,
+  DepositChip,
 } from './shield-ui';
 
 interface Visit {
@@ -48,8 +51,19 @@ interface Visit {
   sessionRef: string;
   publicToken: string | null;
   linkedSessionId: string | null;
+  depositAmount: number | null;
   property: { id: string; propertyName: string; city: string; propertyAddress: string };
 }
+
+/** Filtres rapides de la liste (Problème 3 — « rien oublié »). */
+type VisitFilter = 'TOUS' | 'A_VENIR' | 'EN_RETARD' | 'AUJOURDHUI';
+
+const VISIT_FILTERS: { key: VisitFilter; label: string }[] = [
+  { key: 'TOUS', label: 'Tous' },
+  { key: 'A_VENIR', label: 'À venir' },
+  { key: 'EN_RETARD', label: 'En retard' },
+  { key: 'AUJOURDHUI', label: "Aujourd'hui" },
+];
 
 interface PropertiesResponse {
   properties: {
@@ -97,6 +111,8 @@ export function ShieldVisits() {
   const [guestName, setGuestName] = useState('');
   const [guestEmail, setGuestEmail] = useState('');
   const [cleanerPhone, setCleanerPhone] = useState('');
+  const [depositAmount, setDepositAmount] = useState('');
+  const [filter, setFilter] = useState<VisitFilter>('TOUS');
   const [checkInDate, setCheckInDate] = useState(() => toDatetimeLocal(new Date(Date.now() + 86_400_000)));
   const [checkOutDate, setCheckOutDate] = useState(() => toDatetimeLocal(new Date(Date.now() + 5 * 86_400_000)));
 
@@ -114,6 +130,20 @@ export function ShieldVisits() {
   }, [load]);
 
   const enRetard = useMemo(() => visits?.filter((v) => v.effectiveStatus === 'EN_RETARD').length ?? 0, [visits]);
+
+  /** Filtre rapide client-side (chips du haut). */
+  const filteredVisits = useMemo(() => {
+    if (!visits) return null;
+    if (filter === 'TOUS') return visits;
+    if (filter === 'EN_RETARD') return visits.filter((v) => v.effectiveStatus === 'EN_RETARD');
+    if (filter === 'A_VENIR') return visits.filter((v) => v.effectiveStatus === 'A_VENIR');
+    // AUJOURDHUI : séjours planifiés ce jour (heure locale).
+    const today = new Date();
+    return visits.filter((v) => {
+      const d = new Date(v.scheduledDate);
+      return d.getFullYear() === today.getFullYear() && d.getMonth() === today.getMonth() && d.getDate() === today.getDate();
+    });
+  }, [visits, filter]);
 
   const submit = async () => {
     setFormError(null);
@@ -133,6 +163,7 @@ export function ShieldVisits() {
           guestName: guestName.trim(),
           guestEmail: guestEmail.trim() || undefined,
           cleanerPhone: cleanerPhone.trim() || undefined,
+          depositAmount: depositAmount.trim() || undefined,
           checkInDate: new Date(checkInDate).toISOString(),
           checkOutDate: new Date(checkOutDate).toISOString(),
         }),
@@ -162,6 +193,7 @@ export function ShieldVisits() {
       setGuestName('');
       setGuestEmail('');
       setCleanerPhone('');
+      setDepositAmount('');
       load();
     } catch (e) {
       setFormError((e as Error).message);
@@ -219,6 +251,26 @@ export function ShieldVisits() {
     if (!c.publicToken) return;
     const subject = `Lien intervention ménage — ${c.propertyName}`;
     window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(shareText(c))}`;
+  };
+
+  /**
+   * v4.167 — « Rappeler » (Problème 5) : renvoie le lien cleaner par
+   * WhatsApp pour une session EXISTANTE de la liste. Avec numéro cleaner
+   * → conversation directe pré-remplie ; sans numéro → partage WhatsApp
+   * libre (choix du contact, message déjà rédigé).
+   */
+  const remindWhatsApp = (v: Visit) => {
+    if (!v.publicToken) return;
+    const url = `${window.location.origin}/s/${v.publicToken}`;
+    const text =
+      `Bonjour, rappel ${v.type === 'CHECK_IN' ? 'du check-in' : 'du check-out'} à « ${v.property.propertyName} » ` +
+      `pour l'invité ${v.guestName ?? '—'}, prévu le ${formatDateTime(v.scheduledDate)}. ` +
+      `Voici le lien pour la capture guidée photos + vidéo, sans compte : ${url}`;
+    const digits = (v.cleanerPhone ?? '').replace(/\D/g, '');
+    const href = digits
+      ? `https://wa.me/${digits}?text=${encodeURIComponent(text)}`
+      : `https://wa.me/?text=${encodeURIComponent(text)}`;
+    window.open(href, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -352,6 +404,51 @@ export function ShieldVisits() {
         )}
       </AnimatePresence>
 
+      {/* ── Filtres rapides (v4.167 — Problème 3) ── */}
+      {visits !== null && visits.length > 0 && (
+        <div role="group" aria-label="Filtrer les séjours" className="flex flex-wrap items-center gap-2">
+          {VISIT_FILTERS.map((f) => {
+            const active = filter === f.key;
+            const count =
+              f.key === 'TOUS'
+                ? visits.length
+                : f.key === 'EN_RETARD'
+                  ? enRetard
+                  : f.key === 'A_VENIR'
+                    ? visits.filter((v) => v.effectiveStatus === 'A_VENIR').length
+                    : null;
+            return (
+              <button
+                key={f.key}
+                type="button"
+                onClick={() => setFilter(f.key)}
+                aria-pressed={active}
+                className={`inline-flex min-h-[36px] items-center gap-1.5 rounded-full px-3 text-xs font-semibold transition-colors ${
+                  active
+                    ? 'bg-[#1e3a8a] text-white'
+                    : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                {f.label}
+                {count !== null && count > 0 && (
+                  <span
+                    className={`rounded-full px-1.5 text-[10px] font-bold ${
+                      f.key === 'EN_RETARD' && count > 0
+                        ? 'bg-red-500 text-white'
+                        : active
+                          ? 'bg-white/20 text-white'
+                          : 'bg-slate-100 text-slate-500'
+                    }`}
+                  >
+                    {count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {/* ── Liste des séjours planifiés ── */}
       {visits === null ? (
         <div className="flex min-h-[40vh] items-center justify-center">
@@ -370,10 +467,23 @@ export function ShieldVisits() {
             + Nouveau Séjour
           </RedButton>
         </ShieldCard>
-      ) : (
+      ) : filteredVisits !== null && filteredVisits.length === 0 ? (
+        <ShieldCard className="p-6 text-center text-sm text-slate-500">
+          Aucun séjour dans ce filtre —{' '}
+          <button type="button" onClick={() => setFilter('TOUS')} className="font-semibold text-[#C41E3A] underline underline-offset-2">
+            voir tous les séjours
+          </button>
+          .
+        </ShieldCard>
+      ) : filteredVisits !== null && (
         <div className="max-h-[36rem] space-y-3 overflow-y-auto pr-1 shield-scrollbar">
-          {visits.map((v) => (
-            <ShieldCard key={v.id} className="p-4">
+          {filteredVisits.map((v) => {
+            const late = v.effectiveStatus === 'EN_RETARD';
+            return (
+            <ShieldCard
+              key={v.id}
+              className={`p-4 ${late ? 'border-red-200 bg-red-50/50 ring-1 ring-red-100' : ''}`}
+            >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
@@ -395,8 +505,18 @@ export function ShieldVisits() {
                   <p className="mt-2 text-sm font-semibold text-slate-900">
                     {v.guestName ?? 'Invité'} <span className="font-normal text-slate-500">— {v.property.propertyName}</span>
                   </p>
+                  {/* v4.167 — email de l'invité (Problème 4) : l'hôte en a
+                      souvent besoin pour communiquer directement. */}
+                  {v.guestEmail && (
+                    <p className="mt-0.5 flex items-center gap-1 text-xs text-slate-500">
+                      <Mail className="h-3 w-3 shrink-0" aria-hidden="true" />
+                      <a href={`mailto:${v.guestEmail}`} className="truncate hover:text-[#1e3a8a] hover:underline">
+                        {v.guestEmail}
+                      </a>
+                    </p>
+                  )}
                   <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
-                    <span className="inline-flex items-center gap-1">
+                    <span className={`inline-flex items-center gap-1 ${late ? 'font-semibold text-red-600' : ''}`}>
                       <CalendarDays className="h-3.5 w-3.5" aria-hidden="true" />
                       Prévu le {formatDateTime(v.scheduledDate)}
                     </span>
@@ -406,9 +526,10 @@ export function ShieldVisits() {
                         {v.cleanerPhone}
                       </span>
                     )}
+                    <DepositChip amount={v.depositAmount} />
                   </p>
                 </div>
-                <div className="flex shrink-0 items-center gap-2">
+                <div className="flex shrink-0 flex-wrap items-center gap-2">
                   <GhostButton onClick={() => copyLink(v.publicToken)}>
                     {copied === v.publicToken ? (
                       <Check className="h-3.5 w-3.5 text-emerald-600" aria-hidden="true" />
@@ -416,6 +537,15 @@ export function ShieldVisits() {
                       <Link2 className="h-3.5 w-3.5" aria-hidden="true" />
                     )}
                     {copied === v.publicToken ? 'Copié !' : 'Lien cleaner'}
+                  </GhostButton>
+                  {/* v4.167 — « Rappeler » (Problème 5) : renvoie le lien par WhatsApp */}
+                  <GhostButton
+                    onClick={() => remindWhatsApp(v)}
+                    disabled={!v.publicToken}
+                    className={late ? 'border-red-200 text-red-700 hover:bg-red-50' : ''}
+                  >
+                    <BellRing className="h-3.5 w-3.5" aria-hidden="true" />
+                    Rappeler
                   </GhostButton>
                   <button
                     type="button"
@@ -429,7 +559,8 @@ export function ShieldVisits() {
                 </div>
               </div>
             </ShieldCard>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -540,6 +671,29 @@ export function ShieldVisits() {
                       className={inputClass}
                       autoComplete="off"
                     />
+                  </div>
+                  {/* v4.167 — montant de la caution (Problème 11) : alimente
+                      le badge « 💰 caution sécurisée » + widget « Revenus
+                      protégés » du tableau de bord. */}
+                  <div>
+                    <label htmlFor="v-deposit" className="mb-1 block text-sm font-medium text-slate-700">
+                      Montant de la caution <span className="text-slate-400">(€, optionnel)</span>
+                    </label>
+                    <input
+                      id="v-deposit"
+                      type="number"
+                      min="0"
+                      max="100000"
+                      step="1"
+                      value={depositAmount}
+                      onChange={(e) => setDepositAmount(e.target.value)}
+                      placeholder="ex. 800"
+                      className={inputClass}
+                      autoComplete="off"
+                    />
+                    <p className="mt-1 text-xs text-slate-400">
+                      Affiché comme « caution sécurisée » sur les rapports et le tableau de bord.
+                    </p>
                   </div>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div>

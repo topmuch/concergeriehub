@@ -38,19 +38,25 @@ import {
   ChevronRight,
   CircleHelp,
   FileDown,
+  Hourglass,
   Loader2,
   LogIn,
   LogOut,
   Plus,
   ShieldCheck,
+  Wallet,
   X,
 } from 'lucide-react';
 import { MarketingBadgesModal } from '@/components/airbnb/host/marketing-badges-modal';
 import { PwaInstallBanner } from '@/components/pwa/pwa-install-banner';
 import {
+  agentLabel,
+  AnomalyBadge,
   CardTitle,
+  DepositChip,
   fetchJson,
   formatDateTime,
+  formatMoney,
   GhostButton,
   MiniDonut,
   RedButton,
@@ -68,6 +74,7 @@ interface StatsResponse {
     checkInsTotal: number;
     checkOutsTotal: number;
     sessionsCeMois: number;
+    cautionsCeMois: number;
     tauxProtection: number;
   };
   repartition: { name: string; value: number; color: string }[];
@@ -89,6 +96,8 @@ interface StatsResponse {
     completedAt: string;
     sessionRef: string;
     shots: number;
+    anomalies: number;
+    depositAmount: number | null;
     videoToken: string | null;
     propertyName: string;
   }[];
@@ -404,6 +413,47 @@ export function ShieldDashboard() {
         <GradientStat value={kpis.properties} label="Biens sous Bouclier" gradient={GRADIENTS.violet} />
       </div>
 
+      {/* ── Rangée 3-bis : widgets marketing interne (v4.167 — effet
+          « wahou » demandé par le client : valeur constante de
+          l'abonnement). « Temps gagné » ≈ 40 min économisées par
+          session certifiée vs état des lieux papier. ── */}
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="relative overflow-hidden rounded-xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-white p-5 shadow-sm">
+          <WaveSvg />
+          <div className="relative flex items-start gap-4">
+            <span aria-hidden="true" className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
+              <Wallet className="size-5" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Revenus protégés</p>
+              <p className="mt-1 text-3xl font-bold tracking-tight text-slate-900">{formatMoney(kpis.cautionsCeMois)}</p>
+              <p className="mt-1 text-sm text-slate-500">
+                de cautions sécurisées ce mois-ci grâce à RoomScan
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="relative overflow-hidden rounded-xl border border-violet-200 bg-gradient-to-br from-violet-50 to-white p-5 shadow-sm">
+          <WaveSvg />
+          <div className="relative flex items-start gap-4">
+            <span aria-hidden="true" className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
+              <Hourglass className="size-5" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-wide text-violet-700">Temps gagné</p>
+              <p className="mt-1 text-3xl font-bold tracking-tight text-slate-900">
+                {Math.round(kpis.sessionsCeMois * 40) / 60 > 0
+                  ? new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 1 }).format((kpis.sessionsCeMois * 40) / 60)
+                  : 0}{' '}h
+              </p>
+              <p className="mt-1 text-sm text-slate-500">
+                économisées ce mois-ci sur vos états des lieux
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* ── Rangée 4 : barres hebdo + timeline prochains événements ── */}
       <div className="grid gap-4 lg:grid-cols-2">
         <ShieldCard>
@@ -514,7 +564,10 @@ export function ShieldDashboard() {
                   <tr key={s.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/60">
                     <td className="px-4 py-3">
                       <p className="font-medium text-slate-900">{s.guestName ?? '—'}</p>
-                      <p className="text-xs text-slate-400">{s.agentName}</p>
+                      {/* v4.167 — agent honnête (fix Problème 9) */}
+                      <p className={`text-xs ${s.agentName.trim() ? 'text-slate-400' : 'italic text-slate-300'}`}>
+                        {agentLabel(s.agentName)}
+                      </p>
                     </td>
                     <td className="px-4 py-3 text-slate-600">{s.propertyName}</td>
                     <td className="px-4 py-3">
@@ -533,10 +586,16 @@ export function ShieldDashboard() {
                     </td>
                     <td className="px-4 py-3 text-xs text-slate-500">{formatDateTime(s.completedAt)}</td>
                     <td className="px-4 py-3">
-                      <StatusBadge status="TERMINE" />
+                      {/* v4.167 — statut réel + badge Anomalie (Problème 10) */}
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <StatusBadge status="TERMINE" />
+                        <AnomalyBadge count={s.anomalies} />
+                      </div>
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center justify-end gap-2">
+                      <div className="flex flex-wrap items-center justify-end gap-2">
+                        {/* v4.167 — caution sécurisée (Problème 11) */}
+                        <DepositChip amount={s.depositAmount} />
                         <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">
                           {s.shots} photos
                         </span>

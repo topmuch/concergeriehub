@@ -67,17 +67,20 @@ export function RedButton({
 export function GhostButton({
   children,
   onClick,
+  disabled,
   className = '',
 }: {
   children: ReactNode;
   onClick?: () => void;
+  disabled?: boolean;
   className?: string;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1e3a8a] ${className}`}
+      disabled={disabled}
+      className={`inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1e3a8a] disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
     >
       {children}
     </button>
@@ -107,6 +110,41 @@ export function StatusBadge({ status }: { status: string }) {
       {meta.label}
     </span>
   );
+}
+
+// ── v4.167 — badge rouge « Anomalie » (Problème 10) : visible en 1
+// seconde par l'hôte quand le PDF contient des zones À nettoyer /
+// Mauvais état. `count` = nombre de zones signalées. ──
+export function AnomalyBadge({ count }: { count: number }) {
+  if (count <= 0) return null;
+  return (
+    <span
+      title={`${count} zone${count > 1 ? 's' : ''} signalée${count > 1 ? 's' : ''} dans le rapport`}
+      className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-bold text-red-700"
+    >
+      <span aria-hidden="true" className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
+      🔴 Anomalie · {count}
+    </span>
+  );
+}
+
+// ── v4.167 — badge « Caution sécurisée » (Problème 11). ──
+export function DepositChip({ amount }: { amount: number | null }) {
+  if (!amount || amount <= 0) return null;
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
+      💰 {formatMoney(amount)} de caution sécurisée
+    </span>
+  );
+}
+
+// ── v4.167 — nom d'agent honnête : les sessions planifiées n'ont pas
+// encore d'agent (et l'ancien placeholder « À venir » n'est plus écrit
+// en base). Affichage « Agent non renseigné » au lieu d'un faux nom. ──
+export function agentLabel(agentName: string | null | undefined): string {
+  const a = (agentName ?? '').trim();
+  if (!a || a === 'À venir') return 'Agent non renseigné';
+  return `Agent ${a}`;
 }
 
 // ── Mini donut SVG (KPI cards du style « dashboard premium ») ──
@@ -183,6 +221,22 @@ export function formatDateTime(iso: string): string {
     hour: '2-digit',
     minute: '2-digit',
   });
+}
+
+// ── v4.167 — « Généré le 22 oct. 2026 à 10:15 » (Problème 8) ──
+export function formatDateTimeFull(iso: string): string {
+  return new Date(iso).toLocaleString('fr-FR', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+// ── v4.167 — montants FR (Problème 11 + widget Revenus protégés) ──
+export function formatMoney(n: number): string {
+  return `${n.toLocaleString('fr-FR')} €`;
 }
 
 // ── fetch JSON typé avec erreur explicite ──

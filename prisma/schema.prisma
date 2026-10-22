@@ -2921,6 +2921,11 @@ model ShieldSession {
   scheduledDate DateTime? @map("scheduled_date") // date prévue du check-in / check-out
   cleanerPhone  String?   @map("cleaner_phone") // téléphone du cleaner (partage du lien)
   publicToken   String?   @unique @map("public_token") // lien magique cleaner (24 car.)
+  // v4.167 — montant de la CAUTION protégée par le séjour (€, entier,
+  // optionnel — saisi par l'hôte à la création du séjour, répliqué sur
+  // les 2 sessions du pair CHECK_IN/CHECK_OUT). Alimente le badge
+  // « 💰 X € de caution sécurisée » et le widget « Revenus protégés ».
+  depositAmount Int?      @map("deposit_amount")
 
   property ShieldProperty   @relation(fields: [propertyId], references: [id], onDelete: Cascade)
   shots    ShieldZoneShot[]

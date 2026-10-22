@@ -6,10 +6,22 @@
 // date effective, bien, invité, agent, nb photos, vidéo publique
 // (/shield/video/[token]) et PDF certifié téléchargeable.
 // Un seul composant paramétré par type (design identique).
+// v4.167 — master prompt client :
+//   · Problème 9 (bug crédibilité) : badge de statut RÉEL (plus de
+//     « Terminé » codé en dur), agent affiché honnêtement (« Agent
+//     non renseigné » au lieu du placeholder « À venir »), et
+//     « Aucune photo » stylé ambre au lieu d'un sec « 0 photos » ;
+//   · Problème 10 : badge rouge « Anomalie » quand le rapport
+//     contient des zones À nettoyer / Dégradation ;
+//   · Problème 11 : montant de la caution sécurisée ;
+//   · Suggestion 5 : export CSV/Excel de la liste.
 // =============================================================
 import { useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, FileDown, Loader2, LogIn, LogOut, Search } from 'lucide-react';
+import { AlertTriangle, FileDown, Loader2, LogIn, LogOut, Search, Sheet } from 'lucide-react';
 import {
+  agentLabel,
+  AnomalyBadge,
+  DepositChip,
   fetchJson,
   formatDateTime,
   GhostButton,
@@ -30,6 +42,8 @@ interface SessionRow {
   completedAt: string;
   sessionRef: string;
   shots: number;
+  anomalies: number;
+  depositAmount: number | null;
   videoToken: string | null;
   property: { id: string; propertyName: string; city: string };
 }
@@ -61,6 +75,54 @@ export function ShieldHistory({ type }: { type: 'CHECK_IN' | 'CHECK_OUT' }) {
   const isCheckIn = type === 'CHECK_IN';
   const title = isCheckIn ? 'Check-ins' : 'Check-outs';
 
+  /** v4.167 — Export CSV (suggestion 5) : comptabilité / reporting. */
+  function exportCsv() {
+    const list = filtered ?? [];
+    const esc = (v: string | number | null) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    const header = [
+      'Référence',
+      'Type',
+      'Invité',
+      'Email invité',
+      'Bien',
+      'Ville',
+      'Agent',
+      'Prévu le',
+      'Terminé le',
+      'Photos',
+      'Zones signalées',
+      'Caution (€)',
+      'Statut',
+    ];
+    const lines = list.map((s) =>
+      [
+        s.sessionRef,
+        s.type === 'CHECK_IN' ? 'Check-in' : 'Check-out',
+        s.guestName ?? '',
+        s.guestEmail ?? '',
+        s.property.propertyName,
+        s.property.city,
+        s.agentName.trim() || '',
+        s.scheduledDate ? new Date(s.scheduledDate).toLocaleString('fr-FR') : '',
+        new Date(s.completedAt).toLocaleString('fr-FR'),
+        s.shots,
+        s.anomalies,
+        s.depositAmount ?? '',
+        s.effectiveStatus,
+      ]
+        .map(esc)
+        .join(';'),
+    );
+    // BOM UTF-8 → accents corrects dans Excel.
+    const csv = '\uFEFF' + [header.map(esc).join(';'), ...lines].join('\r\n');
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${title.toLowerCase()}-roomscan-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <div className="mx-auto w-full max-w-7xl space-y-5 p-4 sm:p-6">
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
@@ -70,16 +132,23 @@ export function ShieldHistory({ type }: { type: 'CHECK_IN' | 'CHECK_OUT' }) {
             {filtered === null ? 'Chargement…' : `${filtered.length} ${isCheckIn ? 'entrée' : 'sortie'}${filtered.length > 1 ? 's' : ''} validée${filtered.length > 1 ? 's' : ''}`}
           </p>
         </div>
-        <label className="relative w-full sm:w-72">
-          <span className="sr-only">Rechercher un séjour</span>
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Invité, bien, référence…"
-            className="min-h-[44px] w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#1e3a8a] focus:outline-none focus:ring-2 focus:ring-[#1e3a8a]/20 dark:border-slate-200 dark:bg-white dark:text-slate-900"
-          />
-        </label>
+        <div className="flex w-full items-center gap-2 sm:w-auto">
+          <label className="relative w-full sm:w-72">
+            <span className="sr-only">Rechercher un séjour</span>
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Invité, bien, référence…"
+              className="min-h-[44px] w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#1e3a8a] focus:outline-none focus:ring-2 focus:ring-[#1e3a8a]/20 dark:border-slate-200 dark:bg-white dark:text-slate-900"
+            />
+          </label>
+          {/* v4.167 — Export CSV (suggestion 5) */}
+          <GhostButton onClick={exportCsv} disabled={!filtered || filtered.length === 0} className="shrink-0">
+            <Sheet className="h-4 w-4" aria-hidden="true" />
+            <span className="hidden sm:inline">Export CSV</span>
+          </GhostButton>
+        </div>
       </div>
 
       {error && (
@@ -115,17 +184,34 @@ export function ShieldHistory({ type }: { type: 'CHECK_IN' | 'CHECK_OUT' }) {
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <StatusBadge status="TERMINE" />
+                    {/* v4.167 — statut RÉEL (fix Problème 9 : plus de badge
+                        « Terminé » codé en dur) + badge Anomalie (P10). */}
+                    <StatusBadge status={s.effectiveStatus} />
+                    <AnomalyBadge count={s.anomalies} />
                     <span className="font-mono text-[11px] text-slate-400">{s.sessionRef}</span>
                   </div>
                   <p className="mt-2 text-sm font-semibold text-slate-900">
                     {s.guestName ?? 'Invité'}{' '}
                     <span className="font-normal text-slate-500">— {s.property.propertyName}</span>
                   </p>
-                  <p className="mt-1 text-xs text-slate-500">
-                    Agent {s.agentName} ·{' '}
-                    {formatDateTime(s.scheduledDate ?? s.completedAt)} · {s.shots} photos
-                    {s.guestEmail ? ` · ${s.guestEmail}` : ''}
+                  <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500">
+                    {/* v4.167 — agent honnête (fix Problème 9) */}
+                    <span className={s.agentName.trim() ? '' : 'italic text-slate-400'}>
+                      {agentLabel(s.agentName)}
+                    </span>
+                    <span aria-hidden="true">·</span>
+                    {formatDateTime(s.scheduledDate ?? s.completedAt)}
+                    <span aria-hidden="true">·</span>
+                    {s.shots > 0 ? (
+                      <span>{s.shots} photos</span>
+                    ) : (
+                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
+                        Aucune photo
+                      </span>
+                    )}
+                    {s.guestEmail && <span className="truncate">· {s.guestEmail}</span>}
+                    {/* v4.167 — caution sécurisée (Problème 11) */}
+                    <DepositChip amount={s.depositAmount} />
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
