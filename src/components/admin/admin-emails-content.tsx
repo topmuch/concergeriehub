@@ -81,6 +81,7 @@ interface EmailStats {
 // v4.58 — Configuration e-mail effective renvoyée par l'API
 interface EmailConfig {
   from: string;
+  provider: string;
   providerConfigured: boolean;
 }
 
@@ -135,6 +136,7 @@ export function AdminEmailsContent() {
   const [preview, setPreview] = useState<{ id: string; subject: string; html: string } | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [retryingId, setRetryingId] = useState<string | null>(null);
+  const [retryingBulk, setRetryingBulk] = useState(false);
 
   const load = useCallback(
     async (opts: { silent?: boolean } = {}) => {
@@ -213,6 +215,45 @@ export function AdminEmailsContent() {
     [load],
   );
 
+  // v4.163 — Renvoi EN MASSE de tous les échecs (provider réparé :
+  // nouvelle clé Resend ou identifiants SMTP corrigés → un clic
+  // récupère tous les emails bloqués, ex : confirmations EDL 535).
+  const retryAllFailed = useCallback(
+    async () => {
+      if (retryingBulk) return;
+      setRetryingBulk(true);
+      try {
+        const res = await fetch('/api/admin/emails/retry?all=failed', { method: 'POST' });
+        const data = await res.json() as {
+          ok?: boolean; bulk?: boolean; total?: number; sent?: number; failed?: number;
+          errors?: { id: string; to: string; subject: string; error: string }[];
+          error?: string;
+        };
+        if (!res.ok || !data.ok) throw new Error(data.error ?? `HTTP ${res.status}`);
+        const total = data.total ?? 0;
+        const sent = data.sent ?? 0;
+        const failed = data.failed ?? 0;
+        if (total === 0) {
+          toast.info('Aucun email en échec à renvoyer');
+        } else if (failed === 0) {
+          toast.success(`${sent} email${sent > 1 ? 's' : ''} renvoyé${sent > 1 ? 's' : ''} avec succès ✅`);
+        } else {
+          const first = data.errors?.[0]?.error?.slice(0, 120);
+          toast.warning(
+            `${sent} envoyé${sent > 1 ? 's' : ''}, ${failed} toujours en échec${first ? ` — ex : ${first}` : ''}`,
+          );
+        }
+        await load({ silent: true });
+      } catch (error) {
+        console.error(error);
+        toast.error(error instanceof Error ? error.message : 'Échec du renvoi en masse');
+      } finally {
+        setRetryingBulk(false);
+      }
+    },
+    [load, retryingBulk],
+  );
+
   const kpis = [
     { label: 'Envoyés (24 h)', value: stats ? String(stats.sent24h) : '—', sub: stats ? `${stats.sent} au total` : '', variant: 'luxkpi-emerald' },
     { label: 'Échecs (24 h)', value: stats ? String(stats.failed24h) : '—', sub: stats ? `${stats.failed} au total` : '', variant: 'luxkpi-coral' },
@@ -232,7 +273,8 @@ export function AdminEmailsContent() {
         <p className="lux-eyebrow">Console plateforme</p>
         <h1 className="lux-display mt-2 text-2xl font-semibold text-white sm:text-3xl">Emails transactionnels</h1>
         <p className="mt-2 text-sm text-[#8fa0c2]">
-          Outbox des notifications et reçus — Provider : SMTP, sinon mode démo en dev.
+          Outbox des notifications et reçus — provider configurable dans l&apos;onglet
+          Configuration (SMTP ou Resend), sinon mode démo en dev.
         </p>
         {config && (
           <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
@@ -243,10 +285,22 @@ export function AdminEmailsContent() {
               <span className="lux-dot" style={{ backgroundColor: '#34d399' }} aria-hidden="true" />
               Notifications expédiées par la plateforme — les hôtes n&apos;ont rien à configurer
             </span>
-            {!config.providerConfigured && (
+            {config.provider === 'resend' && !config.providerConfigured && (
               <span className="lux-chip">
                 <span className="lux-dot" style={{ backgroundColor: '#f07d6a' }} aria-hidden="true" />
-                Aucun provider configuré (SMTP — voir Configuration)
+                Provider Resend sélectionné mais clé API manquante — voir Configuration
+              </span>
+            )}
+            {config.provider === 'smtp' && !config.providerConfigured && (
+              <span className="lux-chip">
+                <span className="lux-dot" style={{ backgroundColor: '#f07d6a' }} aria-hidden="true" />
+                Provider SMTP sélectionné mais hôte/port manquants — voir Configuration
+              </span>
+            )}
+            {config.provider === 'none' && (
+              <span className="lux-chip">
+                <span className="lux-dot" style={{ backgroundColor: '#f07d6a' }} aria-hidden="true" />
+                Aucun provider configuré — voir Configuration
               </span>
             )}
           </div>
@@ -262,7 +316,18 @@ export function AdminEmailsContent() {
 
         {/* ----- Onglet Journal d'envoi (outbox) ----- */}
         <TabsContent value="journal" className="mt-6 space-y-6">
-            <div className="flex justify-end">
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              {stats && stats.failed > 0 && (
+                <Button
+                  variant="outline"
+                  onClick={() => void retryAllFailed()}
+                  disabled={retryingBulk}
+                  className="rounded-full! border-[#f07d6a]/40! bg-[#f07d6a]/10! px-4! text-xs! font-semibold text-[#f07d6a]! hover:bg-[#f07d6a]/20! hover:text-[#f07d6a]!"
+                  aria-label="Renvoyer tous les emails en échec"
+                >
+                  {retryingBulk ? 'Renvoi en cours…' : `Renvoyer tous les échecs (${stats.failed})`}
+                </Button>
+              )}
               <Button
                 variant="outline"
                 onClick={() => void load()}
@@ -759,11 +824,19 @@ function EmailConfigTab() {
                 className={LUX_FIELD}
               />
               <p className="text-xs text-[#8fa0c2]">
-                Créez la clé sur <strong>resend.com → API Keys</strong>. Important : vérifiez le
-                domaine <strong>roomscan.pro</strong> dans Resend → Domains (ajoutez les
-                enregistrements DNS fournis) pour expédier depuis{' '}
+                Créez la clé sur <strong>resend.com → API Keys → Create API Key</strong>. Resend
+                n&apos;affiche une clé qu&apos;<strong>une seule fois</strong>, à sa création : si votre
+                ancienne clé n&apos;est plus copiable (affichée <code className="rounded bg-white/10 px-1 font-mono text-[#c7d3ea]">re_****…</code>),
+                c&apos;est normal — créez simplement une <strong>nouvelle clé</strong> (les anciennes
+                restent valables, vous pourrez les supprimer ensuite). Collez-la ici puis
+                enregistrez : effet immédiat, sans redéploiement.
+              </p>
+              <p className="text-xs text-[#fbbf24]">
+                Important : vérifiez le domaine <strong>roomscan.pro</strong> dans Resend → Domains
+                (ajoutez les enregistrements DNS fournis) pour expédier depuis{' '}
                 <code className="rounded bg-white/10 px-1 font-mono text-[#c7d3ea]">notifications@roomscan.pro</code>.
-                Sans domaine vérifié, Resend refuse l&apos;envoi.
+                Sans domaine vérifié, Resend refuse l&apos;envoi vers vos hôtes et invités (compte
+                restreint : uniquement vers l&apos;email du compte Resend).
               </p>
             </div>
           </div>

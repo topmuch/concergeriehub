@@ -574,6 +574,54 @@ export async function retryEmail(outboxId: string): Promise<RetryEmailResult> {
 }
 
 // -------------------------------------------------------------
+// v4.163 — RENVOI EN MASSE des échecs (Console Superadmin)
+// -------------------------------------------------------------
+
+export interface RetryFailedResult {
+  /** Nombre d'emails traités (FAILED trouvés, max 100). */
+  total: number;
+  sent: number;
+  failed: number;
+  /** Détail des échecs restants (pour le toast Console). */
+  errors: { id: string; to: string; subject: string; error: string }[];
+}
+
+/**
+ * Renvoie TOUS les emails FAILED de l'outbox, les plus anciens d'abord
+ * (limite de sécurité : 100 par clic). Chaque email passe par
+ * deliverEmail (idempotent : un SENT n'est jamais renvoyé) — un échec
+ * individuel n'interrompt jamais le lot. Cas d'usage : les identifiants
+ * SMTP / la clé Resend ont été réparés → on récupère en un clic tous
+ * les emails bloqués (ex : confirmations état des lieux hôte/invité).
+ */
+export async function retryFailedEmails(max = 100): Promise<RetryFailedResult> {
+  const rows = await db.emailOutbox.findMany({
+    where: { status: 'FAILED' },
+    orderBy: { createdAt: 'asc' },
+    select: { id: true, to: true, subject: true },
+    take: Math.max(1, Math.min(max, 100)),
+  });
+  let sent = 0;
+  let failed = 0;
+  const errors: RetryFailedResult['errors'] = [];
+  for (const row of rows) {
+    const result = await deliverEmail(row.id);
+    if (result.status === 'SENT') {
+      sent += 1;
+    } else {
+      failed += 1;
+      errors.push({
+        id: row.id,
+        to: row.to,
+        subject: row.subject,
+        error: result.error ?? 'erreur inconnue',
+      });
+    }
+  }
+  return { total: rows.length, sent, failed, errors };
+}
+
+// -------------------------------------------------------------
 // v4.98 — SELF-HEALING : retry automatique de la file en échec
 // -------------------------------------------------------------
 

@@ -16,6 +16,7 @@ import { db } from '@/lib/db';
 import {
   emailFromAddress,
   emailProviderConfigured,
+  resolveEmailProvider,
 } from '@/lib/email';
 
 function round2(n: number): number {
@@ -85,10 +86,14 @@ export async function GET(request: NextRequest) {
 
     const processed24h = sent24h + failed24h;
 
+    // v4.163 — provider résolu (DB > env) pour le chip d'état Console
+    const resolved = await resolveEmailProvider();
+
     return NextResponse.json({
       // v4.55 — Configuration e-mail effective (visibilité superadmin)
       config: {
         from: await emailFromAddress(),
+        provider: resolved.type,
         providerConfigured: await emailProviderConfigured(),
       },
       stats: {
