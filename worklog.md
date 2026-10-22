@@ -5208,3 +5208,23 @@ Stage Summary:
 - /inspection/badges : page de téléchargement des badges de confiance (sélecteur multi-logements, ouverture directe si 1 logement) ; /inspection/application : QR PWA + guides Android/iOS.
 - Leçon INFRA : les credentials Coolify (.coolify-token, coolify.mjs) ne survivent pas aux resync — les stocker dans un fichier documenté du repo (hors tar) ou chez l'utilisateur ; vérifier le scope du token GitHub (admin:repo_hook requis pour diagnostiquer les webhooks).
 - Leçon : un push GitHub ne garantit PAS le déploiement — toujours poller /api/health jusqu'à la version attendue avant d'annoncer (v4.159 avait mis 9 min, v4.160 bloqué côté Coolify après livraison 200).
+
+---
+Task ID: V4161-DEPLOY-FIX
+Agent: Z.ai Code (principal)
+Task: L'utilisateur signale « le deploiement a echoué » et fournit un token Coolify API (http://38.247.134.241:8000). Diagnostiquer l'echec, corriger, deployer v4.160/v4.161 et verifier en prod.
+
+Work Log:
+- DIAGNOSTIC : token OK (GET /applications) ; app roomscan.pro = « Concierge Hub » uuid p7xscubexkcymrehc50xhiuv (repo topmuch/concergeriehub.git, Dockerfile /Dockerfile) ; /api/health prod = v4.159 → le build v4.160 n'avait jamais abouti. Working tree : build.sh contient DEJA le fix « v4.161 BUILD ADAPTATIF » (builds v4.160 morts a ~2 min : OOM kill sur tsc --noEmit ~1,9 Go, RAM hote tombee sous le besoin — 21 apps Coolify + builds sur le meme hote).
+- PIEGE RESYNC : commit local b022ea7 (resync, non pousse) avait SUPPRIME src/app/upload/[token]/page.tsx (piege .gitignore upload/ deja vu en v4.158) — restaure depuis 8bd0acd avant tout tar.
+- FIX TS : bunx tsc --noEmit echouait sur shield-badges.tsx ligne 89 (prop role="alert" sur ShieldCard) → ShieldCard (shield-ui.tsx) accepte desormais role?: string (retro-compatible). TSC OK + lint OK ensuite.
+- LIVRAISON v4.161 : VERSION.txt bump (correctif deploiement + contenu v4.160), Dockerfile cb=v4.161 (le cache-buster DOIT changer : la couche ADD cb=v4.160 etait deja cachee du build mort), tar reconstruit 1315 entrees (verifie : build.sh adaptatif + page upload restaurée + badges/application/VERSION dedans), commit 0dc2444, push origin main fast-forward (8bd0acd..0dc2444, verifie ls-remote).
+- DECLENCHEMENT API : POST /deploy?uuid=p7xscubexkcymrehc50xhiuv&force=true → deployment_uuid 0go5a3as8fn4zkwj2fnwkvxo, « Application Concierge Hub deployment queued ». Poll API : queued ~8 min (builds concurrents), in_progress 10:03→10:12, finished 10:12:18 UTC.
+- VERIF PROD : /api/health = v4.161 + db up ; gardes 307 sur /inspection/badges et /inspection/application sans session ; /upload/test-token 200 (page restaurée).
+- E2E PROD (agent-browser, couverge@gmail.com) : login /login/edl OK ; sidebar dashboard = 12 liens (8 + Aide : Mode d'emploi, FAQ, Badges de confiance, Application mobile) ; /inspection/badges rend l'entete + legende 3 badges et la modal s'ouvre DIRECTEMENT (1 seul logement) avec le VRAI « Le Pelican » et QR roomscan.pro/verify/cmvh7taaa0003qt01fhq4p3v7 (3x PNG HD + HTML) ; /inspection/application rend carte QR « 📱 Installez l'application Roomscan » + region Installation manuelle ; nav mobile iPhone 14 = 12 liens ; 0 erreur console ; screenshots /tmp/prod-badges-v4161.png, /tmp/prod-app-v4161.png, /tmp/prod-mobile-v4161.png ; navigateur ferme.
+
+Stage Summary:
+- v4.161 en production sur roomscan.pro : les onglets « Badges de confiance » et « Application mobile » sont SOUS « FAQ » dans la sidebar du dashboard Bouclier (desktop + mobile), avec leurs pages /inspection/badges (modal badges, QR /verify, PNG HD + HTML) et /inspection/application (QR PWA + guides Android/iOS).
+- Cause racine de l'echec v4.160 corrigee structurellement : scripts/build.sh mesure MemAvailable de l'hote a chaque build — si < 2400 Mo, tsc skipe (avertissement fort) + heap webpack 1024 Mo ; sinon profil complet. Un build qui passe sans check vaut mieux qu'un build mort (la garantie types reste assuree pre-push).
+- Lecon : le cache-buster Dockerfile doit etre STRICTEMENT croissant — reutiliser cb d'un build mort reutiliserait la couche ADD cachee (vieux tar = vieux build.sh = re-OOM).
+- Lecon : tsc est la brique la plus fragile du build (pic ~1,9 Go) — penser OOM d'abord quand un build meurt a ~2 min sur un hote multi-tenants.
