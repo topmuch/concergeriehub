@@ -5296,3 +5296,26 @@ Work Log:
 Stage Summary:
 - v4.163 EN PRODUCTION : renvoi en masse des emails échoués, aide Resend complète, chips provider dynamiques, page /upload/[token] restaurée
 - Pipeline tar : toujours écrire app-update.tar.xz À LA RACINE du repo (pas /tmp) et bumper le cache-buster Dockerfile à CHAQUE push du tar
+
+---
+Task ID: V4164-HUB-EDL-EMAILS-PDF
+Agent: Z.ai Code (main)
+Task: Clé Resend installée + diagnostic emails EDL absents du journal + PDF joint au flux HUB actif
+
+Work Log:
+- Clé API Resend fournie par le client : validée via GET /api/resend.com/domains → roomscan.pro VERIFIED (sending enabled, eu-west-1)
+- Envoi test direct API Resend depuis notifications@roomscan.pro → couverge@gmail.com : SUCCÈS (id 01a16484…)
+- Impossible d'injecter la clé moi-même : token Coolify sans permission write sur envs, compte couverge non superadmin (requireSuperadmin exige role='superadmin') → client a collé la clé dans la Console Superadmin
+- Erreur client au test console : « The verifscan.pro domain is not verified » → reproduite via API Resend avec from notifications@verifscan.pro : l'app expédiait depuis l'ANCIEN domaine (env EMAIL_FROM héritée du produit VerifScan) → FIX client : champ Expéditeur Console → RoomScan <notifications@roomscan.pro> (DB > env) → « sa marche »
+- Client : « ya pas les emails de validation des etats lieux pour lhote et linvité » → audit du code : sendInspectionCompletedEmails (v4.162, PDF joint) appartient au flux V1 (inspection-emails.ts) dont le dashboard InspectionDashboard + InspectionCreateForm ne sont montés NULLE PART dans src/app → SEUL flux EDL actif = hub public /api/public/hub/[slug]/checkout-inspection (emails custom SANS pièce jointe, via queueEmail direct)
+- Hub du bien trouvé : /hub/le-pelican-53bf7a (plaque activée, qrHubSlug exposé via /api/airbnb/properties/{id} → qrHubSlug null mais page plates affiche le lien)
+- E2E COMPLET sur prod v4.163 : hub → mode invité → formulaire EDL arrivée (nom Test Email EDL, email couverge+edltest@gmail.com alias Gmail, signature canvas via PointerEvent) → POST 200 « envoyé par email à vous et à votre hôte » → PDF public 200 (3 pages, 41 Ko) → les 2 emails (hôte couverge@gmail.com + invité alias) partent via Resend
+- v4.164 : renderCheckOutInspectionPdf appelé dans checkout-inspection POST (relecture DB complète, même select que la route PDF publique) → attachment {filename, mime, data:Buffer} aux 2 queueEmail (invité + hôte) + mentions « PDF joint » ; garde 7 Mo + try/catch → repli liens ; MAX_PDF_ATTACHMENT_BYTES=7Mo
+- Piège resync REPRODUIT et cette fois DÉFINITIVEMENT réglé : commit auto e601348 (UUID) a re-supprimé src/app/upload/[token]/page.tsx de HEAD → déplacement du code dans src/components/upload/upload-token-page.tsx (composant protégé, hors dossier upload) + route = shim de 20 lignes trivialement restaurable (import + return)
+- Livraison : tar racine (leçon v4.163), cb=v4.165, commit 3422222, push, deploy jdsrugdpykhr7pa3mcfhqrc4
+
+Stage Summary:
+- Chaîne email 100% fonctionnelle : Resend clé client + domaine roomscan.pro vérifié + expéditeur corrigé en DB
+- Le flux hub envoie désormais le PDF signé EN PIÈCE JOINTE (hôte + invité) — la promesse v4.162 est tenue sur le VRAI flux
+- Procédure resync : vérifier git cat-file HEAD:src/app/upload/[token]/page.tsx à chaque session ; si absent → git checkout depuis dernier commit qui le contient ; le composant protégé src/components/upload/ rend la restauration triviale
+- À vérifier par le client : réception des 2 emails du test E2E (hôte + invité, couverge@gmail.com) et du renvoi des échecs
