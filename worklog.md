@@ -5381,3 +5381,38 @@ Stage Summary:
 - « Mes biens » : chaque carte affiche son état de protection (Protégé / Onboarding partiel avec tooltip), les 3 stats ont leurs icônes et le 1er séjour planifié (check-in/out + invité + date FR) apparaît sous les compteurs — le prochain séjour est visible sans quitter la page.
 - « Documents » : recherche plein texte + 3 filtres combinables (type/bien/mois) sur les deux sections, date de création complète « Généré le 22 octobre 2026 à 10:15 » sur les rapports, badges Anomalie et Caution sécurisée sur les lignes concernées, écran 0-résultat avec réinitialisation en un clic.
 - Aucun fichier hors des 2 autorisés modifié (shield-ui.tsx et routes API intacts) ; le garde-fou agents a détecté une erreur tsc préexistante dans /api/shield/properties/route.ts à corriger par l'agent API.
+---
+Task ID: V4167-DASHBOARD-V2-12-AMELIORATIONS
+Agent: Z.ai Code (main) + full-stack-developer subagent (Task 4-a)
+Task: Dashboard V2 Bouclier — les 12 améliorations du master prompt client + widgets marketing, déploiement v4.167
+
+Work Log:
+- Diagnostic bug « 0 photos / Agent À venir » (P9) : les sessions planifiées (visits POST) naissaient avec agentName='À venir' (fake) + completedAt=now, et l'UI historique affichait un badge « Terminé » CODÉ EN DUR + agentName brut → confusion crédibilité. FIX source : agentName='' à la création (le cleaner renseigne son nom à la capture) ; FIX UI : StatusBadge sur effectiveStatus réel, agentLabel() helper (« Agent non renseigné » si vide/placeholder), « Aucune photo » chip ambre si shots=0
+- Schema : ShieldSession.depositAmount Int? (caution €) — db push local OK, additive-safe (prisma db push au boot Docker)
+- APIs : properties += onboardingStatus + nextVisit (1er A_VENIR par bien) ; sessions += anomalies (groupBy ShieldZoneShot status≠IMPECCABLE) + depositAmount ; stats += cautionsCeMois (Σ deposit CHECK_IN TERMINE ce mois, 1×/séjour) + anomalies/deposit sur recent ; visits POST accepte depositAmount (0–100 000 €) ; NOUVELLE route /api/shield/notifications (late + anomalies 7j + PENDING_PHOTOS, calc à la volée zéro cron)
+- UI (Task 4-a, sous-agent) : shield-properties (badge Protégé/Onboarding partiel, icônes DoorOpen/Plug/ClipboardList sur stats, ligne Prochain séjour) ; shield-documents (recherche, chips type Tous/Check-in/Check-out/ONB, select bien + mois 12 glissants, « Généré le …formatDateTimeFull », AnomalyBadge+DepositChip, état 0-résultat + Réinitialiser)
+- UI (main) : shield-visits (filtres chips avec compteurs, carte EN_RETARD rouge ring, email invité mailto, bouton Rappeler → wa.me pré-rempli avec/sans numéro, champ caution € au formulaire) ; shield-history (statut réel, AnomalyBadge, DepositChip, agent honnête, bouton Export CSV BOM UTF-8 ;séparé) ; shield-dashboard (widgets Revenus protégés + Temps gagné ≈40 min/session, agent honnête + anomalie + caution dans Derniers séjours) ; shield-ui (AnomalyBadge, DepositChip, agentLabel, formatMoney, formatDateTimeFull, GhostButton.disabled) ; shield-bell.tsx NOUVEAU (cloche dark/light, badge rouge via localStorage shieldNotifSeenAt, panneau 3 sections liées) ; shield-shell (topbar desktop blanche sticky + cloche, cloche topbar mobile)
+- E2E LOCAL complet (seed temporaire e2e-v4167@roomscan.test SUPPRIMÉ après) : login /login/edl → dashboard (cloche badge 2, widgets 0 €/1,3 h), ménage (filtres, carte rouge, email, Rappeler, caution 800 €), création séjour réel avec caution 1200 € → « Séjour créé », check-outs (Anomalie·1, 500 € caution, Export CSV), biens (Protégé + icônes + Prochain check-in Amina), documents (filtres + Généré le), panneau cloche (2 à traiter, liens) ; mobile iPhone 14 : NO_HSCROLL, cloche topbar mobile ; lint+tsc 0 erreur
+- INFRA locale : .env avait perdu NEXTAUTH_SECRET (resync) → JWEDecryptionFailed au login → secret+NEXTAUTH_URL ré-ajoutés ; 3 process bun dev concurrents tuaient le port → cleanup + 1 instance propre
+- Pipeline tar respecté : tar À LA RACINE, liste 1322 entrées = tar v4.166 (1319) + 3 nouveaux fichiers exactement (notifications/route.ts, shield-bell.tsx, +dir) ; upload/[token] + composant protégé vérifiés dans HEAD et tar ; VERSION v4.167 ; Dockerfile cb=v4.169 ; commit 2cfe50f pushé ; deploy lgiuj0hjtqlgqx0ljyl5wrfa
+
+Stage Summary:
+- v4.167 = la totalité du plan d'action client : 2 Urgents (bug Agent/0 photos fixé source+UI, retards rouges+filtres), Haute (cloche + Anomalie), Moyenne (documents recherche/filtres/dates, email invité), Nice-to-have (widgets Revenus/Temps, export CSV) ; mode sombre + vue calendrier + ZIP reports = V3 (non demandés au déploiement)
+- Caution : champ optionnel au formulaire Nouveau Séjour, répliqué sur les 2 sessions du pair, comptée 1× via CHECK_IN dans le widget ; les séjours hub/EDL ne portent pas de caution (null) → chips invisibles
+- Nouvel endpoint à surveiller : /api/shield/notifications (3 findMany par appel, poll 60 s client, take bornés)
+- Rappel pipeline : cb bumpé à CHAQUE push de tar (v4.169 consommé par ce build) ; vérifier git cat-file upload shim avant chaque tar
+---
+Task ID: V4167-DEPLOY-VERIFY
+Agent: Z.ai Code (main)
+Task: Déploiement v4.167 + vérification production
+
+Work Log:
+- Deploy Coolify lgiuj0hjtqlgqx0ljyl5wrfa : queued ~13 min → in_progress → finished (build ~20 min total, file d'attente chargée)
+- /api/health → status OK + version v4.167 (2026-10-22) — DASHBOARD V2 : LES 12 AMÉLIORATIONS…
+- Guards prod : 5 pages /inspection/* → 307 /login/edl ✓ ; 5 APIs /api/shield/* (dont la NOUVELLE /notifications) → 401 ✓ ; /upload/test-token → 200 ✓ (piège resync écarté) ; / → 200
+- CSS prod vérifié (agent-browser) : border-radius bouton = 10px (Tailwind compilé, pas le bug v4.166)
+- E2E complet fait en LOCAL (compte de test créé puis SUPPRIMÉ) — E2E prod NON Fait sur le compte couverge : mot de passe non détenu + session agent-browser expirée → vérifications visuelles à faire par le client
+
+Stage Summary:
+- v4.167 EN PRODUCTION. À vérifier par le client (connexion couverge@gmail.com) : cloche 🔔 en haut à droite (badge rouge + panneau), Tableau de bord (widgets Revenus protégés / Temps gagné), Ménage à faire (filtres, retards rouges, email invité, bouton Rappeler, champ caution au formulaire), Check-ins/Check-outs (badge Anomalie, caution, « Agent non renseigné », Export CSV), Mes biens (badge Protégé + icônes + Prochain séjour), Documents (recherche + filtres + « Généré le … »)
+- Rollback possible si problème : redéployer le tar précédent (commit bab4b70, v4.166, cb=v4.168) via Coolify
