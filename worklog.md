@@ -5340,3 +5340,23 @@ Stage Summary:
 - Email ET site montrent désormais le MÊME document au modèle rouge actuel (route PDF publique + pièces jointes)
 - Ancien modèle bleu conservé en repli automatique si le rendu rouge échoue
 - Procédure anti-resync fonctionnelle : shim upload/[token] + composant protégé revérifiés avant chaque tar
+
+---
+Task ID: V4166-CHECKOUT-LINK-COHERENCE
+Agent: Z.ai Code (main)
+Task: Incohérence check-in/check-out — le lien EDL de départ n'apparaissait pas dans le Hub
+
+Work Log:
+- Client : « dans checkout les liens du checkout n'y figure pas alors que le lien du checkin est généré et activé »
+- Diagnostic : hub-content.tsx — CheckInInspectionCard affichée dès l'arrivée (moment !== 'departure'), mais CheckOutInspectionCard limitée à (moment === 'departure' || isCheckoutDay) → invisible pendant TOUT le séjour (moment='midstay'), impossible de faire son EDL de sortie en avance
+- FIX v4.166 : condition relaxée à !checkoutDone && !stayOver (identique au checkin) ; disparition post-signature + sync serveur + remontée en tête le jour J (sec2Order) inchangées ; flux d'au-revoir (hidden card) inchangé
+- ERREUR PIPELINE CORRIGÉE : 1er tar v4.166 bâti à la main SANS les configs racine (postcss.config.mjs, tailwind.config.ts, bun.lock, components.json, eslint.config.mjs, README.md absents) → build Coolify sans PostCSS Tailwind → CSS BRUT servi (@theme inline non compilé, 0 règle utilitaire) = site ENTIÈREMENT sans style en prod. Détecté pendant l'E2E (borderRadius 0px, 0 classe .rounded-3xl dans les CSS). Comparaison avec le tar v4.165 précédent (git cat-file) → liste exacte restaurée : README.md VERSION.txt bun.lock components.json eslint.config.mjs next.config.ts package.json postcss.config.mjs tailwind.config.ts tsconfig.json prisma public scripts src (1319 entrées)
+- 2 déploiements : tgfhkbqkx9issbzr028wazgd (v4.166 tar incomplet, cb=v4.167) puis xff3ug5piyffoclpdxq9i44t (v4.166 fix2, cb=v4.168), finished 19:04:32 puis 19:27:34 UTC
+- Tokens Coolify retrouvés dans /tmp/my-project/.coolify-token (le workspace avait perdu .coolify-token racine) ; le port 8000 = dashboard Coolify (nginx) — /api/health textuel « OK » n'est PAS l'app : toujours vérifier https://roomscan.pro/api/health (JSON avec version)
+
+Stage Summary:
+- v4.166 EN PRODUCTION : la carte « État des lieux de départ » est visible PENDANT TOUT LE SÉJOUR, au même titre que l'EDL d'entrée — l'invité peut faire son checkout en avance ; jour J : remontée en tête conservée
+- E2E validé (agent-browser sur prod) : hub le-pelican → Mode Invité → carte checkout visible+stylée (radius 24px) → dialog formulaire complet ouvert (« Document à valeur légale », pièces Bon état/Sale/Endommagé) → fermeture Escape ; carte arrivée toujours présente ; 0 erreur console ; mobile 390px : pas de scroll horizontal
+- CSS Tailwind re-compilé en prod (b4485e7e7ae49535.css 469 Ko avec .rounded-3xl ; plus de @theme brut)
+- LEÇON PIPELINE (critique) : le tar DOIT contenir EXACTEMENT la liste v4.165 (configs racine incluses — postcss.config.mjs est VITAL pour le CSS) ; la liste du tar précédent se vérifie par git cat-file blob HEAD~1:app-update.tar.xz ; bump du cache-buster Dockerfile à CHAQUE tar poussé (v4.167 consommé par le 1er build, v4.168 par le 2e)
+- Screenshots : /tmp/prod-v4166-final-card.png (desktop), /tmp/prod-v4166-final-dialog.png (formulaire), /tmp/prod-v4166-mobile.png (mobile)
