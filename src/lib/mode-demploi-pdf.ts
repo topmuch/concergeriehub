@@ -145,6 +145,12 @@ const ROUGE = '#C41E3A';
 const GRIS = '#64748b';
 const GRIS_CLAIR = '#eef2f7';
 
+/** Tronque un texte à N caractères + ellipsis (pdfkit TextOptions
+ *  n'expose pas maxLines/ellipsis typés → troncature amont). */
+function clamp(text: string, max: number): string {
+  return text.length > max ? `${text.slice(0, max - 1).trimEnd()}…` : text;
+}
+
 export async function renderModeDEmploiPdf(): Promise<Buffer> {
   const { default: PDFDocument } = await import('pdfkit');
   const doc = new PDFDocument({ size: 'A4', margin: 0, info: { Title: 'Mode d\u2019emploi — RoomScan Inventaire' } });
@@ -166,7 +172,7 @@ export async function renderModeDEmploiPdf(): Promise<Buffer> {
   doc
     .path(`M ${W - 210} 0 L ${W - 140} 0 L ${W - 226} 132 L ${W - 296} 132 Z`)
     .fill(ROUGE);
-  doc.path(`M ${W - 120} 0 L ${W - 80} 0 L ${W - 166} 132 L ${W - 206} 132 Z`).fill('#ffffff', 0.14);
+  doc.path(`M ${W - 120} 0 L ${W - 80} 0 L ${W - 166} 132 L ${W - 206} 132 Z`).fill('#3e559a');
   doc.fillColor('#C7D2FE').font(body).fontSize(9).text('ROOMSCAN INVENTAIRE — ÉTATS DES LIEUX CERTIFIÉS', M, 34, { characterSpacing: 1.6 });
   doc.fillColor('#ffffff').font(bold).fontSize(26).text('Mode d\u2019emploi', M, 52);
   doc.fillColor('#C7D2FE').font(body).fontSize(10.5).text(
@@ -216,12 +222,12 @@ export async function renderModeDEmploiPdf(): Promise<Buffer> {
       doc.roundedRect(tx, y + 36, bw, 15, 7).fill(ROUGE);
       doc.fillColor('#ffffff').font(bold).fontSize(7.5).text(s.badge, tx + 7, y + 40);
     }
-    // Description
+    // Description (tronquée à 3 lignes ≈ 300 chars pour la largeur A4)
     doc.fillColor(GRIS).font(body).fontSize(8.8).text(
-      s.description,
+      clamp(s.description, 300),
       M + 62,
       y + (s.badge ? 58 : 40),
-      { width: W - M * 2 - 84, lineGap: 2.2, maxLines: 3, ellipsis: true, height: 30 },
+      { width: W - M * 2 - 84, lineGap: 2.2, height: 30 },
     );
     y += stepH + 12;
   }
@@ -252,7 +258,7 @@ export async function renderModeDEmploiPdf(): Promise<Buffer> {
       doc.roundedRect(W - M - tw - 12, y + 7, tw, 14, 7).fill(n.alert ? ROUGE : BLEU);
       doc.fillColor('#ffffff').font(bold).fontSize(7).text(n.tag, W - M - tw - 6, y + 10.5);
     }
-    doc.fillColor(GRIS).font(body).fontSize(8.4).text(n.description, nx, y + 24, { width: W - M * 2 - 56, maxLines: 2, ellipsis: true });
+    doc.fillColor(GRIS).font(body).fontSize(8.4).text(clamp(n.description, 220), nx, y + 24, { width: W - M * 2 - 56 });
     y += notifH + 8;
   }
 
