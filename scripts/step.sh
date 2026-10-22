@@ -1,10 +1,15 @@
 #!/bin/sh
 # =============================================================
-# v5.3 — Wrapper de couche Dockerfile avec télémetrie.
-# Exécute une étape du build ; en cas d'échec, le log est
-# téléversé vers /api/errors (lisible /admin/logs) AVANT de
-# propager le code de sortie → le build Coolify échoue comme
-# avant, MAIS la cause est diagnostiquable sans accès SSH.
+# v5.5 — Wrapper de couche Dockerfile avec télématrie.
+# Exécute une étape du build DIRECTEMENT (pas de sh -c : l'appel
+# précédent `sh -c "$*"` transformait le séparateur `--` en OPTION
+# de sh → « sh: bad option '-- bun install' » → exit 2, la cause
+# des échecs v5.4/v5.5).
+#
+# En cas d'échec, le log est téléversé vers /api/errors +
+# webhook.site (lisible /admin/logs et sandbox) AVANT de propager
+# le code de sortie → le build échoue comme avant, MAIS la cause
+# est diagnostiquable sans accès SSH.
 #
 # Usage : sh scripts/step.sh <nom-étape> <commande...>
 # =============================================================
@@ -15,7 +20,7 @@ LOG="/tmp/step-${NAME}.log"
 
 echo "[step:${NAME}] démarrage…"
 set +e
-sh -c "$*" > "$LOG" 2>&1
+"$@" > "$LOG" 2>&1
 EXIT=$?
 set -e
 
