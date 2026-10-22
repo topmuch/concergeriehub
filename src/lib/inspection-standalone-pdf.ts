@@ -93,6 +93,13 @@ export interface StandaloneInspectionPdfData {
     ipAddress?: string | null;
   };
   rooms: StandalonePdfRoom[];
+  // ── v4.165 — champs optionnels du flux HUB (checkout-inspection) ──
+  /** Commentaire libre global de l'invité (« Un problème à signaler ? »). */
+  guestNotes?: string | null;
+  /** Inventaire rendu (sortie) : clés, télécommandes, serviettes. */
+  inventory?: { keys: number; remotes: number; towels: number } | null;
+  /** Minibar déclaré (sortie) : unités consommées par article. */
+  minibar?: { name: string; consumed: number }[] | null;
 }
 
 // ---------- Constantes page & palette « Bouclier » ----------
@@ -665,6 +672,26 @@ function drawInfoBox(doc: PdfDoc, data: StandaloneInspectionPdfData, fontsOk: bo
   }
 
   doc.y += 12;
+
+  // — v4.165 — Encart « Remarques de l'invité » (commentaire libre hub) —
+  if (data.guestNotes?.trim()) {
+    const noteText = data.guestNotes.trim().slice(0, 600);
+    const noteLines = Math.max(
+      1,
+      Math.ceil(doc.widthOfString(noteText) / (CONTENT_W - 24)),
+    );
+    const noteH = 22 + noteLines * 10;
+    doc.save();
+    doc.roundedRect(MARGIN, doc.y, CONTENT_W, noteH, 4).fill('#FAFAF9');
+    doc.roundedRect(MARGIN, doc.y, CONTENT_W, noteH, 4).lineWidth(0.5).strokeColor(CARD_BORDER).stroke();
+    doc.restore();
+    txt(doc, fname('bold', fontsOk), 6.2, MUTED, 'REMARQUES DE L’INVITÉ', MARGIN + 12, doc.y + 6, CONTENT_W - 24, 'left');
+    doc.font(fname('body', fontsOk)).fontSize(7.6).fillColor(INK);
+    doc.text(noteText, MARGIN + 12, doc.y + 17, { width: CONTENT_W - 24, align: 'left', lineGap: 1 });
+    doc.y += noteH + 6;
+  }
+
+  doc.y += 0;
 }
 
 /** Bandeau de section rouge arrondi : icône blanche + titre blanc. */
@@ -1110,6 +1137,41 @@ function drawElectronicsPage(
 
 // ---------- Déclaration légale & anti-fraude ----------
 
+// ---------- v4.165 — Section INVENTAIRE & CONSOMMATIONS (flux HUB) ----------
+
+function drawInventorySection(doc: PdfDoc, data: StandaloneInspectionPdfData, startNumber: number, fontsOk: boolean): number {
+  const inv = data.inventory;
+  const minibar = (data.minibar ?? []).filter((m) => m.consumed > 0);
+  if (!inv && minibar.length === 0) return startNumber;
+
+  sectionBanner(doc, startNumber, 'INVENTAIRE & CONSOMMATIONS', 'sofa', fontsOk);
+
+  const rows: { label: string; value: string; bad: boolean }[] = [];
+  if (inv) {
+    rows.push({ label: 'Clés rendues', value: `${inv.keys}`, bad: false });
+    rows.push({ label: 'Télécommandes rendues', value: `${inv.remotes}`, bad: false });
+    rows.push({ label: 'Serviettes rendues', value: `${inv.towels}`, bad: false });
+  }
+  for (const m of minibar) {
+    rows.push({ label: `Minibar — ${m.name}`, value: `${m.consumed} consommé(s)`, bad: true });
+  }
+
+  for (const r of rows) {
+    doc.font(fname('bold', fontsOk)).fontSize(7.6).fillColor(r.bad ? BAD : INK);
+    doc.text(r.label, MARGIN, doc.y, { width: CONTENT_W - 120, align: 'left', lineBreak: false });
+    doc.font(fname('body', fontsOk)).fontSize(7.6).fillColor(r.bad ? BAD : INK);
+    doc.text(r.value, MARGIN + CONTENT_W - 120, doc.y, { width: 120, align: 'right', lineBreak: false });
+    doc.y += 14;
+  }
+  doc.y += 4;
+  summaryPill(
+    doc,
+    `Inventaire contrôlé à la remise des clés — ${rows.length} ligne${rows.length > 1 ? 's' : ''}`,
+    fontsOk,
+  );
+  return startNumber + 1;
+}
+
 function drawLegalDeclaration(doc: PdfDoc, data: StandaloneInspectionPdfData, fontsOk: boolean): void {
   const ins = data.inspection;
   ensureSpace(doc, 300);
@@ -1313,6 +1375,9 @@ export async function renderStandaloneInspectionPdf(
 
   // ── Page noire : contrôles électronique & électroménager ──
   sectionNumber = drawElectronicsPage(doc, data, sectionNumber, fontsOk);
+
+  // ── v4.165 — Inventaire & minibar (flux HUB, sortie) ──
+  sectionNumber = drawInventorySection(doc, data, sectionNumber, fontsOk);
 
   // ── Déclaration légale & anti-fraude ──
   drawLegalDeclaration(doc, data, fontsOk);

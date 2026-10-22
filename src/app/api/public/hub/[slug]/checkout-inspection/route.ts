@@ -7,12 +7,14 @@ import { resolveHubPropertyId } from '@/lib/hub-resolve';
 import { queueEmail } from '@/lib/email';
 import { siteUrl } from '@/lib/site';
 import { requireHubAccess } from '@/lib/hub-access';
-// v4.164 — PDF EN PIÈCE JOINTE des emails EDL (flux HUB actif).
-// Même rendu que /api/public/inspection/[token]/pdf (v4.162 l'avait
-// livré sur l'ancien flux V1, hors service — le hub est le seul flux
-// EDL réel depuis la refonte Bouclier V2).
-import { renderCheckOutInspectionPdf } from '@/lib/inspection-pdf';
-import { parseBranding } from '@/lib/branding';
+// v4.165 — PDF EN PIÈCE JOINTE des emails EDL (flux HUB actif) au
+// modèle ROUGE « ATTESTATION D'ÉTAT DES LIEUX » (le modèle actuel du
+// site — la v4.164 joignait encore l'ancien modèle bleu).
+import {
+  buildHubInspectionPdfBuffer,
+  HUB_PDF_MAX_BYTES,
+  hubInspectionPdfFilename,
+} from '@/lib/hub-inspection-pdf';
 // v4.81 (AUDIT QA) — notification unifiée (in-app + email + push) pour
 // l'état des lieux signé : avant, la route créait la cloche en direct
 // SANS push et sans couvrir les managers.
@@ -409,100 +411,24 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
       }
     }
 
-    // ── v4.164 — PDF EN PIÈCE JOINTE des emails (flux HUB) ──
-    // Relecture complète de l'inspection (mêmes données que la route
-    // PDF publique) + rendu PDFKit partagé. Garde-fous : échec de
-    // rendu ou PDF > 7 Mo → emails SANS pièce jointe (les liens
-    // directs restent) — jamais bloquant, jamais levant.
-    const MAX_PDF_ATTACHMENT_BYTES = 7 * 1024 * 1024;
+    // ── v4.165 — PDF EN PIÈCE JOINTE des emails (flux HUB) ──
+    // Modèle ROUGE « ATTESTATION D'ÉTAT DES LIEUX » (le modèle actuel
+    // du site) — même rendu que la route PDF publique. Garde-fous :
+    // échec de rendu ou PDF > 7 Mo → emails SANS pièce jointe (les
+    // liens directs restent) — jamais bloquant, jamais levant.
     let pdfAttachment: { filename: string; mime: string; data: Buffer } | null = null;
     try {
-      const row = await db.checkOutInspection.findUnique({
-        where: { publicToken },
-        select: {
-          id: true,
-          publicToken: true,
-          guestName: true,
-          guestEmail: true,
-          ipAddress: true,
-          signedAt: true,
-          type: true,
-          selfAssessment: true,
-          issues: true,
-          damages: true,
-          roomsData: true,
-          inventoryCheck: true,
-          minibarData: true,
-          damagePhotos: true,
-          guestSignature: true,
-          property: {
-            select: {
-              name: true,
-              address: true,
-              propertyType: true,
-              branding: true,
-              owner: {
-                select: {
-                  fullName: true,
-                  email: true,
-                  profile: { select: { phone: true } },
-                },
-              },
-            },
-          },
-          booking: { select: { checkIn: true, checkOut: true } },
-        },
-      });
-      if (row) {
-        const buffer = await renderCheckOutInspectionPdf({
-          id: row.id,
-          publicToken: row.publicToken,
-          guestName: row.guestName,
-          guestEmail: row.guestEmail,
-          ipAddress: row.ipAddress,
-          signedAt: row.signedAt,
-          type: row.type === 'checkin' ? 'checkin' : 'checkout',
-          selfAssessment: row.selfAssessment,
-          issues: row.issues,
-          damages: row.damages,
-          roomsData: row.roomsData,
-          inventoryCheck: row.inventoryCheck,
-          minibarData: row.minibarData,
-          damagePhotos: row.damagePhotos,
-          guestSignature: row.guestSignature,
-          booking: row.booking
-            ? { checkIn: row.booking.checkIn, checkOut: row.booking.checkOut }
-            : null,
-          property: {
-            name: row.property.name,
-            address: row.property.address,
-            propertyType: row.property.propertyType,
-            branding: parseBranding(row.property.branding),
-            host: {
-              name: row.property.owner?.fullName ?? null,
-              email: row.property.owner?.email ?? null,
-              phone: row.property.owner?.profile?.phone ?? null,
-            },
-          },
-        });
-        if (buffer.byteLength <= MAX_PDF_ATTACHMENT_BYTES) {
-          const guestSlug = row.guestName
-            .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '')
-            .replace(/[^a-zA-Z0-9]+/g, '-')
-            .replace(/^-+|-+$/g, '')
-            .toLowerCase()
-            .slice(0, 60);
-          pdfAttachment = {
-            filename: `etat-des-lieux-${row.type === 'checkin' ? 'entree' : 'sortie'}-${guestSlug || 'invite'}-${row.id.slice(-6)}.pdf`,
-            mime: 'application/pdf',
-            data: buffer,
-          };
-        } else {
-          console.warn(
-            `[checkout-inspection] PDF ${buffer.byteLength} o > 7 Mo — emails sans pièce jointe (${publicToken})`,
-          );
-        }
+      const buffer = await buildHubInspectionPdfBuffer(publicToken);
+      if (buffer && buffer.byteLength <= HUB_PDF_MAX_BYTES) {
+        pdfAttachment = {
+          filename: hubInspectionPdfFilename(data.type, data.guestName, inspection.id),
+          mime: 'application/pdf',
+          data: buffer,
+        };
+      } else if (buffer) {
+        console.warn(
+          `[checkout-inspection] PDF ${buffer.byteLength} o > 7 Mo — emails sans pièce jointe (${publicToken})`,
+        );
       }
     } catch (error) {
       console.error('[checkout-inspection] PDF joint échoué (emails sans pièce jointe) :', error);

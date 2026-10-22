@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { buildHubInspectionPdfBuffer, hubInspectionPdfFilename } from '@/lib/hub-inspection-pdf';
 import { db } from '@/lib/db';
 import { captureError } from '@/lib/error-monitor';
 import { parseBranding } from '@/lib/branding';
@@ -107,7 +108,22 @@ export async function GET(_req: Request, { params }: { params: Promise<{ token: 
     });
 
     if (inspection) {
-      const buffer = await renderCheckOutInspectionPdf({
+      // v4.165 — modèle ROUGE « ATTESTATION D'ÉTAT DES LIEUX » (le
+      // modèle actuel du site, identique aux emails) — remplace
+      // l'ancien rendu bleu « document de preuve horodaté ».
+      const buffer = await buildHubInspectionPdfBuffer(inspection.publicToken);
+      if (buffer) {
+        return new NextResponse(new Uint8Array(buffer), {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': `inline; filename="${hubInspectionPdfFilename(inspection.type, inspection.guestName, inspection.id)}"`,
+            'Cache-Control': 'private, no-store',
+          },
+        });
+      }
+      // Rendu rouge indisponible → repli sur l'ancien rendu (jamais 404).
+      const legacy = await renderCheckOutInspectionPdf({
         id: inspection.id,
         publicToken: inspection.publicToken,
         guestName: inspection.guestName,
@@ -128,7 +144,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ token: 
           : null,
         property: pdfProperty(inspection.property),
       });
-      return new NextResponse(new Uint8Array(buffer), {
+      return new NextResponse(new Uint8Array(legacy), {
         status: 200,
         headers: {
           'Content-Type': 'application/pdf',
