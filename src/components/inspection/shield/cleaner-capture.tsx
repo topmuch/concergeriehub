@@ -17,7 +17,7 @@
 // /api/shield/cleaner/[token] — le token magique EST l'autorisation.
 // Thème clair (fond slate-50, cartes blanches) · rouge bouclier #C21F26.
 // =============================================================
-import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
@@ -50,6 +50,7 @@ import {
   reencodeVideo,
 } from './shield-capture';
 import { blobToBase64 } from './shield-photo';
+import { VIDEO_VOICE_CUES, VoiceGuideBar, useVoiceGuide } from './use-voice-guide';
 
 const VIDEO_TARGET_SEC = 120; // master prompt : walkthrough ≤ 120 s
 const VIDEO_MAX_BYTES = 20_000_000; // garde-fou client (< 22 Mo serveur)
@@ -101,6 +102,25 @@ export default function CleanerCapture({ data }: { data: CleanerSessionView }) {
   const shot = zone ? shots[zone.id] : undefined;
   const canNext = Boolean(shot && (shot.status === 'IMPECCABLE' || shot.comment.trim().length > 0));
 
+  // v5.12 — GUIDAGE VOCAL (voix « Denise », Edge TTS) : une consigne
+  // parlée à chaque zone + encadrement complet de la vidéo (Option 3
+  // validée client : instructions AVANT l'enregistrement, repères
+  // courts pendant, message de fin). Sous-titres + muet mémorisé.
+  const zoneNames = useMemo(() => data.zones.map((z) => z.name), [data.zones]);
+  const voice = useVoiceGuide({
+    type: data.type,
+    propertyName: data.propertyName,
+    zoneNames,
+    videoTargetSec: VIDEO_TARGET_SEC,
+  });
+  const voiceCueIdxRef = useRef(0);
+
+  // Voix guide : consigne à chaque zone, instructions vidéo à l'entrée du stage.
+  useEffect(() => {
+    if (stage === 'zones') voice.say(`step-${stepIdx}`);
+    else if (stage === 'video') voice.say('video-intro');
+  }, [stage, stepIdx, voice.say]);
+
   const setShotFor = (zoneId: string, patch: Partial<ShotState>) => {
     setShots((prev) => ({
       ...prev,
@@ -141,6 +161,11 @@ export default function CleanerCapture({ data }: { data: CleanerSessionView }) {
   // FIX-CAPTURE-V38 : à mi-temps (60 s sur 120), l'utilisateur peut
   // arrêter tout de suite ou continuer jusqu'à l'arrêt automatique.
   const [halfPrompt, setHalfPrompt] = useState(false);
+
+  // Fin d'enregistrement (aperçu prêt) → message de fin du guidage vocal.
+  useEffect(() => {
+    if (recState === 'preview') voice.say('video-end');
+  }, [recState, voice.say]);
 
   const recRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<BlobPart[]>([]);
@@ -251,6 +276,7 @@ export default function CleanerCapture({ data }: { data: CleanerSessionView }) {
       setRecState('recording');
       setRemaining(VIDEO_TARGET_SEC);
       setHalfPrompt(false);
+      voiceCueIdxRef.current = 0; // repères vocaux repartent de zéro
       // FIX-CAPTURE-V38 : arrêt automatique à 120 s (timeout dur + décompte).
       stopTimeoutRef.current = setTimeout(
         () => stopRecording(),
@@ -263,6 +289,15 @@ export default function CleanerCapture({ data }: { data: CleanerSessionView }) {
           return;
         }
         if (left <= Math.floor(VIDEO_TARGET_SEC / 2)) setHalfPrompt(true);
+        // v5.12 — repères vocaux courts pendant l'enregistrement (Option 3).
+        if (voiceCueIdxRef.current < VIDEO_VOICE_CUES.length) {
+          const cue = VIDEO_VOICE_CUES[voiceCueIdxRef.current];
+          const elapsed = VIDEO_TARGET_SEC - left;
+          if (elapsed >= cue.atSec(VIDEO_TARGET_SEC) && left > 4) {
+            voiceCueIdxRef.current += 1;
+            voice.say(cue.key);
+          }
+        }
         setRemaining(left);
       }, 1000);
     } catch {
@@ -585,6 +620,14 @@ export default function CleanerCapture({ data }: { data: CleanerSessionView }) {
                 style={{ width: `${((stepIdx + 1) / total) * 100}%` }}
               />
             </div>
+            {/* v5.12 — voix guide : sous-titre + rejouer + muet */}
+            <VoiceGuideBar
+              current={voice.current}
+              muted={voice.muted}
+              onReplay={voice.replay}
+              onToggleMuted={voice.toggleMuted}
+              className="mt-2"
+            />
             <p className="mt-2 text-xs text-gray-500">
               Alignez votre cadrage sur le fantôme d&apos;angle (photo de référence) puis capturez.
             </p>
@@ -699,6 +742,15 @@ export default function CleanerCapture({ data }: { data: CleanerSessionView }) {
               inattaquable de l&apos;état du logement. Elle est scellée (hash SHA-256) avec le
               certificat envoyé à l&apos;hôte.
             </p>
+
+            {/* v5.12 — voix guide : instructions avant l'enregistrement, puis repères pendant */}
+            <VoiceGuideBar
+              current={voice.current}
+              muted={voice.muted}
+              onReplay={voice.replay}
+              onToggleMuted={voice.toggleMuted}
+              className="mt-3"
+            />
 
             <div className="mt-4">
               {recState === 'idle' ? (

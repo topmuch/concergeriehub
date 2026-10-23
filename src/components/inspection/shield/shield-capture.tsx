@@ -14,7 +14,7 @@
 //
 // Thème clair (fond slate-50, cartes blanches) · rouge bouclier #C21F26 · aucune dépendance réseau tierce.
 // =============================================================
-import { useCallback, useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
@@ -25,6 +25,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { SHIELD_ZONE_STATUSES, type ShieldZoneStatus } from '@/lib/shield-refs';
 import { blobToBase64, canvasToCompressedDataUrl, fileToShieldPhotoDataUrl } from './shield-photo';
+import { VIDEO_VOICE_CUES, VoiceGuideBar, useVoiceGuide } from './use-voice-guide';
 
 // ---------- Constantes du flux ----------
 
@@ -719,6 +720,24 @@ export function ShieldCapture({
   const shot = zone ? shots[zone.id] : undefined;
   const canNext = Boolean(shot && (shot.status === 'IMPECCABLE' || shot.comment.trim().length > 0));
 
+  // v5.12 — GUIDAGE VOCAL (voix « Denise », Edge TTS) : consigne par
+  // zone + encadrement de la vidéo (Option 3 : instructions AVANT
+  // l'enregistrement, repères courts pendant, message de fin).
+  const zoneNames = useMemo(() => zones.map((z) => z.name), [zones]);
+  const voice = useVoiceGuide({
+    type,
+    propertyName: property.propertyName,
+    zoneNames,
+    videoTargetSec: VIDEO_TARGET_SEC,
+  });
+  const voiceCueIdxRef = useRef(0);
+
+  // Voix guide : consigne à chaque zone, instructions vidéo à l'entrée du stage.
+  useEffect(() => {
+    if (stage === 'zones') voice.say(`step-${stepIdx}`);
+    else if (stage === 'video') voice.say('video-intro');
+  }, [stage, stepIdx, voice.say]);
+
   const armQuit = () => {
     if (quitArmed) {
       onClose();
@@ -775,6 +794,11 @@ export function ShieldCapture({
   // FIX-CAPTURE-V38 : à mi-temps (cible/2), l'utilisateur peut arrêter
   // tout de suite ou continuer jusqu'à l'arrêt automatique.
   const [halfPrompt, setHalfPrompt] = useState(false);
+
+  // Fin d'enregistrement (aperçu prêt) → message de fin du guidage vocal.
+  useEffect(() => {
+    if (recState === 'preview') voice.say('video-end');
+  }, [recState, voice.say]);
 
   // Invité optionnel — le certificat PDF final lui sera aussi envoyé
   // par email (pièce jointe) dès la fin de la session.
@@ -892,6 +916,7 @@ export function ShieldCapture({
       setRecState('recording');
       setRemaining(VIDEO_TARGET_SEC);
       setHalfPrompt(false);
+      voiceCueIdxRef.current = 0; // repères vocaux repartent de zéro
       stopTimeoutRef.current = setTimeout(
         () => stopRecording(),
         (VIDEO_TARGET_SEC + 1.5) * 1000,
@@ -903,6 +928,15 @@ export function ShieldCapture({
           return;
         }
         if (left <= Math.floor(VIDEO_TARGET_SEC / 2)) setHalfPrompt(true);
+        // v5.12 — repères vocaux courts pendant l'enregistrement (Option 3).
+        if (voiceCueIdxRef.current < VIDEO_VOICE_CUES.length) {
+          const cue = VIDEO_VOICE_CUES[voiceCueIdxRef.current];
+          const elapsed = VIDEO_TARGET_SEC - left;
+          if (elapsed >= cue.atSec(VIDEO_TARGET_SEC) && left > 4) {
+            voiceCueIdxRef.current += 1;
+            voice.say(cue.key);
+          }
+        }
         setRemaining(left);
       }, 1000);
     } catch {
@@ -1118,6 +1152,14 @@ export function ShieldCapture({
                   style={{ width: `${((stepIdx + 1) / total) * 100}%` }}
                 />
               </div>
+              {/* v5.12 — voix guide : sous-titre + rejouer + muet */}
+              <VoiceGuideBar
+                current={voice.current}
+                muted={voice.muted}
+                onReplay={voice.replay}
+                onToggleMuted={voice.toggleMuted}
+                className="mt-2"
+              />
               <p className="mt-2 text-xs text-gray-500">
                 Alignez votre cadrage sur le fantôme d&apos;angle (photo de référence) puis capturez.
               </p>
@@ -1232,6 +1274,15 @@ export function ShieldCapture({
                 toilette) : cette traversée ininterrompue est la preuve inattaquable de
                 re-validation. Elle est scellée (hash SHA-256) avec le certificat.
               </p>
+
+              {/* v5.12 — voix guide : instructions avant l'enregistrement, puis repères pendant */}
+              <VoiceGuideBar
+                current={voice.current}
+                muted={voice.muted}
+                onReplay={voice.replay}
+                onToggleMuted={voice.toggleMuted}
+                className="mt-3"
+              />
 
               <div className="mt-4">
                 {recState === 'idle' ? (
