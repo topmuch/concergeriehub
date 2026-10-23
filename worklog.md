@@ -5505,3 +5505,17 @@ Stage Summary:
 - v5.9 = nouveau logo officiel PARTOUT + site entièrement aux couleurs du logo (cobalt #055492, famille 207°) ; rouge réservé à la sémantique EDL (badge anomalie, tuile Check-outs, module États des Lieux)
 - Palette marque documentée : #055492 (core), #04467a (hover), #033a66/#043455 (profonds), #1173c7 (vif sombre), #8fb1cc/#c8dfef (teintes mesurées dans le logo), or #d9b45b (accent luxe)
 - Compte démo dev : demo@qrdomotik.roomscan.pro / demo1234 (MDP réinitialisé en local uniquement, DB dev)
+
+---
+Task ID: V59-DEPLOY-VERIFY
+Agent: Z.ai Code (main)
+Task: Déploiement v5.9 + vérification production
+
+Work Log:
+- Push 43f055c (179 fichiers) → build Coolify auto-déclenché (in_progress dès 00:36:48, ~8 min)
+- Prod vérifiée : /api/health → « v5.9 (2026-10-23) — ROOMSCAN INVENTAIRE : NOUVEAU LOGO OFFICIEL… », accueil 200, /brand/roomscan-logo.png 200 (49,6 Ko = nouveau 754×283), /icon-512.png 200, /upload/test-token 200 (piège resync écarté)
+- Visuel prod (agent-browser) : accueil = logo géant en hero + palette cobalt homogène ; manifest.webmanifest → name « Roomscan Inventaire », theme_color #055492 ; 0 erreur console
+
+Stage Summary:
+- v5.9 EN PRODUCTION sur https://roomscan.pro : nouveau logo officiel en grand format + site harmonisé aux couleurs du logo (cobalt #055492)
+- Rollback disponible : release GitHub v.10 (asset tar v5.8 figé) ou tag git v5.8
