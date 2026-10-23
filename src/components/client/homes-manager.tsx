@@ -156,7 +156,7 @@ export function HomesManager() {
             <Card key={home.id} className="hover:shadow-md transition-shadow">
               <CardContent className="p-6">
                 <div className="flex items-start justify-between mb-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10"><Home className="h-5 w-5 text-blue-600" /></div>
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#1173c7]/10"><Home className="h-5 w-5 text-[#055492]" /></div>
                   <div className="flex gap-1">
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setSelectedHome(home); fetchMembers(home.id); }}><Users className="h-4 w-4" /></Button>
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => setDeleteHome(home)}><Trash2 className="h-4 w-4" /></Button>

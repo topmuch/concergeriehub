@@ -448,7 +448,7 @@ export function SouvenirsContent({ initialPropertyId }: { initialPropertyId: str
               </span>
             )}
           </h1>
-          <p className="mt-1 text-sm text-[#8fa0c2]">
+          <p className="mt-1 text-sm text-[#8fabc2]">
             Vendez vos produits locaux (confitures, vins, artisanat) à vos invités — proposés dans leur hub et mis
             en avant la veille de leur départ. Seuls les produits <strong className="font-semibold text-white">actifs</strong>{' '}
             sont visibles par vos invités.
@@ -504,7 +504,7 @@ export function SouvenirsContent({ initialPropertyId }: { initialPropertyId: str
           <p className="lux-display text-lg font-semibold text-white">
             Aucun souvenir{currentProperty ? ` pour ${currentProperty.name}` : ''} pour le moment
           </p>
-          <p className="max-w-md text-sm text-[#8fa0c2]">
+          <p className="max-w-md text-sm text-[#8fabc2]">
             Confitures maison, miel, bouteilles du domaine, poteries locales… Ajoutez vos produits : vos invités les
             découvriront dans leur hub et la boutique sera mise en avant la veille de leur départ.
           </p>
@@ -574,7 +574,7 @@ export function SouvenirsContent({ initialPropertyId }: { initialPropertyId: str
                     </span>
                   </div>
                   {product.description && (
-                    <p className="line-clamp-2 text-xs leading-relaxed text-[#8fa0c2]">
+                    <p className="line-clamp-2 text-xs leading-relaxed text-[#8fabc2]">
                       {product.description}
                     </p>
                   )}
@@ -591,14 +591,14 @@ export function SouvenirsContent({ initialPropertyId }: { initialPropertyId: str
                             : `Rendre « ${product.name} » visible par les invités`
                         }
                       />
-                      <span className="text-xs font-semibold text-[#8fa0c2]">
+                      <span className="text-xs font-semibold text-[#8fabc2]">
                         {product.isActive ? 'Visible' : 'Masqué'}
                       </span>
                     </label>
                     {togglingId === product.id && (
                       <span
                         className="lux-dot animate-pulse"
-                        style={{ backgroundColor: '#8fa0c2' }}
+                        style={{ backgroundColor: '#8fabc2' }}
                         aria-hidden="true"
                       />
                     )}
@@ -608,7 +608,7 @@ export function SouvenirsContent({ initialPropertyId }: { initialPropertyId: str
                     <Button
                       variant="outline"
                       size="sm"
-                      className="h-8 flex-1 rounded-full border-white/12 bg-transparent text-xs font-semibold text-[#a9c4ff] hover:bg-white/[0.06] hover:text-white"
+                      className="h-8 flex-1 rounded-full border-white/12 bg-transparent text-xs font-semibold text-[#a9d8ff] hover:bg-white/[0.06] hover:text-white"
                       onClick={() => openEdit(product)}
                       aria-label={`Modifier « ${product.name} »`}
                     >
@@ -636,7 +636,7 @@ export function SouvenirsContent({ initialPropertyId }: { initialPropertyId: str
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-8 rounded-full px-2.5 text-xs text-[#8fa0c2] hover:bg-white/8 hover:text-white"
+                          className="h-8 rounded-full px-2.5 text-xs text-[#8fabc2] hover:bg-white/8 hover:text-white"
                           onClick={cancelDelete}
                           aria-label="Annuler la suppression"
                         >
@@ -678,7 +678,7 @@ export function SouvenirsContent({ initialPropertyId }: { initialPropertyId: str
             <DialogTitle className="lux-display text-xl font-semibold text-white">
               {editingId ? 'Modifier le souvenir' : 'Nouveau souvenir'}
             </DialogTitle>
-            <DialogDescription className="text-[#8fa0c2]">
+            <DialogDescription className="text-[#8fabc2]">
               {editingId
                 ? 'Ajustez les informations du produit — les modifications sont visibles immédiatement côté invité.'
                 : 'Proposez un produit local à vos invités — il apparaîtra dans leur hub s’il est actif.'}
@@ -708,14 +708,14 @@ export function SouvenirsContent({ initialPropertyId }: { initialPropertyId: str
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="h-8 rounded-full border-white/12 bg-transparent text-xs font-semibold text-[#a9c4ff] hover:bg-white/[0.06] hover:text-white"
+                    className="h-8 rounded-full border-white/12 bg-transparent text-xs font-semibold text-[#a9d8ff] hover:bg-white/[0.06] hover:text-white"
                     onClick={pickImage}
                     disabled={uploadingImage}
                   >
                     {uploadingImage && (
                       <span
                         className="lux-dot animate-pulse"
-                        style={{ backgroundColor: '#a9c4ff' }}
+                        style={{ backgroundColor: '#a9d8ff' }}
                         aria-hidden="true"
                       />
                     )}
@@ -726,14 +726,14 @@ export function SouvenirsContent({ initialPropertyId }: { initialPropertyId: str
                       type="button"
                       variant="ghost"
                       size="sm"
-                      className="h-8 rounded-full px-2.5 text-xs text-[#8fa0c2] hover:bg-white/8 hover:text-white"
+                      className="h-8 rounded-full px-2.5 text-xs text-[#8fabc2] hover:bg-white/8 hover:text-white"
                       onClick={() => setForm((f) => ({ ...f, imageUrl: '' }))}
                     >
                       Retirer
                     </Button>
                   )}
                 </div>
-                <p className="text-[11px] text-[#8fa0c2]/70">
+                <p className="text-[11px] text-[#8fabc2]/70">
                   PNG, JPEG, WebP ou GIF — 5 Mo max. Sans photo, l’initiale du produit est affichée.
                 </p>
               </div>
@@ -749,9 +749,9 @@ export function SouvenirsContent({ initialPropertyId }: { initialPropertyId: str
                 maxLength={60}
                 placeholder="ex : Confiture de figues maison"
                 autoComplete="off"
-                className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+                className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50"
               />
-              <p className="text-[11px] text-[#8fa0c2]/70">{form.name.length}/60</p>
+              <p className="text-[11px] text-[#8fabc2]/70">{form.name.length}/60</p>
             </div>
 
             {/* ── Description ── */}
@@ -764,9 +764,9 @@ export function SouvenirsContent({ initialPropertyId }: { initialPropertyId: str
                 maxLength={280}
                 rows={3}
                 placeholder="ex : Cuite au chaudron avec les figues du jardin, pot de 220 g."
-                className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+                className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50"
               />
-              <p className="text-[11px] text-[#8fa0c2]/70">{form.description.length}/280</p>
+              <p className="text-[11px] text-[#8fabc2]/70">{form.description.length}/280</p>
             </div>
 
             {/* ── Prix + catégorie ── */}
@@ -784,7 +784,7 @@ export function SouvenirsContent({ initialPropertyId }: { initialPropertyId: str
                   onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
                   placeholder="ex : 8,50"
                   autoComplete="off"
-                  className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+                  className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50"
                 />
               </div>
               <div className="flex flex-col gap-1.5">
@@ -812,7 +812,7 @@ export function SouvenirsContent({ initialPropertyId }: { initialPropertyId: str
             <Button
               type="button"
               variant="outline"
-              className="rounded-full border-white/12 bg-transparent text-[#8fa0c2] hover:bg-white/[0.06] hover:text-white"
+              className="rounded-full border-white/12 bg-transparent text-[#8fabc2] hover:bg-white/[0.06] hover:text-white"
               onClick={() => setDialogOpen(false)}
               disabled={saving || uploadingImage}
             >
@@ -827,7 +827,7 @@ export function SouvenirsContent({ initialPropertyId }: { initialPropertyId: str
               {saving && (
                 <span
                   className="lux-dot animate-pulse"
-                  style={{ backgroundColor: '#a9c4ff' }}
+                  style={{ backgroundColor: '#a9d8ff' }}
                   aria-hidden="true"
                 />
               )}

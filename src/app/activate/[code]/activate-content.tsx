@@ -18,8 +18,8 @@ type CodeCheckResult =
 // ── Plans ──
 const PLANS: { id: ProfileType; emoji: string; label: string; price: string; color: string }[] = [
   { id: 'free', emoji: '🏠', label: 'Découverte', price: '0€ — 1 logement', color: 'bg-slate-800 text-white' },
-  { id: 'airbnb_solo', emoji: '🏨', label: 'Airbnb Solo', price: '9,90€/mois', color: 'bg-[#0066EF] text-white' },
-  { id: 'agency', emoji: '🏢', label: 'Agence', price: '49€/mois — 10 logements', color: 'bg-[#0052C4] text-white' },
+  { id: 'airbnb_solo', emoji: '🏨', label: 'Airbnb Solo', price: '9,90€/mois', color: 'bg-[#055492] text-white' },
+  { id: 'agency', emoji: '🏢', label: 'Agence', price: '49€/mois — 10 logements', color: 'bg-[#04467a] text-white' },
 ];
 
 const STEP_TITLES: Record<string, string> = {
@@ -42,7 +42,7 @@ const slideVariants = {
 
 // ── Input style QRTags ──
 const qrtInput =
-  'w-full h-12 px-4 bg-gray-50 border-2 border-gray-200 rounded-[8px] text-[15px] font-medium text-black placeholder:text-gray-400 focus:outline-none focus:border-[#0066EF] focus:bg-white transition-colors';
+  'w-full h-12 px-4 bg-gray-50 border-2 border-gray-200 rounded-[8px] text-[15px] font-medium text-black placeholder:text-gray-400 focus:outline-none focus:border-[#055492] focus:bg-white transition-colors';
 
 // Règle mot de passe alignée sur le serveur (POST /api/setup/[token]) :
 // 8 caractères minimum + au moins une lettre et un chiffre.
@@ -264,7 +264,7 @@ export function ActivatePageContent({ params }: { params: Promise<{ code: string
             {hubSlug && (
               <div className="bg-gray-50 border-2 border-gray-200 rounded-[8px] p-4 mb-5 text-left">
                 <p className="text-[11px] font-bold text-gray-400 uppercase mb-1">Votre Hub</p>
-                <p className="text-sm font-bold text-[#0066EF] font-mono break-all">{typeof window !== 'undefined' ? window.location.origin : ''}/hub/{hubSlug}</p>
+                <p className="text-sm font-bold text-[#055492] font-mono break-all">{typeof window !== 'undefined' ? window.location.origin : ''}/hub/{hubSlug}</p>
               </div>
             )}
             <QRTButton
@@ -333,7 +333,7 @@ export function ActivatePageContent({ params }: { params: Promise<{ code: string
                         onClick={() => setProfile(p.id)}
                         className={`w-full flex items-center gap-4 p-4 rounded-[10px] border-2 transition-all cursor-pointer text-left
                           ${profile === p.id
-                            ? 'border-[#0066EF] bg-[#0066EF]/5 shadow-[2px_2px_0_rgba(109,40,217,0.15)]'
+                            ? 'border-[#055492] bg-[#055492]/5 shadow-[2px_2px_0_rgba(109,40,217,0.15)]'
                             : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`}
                       >
                         <span className="text-2xl">{p.emoji}</span>
@@ -342,7 +342,7 @@ export function ActivatePageContent({ params }: { params: Promise<{ code: string
                           <p className="text-xs text-gray-400">{p.price}</p>
                         </div>
                         {profile === p.id && (
-                          <div className="h-5 w-5 rounded-full bg-[#0066EF] flex items-center justify-center">
+                          <div className="h-5 w-5 rounded-full bg-[#055492] flex items-center justify-center">
                             <span className="text-white text-xs font-bold">✓</span>
                           </div>
                         )}

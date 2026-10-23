@@ -54,15 +54,15 @@ const AdminProvidersMap = dynamic(() => import('./admin-providers-map'), {
 
 // ---------- Design « Saphir Luxe » : champ de formulaire (portails & surfaces sombres) ----------
 const LUX_FIELD =
-  'rounded-xl! border-white/12! bg-white/[0.04]! text-white! placeholder:text-[#8fa0c2]/60! focus-visible:ring-[#5c8af0]/50!';
+  'rounded-xl! border-white/12! bg-white/[0.04]! text-white! placeholder:text-[#8fabc2]/60! focus-visible:ring-[#5cadf0]/50!';
 const LUX_SELECT_TRIGGER =
-  'rounded-xl! border-white/12! bg-white/[0.04]! text-white! font-semibold focus-visible:ring-[#5c8af0]/50!';
+  'rounded-xl! border-white/12! bg-white/[0.04]! text-white! font-semibold focus-visible:ring-[#5cadf0]/50!';
 const LUX_SELECT_CONTENT = 'border-white/10! bg-[#0b1226]! text-white!';
 const LUX_SELECT_ITEM = 'focus:bg-white/8! focus:text-white!';
 
 // Pastilles de statut (design) — données PROVIDER_REVIEW_STATUS_META / DOC_STATUS_META inchangées.
 const REVIEW_STATUS_DOT: Record<ProviderReviewStatus, string> = {
-  PENDING: '#8fa0c2',
+  PENDING: '#8fabc2',
   IN_REVIEW: '#fbbf24',
   REJECTED: '#f07d6a',
   VERIFIED: '#34d399',
@@ -452,7 +452,7 @@ export function AdminProvidersContent() {
           <h1 className="lux-display mt-2 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
             Prestataires
           </h1>
-          <p className="mt-2 text-sm text-[#8fa0c2]">
+          <p className="mt-2 text-sm text-[#8fabc2]">
             Le catalogue central — ajout, géolocalisation et audiences réservés au Superadmin.
           </p>
         </div>
@@ -481,7 +481,7 @@ export function AdminProvidersContent() {
             }}
           />
         </div>
-        <p className="mt-2 text-center text-xs text-[#8fa0c2]/70">
+        <p className="mt-2 text-center text-xs text-[#8fabc2]/70">
           Cliquez sur un marqueur pour le sélectionner · un clic sur la carte remplit les
           coordonnées quand le formulaire est ouvert.
         </p>
@@ -542,7 +542,7 @@ export function AdminProvidersContent() {
         ) : error ? (
           <div className="lux-card p-8 text-center" role="alert">
             <span className="lux-dot mx-auto" style={{ backgroundColor: '#f07d6a' }} aria-hidden="true" />
-            <p className="mt-3 text-sm text-[#8fa0c2]">{error}</p>
+            <p className="mt-3 text-sm text-[#8fabc2]">{error}</p>
             <button type="button" onClick={load} className="lux-btn mt-5">
               Réessayer
             </button>
@@ -550,7 +550,7 @@ export function AdminProvidersContent() {
         ) : filtered.length === 0 ? (
           <div className="lux-empty mt-2 rounded-2xl px-4 py-10 text-center">
             <p className="text-sm font-semibold text-white">Aucun prestataire trouvé</p>
-            <p className="mx-auto mt-1 max-w-sm text-sm text-[#8fa0c2]">
+            <p className="mx-auto mt-1 max-w-sm text-sm text-[#8fabc2]">
               Modifiez la recherche ou ajoutez un nouveau prestataire.
             </p>
           </div>
@@ -572,7 +572,7 @@ export function AdminProvidersContent() {
                   key={p.id}
                   className={cn(
                     'lux-card lux-card-hover p-5',
-                    selected && 'ring-1 ring-[#5c8af0]/60',
+                    selected && 'ring-1 ring-[#5cadf0]/60',
                     !p.isActive && 'opacity-75',
                   )}
                 >
@@ -587,7 +587,7 @@ export function AdminProvidersContent() {
                   >
                     <div className="flex items-start gap-3">
                       <span
-                        className="lux-num flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#3d6fe0]/15 text-base text-[#a9c4ff] ring-1 ring-[#5c8af0]/25"
+                        className="lux-num flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#3d97e0]/15 text-base text-[#a9d8ff] ring-1 ring-[#5cadf0]/25"
                         aria-hidden="true"
                       >
                         {meta.label.charAt(0)}
@@ -613,17 +613,17 @@ export function AdminProvidersContent() {
                             {statusMeta.label}
                           </span>
                         </div>
-                        <p className="mt-0.5 text-xs text-[#8fa0c2]">
+                        <p className="mt-0.5 text-xs text-[#8fabc2]">
                           {meta.label}
                           {p.location ? ` · ${p.location}` : ''}
                           {p.audience && audienceMeta ? ` · ${audienceMeta.label}` : ''}
                         </p>
                         {p.description && (
-                          <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-[#8fa0c2]">
+                          <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-[#8fabc2]">
                             {p.description}
                           </p>
                         )}
-                        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-[#8fa0c2]/80">
+                        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-[#8fabc2]/80">
                           <span>
                             {p.latitude?.toFixed(3)}, {p.longitude?.toFixed(3)} · rayon {p.serviceRadiusKm} km
                           </span>
@@ -644,7 +644,7 @@ export function AdminProvidersContent() {
                         onCheckedChange={(v) => toggleActive(p, v)}
                         aria-label={`${p.businessName} actif`}
                       />
-                      <span className="text-xs font-semibold text-[#8fa0c2]">
+                      <span className="text-xs font-semibold text-[#8fabc2]">
                         {p.isActive ? 'Actif' : 'Inactif'}
                       </span>
                     </label>
@@ -689,7 +689,7 @@ export function AdminProvidersContent() {
             <SheetTitle className="lux-display text-lg font-semibold text-white">
               {editingId ? 'Modifier le prestataire' : 'Nouveau prestataire'}
             </SheetTitle>
-            <SheetDescription id="provider-form-desc" className="text-sm text-[#8fa0c2]">
+            <SheetDescription id="provider-form-desc" className="text-sm text-[#8fabc2]">
               {editingId
                 ? 'Ajustez la fiche : géolocalisation, rayon, audience ou statut.'
                 : 'Règle d’or : seul le Superadmin crée et géolocalise les prestataires. La carte reste cliquable à gauche.'}
@@ -778,7 +778,7 @@ export function AdminProvidersContent() {
                   rows={2}
                   className={LUX_FIELD}
                 />
-                <p className="text-[11px] text-[#8fa0c2]/70">6 URLs max — affichées dans la fiche prestataire.</p>
+                <p className="text-[11px] text-[#8fabc2]/70">6 URLs max — affichées dans la fiche prestataire.</p>
               </div>
             </fieldset>
 
@@ -802,12 +802,12 @@ export function AdminProvidersContent() {
                       className={cn(
                         'rounded-xl border p-3.5 text-left transition-all',
                         active
-                          ? 'border-[#5c8af0]/60 bg-[#5c8af0]/15 text-white shadow-[0_10px_30px_-14px_rgba(61,111,224,0.6)]'
+                          ? 'border-[#5cadf0]/60 bg-[#5cadf0]/15 text-white shadow-[0_10px_30px_-14px_rgba(61,111,224,0.6)]'
                           : 'border-white/10 bg-white/[0.03] text-white hover:border-white/20 hover:bg-white/[0.05]',
                       )}
                     >
                       <p className="text-sm font-bold">{meta.label}</p>
-                      <p className={cn('mt-1 text-xs leading-relaxed', active ? 'text-[#a9c4ff]' : 'text-[#8fa0c2]')}>
+                      <p className={cn('mt-1 text-xs leading-relaxed', active ? 'text-[#a9d8ff]' : 'text-[#8fabc2]')}>
                         {meta.hint}
                       </p>
                     </button>
@@ -924,13 +924,13 @@ export function AdminProvidersContent() {
                       {sheetStatusMeta.label}
                     </span>
                     {documents && documents.length > 0 && (
-                      <span className="text-[11px] text-[#8fa0c2]/70">
+                      <span className="text-[11px] text-[#8fabc2]/70">
                         {documents.length}/5
                       </span>
                     )}
                   </div>
                 </div>
-                <p className="text-xs leading-relaxed text-[#8fa0c2]">
+                <p className="text-xs leading-relaxed text-[#8fabc2]">
                   Uploadés par le prestataire depuis son portail. Validez ou rejetez chaque
                   document — le badge ✓ Vérifié est recalculé automatiquement.
                 </p>
@@ -941,7 +941,7 @@ export function AdminProvidersContent() {
                     <Skeleton className="h-12 rounded-lg bg-white/8" />
                   </div>
                 ) : !documents || documents.length === 0 ? (
-                  <p className="lux-empty rounded-lg px-3 py-4 text-center text-xs text-[#8fa0c2]">
+                  <p className="lux-empty rounded-lg px-3 py-4 text-center text-xs text-[#8fabc2]">
                     Aucun document fourni
                   </p>
                 ) : (
@@ -960,14 +960,14 @@ export function AdminProvidersContent() {
                               <p className="flex items-center gap-1.5 text-sm font-semibold text-white">
                                 {kindMeta.label}
                               </p>
-                              <p className="mt-0.5 max-w-full truncate text-[11px] text-[#8fa0c2]">
+                              <p className="mt-0.5 max-w-full truncate text-[11px] text-[#8fabc2]">
                                 {doc.name} · {formatFrDate(doc.uploadedAt)}
                               </p>
                             </div>
                             <span className="lux-chip px-2! py-0.5! text-[10px]!">
                               <span
                                 className="lux-dot"
-                                style={{ backgroundColor: DOC_STATUS_DOT[doc.status] ?? '#8fa0c2' }}
+                                style={{ backgroundColor: DOC_STATUS_DOT[doc.status] ?? '#8fabc2' }}
                                 aria-hidden="true"
                               />
                               {statusMeta.label}
@@ -978,7 +978,7 @@ export function AdminProvidersContent() {
                               href={doc.url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-xs font-semibold text-[#a9c4ff] underline underline-offset-2 hover:text-white"
+                              className="text-xs font-semibold text-[#a9d8ff] underline underline-offset-2 hover:text-white"
                             >
                               Voir le document ↗
                             </a>
@@ -987,7 +987,7 @@ export function AdminProvidersContent() {
                                 type="button"
                                 disabled={busy || doc.status === 'VERIFIED'}
                                 onClick={() => reviewDocument(doc, 'VERIFIED')}
-                                className="inline-flex h-8 items-center rounded-full bg-gradient-to-br from-[#3d6fe0] to-[#24479c] px-3 text-xs font-semibold text-white shadow-[0_8px_20px_-10px_rgba(61,111,224,0.6)] transition-[filter,transform] hover:brightness-110 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50"
+                                className="inline-flex h-8 items-center rounded-full bg-gradient-to-br from-[#3d97e0] to-[#24479c] px-3 text-xs font-semibold text-white shadow-[0_8px_20px_-10px_rgba(61,111,224,0.6)] transition-[filter,transform] hover:brightness-110 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50"
                               >
                                 ✓ Valider
                               </button>
@@ -1008,7 +1008,7 @@ export function AdminProvidersContent() {
                 )}
               </section>
             ) : (
-              <p className="rounded-lg border border-[#5c8af0]/25 bg-[#5c8af0]/10 px-3 py-2 text-xs text-[#a9c4ff]">
+              <p className="rounded-lg border border-[#5cadf0]/25 bg-[#5cadf0]/10 px-3 py-2 text-xs text-[#a9d8ff]">
                 Les documents de vérification (Kbis, assurance…) sont envoyés par le
                 prestataire depuis son portail, puis validés ici — d&apos;abord créez la fiche.
               </p>
@@ -1047,13 +1047,13 @@ export function AdminProvidersContent() {
             <AlertDialogTitle className="lux-display text-xl font-semibold text-white">
               Supprimer « {deleteTarget?.businessName} » ?
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-sm text-[#8fa0c2]">
+            <AlertDialogDescription className="text-sm text-[#8fabc2]">
               Le prestataire et son compte technique seront définitivement supprimés
               (les demandes de service associées aussi). Cette action est irréversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-full! border-white/10! bg-white/[0.04]! text-[#8fa0c2]! hover:bg-white/[0.08]! hover:text-white!">
+            <AlertDialogCancel className="rounded-full! border-white/10! bg-white/[0.04]! text-[#8fabc2]! hover:bg-white/[0.08]! hover:text-white!">
               Annuler
             </AlertDialogCancel>
             <AlertDialogAction

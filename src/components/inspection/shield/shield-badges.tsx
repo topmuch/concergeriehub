@@ -26,7 +26,7 @@ interface ShieldPropertyLite {
 }
 
 const BADGE_LEGEND = [
-  { label: 'Sécurité', detail: '« Caution protégée par RoomScan » — bleu', dot: '#1e3a8a' },
+  { label: 'Sécurité', detail: '« Caution protégée par RoomScan » — bleu', dot: '#055492' },
   { label: 'Propreté', detail: '« Ménage certifié & photographié » — vert', dot: '#16a34a' },
   { label: 'Technologie', detail: '« État des lieux vidéo & hash SHA256 » — rouge', dot: '#C41E3A' },
 ] as const;
@@ -95,7 +95,7 @@ export function ShieldBadgesContent() {
       {/* ── Chargement ── */}
       {!properties && !error && (
         <div className="flex min-h-[30vh] items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-[#1e3a8a] dark:text-[#3b82f6]" aria-label="Chargement" />
+          <Loader2 className="h-8 w-8 animate-spin text-[#055492] dark:text-[#1173c7]" aria-label="Chargement" />
         </div>
       )}
 
@@ -157,7 +157,7 @@ export function ShieldBadgesContent() {
       {/* ── Aide contextuelle (sous le sélecteur) ── */}
       {properties && properties.length > 1 && (
         <ShieldCard className="flex items-start gap-3 p-4">
-          <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-[#1e3a8a]" aria-hidden="true" />
+          <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-[#055492]" aria-hidden="true" />
           <p className="text-xs leading-relaxed text-slate-500">
             Le QR de chaque badge affiche la page publique de vérification du logement : statut
             Inventaire, référence d&apos;onboarding et derniers contrôles photo/vidéo — aucune donnée

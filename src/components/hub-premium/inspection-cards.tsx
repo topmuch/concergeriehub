@@ -303,7 +303,7 @@ function InspectionFlowForm({
               maxLength={80}
               autoComplete="name"
               placeholder={t('Votre nom')}
-              className="mt-1 w-full min-h-[44px] rounded-xl border border-border bg-background px-3.5 text-sm text-card-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-[#0066EF]/50"
+              className="mt-1 w-full min-h-[44px] rounded-xl border border-border bg-background px-3.5 text-sm text-card-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-[#055492]/50"
             />
           </div>
           <div>
@@ -319,7 +319,7 @@ function InspectionFlowForm({
               autoComplete="email"
               inputMode="email"
               placeholder="vous@exemple.com"
-              className="mt-1 w-full min-h-[44px] rounded-xl border border-border bg-background px-3.5 text-sm text-card-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-[#0066EF]/50"
+              className="mt-1 w-full min-h-[44px] rounded-xl border border-border bg-background px-3.5 text-sm text-card-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-[#055492]/50"
             />
           </div>
         </div>
@@ -549,7 +549,7 @@ function InspectionFlowForm({
           rows={2}
           placeholder={t('Commentaires libres (optionnel)')}
           aria-label={t('Commentaires libres')}
-          className="mt-2 w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm text-card-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-[#0066EF]/50 resize-none"
+          className="mt-2 w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm text-card-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-[#055492]/50 resize-none"
         />
       </section>
 
@@ -573,7 +573,7 @@ function InspectionFlowForm({
         type="button"
         onClick={() => void submit()}
         disabled={!canSubmit}
-        className="inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl bg-[#0066EF] px-5 py-3 text-sm font-bold text-white shadow-sm transition-all hover:bg-[#0052C4] active:scale-[0.99] cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+        className="inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl bg-[#055492] px-5 py-3 text-sm font-bold text-white shadow-sm transition-all hover:bg-[#04467a] active:scale-[0.99] cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
       >
         {submitting && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
         {submitting

@@ -175,7 +175,7 @@ export function ShieldDocuments() {
 
       {loading ? (
         <div className="flex min-h-[40vh] items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-[#1e3a8a] dark:text-[#3b82f6]" aria-label="Chargement" />
+          <Loader2 className="h-8 w-8 animate-spin text-[#055492] dark:text-[#1173c7]" aria-label="Chargement" />
         </div>
       ) : (
         <>
@@ -280,7 +280,7 @@ export function ShieldDocuments() {
                         <ShieldCard key={p.id} className="flex items-center gap-3 p-4 transition-shadow hover:shadow-lg">
                           <span
                             aria-hidden="true"
-                            className="luxe-tile bg-gradient-to-br from-[#1e3a8a] to-[#2f6fed] text-white"
+                            className="luxe-tile bg-gradient-to-br from-[#055492] to-[#2f6fed] text-white"
                           >
                             <Building2 className="h-5 w-5" />
                           </span>
@@ -328,7 +328,7 @@ export function ShieldDocuments() {
                             aria-hidden="true"
                             className={`luxe-tile ${
                               s.type === 'CHECK_IN'
-                                ? 'bg-gradient-to-br from-[#2f6fed] to-[#1d4ed8] text-white'
+                                ? 'bg-gradient-to-br from-[#2f6fed] to-[#04467a] text-white'
                                 : 'bg-gradient-to-br from-[#ef2f5b] to-[#C41E3A] text-white'
                             }`}
                           >

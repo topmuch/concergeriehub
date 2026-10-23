@@ -6,7 +6,7 @@
 //
 // ⚠️ Synchronisation : ces corps reflètent les templates codés en
 // dur de lib/email-templates.ts (même charte : fond slate, carte
-// 560 px, accent émeraude #0066EF, styles inline). Le rendu réel
+// 560 px, accent émeraude #055492, styles inline). Le rendu réel
 // (lib/email-template-render.ts) lit D'ABORD la ligne DB par key ;
 // si elle est absente/désactivée, fallback silencieux sur les
 // fonctions codées en dur. Les valeurs sont substituées aux jetons
@@ -22,7 +22,7 @@ export interface EmailTemplateDefault {
 }
 
 const BRAND = 'RoomScan';
-const ACCENT = '#0066EF';
+const ACCENT = '#055492';
 
 /** Miroir fidèle de shell() de lib/email-templates.ts. */
 function shell(opts: {

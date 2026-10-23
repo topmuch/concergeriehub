@@ -18,9 +18,9 @@ const TONE_DOTS: Record<Tone, string> = {
   success: '#34d399',
   warning: '#fbbf24',
   danger: '#f07d6a',
-  info: '#5c8af0',
+  info: '#5cadf0',
   purple: '#cdb6ff',
-  neutral: '#8fa0c2',
+  neutral: '#8fabc2',
 };
 
 const STATUS_MAP: Record<string, { tone: Tone; label: string }> = {

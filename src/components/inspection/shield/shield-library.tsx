@@ -87,7 +87,7 @@ export function ShieldLibrary({ initialPropertyId }: { initialPropertyId?: strin
         <div>
           <h1 className="flex items-center gap-2 text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
             Inventaire
-            <span className="inline-flex items-center gap-1 rounded-full bg-[#1e3a8a]/10 px-2.5 py-1 text-xs font-semibold text-[#1e3a8a]">
+            <span className="inline-flex items-center gap-1 rounded-full bg-[#055492]/10 px-2.5 py-1 text-xs font-semibold text-[#055492]">
               <Lock className="h-3 w-3" aria-hidden="true" />
               Bibliothèque verrouillée
             </span>
@@ -102,7 +102,7 @@ export function ShieldLibrary({ initialPropertyId }: { initialPropertyId?: strin
             <select
               value={selected}
               onChange={(e) => setSelected(e.target.value)}
-              className="min-h-[44px] w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 focus:border-[#1e3a8a] focus:outline-none focus:ring-2 focus:ring-[#1e3a8a]/20 dark:border-slate-200 dark:bg-white dark:text-slate-900"
+              className="min-h-[44px] w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 focus:border-[#055492] focus:outline-none focus:ring-2 focus:ring-[#055492]/20 dark:border-slate-200 dark:bg-white dark:text-slate-900"
             >
               {list.map((p) => (
                 <option key={p.id} value={p.id}>
@@ -123,7 +123,7 @@ export function ShieldLibrary({ initialPropertyId }: { initialPropertyId?: strin
 
       {list === null ? (
         <div className="flex min-h-[40vh] items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-[#1e3a8a] dark:text-[#3b82f6]" aria-label="Chargement" />
+          <Loader2 className="h-8 w-8 animate-spin text-[#055492] dark:text-[#1173c7]" aria-label="Chargement" />
         </div>
       ) : list.length === 0 ? (
         <ShieldCard className="p-8 text-center sm:p-12">
@@ -139,7 +139,7 @@ export function ShieldLibrary({ initialPropertyId }: { initialPropertyId?: strin
         </ShieldCard>
       ) : detail === null || detail.property.id !== selected ? (
         <div className="flex min-h-[40vh] items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-[#1e3a8a] dark:text-[#3b82f6]" aria-label="Chargement" />
+          <Loader2 className="h-8 w-8 animate-spin text-[#055492] dark:text-[#1173c7]" aria-label="Chargement" />
         </div>
       ) : (
         <>
@@ -162,7 +162,7 @@ export function ShieldLibrary({ initialPropertyId }: { initialPropertyId?: strin
                         alt={`Référence ${z.name}`}
                         className="h-full w-full object-cover"
                       />
-                      <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-[#1e3a8a]/90 px-2 py-0.5 text-[10px] font-semibold text-white">
+                      <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-[#055492]/90 px-2 py-0.5 text-[10px] font-semibold text-white">
                         <Lock className="h-2.5 w-2.5" aria-hidden="true" />
                         Référence
                       </span>

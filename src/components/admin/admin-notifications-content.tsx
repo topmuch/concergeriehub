@@ -54,14 +54,14 @@ const eur = (n: number) => `${n.toFixed(2).replace('.', ',')} €`;
 
 // CTA « lux » — pilule saphir du design system.
 const AIR_CTA_CLASS =
-  'lux-btn inline-flex items-center justify-center rounded-full px-4 text-xs font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5c8af0]/50 disabled:pointer-events-none disabled:opacity-60';
+  'lux-btn inline-flex items-center justify-center rounded-full px-4 text-xs font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5cadf0]/50 disabled:pointer-events-none disabled:opacity-60';
 
 // Couleurs des points par type de notification (décompte 30 j).
 const TYPE_DOT: Record<NotificationType, string> = {
   breakfast: '#e9c47c',
   lunch: '#2dd4bf',
   dinner: '#cdb6ff',
-  checkout_reminder: '#5c8af0',
+  checkout_reminder: '#5cadf0',
 };
 
 export function AdminNotificationsContent() {
@@ -211,7 +211,7 @@ export function AdminNotificationsContent() {
   function counterTone(length: number): string {
     if (length >= MAX_TEMPLATE_LENGTH) return 'text-[#f07d6a]';
     if (length >= MAX_TEMPLATE_LENGTH - 20) return 'text-[#fbbf24]';
-    return 'text-[#8fa0c2]';
+    return 'text-[#8fabc2]';
   }
 
   return (
@@ -221,7 +221,7 @@ export function AdminNotificationsContent() {
         <div>
           <p className="lux-eyebrow">Smart Prompts</p>
           <h1 className="lux-display mt-1 text-2xl font-semibold text-white">Notifications intelligentes</h1>
-          <p className="text-sm text-[#8fa0c2]">
+          <p className="text-sm text-[#8fabc2]">
             Contrôle global des Smart Prompts affichés dans les hubs invités — messages par défaut des
             nouveaux hôtes et impact sur les commandes.
           </p>
@@ -338,14 +338,14 @@ export function AdminNotificationsContent() {
                     {globalDisabled ? 'ACTIVÉE — notifications coupées' : 'Notifications actives'}
                   </Badge>
                 </div>
-                <p className="text-sm text-[#8fa0c2]">
+                <p className="text-sm text-[#8fabc2]">
                   Coupe IMMÉDIATEMENT toutes les notifications de la plateforme (tous hubs, tous hôtes). À
                   utiliser en cas de bug.
                 </p>
               </div>
               <div className="flex shrink-0 items-center gap-3 sm:pl-6">
                 {savingGlobal && (
-                  <span className="text-xs text-[#8fa0c2]" role="status">
+                  <span className="text-xs text-[#8fabc2]" role="status">
                     Enregistrement…
                   </span>
                 )}
@@ -366,7 +366,7 @@ export function AdminNotificationsContent() {
               <div>
                 <p className="lux-eyebrow">Templates</p>
                 <h2 className="lux-display mt-1 text-lg text-white">Messages par défaut des nouveaux hôtes</h2>
-                <p className="mt-1 text-sm text-[#8fa0c2]">
+                <p className="mt-1 text-sm text-[#8fabc2]">
                   Ces messages sont les valeurs PAR DÉFAUT appliquées aux nouveaux hôtes — chaque hôte peut
                   les personnaliser pour son bien.
                 </p>
@@ -383,7 +383,7 @@ export function AdminNotificationsContent() {
                       onChange={(e) => setDraft((d) => ({ ...d, [field.key]: e.target.value }))}
                       maxLength={MAX_TEMPLATE_LENGTH}
                       rows={2}
-                      className="min-h-[64px] resize-none rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+                      className="min-h-[64px] resize-none rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50"
                       aria-describedby={`tpl-${field.key}-count`}
                     />
                     <p

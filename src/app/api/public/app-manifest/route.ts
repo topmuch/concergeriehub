@@ -63,7 +63,7 @@ export async function GET(req: Request) {
     lang: 'fr',
     dir: 'ltr',
     background_color: '#F8FAFC',
-    theme_color: '#07235B',
+    theme_color: '#043455',
     categories: ['travel', 'lifestyle'],
     icons: [
       { src: icon(192, 'any'), sizes: '192x192', type: 'image/png', purpose: 'any' },

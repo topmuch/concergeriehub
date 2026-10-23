@@ -7,7 +7,7 @@
 // =============================================================
 
 /** Couleur de repli = identité RoomScan (émeraude manifest). */
-export const DEFAULT_PRIMARY_COLOR = '#0066EF';
+export const DEFAULT_PRIMARY_COLOR = '#055492';
 
 export interface PropertyBranding {
   /** Chemin public du logo (ex: /uploads/branding/xxx.png) — null = aucun. */

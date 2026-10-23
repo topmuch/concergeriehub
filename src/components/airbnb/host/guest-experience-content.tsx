@@ -660,7 +660,7 @@ export function GuestExperienceContent({ initialPropertyId }: { initialPropertyI
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
           <h1 className="lux-display text-2xl font-semibold text-white sm:text-3xl">Expérience Invité</h1>
-          <p className="mt-1.5 text-xs text-[#8fa0c2] sm:text-sm">
+          <p className="mt-1.5 text-xs text-[#8fabc2] sm:text-sm">
             Vidéo de bienvenue, arrivée guidée en photos, upselling et kit de survie — l’expérience 5 étoiles, dans l’app de vos invités.
           </p>
         </div>
@@ -735,23 +735,23 @@ export function GuestExperienceContent({ initialPropertyId }: { initialPropertyI
                   aria-selected={active}
                   onClick={() => setActiveGroup(g.id)}
                   className={cn(
-                    'flex flex-col items-start gap-1 rounded-2xl border p-4 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5c8af0]/50',
+                    'flex flex-col items-start gap-1 rounded-2xl border p-4 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5cadf0]/50',
                     active
-                      ? 'border-[#5c8af0]/45 bg-[#5c8af0]/12 shadow-[0_12px_32px_-14px_rgba(61,111,224,0.55)] ring-2 ring-[#5c8af0]/25'
+                      ? 'border-[#5cadf0]/45 bg-[#5cadf0]/12 shadow-[0_12px_32px_-14px_rgba(61,111,224,0.55)] ring-2 ring-[#5cadf0]/25'
                       : 'border-white/10 bg-white/[0.03] hover:border-white/20 hover:bg-white/[0.05]',
                   )}
                 >
                   <span className="flex items-center gap-2">
                     <span
                       className="lux-dot"
-                      style={{ backgroundColor: active ? '#a9c4ff' : '#5c8af0' }}
+                      style={{ backgroundColor: active ? '#a9d8ff' : '#5cadf0' }}
                       aria-hidden="true"
                     />
                     <span className={cn('text-sm font-semibold uppercase tracking-[0.1em]', active ? 'text-white' : 'text-[#c7d3ec]')}>
                       {g.title}
                     </span>
                   </span>
-                  <span className="text-[11px] leading-snug text-[#8fa0c2]">{g.desc}</span>
+                  <span className="text-[11px] leading-snug text-[#8fabc2]">{g.desc}</span>
                 </button>
               );
             })}
@@ -768,12 +768,12 @@ export function GuestExperienceContent({ initialPropertyId }: { initialPropertyI
                 Vidéo de bienvenue
                 <CountBadge n={premiumCount} />
               </h2>
-              <p className="mt-1 text-xs text-[#8fa0c2] sm:text-sm">
+              <p className="mt-1 text-xs text-[#8fabc2] sm:text-sm">
                 « Un mot de votre hôte » — la carte s’affiche en tête de l’accueil de vos invités.
               </p>
             </div>
             <div className="mt-4 flex flex-col gap-1.5">
-              <Label htmlFor="premium-video" className="text-xs font-semibold text-[#8fa0c2]">
+              <Label htmlFor="premium-video" className="text-xs font-semibold text-[#8fabc2]">
                 Collez un lien YouTube, Vimeo ou Loom (public)
               </Label>
               <Input
@@ -783,21 +783,21 @@ export function GuestExperienceContent({ initialPropertyId }: { initialPropertyI
                 maxLength={500}
                 placeholder="https://youtube.com/watch?v=…"
                 autoComplete="off"
-                className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+                className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50"
               />
             </div>
             {draft.videoUrl.trim() && (
               <VideoPreview url={draft.videoUrl.trim()} />
             )}
-            <p className="mt-2 text-xs text-[#8fa0c2]/80">
+            <p className="mt-2 text-xs text-[#8fabc2]/80">
               Astuce : une vidéo de 60–90 s suffit. Collez un lien PUBLIC (YouTube, Vimeo ou Loom) :
               il s’ouvre dans un lecteur dédié côté invité. Aucun fichier à téléverser.
             </p>
 
             {/* v4.54 « ALERTE VOCALE DE DÉPART » — audio pré-enregistré */}
             <div className="mt-4 border-t border-white/8 pt-4">
-              <Label htmlFor="premium-checkout-audio" className="text-xs font-semibold text-[#8fa0c2]">
-                Rappel vocal du départ <span className="font-normal text-[#8fa0c2]/70">(optionnel — modale de check-out)</span>
+              <Label htmlFor="premium-checkout-audio" className="text-xs font-semibold text-[#8fabc2]">
+                Rappel vocal du départ <span className="font-normal text-[#8fabc2]/70">(optionnel — modale de check-out)</span>
               </Label>
               <Input
                 id="premium-checkout-audio"
@@ -806,9 +806,9 @@ export function GuestExperienceContent({ initialPropertyId }: { initialPropertyI
                 maxLength={500}
                 placeholder="https://…/mon-message-depart.mp3 (ou /uploads/voice/…)"
                 autoComplete="off"
-                className="mt-1.5 rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+                className="mt-1.5 rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50"
               />
-              <p className="mt-2 text-xs text-[#8fa0c2]/80">
+              <p className="mt-2 text-xs text-[#8fabc2]/80">
                 Lorsque l’invité confirme son départ, votre message est joué AVANT la checklist finale
                 (chargeurs, sous le lit, coffre-fort…). Sans audio, une voix de synthèse française joue le rappel.
               </p>
@@ -825,7 +825,7 @@ export function GuestExperienceContent({ initialPropertyId }: { initialPropertyI
                   Guide visuel d’arrivée
                   <CountBadge n={stepsCount} />
                 </h2>
-                <p className="mt-1 text-xs text-[#8fa0c2] sm:text-sm">
+                <p className="mt-1 text-xs text-[#8fabc2] sm:text-sm">
                   Pas à pas en photos : façade → digicode → porte… Fin des « C’est laquelle la porte ? ».
                 </p>
               </div>
@@ -844,7 +844,7 @@ export function GuestExperienceContent({ initialPropertyId }: { initialPropertyI
             {draft.steps.length === 0 ? (
               <div className="lux-empty mt-4 flex flex-col items-center gap-2 rounded-2xl p-8 text-center">
                 <p className="lux-display text-lg text-white">Aucune étape</p>
-                <p className="mx-auto max-w-sm text-xs text-[#8fa0c2] sm:text-sm">
+                <p className="mx-auto max-w-sm text-xs text-[#8fabc2] sm:text-sm">
                   Ajoutez la façade, le digicode, la porte, l’ascenseur… dans l’ordre réel de l’arrivée.
                 </p>
                 <Button
@@ -882,27 +882,27 @@ export function GuestExperienceContent({ initialPropertyId }: { initialPropertyI
                   >
                     <div className="flex items-center gap-2">
                       <span
-                        className="hidden cursor-grab select-none text-[#8fa0c2]/50 hover:text-[#8fa0c2] sm:block"
+                        className="hidden cursor-grab select-none text-[#8fabc2]/50 hover:text-[#8fabc2] sm:block"
                         title="Glisser pour réordonner"
                         aria-hidden="true"
                       >
                         ↕
                       </span>
-                      <span className="lux-num inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#3d6fe0]/15 text-sm font-semibold text-[#a9c4ff] ring-1 ring-[#5c8af0]/25" aria-hidden="true">
+                      <span className="lux-num inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#3d97e0]/15 text-sm font-semibold text-[#a9d8ff] ring-1 ring-[#5cadf0]/25" aria-hidden="true">
                         {i + 1}
                       </span>
                       <Input
                         value={s.title}
                         onChange={(e) => setStep(s.key, { title: e.target.value })}
                         maxLength={80}
-                        className="flex-1 rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+                        className="flex-1 rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50"
                         placeholder={`Titre de l’étape ${i + 1} (ex : « La façade »)`}
                         aria-label={`Titre de l’étape ${i + 1}`}
                       />
                       <div className="flex shrink-0 flex-col gap-0.5">
                         <button
                           type="button"
-                          className="rounded p-0.5 text-[#8fa0c2]/80 transition-colors hover:bg-white/8 hover:text-white disabled:opacity-30"
+                          className="rounded p-0.5 text-[#8fabc2]/80 transition-colors hover:bg-white/8 hover:text-white disabled:opacity-30"
                           onClick={() => moveStep(i, i - 1)}
                           disabled={i === 0}
                           aria-label={`Monter l’étape ${i + 1}`}
@@ -911,7 +911,7 @@ export function GuestExperienceContent({ initialPropertyId }: { initialPropertyI
                         </button>
                         <button
                           type="button"
-                          className="rounded p-0.5 text-[#8fa0c2]/80 transition-colors hover:bg-white/8 hover:text-white disabled:opacity-30"
+                          className="rounded p-0.5 text-[#8fabc2]/80 transition-colors hover:bg-white/8 hover:text-white disabled:opacity-30"
                           onClick={() => moveStep(i, i + 1)}
                           disabled={i === draft.steps.length - 1}
                           aria-label={`Descendre l’étape ${i + 1}`}
@@ -961,8 +961,8 @@ export function GuestExperienceContent({ initialPropertyId }: { initialPropertyI
                           className={cn(
                             'flex h-28 w-44 shrink-0 flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed text-center text-xs transition-colors',
                             dragOverKey === s.key
-                              ? 'border-[#5c8af0]/70 bg-[#5c8af0]/10 text-[#a9c4ff]'
-                              : 'border-white/12 bg-white/[0.03] text-[#8fa0c2] hover:border-white/25 hover:bg-white/[0.05]',
+                              ? 'border-[#5cadf0]/70 bg-[#5cadf0]/10 text-[#a9d8ff]'
+                              : 'border-white/12 bg-white/[0.03] text-[#8fabc2] hover:border-white/25 hover:bg-white/[0.05]',
                           )}
                           aria-label={`Ajouter la photo de l’étape ${s.title || i + 1} (glisser-déposer ou cliquer)`}
                         >
@@ -975,7 +975,7 @@ export function GuestExperienceContent({ initialPropertyId }: { initialPropertyI
                       )}
                       <div className="flex flex-col gap-2">
                         <div className="flex flex-col gap-1.5">
-                          <Label className="text-xs font-semibold text-[#8fa0c2]">Texte court pour l’invité</Label>
+                          <Label className="text-xs font-semibold text-[#8fabc2]">Texte court pour l’invité</Label>
                           <Textarea
                             value={s.description}
                             onChange={(e) => setStep(s.key, { description: e.target.value })}
@@ -983,7 +983,7 @@ export function GuestExperienceContent({ initialPropertyId }: { initialPropertyI
                             rows={3}
                             placeholder="ex : Immeuble bleu avec la porte verte — le digicode est à droite."
                             aria-label={`Description de l’étape ${s.title || i + 1}`}
-                            className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+                            className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50"
                           />
                         </div>
                       </div>
@@ -1013,7 +1013,7 @@ export function GuestExperienceContent({ initialPropertyId }: { initialPropertyI
                 <h2 className="lux-display flex flex-wrap items-center gap-2 text-lg font-semibold text-white">
                   Voix du guidebook
                 </h2>
-                <p className="mt-1 text-xs text-[#8fa0c2] sm:text-sm">
+                <p className="mt-1 text-xs text-[#8fabc2] sm:text-sm">
                   Une voix qui lit votre guide de bienvenue aux invités — dans l’app invitée et le hub.
                 </p>
               </div>
@@ -1042,7 +1042,7 @@ export function GuestExperienceContent({ initialPropertyId }: { initialPropertyI
                   />
                 )}
                 <div className="mt-4 flex flex-col gap-1.5">
-                  <Label htmlFor="guidebook-voice-text" className="text-xs font-semibold text-[#8fa0c2]">
+                  <Label htmlFor="guidebook-voice-text" className="text-xs font-semibold text-[#8fabc2]">
                     Texte à faire lire ({guidebookText.length}/{MAX_GUIDEBOOK_TTS_CHARS} caractères)
                   </Label>
                   <Textarea
@@ -1053,7 +1053,7 @@ export function GuestExperienceContent({ initialPropertyId }: { initialPropertyI
                     rows={4}
                     placeholder="ex : Bienvenue ! Récupérez les clés dans le coffre à gauche de la porte, le code est 4821. Le wifi s’appelle Maison-Verte…"
                     aria-label="Texte de la voix du guidebook"
-                    className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+                    className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50"
                   />
                 </div>
                 <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -1101,7 +1101,7 @@ export function GuestExperienceContent({ initialPropertyId }: { initialPropertyI
                     </Button>
                   )}
                 </div>
-                <p className="mt-2 text-xs text-[#8fa0c2]/80">
+                <p className="mt-2 text-xs text-[#8fabc2]/80">
                   « Générer la voix » synthétise votre texte en français (max {MAX_GUIDEBOOK_TTS_CHARS} caractères ≈ 30 s).
                   « Enregistrer ma voix » importe votre propre audio (MP3, M4A, WAV, WEBM ou OGG — max 1 Mo) :
                   elle remplace la voix générée et reste prioritaire sur la voix par défaut de la plateforme.
@@ -1118,7 +1118,7 @@ export function GuestExperienceContent({ initialPropertyId }: { initialPropertyI
           <section className="lux-card p-5 sm:p-6" aria-label="Services et upselling">
             <div className="min-w-0">
               <h2 className="lux-display text-lg font-semibold text-white">Services &amp; Upselling</h2>
-              <p className="mt-1 text-xs text-[#8fa0c2] sm:text-sm">
+              <p className="mt-1 text-xs text-[#8fabc2] sm:text-sm">
                 Transformez l’app en source de revenus — et protégez votre note en cas de couac.
               </p>
             </div>
@@ -1131,7 +1131,7 @@ export function GuestExperienceContent({ initialPropertyId }: { initialPropertyI
                     <Label htmlFor="toggle-late" className="text-sm font-semibold text-white">
                       Late Check-out payant
                     </Label>
-                    <p className="mt-0.5 text-xs text-[#8fa0c2]">
+                    <p className="mt-0.5 text-xs text-[#8fabc2]">
                       L’invité voit une carte « Prolonger votre séjour ? » sur son accueil.
                     </p>
                   </div>
@@ -1145,7 +1145,7 @@ export function GuestExperienceContent({ initialPropertyId }: { initialPropertyI
                 {draft.enableLateCheckout && (
                   <div className="mt-3 flex flex-wrap items-end gap-3">
                     <div className="flex flex-col gap-1.5">
-                      <Label htmlFor="late-price" className="text-xs font-semibold text-[#8fa0c2]">
+                      <Label htmlFor="late-price" className="text-xs font-semibold text-[#8fabc2]">
                         Prix (€)
                       </Label>
                       <Input
@@ -1154,13 +1154,13 @@ export function GuestExperienceContent({ initialPropertyId }: { initialPropertyI
                         onChange={(e) => setPremium({ lateCheckoutPrice: e.target.value })}
                         inputMode="decimal"
                         maxLength={7}
-                        className="w-28 rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+                        className="w-28 rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50"
                         placeholder="20"
                         aria-label="Prix du late check-out en euros"
                       />
                     </div>
                     <div className="flex flex-col gap-1.5">
-                      <Label htmlFor="late-hour" className="text-xs font-semibold text-[#8fa0c2]">
+                      <Label htmlFor="late-hour" className="text-xs font-semibold text-[#8fabc2]">
                         Départ jusqu’à
                       </Label>
                       <Select
@@ -1199,7 +1199,7 @@ export function GuestExperienceContent({ initialPropertyId }: { initialPropertyI
                     <Label htmlFor="toggle-shield" className="text-sm font-semibold text-white">
                       Bouclier d’avis (Review Shield)
                     </Label>
-                    <p className="mt-0.5 text-xs text-[#8fa0c2]">
+                    <p className="mt-0.5 text-xs text-[#8fabc2]">
                       Invités ravis → guidés vers votre annonce. Invités déçus → message privé d’abord.
                     </p>
                   </div>
@@ -1212,7 +1212,7 @@ export function GuestExperienceContent({ initialPropertyId }: { initialPropertyI
                 </div>
                 {draft.enableReviewShield && (
                   <div className="mt-3 flex flex-col gap-1.5">
-                    <Label htmlFor="review-url" className="text-xs font-semibold text-[#8fa0c2]">
+                    <Label htmlFor="review-url" className="text-xs font-semibold text-[#8fabc2]">
                       Lien de votre annonce (Airbnb, Booking…)
                     </Label>
                     <Input
@@ -1223,7 +1223,7 @@ export function GuestExperienceContent({ initialPropertyId }: { initialPropertyI
                       placeholder="https://www.airbnb.com/rooms/…"
                       autoComplete="off"
                       aria-label="Lien de l’annonce pour le bouclier d’avis"
-                      className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+                      className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50"
                     />
                   </div>
                 )}
@@ -1235,7 +1235,7 @@ export function GuestExperienceContent({ initialPropertyId }: { initialPropertyI
                     <Label htmlFor="toggle-minibar" className="text-sm font-semibold text-white">
                       Minibar numérique (Honesty Bar)
                     </Label>
-                    <p className="mt-0.5 text-xs text-[#8fa0c2]">
+                    <p className="mt-0.5 text-xs text-[#8fabc2]">
                       Snacks, vin, bières locales, câbles neufs… L’invité coche sa consommation et paie (CB / Apple Pay) ou règle sur place.
                     </p>
                   </div>
@@ -1250,7 +1250,7 @@ export function GuestExperienceContent({ initialPropertyId }: { initialPropertyI
                   <div className="mt-3">
                     {draft.minibar.length === 0 && (
                       <div className="rounded-xl border border-dashed border-white/12 p-3">
-                        <p className="text-xs text-[#8fa0c2]">
+                        <p className="text-xs text-[#8fabc2]">
                           Ajoutez vos articles (ou partez d’une suggestion) — prix recalculés côté serveur à chaque commande.
                         </p>
                         <div className="mt-2 flex flex-wrap gap-1.5">
@@ -1279,7 +1279,7 @@ export function GuestExperienceContent({ initialPropertyId }: { initialPropertyI
                               disabled={uploadingKey === m.key}
                               aria-label={`Photo de l’article ${m.name || i + 1}`}
                               className={cn(
-                                'flex h-11 w-11 items-center justify-center overflow-hidden rounded-xl border-2 text-[#8fa0c2]/70 transition-colors hover:border-[#5c8af0]/60 hover:text-[#a9c4ff]',
+                                'flex h-11 w-11 items-center justify-center overflow-hidden rounded-xl border-2 text-[#8fabc2]/70 transition-colors hover:border-[#5cadf0]/60 hover:text-[#a9d8ff]',
                                 m.photo
                                   ? 'border-solid border-white/10 bg-white/[0.04]'
                                   : 'border-dashed border-white/12 bg-white/[0.03]',
@@ -1298,7 +1298,7 @@ export function GuestExperienceContent({ initialPropertyId }: { initialPropertyI
                                 type="button"
                                 onClick={() => setMb(m.key, { photo: '' })}
                                 aria-label={`Retirer la photo de l’article ${m.name || i + 1}`}
-                                className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full border border-white/10 bg-[#0b1226] text-[#8fa0c2] shadow-sm transition-colors hover:text-[#f6a293]"
+                                className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full border border-white/10 bg-[#0b1226] text-[#8fabc2] shadow-sm transition-colors hover:text-[#f6a293]"
                               >
                                 <span aria-hidden="true" className="text-xs leading-none">×</span>
                               </button>
@@ -1308,7 +1308,7 @@ export function GuestExperienceContent({ initialPropertyId }: { initialPropertyI
                             value={m.emoji}
                             onChange={(e) => setMb(m.key, { emoji: e.target.value })}
                             maxLength={4}
-                            className="w-12 rounded-xl border-white/12 bg-white/[0.04] text-center text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50 max-sm:hidden"
+                            className="w-12 rounded-xl border-white/12 bg-white/[0.04] text-center text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50 max-sm:hidden"
                             placeholder="🍷"
                             aria-label={`Emoji de secours de l’article ${m.name || i + 1}`}
                           />
@@ -1316,7 +1316,7 @@ export function GuestExperienceContent({ initialPropertyId }: { initialPropertyI
                             value={m.name}
                             onChange={(e) => setMb(m.key, { name: e.target.value })}
                             maxLength={60}
-                            className="flex-1 rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+                            className="flex-1 rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50"
                             placeholder="Article (ex : Bière locale)"
                             aria-label={`Nom de l’article ${i + 1}`}
                           />
@@ -1325,7 +1325,7 @@ export function GuestExperienceContent({ initialPropertyId }: { initialPropertyI
                             onChange={(e) => setMb(m.key, { price: e.target.value })}
                             inputMode="decimal"
                             maxLength={7}
-                            className={cn('w-20 rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50', m.free && 'opacity-40')}
+                            className={cn('w-20 rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50', m.free && 'opacity-40')}
                             placeholder="€"
                             disabled={m.free}
                             aria-label={`Prix de l’article ${m.name || i + 1}`}
@@ -1340,7 +1340,7 @@ export function GuestExperienceContent({ initialPropertyId }: { initialPropertyI
                               'h-9 shrink-0 rounded-lg border px-2 text-xs font-bold transition-colors max-sm:hidden',
                               m.free
                                 ? 'border-[#e9c47c]/40 bg-[#e9c47c]/12 text-[#e9c47c]'
-                                : 'border-white/10 bg-white/[0.04] text-[#8fa0c2] hover:border-[#e9c47c]/40 hover:text-[#e9c47c]',
+                                : 'border-white/10 bg-white/[0.04] text-[#8fabc2] hover:border-[#e9c47c]/40 hover:text-[#e9c47c]',
                             )}
                           >
                             <span aria-hidden="true">✓</span>
@@ -1359,7 +1359,7 @@ export function GuestExperienceContent({ initialPropertyId }: { initialPropertyI
                     >
                       Ajouter un article
                     </Button>
-                    <p className="mt-1.5 text-[11px] text-[#8fa0c2]/80">
+                    <p className="mt-1.5 text-[11px] text-[#8fabc2]/80">
                       ✓ = article OFFERT (pack de bienvenue) : mis en avant côté invité pour l’inciter à ouvrir le minibar, facturé 0 €.
                     </p>
 
@@ -1375,7 +1375,7 @@ export function GuestExperienceContent({ initialPropertyId }: { initialPropertyI
                             disabled={uploadingKey === '__arrival__'}
                             aria-label="Photo du minibar rempli à l’arrivée"
                             className={cn(
-                              'flex h-16 w-16 items-center justify-center overflow-hidden rounded-xl border-2 text-[#8fa0c2]/70 transition-colors hover:border-[#e9c47c]/60 hover:text-[#e9c47c]',
+                              'flex h-16 w-16 items-center justify-center overflow-hidden rounded-xl border-2 text-[#8fabc2]/70 transition-colors hover:border-[#e9c47c]/60 hover:text-[#e9c47c]',
                               draft.minibarArrivalPhoto
                                 ? 'border-solid border-white/10 bg-white/[0.04]'
                                 : 'border-dashed border-[#e9c47c]/40 bg-white/[0.03]',
@@ -1393,7 +1393,7 @@ export function GuestExperienceContent({ initialPropertyId }: { initialPropertyI
                               type="button"
                               onClick={() => setPremium({ minibarArrivalPhoto: '' })}
                               aria-label="Retirer la photo d’arrivée du minibar"
-                              className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full border border-white/10 bg-[#0b1226] text-[#8fa0c2] shadow-sm transition-colors hover:text-[#f6a293]"
+                              className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full border border-white/10 bg-[#0b1226] text-[#8fabc2] shadow-sm transition-colors hover:text-[#f6a293]"
                             >
                               <span aria-hidden="true" className="text-xs leading-none">×</span>
                             </button>
@@ -1439,7 +1439,7 @@ export function GuestExperienceContent({ initialPropertyId }: { initialPropertyI
             <div className="flex items-start justify-between gap-3 flex-wrap">
               <div className="min-w-0">
                 <h2 className="lux-display text-lg font-semibold text-white">Verrouillage du hub par code</h2>
-                <p className="mt-1 text-xs text-[#8fa0c2]">
+                <p className="mt-1 text-xs text-[#8fabc2]">
                   Chaque réservation du calendrier reçoit automatiquement un code PIN unique (4 chiffres). L&apos;invité le saisit au scan du QR pour déverrouiller son hub — qui se verrouille seul à l&apos;heure exacte de fin de séjour (compte à rebours visible en haut de l&apos;écran).
                 </p>
               </div>
@@ -1459,7 +1459,7 @@ export function GuestExperienceContent({ initialPropertyId }: { initialPropertyI
                   </p>
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <Label htmlFor="hublock-instructions" className="text-xs font-semibold text-[#8fa0c2]">
+                  <Label htmlFor="hublock-instructions" className="text-xs font-semibold text-[#8fabc2]">
                     Consignes de départ (affichées dans la modal du compte à rebours)
                   </Label>
                   <Textarea
@@ -1470,9 +1470,9 @@ export function GuestExperienceContent({ initialPropertyId }: { initialPropertyI
                     rows={3}
                     placeholder="Laissez les clés sur la table, éteignez la climatisation, triez les déchets…"
                     aria-label="Consignes de départ"
-                    className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+                    className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50"
                   />
-                  <p className="text-[11px] text-[#8fa0c2]/80">
+                  <p className="text-[11px] text-[#8fabc2]/80">
                     Où laisser les clés, éteindre la clim, tri… {draft.hubLockInstructions.length}/600
                   </p>
                 </div>
@@ -1481,7 +1481,7 @@ export function GuestExperienceContent({ initialPropertyId }: { initialPropertyI
                     <p className="text-sm font-semibold text-white">
                       Autoriser « Demander un départ tardif »
                     </p>
-                    <p className="mt-0.5 text-xs text-[#8fa0c2]">
+                    <p className="mt-0.5 text-xs text-[#8fabc2]">
                       Bouton dans la modal du compte à rebours (si le module Départ tardif est activé). Une prolongation validée rallonge automatiquement le verrouillage.
                     </p>
                   </div>
@@ -1492,7 +1492,7 @@ export function GuestExperienceContent({ initialPropertyId }: { initialPropertyI
                     aria-label="Autoriser les demandes de départ tardif"
                   />
                 </div>
-                <div className="rounded-lg border border-white/10 bg-white/[0.02] p-3 text-xs text-[#8fa0c2]">
+                <div className="rounded-lg border border-white/10 bg-white/[0.02] p-3 text-xs text-[#8fabc2]">
                   <p className="font-semibold text-white">Double vérification intégrée</p>
                   <p className="mt-1 leading-relaxed">
                     Côté téléphone : compte à rebours en continu, effacement de la clé locale à zéro. Côté serveur : chaque action du hub (minibar, commandes, tickets…) est refusée (403 Session expirée) dès que l&apos;heure de fin de séjour est passée — même si l&apos;onglet reste ouvert.
@@ -1511,7 +1511,7 @@ export function GuestExperienceContent({ initialPropertyId }: { initialPropertyI
                   Kit de survie
                   <CountBadge n={kitCount} />
                 </h2>
-                <p className="mt-1 text-xs text-[#8fa0c2] sm:text-sm">
+                <p className="mt-1 text-xs text-[#8fabc2] sm:text-sm">
                   Les objets qu’on oublie toujours — et leur emplacement exact dans le logement.
                 </p>
               </div>
@@ -1530,7 +1530,7 @@ export function GuestExperienceContent({ initialPropertyId }: { initialPropertyI
             {draft.kit.length === 0 ? (
               <div className="lux-empty mt-4 flex flex-col items-center gap-2 rounded-2xl p-8 text-center">
                 <p className="lux-display text-lg text-white">Aucun objet</p>
-                <p className="mx-auto max-w-sm text-xs text-[#8fa0c2] sm:text-sm">
+                <p className="mx-auto max-w-sm text-xs text-[#8fabc2] sm:text-sm">
                   Chargeur iPhone, adaptateur, parapluie… Listez-les avec leur emplacement — fin des appels paniques à 23 h.
                 </p>
                 <Button
@@ -1557,7 +1557,7 @@ export function GuestExperienceContent({ initialPropertyId }: { initialPropertyI
                       value={k.name}
                       onChange={(e) => setKit(k.key, { name: e.target.value })}
                       maxLength={60}
-                      className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50 sm:w-56"
+                      className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50 sm:w-56"
                       placeholder="Objet (ex : Chargeur iPhone)"
                       aria-label={`Nom de l’objet ${i + 1}`}
                     />
@@ -1565,7 +1565,7 @@ export function GuestExperienceContent({ initialPropertyId }: { initialPropertyI
                       value={k.location}
                       onChange={(e) => setKit(k.key, { location: e.target.value })}
                       maxLength={120}
-                      className="flex-1 rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+                      className="flex-1 rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50"
                       placeholder="Emplacement (ex : Tiroir de la cuisine, sous le micro-ondes)"
                       aria-label={`Emplacement de l’objet ${k.name || i + 1}`}
                     />
@@ -1624,7 +1624,7 @@ export function GuestExperienceContent({ initialPropertyId }: { initialPropertyI
       {!loading && data && !data.property && (
         <div className="lux-empty rounded-2xl p-10 text-center">
           <h2 className="lux-display text-lg text-white">Aucun bien</h2>
-          <p className="mt-2 text-xs text-[#8fa0c2] sm:text-sm">Ajoutez d’abord un bien pour créer son expérience invité.</p>
+          <p className="mt-2 text-xs text-[#8fabc2] sm:text-sm">Ajoutez d’abord un bien pour créer son expérience invité.</p>
         </div>
       )}
     </div>
@@ -1661,9 +1661,9 @@ function VideoPreview({ url }: { url: string }) {
       <span className="lux-rule w-6 shrink-0" aria-hidden="true" />
       <span className="min-w-0 flex-1">
         <span className="block truncate text-sm font-semibold text-white">{url}</span>
-        <span className="block text-xs text-[#8fa0c2]">Cliquez pour prévisualiser — l’invité la verra en tête d’accueil</span>
+        <span className="block text-xs text-[#8fabc2]">Cliquez pour prévisualiser — l’invité la verra en tête d’accueil</span>
       </span>
-      <span className="shrink-0 text-sm text-[#8fa0c2]" aria-hidden="true">→</span>
+      <span className="shrink-0 text-sm text-[#8fabc2]" aria-hidden="true">→</span>
     </a>
   );
 }
@@ -1741,7 +1741,7 @@ function DeleteRowButton({ onClick, label }: { onClick: () => void; label: strin
     <Button
       variant="ghost"
       size="icon"
-      className="shrink-0 text-[#8fa0c2]/70 hover:bg-[#f07d6a]/10 hover:text-[#f6a293]"
+      className="shrink-0 text-[#8fabc2]/70 hover:bg-[#f07d6a]/10 hover:text-[#f6a293]"
       onClick={onClick}
       aria-label={label}
       title={label}
@@ -1872,7 +1872,7 @@ function MinibarOpsPanel({ propertyId }: { propertyId: string }) {
           Demandes « Recharger le frigo » {pendingRestocks.length > 0 ? `(${pendingRestocks.length} en attente)` : ''}
         </p>
         {pendingRestocks.length === 0 ? (
-          <p className="mt-1 text-[11px] text-[#8fa0c2]/80">Aucune demande en attente.</p>
+          <p className="mt-1 text-[11px] text-[#8fabc2]/80">Aucune demande en attente.</p>
         ) : (
           <ul className="mt-1.5 space-y-1.5">
             {pendingRestocks.map((r) => (
@@ -1904,7 +1904,7 @@ function MinibarOpsPanel({ propertyId }: { propertyId: string }) {
           Consommations à encaisser {openOrders.length > 0 ? `(${openOrders.length})` : ''}
         </p>
         {openOrders.length === 0 ? (
-          <p className="mt-1 text-[11px] text-[#8fa0c2]/80">Aucune consommation ouverte.</p>
+          <p className="mt-1 text-[11px] text-[#8fabc2]/80">Aucune consommation ouverte.</p>
         ) : (
           <ul className="lux-scroll mt-1.5 max-h-40 space-y-1.5 overflow-y-auto pr-1">
             {openOrders.map((o) => (
@@ -1920,12 +1920,12 @@ function MinibarOpsPanel({ propertyId }: { propertyId: string }) {
                         au départ
                       </span>
                     ) : (
-                      <span className="ml-1 rounded-full bg-white/8 px-1.5 py-0.5 text-[9px] font-bold text-[#8fa0c2]">
+                      <span className="ml-1 rounded-full bg-white/8 px-1.5 py-0.5 text-[9px] font-bold text-[#8fabc2]">
                         sur place
                       </span>
                     )}
                   </p>
-                  <p className="truncate text-[11px] text-[#8fa0c2]/80">
+                  <p className="truncate text-[11px] text-[#8fabc2]/80">
                     {o.items.map((l) => `${l.emoji} ×${l.qty}${l.free ? ' 🎁' : ''}`).join(', ')}
                   </p>
                 </div>
@@ -1948,7 +1948,7 @@ function MinibarOpsPanel({ propertyId }: { propertyId: string }) {
       {checks.length > 0 && (
         <div className="mt-3">
           <p className="lux-eyebrow">Inventaires validés (arrivée)</p>
-          <p className="mt-1 text-[11px] text-[#8fa0c2]/80">
+          <p className="mt-1 text-[11px] text-[#8fabc2]/80">
             Dernière validation :{' '}
             {new Date(checks[0].checkedAt).toLocaleString('fr-FR', {
               day: 'numeric',
@@ -2122,7 +2122,7 @@ function CheckoutReportsPanel({ propertyId, propertyName }: { propertyId: string
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div className="min-w-0">
           <h2 className="lux-display text-lg font-semibold text-white">Rapports de check-out</h2>
-          <p className="mt-1 text-xs text-[#8fa0c2] sm:text-sm">
+          <p className="mt-1 text-xs text-[#8fabc2] sm:text-sm">
             À l&apos;expiration du compte à rebours de chaque séjour, un récapitulatif net est
             généré automatiquement : consommations minibar, signalements, preuve ménage horodatée.
           </p>
@@ -2150,7 +2150,7 @@ function CheckoutReportsPanel({ propertyId, propertyName }: { propertyId: string
       ) : reports.length === 0 ? (
         <div className="lux-empty mt-4 rounded-xl p-6 text-center">
           <p className="lux-display text-lg text-white">Aucun rapport pour le moment</p>
-          <p className="mx-auto mt-2 max-w-md text-xs text-[#8fa0c2] sm:text-sm">
+          <p className="mx-auto mt-2 max-w-md text-xs text-[#8fabc2] sm:text-sm">
             Le premier rapport apparaîtra dès qu&apos;un séjour se terminera (compte à rebours
             expiré ou départ confirmé dans le Hub).
           </p>
@@ -2169,7 +2169,7 @@ function CheckoutReportsPanel({ propertyId, propertyName }: { propertyId: string
                     <p className="text-sm font-semibold text-white">
                       {r.guestName || 'Séjour'}
                     </p>
-                    <p className="mt-0.5 text-xs text-[#8fa0c2]">
+                    <p className="mt-0.5 text-xs text-[#8fabc2]">
                       {frShort(r.checkIn)} → {frShort(r.checkOut)}
                       {r.departedAt ? ` · départ confirmé ${frHour(r.departedAt)}` : ''}
                     </p>
@@ -2217,7 +2217,7 @@ function CheckoutReportsPanel({ propertyId, propertyName }: { propertyId: string
                   >
                     <span
                       className="lux-dot"
-                      style={{ backgroundColor: r.minibar.length > 0 ? '#e9c47c' : '#8fa0c2' }}
+                      style={{ backgroundColor: r.minibar.length > 0 ? '#e9c47c' : '#8fabc2' }}
                       aria-hidden="true"
                     />
                     Consommations :{' '}
@@ -2248,7 +2248,7 @@ function CheckoutReportsPanel({ propertyId, propertyName }: { propertyId: string
                   >
                     <span
                       className="lux-dot"
-                      style={{ backgroundColor: r.cleaningValidatedAt ? '#2dd4bf' : '#8fa0c2' }}
+                      style={{ backgroundColor: r.cleaningValidatedAt ? '#2dd4bf' : '#8fabc2' }}
                       aria-hidden="true"
                     />
                     Preuve Ménage :{' '}
@@ -2272,7 +2272,7 @@ function CheckoutReportsPanel({ propertyId, propertyName }: { propertyId: string
                 <div className="mt-2">
                   <button
                     type="button"
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#8fa0c2] transition-colors hover:text-white"
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#8fabc2] transition-colors hover:text-white"
                     onClick={() => toggle(r.id)}
                     aria-expanded={isOpen}
                   >
@@ -2286,7 +2286,7 @@ function CheckoutReportsPanel({ propertyId, propertyName }: { propertyId: string
                   </button>
                   {isOpen && (
                     <div className="mt-2 space-y-2 rounded-xl bg-white/[0.04] p-3">
-                      <p className="flex items-center gap-1.5 text-[11px] text-[#8fa0c2]">
+                      <p className="flex items-center gap-1.5 text-[11px] text-[#8fabc2]">
                         <span
                           className="lux-dot"
                           style={{ backgroundColor: r.minibarCheckedAt ? '#34d399' : '#fbbf24' }}

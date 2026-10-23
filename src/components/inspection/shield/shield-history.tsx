@@ -229,7 +229,7 @@ export function ShieldHistory({ type }: { type: 'CHECK_IN' | 'CHECK_OUT' }) {
 
       {filtered === null ? (
         <div className="flex min-h-[40vh] items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-[#1e3a8a] dark:text-[#3b82f6]" aria-label="Chargement" />
+          <Loader2 className="h-8 w-8 animate-spin text-[#055492] dark:text-[#1173c7]" aria-label="Chargement" />
         </div>
       ) : filtered.length === 0 ? (
         <ShieldCard className="p-8 text-center sm:p-12">

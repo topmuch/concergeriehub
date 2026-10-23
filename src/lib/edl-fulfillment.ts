@@ -228,7 +228,7 @@ function queueWelcomeEmail(to: string, fullName: string, isNew: boolean): Promis
       <p style="color:#334155">Votre offre <strong>États des Lieux — 299 €/an</strong> est activée :
       créations illimitées, signature électronique et <strong>génération de PDF illimitée</strong>.</p>
       <table style="border-collapse:collapse;margin:16px 0">
-        <tr><td style="padding:4px 12px 4px 0;color:#64748b">Votre espace</td><td><a href="${dashboardUrl}" style="color:#0052C4">Tableau de bord États des Lieux</a></td></tr>
+        <tr><td style="padding:4px 12px 4px 0;color:#64748b">Votre espace</td><td><a href="${dashboardUrl}" style="color:#04467a">Tableau de bord États des Lieux</a></td></tr>
         <tr><td style="padding:4px 12px 4px 0;color:#64748b">Validité</td><td>12 mois (jusqu'au ${new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toLocaleDateString('fr-FR')})</td></tr>
       </table>
       <p style="color:#334155">${isNew

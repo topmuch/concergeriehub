@@ -420,7 +420,7 @@ async function detectPredictive(
 const SEVERITY_INK: Record<IncidentSeverity, string> = {
   CRITICAL: '#f07d6a',
   WARNING: '#e9c47c',
-  INFO: '#5c8af0',
+  INFO: '#5cadf0',
 };
 
 interface AlertEmailOptions {

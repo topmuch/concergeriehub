@@ -6,7 +6,7 @@
 // prêt à être passé à queueEmail() (lib/email.ts, server-only).
 //
 // Charte : fond slate clair, carte blanche 560 px, accent émeraude
-// (#0066EF — pas de violet/indigo), boutons CTA pleine largeur,
+// (#055492 — pas de violet/indigo), boutons CTA pleine largeur,
 // styles inline (compatibilité clients mail), textes courts.
 // =============================================================
 
@@ -17,7 +17,7 @@ export interface EmailTemplate {
 }
 
 const BRAND = 'RoomScan';
-const ACCENT = '#0066EF';
+const ACCENT = '#055492';
 
 /** Échappe les caractères sensibles du HTML. */
 function esc(value: string): string {

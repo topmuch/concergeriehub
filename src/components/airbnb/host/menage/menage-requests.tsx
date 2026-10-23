@@ -118,7 +118,7 @@ export function MenageRequests({ selectedId }: MenageRequestsProps) {
         <div className="min-w-0">
           <p className="lux-eyebrow">Demandes des invités</p>
           <h2 className="lux-display mt-1 text-lg text-white">Demandes particulières</h2>
-          <p className="mt-0.5 text-xs text-[#8fa0c2]">
+          <p className="mt-0.5 text-xs text-[#8fabc2]">
             Lit d&apos;appoint, lit bébé, siège bébé, serviettes… envoyées depuis le Hub par vos
             invités.
           </p>
@@ -143,7 +143,7 @@ export function MenageRequests({ selectedId }: MenageRequestsProps) {
         <div className="lux-empty mt-4 flex flex-col items-center gap-2 rounded-2xl p-6 text-center">
           <span className="lux-dot" style={{ backgroundColor: '#e9c47c' }} aria-hidden="true" />
           <p className="text-sm font-semibold text-white">Chargement impossible</p>
-          <p className="text-xs text-[#8fa0c2]">Réessayez avec le bouton Actualiser.</p>
+          <p className="text-xs text-[#8fabc2]">Réessayez avec le bouton Actualiser.</p>
         </div>
       ) : (
         <div className="mt-4 space-y-3">
@@ -151,7 +151,7 @@ export function MenageRequests({ selectedId }: MenageRequestsProps) {
             <div className="lux-empty flex flex-col items-center gap-2 rounded-2xl p-6 text-center">
               <span className="lux-dot" style={{ backgroundColor: '#e9c47c' }} aria-hidden="true" />
               <p className="text-sm font-semibold text-white">Aucune demande pour le moment</p>
-              <p className="text-xs text-[#8fa0c2]">
+              <p className="text-xs text-[#8fabc2]">
                 Les demandes envoyées depuis l&apos;onglet « Demandes particulières » du Hub
                 apparaîtront ici.
               </p>
@@ -176,12 +176,12 @@ export function MenageRequests({ selectedId }: MenageRequestsProps) {
                     <div className="min-w-0">
                       <p className="flex flex-wrap items-center gap-2 text-sm font-semibold text-white">
                         {item.label}
-                        {r.quantity > 1 ? <span className="text-[#8fa0c2]">×{r.quantity}</span> : null}
+                        {r.quantity > 1 ? <span className="text-[#8fabc2]">×{r.quantity}</span> : null}
                         <span className="ml-1 inline-block rounded-full border px-2 py-0.5 text-[11px] font-bold" style={{ borderColor: `${statusMeta.dot}55`, color: statusMeta.dot }}>
                           {statusMeta.label}
                         </span>
                       </p>
-                      <p className="mt-1 flex flex-wrap items-center gap-x-2 text-xs text-[#8fa0c2]">
+                      <p className="mt-1 flex flex-wrap items-center gap-x-2 text-xs text-[#8fabc2]">
                         <span
                           className="lux-dot shrink-0"
                           style={{ backgroundColor: statusMeta.dot }}
@@ -203,7 +203,7 @@ export function MenageRequests({ selectedId }: MenageRequestsProps) {
                         <Button
                           type="button"
                           size="sm"
-                          className="h-9 rounded-full bg-gradient-to-br from-[#3d6fe0] to-[#24479c] px-4 text-xs font-semibold text-white shadow-[0_10px_28px_-12px_rgba(61,111,224,0.55)] hover:from-[#5c8af0] hover:to-[#2c56b8]"
+                          className="h-9 rounded-full bg-gradient-to-br from-[#3d97e0] to-[#24479c] px-4 text-xs font-semibold text-white shadow-[0_10px_28px_-12px_rgba(61,111,224,0.55)] hover:from-[#5cadf0] hover:to-[#2c56b8]"
                           disabled={actingId === r.id}
                           onClick={() => void act(r.id, 'START')}
                           aria-label={`Prendre en charge : ${item.label}`}
@@ -245,7 +245,7 @@ export function MenageRequests({ selectedId }: MenageRequestsProps) {
 
           {history.length > 0 && (
             <details className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-              <summary className="cursor-pointer text-sm font-semibold text-[#8fa0c2] transition-colors hover:text-white">
+              <summary className="cursor-pointer text-sm font-semibold text-[#8fabc2] transition-colors hover:text-white">
                 Historique traité / annulé ({history.length})
               </summary>
               <ul className="mt-2.5 space-y-1.5">
@@ -253,7 +253,7 @@ export function MenageRequests({ selectedId }: MenageRequestsProps) {
                   const item = specialRequestItemMeta(r.itemType);
                   const statusMeta = SPECIAL_REQUEST_STATUS_META[r.status] ?? SPECIAL_REQUEST_STATUS_META.done;
                   return (
-                    <li key={r.id} className="flex flex-wrap items-center gap-2 text-xs text-[#8fa0c2]">
+                    <li key={r.id} className="flex flex-wrap items-center gap-2 text-xs text-[#8fabc2]">
                       <span className="lux-dot shrink-0" style={{ backgroundColor: statusMeta.dot }} aria-hidden="true" />
                       {item.label}
                       {r.quantity > 1 ? ` ×${r.quantity}` : ''}

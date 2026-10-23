@@ -524,7 +524,7 @@ export function BillingContent({ host, current, stripeMode }: BillingContentProp
               <div className="flex shrink-0 flex-wrap gap-2">
                 <Button
                   variant="outline"
-                  className="rounded-full border-transparent bg-white text-[#0047B3] hover:bg-white/90"
+                  className="rounded-full border-transparent bg-white text-[#033a66] hover:bg-white/90"
                   onClick={openPortal}
                   disabled={managing || !stripeMode || current.paymentProvider === 'paypal'}
                   title={current.paymentProvider === 'paypal' ? 'Facturation gérée via PayPal — utilisez votre compte PayPal pour gérer la souscription.' : undefined}
@@ -558,7 +558,7 @@ export function BillingContent({ host, current, stripeMode }: BillingContentProp
             aria-label="Basculer entre facturation mensuelle et annuelle"
             onClick={() => setCycle((c) => (c === 'monthly' ? 'annual' : 'monthly'))}
             className={cn(
-              'relative h-6 w-11 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0066EF]/50 focus-visible:ring-offset-2',
+              'relative h-6 w-11 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#055492]/50 focus-visible:ring-offset-2',
               cycle === 'annual' ? 'air-gradient shadow' : 'border border-border bg-muted',
             )}
           >
@@ -594,7 +594,7 @@ export function BillingContent({ host, current, stripeMode }: BillingContentProp
                   className={cn(
                     'air-shadow air-hoverlift relative rounded-2xl border bg-card p-6',
                     plan.highlight
-                      ? 'border-[#0066EF]/60 ring-2 ring-[#0066EF]/25'
+                      ? 'border-[#055492]/60 ring-2 ring-[#055492]/25'
                       : 'border-border',
                   )}
                 >
@@ -683,7 +683,7 @@ export function BillingContent({ host, current, stripeMode }: BillingContentProp
                     disabled={isCurrent || price === null || busyPlan !== null}
                     onClick={() => subscribe(plan.id, cycle)}
                     className={cn(
-                      'inline-flex h-11 w-full items-center justify-center gap-2 rounded-full text-sm font-bold shadow transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0066EF]/50 disabled:pointer-events-none disabled:opacity-60',
+                      'inline-flex h-11 w-full items-center justify-center gap-2 rounded-full text-sm font-bold shadow transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#055492]/50 disabled:pointer-events-none disabled:opacity-60',
                       plan.highlight
                         ? 'air-gradient text-white hover:scale-[1.02]'
                         : 'border border-border bg-background text-foreground hover:bg-muted/60',
@@ -758,7 +758,7 @@ export function BillingContent({ host, current, stripeMode }: BillingContentProp
                 type="button"
                 onClick={() => void loadTransactions()}
                 aria-label="Réessayer le chargement de l'historique"
-                className="air-gradient mt-1 inline-flex h-9 items-center gap-2 rounded-full px-4 text-xs font-bold text-white shadow transition-transform hover:scale-[1.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0066EF]/50"
+                className="air-gradient mt-1 inline-flex h-9 items-center gap-2 rounded-full px-4 text-xs font-bold text-white shadow transition-transform hover:scale-[1.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#055492]/50"
               >
                 Réessayer
               </button>

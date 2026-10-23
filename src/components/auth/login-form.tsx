@@ -135,8 +135,8 @@ function AuthFormInner({ onSuccess, initialRegister, onBack }: AuthFormProps) {
             backgroundSize: '40px 40px',
           }} />
           {/* Gradient accent */}
-          <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-[#0066EF]/10 rounded-full blur-[120px]" />
-          <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-[#0066EF]/8 rounded-full blur-[100px]" />
+          <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-[#055492]/10 rounded-full blur-[120px]" />
+          <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-[#055492]/8 rounded-full blur-[100px]" />
 
           <div className="relative z-10 flex flex-col justify-center px-12 xl:px-20">
             <motion.div
@@ -144,10 +144,10 @@ function AuthFormInner({ onSuccess, initialRegister, onBack }: AuthFormProps) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
             >
-              <BrandLogo variant="light" size="lg" className="mb-8" />
+              <BrandLogo variant="light" size="xl" className="mb-8" />
               <h1 className="text-4xl xl:text-5xl font-bold text-white tracking-tight leading-tight">
                 {t('La conciergerie digitale')}{' '}
-                <span className="bg-gradient-to-r from-[#3B82F6] to-[#3B82F6] bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-[#1173c7] to-[#1173c7] bg-clip-text text-transparent">
                   {t('commence par un QR')}
                 </span>
               </h1>
@@ -173,7 +173,7 @@ function AuthFormInner({ onSuccess, initialRegister, onBack }: AuthFormProps) {
                   key={f.label}
                   className="flex items-center gap-2 rounded-full border border-slate-700/50 bg-slate-800/40 px-4 py-2 text-sm text-slate-300"
                 >
-                  <f.icon className="h-4 w-4 text-[#3B82F6]" />
+                  <f.icon className="h-4 w-4 text-[#1173c7]" />
                   {t(f.label)}
                 </div>
               ))}
@@ -206,7 +206,6 @@ function AuthFormInner({ onSuccess, initialRegister, onBack }: AuthFormProps) {
           <div className="lg:hidden flex items-center justify-center px-6 pt-6">
             <BrandLogo variant="light" size="lg" />
           </div>
-
           <div className="flex-1 flex items-center justify-center px-6 py-8 lg:px-12">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -244,7 +243,7 @@ function AuthFormInner({ onSuccess, initialRegister, onBack }: AuthFormProps) {
                             type="text"
                             value={fullName}
                             onChange={(e) => setFullName(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2.5 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-[#0066EF]/50 focus:ring-1 focus:ring-[#0066EF]/20 transition-all"
+                            className="w-full pl-10 pr-4 py-2.5 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-[#055492]/50 focus:ring-1 focus:ring-[#055492]/20 transition-all"
                             placeholder="Jean Dupont"
                             required={!isLogin}
                           />
@@ -262,7 +261,7 @@ function AuthFormInner({ onSuccess, initialRegister, onBack }: AuthFormProps) {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         autoComplete="email"
-                        className="w-full pl-10 pr-4 py-2.5 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-[#0066EF]/50 focus:ring-1 focus:ring-[#0066EF]/20 transition-all"
+                        className="w-full pl-10 pr-4 py-2.5 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-[#055492]/50 focus:ring-1 focus:ring-[#055492]/20 transition-all"
                         placeholder={t('vous@exemple.com')}
                         required
                       />
@@ -278,7 +277,7 @@ function AuthFormInner({ onSuccess, initialRegister, onBack }: AuthFormProps) {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         autoComplete={isLogin ? 'current-password' : 'new-password'}
-                        className="w-full pl-10 pr-10 py-2.5 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-[#0066EF]/50 focus:ring-1 focus:ring-[#0066EF]/20 transition-all"
+                        className="w-full pl-10 pr-10 py-2.5 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-[#055492]/50 focus:ring-1 focus:ring-[#055492]/20 transition-all"
                         placeholder={isLogin ? t('Mot de passe') : t('8 caractères min. — lettres + chiffres')}
                         required
                         minLength={8}
@@ -307,7 +306,7 @@ function AuthFormInner({ onSuccess, initialRegister, onBack }: AuthFormProps) {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full py-3 rounded-xl bg-[#0066EF] hover:bg-[#0052C4] text-white font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full py-3 rounded-xl bg-[#055492] hover:bg-[#04467a] text-white font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {loading ? (
                       <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -323,7 +322,7 @@ function AuthFormInner({ onSuccess, initialRegister, onBack }: AuthFormProps) {
                     <p className="text-center">
                       <Link
                         href="/forgot-password"
-                        className="text-xs text-slate-400 hover:text-[#60A5FA] transition-colors"
+                        className="text-xs text-slate-400 hover:text-[#8fb8dc] transition-colors"
                       >
                         {t('Mot de passe oublié ?')}
                       </Link>
@@ -335,7 +334,7 @@ function AuthFormInner({ onSuccess, initialRegister, onBack }: AuthFormProps) {
                   {isLogin ? t('Pas encore de compte ?') : t('Déjà un compte ?')}{' '}
                   <button
                     onClick={() => { setIsLogin(!isLogin); setError(''); }}
-                    className="text-[#3B82F6] hover:text-[#60A5FA] hover:underline font-medium transition-colors"
+                    className="text-[#1173c7] hover:text-[#8fb8dc] hover:underline font-medium transition-colors"
                   >
                     {isLogin ? t("S'inscrire") : t('Se connecter')}
                   </button>

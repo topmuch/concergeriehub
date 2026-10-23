@@ -99,7 +99,7 @@ export function TabletQuickActions({
               className={cn(
                 'flex h-12 w-12 items-center justify-center rounded-full text-slate-600 dark:text-slate-300',
                 'transition-all duration-200 hover:bg-stone-100 hover:text-slate-900 dark:hover:bg-white/10 dark:hover:text-white active:scale-90',
-                'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0066EF]/40',
+                'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#055492]/40',
                 'disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-transparent',
                 a.tone,
               )}

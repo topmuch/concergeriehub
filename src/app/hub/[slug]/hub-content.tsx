@@ -1944,7 +1944,7 @@ function ModuleCard({
         className={cn(
           'group relative flex h-full min-h-52 w-full flex-col overflow-hidden rounded-2xl border p-5 text-left text-slate-900 dark:text-slate-100',
           'air-shadow transition-[border-color,box-shadow] duration-300',
-          'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0066EF]/40',
+          'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#055492]/40',
           urgentLabel && 'hub-alert-blink border-red-400/70',
           t.border,
           // v5.0 — carte BLANCHE uniforme (le ton vit dans la pastille +
@@ -2104,7 +2104,7 @@ function PreviewChip({ children }: { children: React.ReactNode }) {
 /** Séparateur de section (lignes dégradées + libellé tracking). */
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    // v5.0 « TYPOGRAPHIE AIRBNB PRO » — sur-titre bleu logo #0066EF
+    // v5.0 « TYPOGRAPHIE AIRBNB PRO » — sur-titre bleu logo #055492
     // (filet court) + titre serif slate-900. L'ancien filet dégradé
     // ambre est retiré ; le <h2> reste navigable au lecteur d'écran.
     <div className="mb-5 mt-12">
@@ -2114,8 +2114,8 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
         aria-hidden="true"
         className="mb-2.5 flex items-center gap-2"
       >
-        <span className="h-1 w-8 rounded-full bg-[#0066EF]" />
-        <span className="h-1 w-1.5 rounded-full bg-[#0066EF]/40" />
+        <span className="h-1 w-8 rounded-full bg-[#055492]" />
+        <span className="h-1 w-1.5 rounded-full bg-[#055492]/40" />
       </div>
       <h2 className="font-serif text-2xl font-bold tracking-tight text-slate-900 dark:text-white md:text-3xl">
         {children}
@@ -2564,7 +2564,7 @@ function SosAlertCard({
             href={breakageShopUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-3 flex h-auto min-h-11 w-full items-center justify-center gap-2 whitespace-normal rounded-xl bg-[#0066EF] px-4 py-2.5 text-center text-sm font-semibold leading-snug text-white transition-colors hover:bg-[#0052C4]"
+            className="mt-3 flex h-auto min-h-11 w-full items-center justify-center gap-2 whitespace-normal rounded-xl bg-[#055492] px-4 py-2.5 text-center text-sm font-semibold leading-snug text-white transition-colors hover:bg-[#04467a]"
           >
             🛒 {t('Commander le produit de remplacement')}
           </a>
@@ -2830,7 +2830,7 @@ function ForYouStrip({
               if (e.targetId) onJump(e.targetId);
               else if (e.openDialog) onOpen(e.openDialog);
             }}
-            className="group relative h-32 w-44 shrink-0 snap-start overflow-hidden rounded-2xl border border-black/10 text-left air-shadow-lg transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0066EF]/50 hover:shadow-[0_18px_40px_-18px_rgba(15,23,42,0.35)] dark:border-white/10"
+            className="group relative h-32 w-44 shrink-0 snap-start overflow-hidden rounded-2xl border border-black/10 text-left air-shadow-lg transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-[#055492]/50 hover:shadow-[0_18px_40px_-18px_rgba(15,23,42,0.35)] dark:border-white/10"
           >
             {e.photo && !failed[e.key] ? (
               <img
@@ -3069,12 +3069,12 @@ function DirectBookingBanner({
         )}`
       : null;
   return (
-    <div className="mx-auto mt-4 w-full overflow-hidden rounded-3xl bg-gradient-to-r from-[#0066EF] via-[#0052C4] to-[#07235B] p-[1.5px] shadow-[0_18px_44px_-20px_rgba(0,102,239,0.5)]">
+    <div className="mx-auto mt-4 w-full overflow-hidden rounded-3xl bg-gradient-to-r from-[#055492] via-[#04467a] to-[#043455] p-[1.5px] shadow-[0_18px_44px_-20px_rgba(5, 84, 146,0.5)]">
       <div className="rounded-[22px] bg-white/95 p-4 sm:p-5 dark:bg-slate-900/95">
-        <p className="flex flex-wrap items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-[#0052C4] dark:text-[#3B82F6]">
+        <p className="flex flex-wrap items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-[#04467a] dark:text-[#1173c7]">
           <BadgePercent className="h-3.5 w-3.5" aria-hidden="true" />
           {t('Réservation directe')}
-          <span className="rounded-full bg-[#0066EF] px-2 py-0.5 text-[10px] font-bold tracking-normal text-white">
+          <span className="rounded-full bg-[#055492] px-2 py-0.5 text-[10px] font-bold tracking-normal text-white">
             -{discount} %
           </span>
         </p>
@@ -3189,7 +3189,7 @@ function StarReviewFlow({
             target="_blank"
             rel="noopener noreferrer"
             className={cn(
-              'flex w-full items-center justify-center gap-2.5 rounded-2xl bg-gradient-to-r from-[#0066EF] via-[#0052C4] to-[#0047B3] font-bold text-white shadow-[0_14px_34px_-14px_rgba(0,102,239,0.55)] transition-transform hover:scale-[1.02] active:scale-[0.98]',
+              'flex w-full items-center justify-center gap-2.5 rounded-2xl bg-gradient-to-r from-[#055492] via-[#04467a] to-[#033a66] font-bold text-white shadow-[0_14px_34px_-14px_rgba(5, 84, 146,0.55)] transition-transform hover:scale-[1.02] active:scale-[0.98]',
               big ? 'min-h-16 px-4 text-center text-base sm:text-lg' : 'min-h-14 px-3 text-center text-sm',
             )}
           >
@@ -3267,7 +3267,7 @@ function StarReviewFlow({
             onRated?.(n);
           }}
           className={cn(
-            'rounded-lg p-1 transition-transform hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0066EF]',
+            'rounded-lg p-1 transition-transform hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#055492]',
             big && 'p-1.5',
           )}
         >
@@ -4321,7 +4321,7 @@ function MinibarDialog({
                     // bleu marque + anneau) pour rendre les steppers évidents.
                     'flex items-center gap-3 rounded-2xl border p-2.5 transition-colors',
                     q > 0
-                      ? 'border-[#0066EF]/40 bg-[#EAF2FF]/70 ring-1 ring-[#0066EF]/20 dark:border-[#0066EF]/50 dark:bg-[#0066EF]/15'
+                      ? 'border-[#055492]/40 bg-[#dceaf5]/70 ring-1 ring-[#055492]/20 dark:border-[#055492]/50 dark:bg-[#055492]/15'
                       : 'border-slate-200 dark:border-white/10',
                   )}
                 >
@@ -4335,7 +4335,7 @@ function MinibarDialog({
                         </span>
                       ) : null}
                       {q > 0 ? (
-                        <span className="ml-1.5 rounded-full bg-[#0066EF] px-1.5 py-0.5 align-middle text-[9px] font-bold text-white">
+                        <span className="ml-1.5 rounded-full bg-[#055492] px-1.5 py-0.5 align-middle text-[9px] font-bold text-white">
                           ×{q}
                         </span>
                       ) : null}
@@ -4417,7 +4417,7 @@ function MinibarDialog({
               bouton au client. */}
           <Button
             type="button"
-            className="mt-3 h-auto min-h-12 w-full whitespace-normal bg-[#0066EF] py-3 text-center text-sm font-bold text-white hover:bg-[#0052C4] disabled:cursor-not-allowed disabled:opacity-60"
+            className="mt-3 h-auto min-h-12 w-full whitespace-normal bg-[#055492] py-3 text-center text-sm font-bold text-white hover:bg-[#04467a] disabled:cursor-not-allowed disabled:opacity-60"
             onClick={submit}
             disabled={sending || count === 0}
           >
@@ -6317,7 +6317,7 @@ function GuestView({
       {/* Fond fixe — dégradé neutre chaud très léger, zéro animation */}
       <div
         aria-hidden="true"
-        className="fixed inset-0 -z-10 bg-[radial-gradient(1100px_480px_at_50%_-8%,rgba(0,102,239,0.10),transparent_70%),radial-gradient(900px_420px_at_88%_6%,rgba(245,158,11,0.08),transparent_65%),linear-gradient(to_bottom,#FBFBFA,#FFFFFF,#F2F1EF)] dark:bg-[radial-gradient(1100px_500px_at_50%_-8%,rgba(212,175,55,0.13),transparent_68%),radial-gradient(900px_440px_at_88%_8%,rgba(217,119,6,0.08),transparent_62%),linear-gradient(to_bottom,#131009,#0B0906,#040302)]"
+        className="fixed inset-0 -z-10 bg-[radial-gradient(1100px_480px_at_50%_-8%,rgba(5, 84, 146,0.10),transparent_70%),radial-gradient(900px_420px_at_88%_6%,rgba(245,158,11,0.08),transparent_65%),linear-gradient(to_bottom,#FBFBFA,#FFFFFF,#F2F1EF)] dark:bg-[radial-gradient(1100px_500px_at_50%_-8%,rgba(212,175,55,0.13),transparent_68%),radial-gradient(900px_440px_at_88%_8%,rgba(217,119,6,0.08),transparent_62%),linear-gradient(to_bottom,#131009,#0B0906,#040302)]"
       />
 
       {/* ── v4.51 « SMART HEADER » — bandeau fixe des grands écrans :
@@ -6785,7 +6785,7 @@ function GuestView({
               className="fixed bottom-6 right-4 z-40 inline-flex items-center gap-2.5 rounded-full border border-stone-200/80 bg-white/95 px-6 py-3.5 text-sm font-bold text-slate-800 air-shadow-lg backdrop-blur-md transition-shadow hover:shadow-xl dark:border-white/15 dark:bg-slate-900/90 dark:text-slate-100 sm:right-6 lg:right-8"
             >
               <Home
-                className="h-5 w-5 shrink-0 animate-pulse text-[#0066EF]"
+                className="h-5 w-5 shrink-0 animate-pulse text-[#055492]"
                 aria-hidden="true"
               />
               {tL('🚶 Retour à la maison')}
@@ -7320,7 +7320,7 @@ function GuidebookVoicePlayer({
     `/api/public/hub/${encodeURIComponent(slug)}/voice-messages/audio` +
     `?kind=guidebook&lang=${lang}&v=${encodeURIComponent(info!.v)}`;
   return (
-    <div className="mt-3 rounded-2xl border border-[#0066EF]/25 bg-[#EAF2FF]/70 p-3 dark:border-[#0066EF]/40 dark:bg-[#0066EF]/10">
+    <div className="mt-3 rounded-2xl border border-[#055492]/25 bg-[#dceaf5]/70 p-3 dark:border-[#055492]/40 dark:bg-[#055492]/10">
       <p className="flex items-center gap-2 text-[13px] font-bold text-[#0642A8] dark:text-[#8FB8FF]">
         <span aria-hidden="true">🎙️</span>
         {t("Écouter l'explication de l'hôte")}
@@ -7565,7 +7565,7 @@ function AppliancesCard({
                           href={app.videoUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 mt-2 text-xs font-semibold text-[#0066EF] hover:text-[#0052C4] dark:text-[#3B82F6]"
+                          className="inline-flex items-center gap-1.5 mt-2 text-xs font-semibold text-[#055492] hover:text-[#04467a] dark:text-[#1173c7]"
                         >
                           <Play className="h-3.5 w-3.5" aria-hidden="true" /> Voir la vidéo {isYouTubeUrl(app.videoUrl) ? '(YouTube)' : ''}
                         </a>
@@ -7924,7 +7924,7 @@ function ReviewShieldCard({
               {rating >= 4 && reviewUrl && (
                 <Button
                   type="button"
-                  className="w-full h-11 bg-[#0066EF] hover:bg-[#0052C4] text-white font-semibold"
+                  className="w-full h-11 bg-[#055492] hover:bg-[#04467a] text-white font-semibold"
                   onClick={() => window.open(reviewUrl, '_blank', 'noopener,noreferrer')}
                 >
                   <Star className="h-4 w-4" aria-hidden="true" /> Laisser un avis public
@@ -7952,7 +7952,7 @@ function ReviewShieldCard({
                     onMouseEnter={() => setHover(n)}
                     onMouseLeave={() => setHover(0)}
                     onClick={() => setRating(n)}
-                    className="p-1 rounded-lg transition-transform hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0066EF]"
+                    className="p-1 rounded-lg transition-transform hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#055492]"
                   >
                     <Star
                       className={cn(
@@ -8561,7 +8561,7 @@ function WeatherCard({ slug }: { slug: string }) {
           {/* ── v4.50 « HEURE & DATE » — bandeau horloge live (téléphone
               de l'invité) au-dessus du temps actuel. v4.68 — bandeau
               pastel bleu marque (clair) / bandeau or sombre (luxe). ── */}
-          <div className="mb-3 flex items-center justify-between gap-3 rounded-2xl border border-[#DBE8FF] bg-[#EAF2FF]/80 px-3.5 py-2 dark:border-[#D4AF37]/20 dark:bg-[#D4AF37]/[0.07]">
+          <div className="mb-3 flex items-center justify-between gap-3 rounded-2xl border border-[#DBE8FF] bg-[#dceaf5]/80 px-3.5 py-2 dark:border-[#D4AF37]/20 dark:bg-[#D4AF37]/[0.07]">
             <p className="min-w-0 truncate text-[11px] font-bold uppercase tracking-[0.16em] text-[#0642A8] dark:text-[#E7C66B]">
               📅 <span className="capitalize">{dateLabel}</span>
             </p>
@@ -8577,7 +8577,7 @@ function WeatherCard({ slug }: { slug: string }) {
             <div className="min-w-0 flex-1">
               {/* v4.68 — pastille accent bleu marque (lisible en light).
                   v4.73 — pastille or (lisible en sombre luxueux). */}
-              <p className="inline-flex items-center rounded-full bg-[#EAF2FF] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.18em] text-[#0642A8] dark:bg-[#D4AF37]/15 dark:text-[#E7C66B]">
+              <p className="inline-flex items-center rounded-full bg-[#dceaf5] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.18em] text-[#0642A8] dark:bg-[#D4AF37]/15 dark:text-[#E7C66B]">
                 Météo sur place
               </p>
               <p className="display-title font-serif! mt-1 text-3xl font-bold text-slate-900 dark:text-[#F5EFE6]">
@@ -9701,7 +9701,7 @@ function HostActionCard({
     <button
       type="button"
       onClick={onClick}
-      className="relative w-full text-left glass glass-hover backdrop-blur-xl backdrop-saturate-[1.4] rounded-2xl p-4 transition-all duration-500 hover:-translate-y-0.5 active:scale-[0.99] cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0066EF]"
+      className="relative w-full text-left glass glass-hover backdrop-blur-xl backdrop-saturate-[1.4] rounded-2xl p-4 transition-all duration-500 hover:-translate-y-0.5 active:scale-[0.99] cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#055492]"
     >
       {badge && (
         <span className="absolute top-3 right-3 inline-flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full bg-red-500 text-white text-[11px] font-bold shadow-lg shadow-red-500/30">

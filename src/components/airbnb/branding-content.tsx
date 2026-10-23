@@ -28,7 +28,7 @@ import { cn } from '@/lib/utils';
 // • Tokens sémantiques partout — lisible en clair ET en sombre
 // =============================================================
 
-const COLOR_PRESETS = ['#0066EF', '#0d9488', '#d97706', '#dc2626', '#7c3aed', '#db2777'];
+const COLOR_PRESETS = ['#055492', '#0d9488', '#d97706', '#dc2626', '#7c3aed', '#db2777'];
 
 interface BrandingResponse {
   properties: { id: string; name: string }[];
@@ -407,7 +407,7 @@ export function BrandingContent() {
                         }
                       }}
                       className="w-28 font-mono"
-                      placeholder="#0066EF"
+                      placeholder="#055492"
                       aria-label="Couleur en hexadécimal"
                     />
                     <div className="flex gap-1.5" role="group" aria-label="Couleurs suggérées">

@@ -35,14 +35,14 @@ export default function LegalPage() {
       <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-4xl items-center justify-between px-4 sm:px-6">
           <Link href="/" className="flex items-center gap-2 font-bold">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#0066EF] text-sm text-white">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#055492] text-sm text-white">
               C
             </span>
             RoomScan
           </Link>
           <Link
             href="/"
-            className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:border-[#0066EF] hover:text-[#0052C4]"
+            className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:border-[#055492] hover:text-[#04467a]"
           >
             ← Retour au site
           </Link>
@@ -60,7 +60,7 @@ export default function LegalPage() {
             <a
               key={s.id}
               href={`#${s.id}`}
-              className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:border-[#0066EF] hover:text-[#0052C4]"
+              className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:border-[#055492] hover:text-[#04467a]"
             >
               {s.label}
             </a>
@@ -77,7 +77,7 @@ export default function LegalPage() {
             </P>
             <P>
               <strong>Contact :</strong>{' '}
-              <a className="font-semibold text-[#0052C4] hover:underline" href="mailto:contact@roomscan.pro">
+              <a className="font-semibold text-[#04467a] hover:underline" href="mailto:contact@roomscan.pro">
                 contact@roomscan.pro
               </a>{' '}
               — réponse sous 24 h, 7j/7.
@@ -146,7 +146,7 @@ export default function LegalPage() {
             <P>
               <strong>3.4 Vos droits.</strong> Accès, rectification, effacement, portabilité,
               opposition et limitation — par simple demande à{' '}
-              <a className="font-semibold text-[#0052C4] hover:underline" href="mailto:contact@roomscan.pro">
+              <a className="font-semibold text-[#04467a] hover:underline" href="mailto:contact@roomscan.pro">
                 contact@roomscan.pro
               </a>
               , traitée sous 30 jours. Vous pouvez aussi saisir la CNIL (cnil.fr).

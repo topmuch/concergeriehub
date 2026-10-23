@@ -74,8 +74,8 @@ interface Preferences {
 const PRIORITY_META: Record<InsightRow['priority'], { label: string; dot: string; ink: string }> = {
   CRITICAL: { label: 'Urgent', dot: '#f07d6a', ink: 'text-[#ffab92]' },
   HIGH: { label: 'Important', dot: '#e9c47c', ink: 'text-[#e9c47c]' },
-  MEDIUM: { label: 'À noter', dot: '#5c8af0', ink: 'text-[#a9c4ff]' },
-  LOW: { label: 'Info', dot: '#8fa0c2', ink: 'text-[#8fa0c2]' },
+  MEDIUM: { label: 'À noter', dot: '#5cadf0', ink: 'text-[#a9d8ff]' },
+  LOW: { label: 'Info', dot: '#8fabc2', ink: 'text-[#8fabc2]' },
 };
 
 const TYPE_LABELS: Record<string, string> = {
@@ -132,7 +132,7 @@ export function CoachContent() {
             <h1 className="lux-display mt-1 text-2xl font-semibold text-white sm:text-3xl">
               Votre coach IA
             </h1>
-            <p className="mt-2 max-w-2xl text-[13px] leading-relaxed text-[#8fa0c2]">
+            <p className="mt-2 max-w-2xl text-[13px] leading-relaxed text-[#8fabc2]">
               {selectedProperty ? (
                 <>
                   L&apos;assistant surveille{' '}
@@ -178,8 +178,8 @@ export function CoachContent() {
             className={cn(
               'min-h-[38px] flex-1 rounded-full px-4 text-xs font-semibold transition-colors',
               tab === t.key
-                ? 'bg-white/10 text-white ring-1 ring-[#5c8af0]/35'
-                : 'text-[#8fa0c2] hover:text-white',
+                ? 'bg-white/10 text-white ring-1 ring-[#5cadf0]/35'
+                : 'text-[#8fabc2] hover:text-white',
             )}
           >
             {t.label}
@@ -298,7 +298,7 @@ function InsightsTab({
               onClick={() => setStatus(f.key)}
               className={cn(
                 'min-h-[34px] rounded-full px-4 text-[11px] font-semibold transition-colors',
-                status === f.key ? 'bg-white/10 text-white' : 'text-[#8fa0c2] hover:text-white',
+                status === f.key ? 'bg-white/10 text-white' : 'text-[#8fabc2] hover:text-white',
               )}
             >
               {f.label}
@@ -353,7 +353,7 @@ function InsightsTab({
                 <div className="flex flex-col items-center gap-2 rounded-2xl border border-white/8 bg-white/[0.02] px-4 py-8 text-center">
                   <span className="lux-dot" style={{ backgroundColor: '#34d399' }} aria-hidden="true" />
                   <p className="lux-display text-lg text-white">Tout est sous contrôle</p>
-                  <p className="max-w-sm text-xs leading-relaxed text-[#8fa0c2]">
+                  <p className="max-w-sm text-xs leading-relaxed text-[#8fabc2]">
                     Aucune recommandation active pour ce filtre. Le coach vous préviendra dès qu&apos;une
                     urgence ou une opportunité se présentera.
                   </p>
@@ -381,7 +381,7 @@ function InsightsTab({
               {historyShown.length === 0 ? (
                 <div className="lux-empty rounded-2xl">
                   <p className="lux-display text-lg">Rien dans l&apos;historique</p>
-                  <p className="mt-1 text-xs text-[#8fa0c2]">
+                  <p className="mt-1 text-xs text-[#8fabc2]">
                     Les recommandations traitées apparaîtront ici pendant 90 jours.
                   </p>
                 </div>
@@ -437,9 +437,9 @@ function InsightCard({
         <span className="lux-dot shrink-0" style={{ backgroundColor: meta.dot }} aria-hidden="true" />
         <p className="min-w-0 flex-1 truncate text-sm font-semibold text-white">{insight.title}</p>
         <span className={cn('lux-chip shrink-0', meta.ink)}>{meta.label}</span>
-        <span className="lux-chip shrink-0 text-[#8fa0c2]">{TYPE_LABELS[insight.type] ?? insight.type}</span>
+        <span className="lux-chip shrink-0 text-[#8fabc2]">{TYPE_LABELS[insight.type] ?? insight.type}</span>
       </div>
-      <p className="mt-2 text-[13px] leading-relaxed text-[#8fa0c2]">{insight.message}</p>
+      <p className="mt-2 text-[13px] leading-relaxed text-[#8fabc2]">{insight.message}</p>
       <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
         <Link
           href={insight.actionUrl}
@@ -465,12 +465,12 @@ function InsightCard({
           type="button"
           disabled={busy}
           onClick={() => onAct(insight.id, 'DISMISSED')}
-          className="h-8 px-2 text-[11px] font-medium text-[#8fa0c2] underline-offset-4 transition-colors hover:text-white hover:underline disabled:opacity-50"
+          className="h-8 px-2 text-[11px] font-medium text-[#8fabc2] underline-offset-4 transition-colors hover:text-white hover:underline disabled:opacity-50"
         >
           Passer
         </button>
         {propertyName && (
-          <span className="ml-auto hidden truncate text-[11px] text-[#8fa0c2]/70 sm:block">
+          <span className="ml-auto hidden truncate text-[11px] text-[#8fabc2]/70 sm:block">
             {propertyName}
           </span>
         )}
@@ -500,14 +500,14 @@ function HistoryRow({
     >
       <span className="lux-dot shrink-0 opacity-60" style={{ backgroundColor: meta.dot }} aria-hidden="true" />
       <p className="min-w-0 flex-1 truncate text-[13px] font-medium text-white/85">{insight.title}</p>
-      <span className="lux-chip shrink-0 text-[#8fa0c2]">{TYPE_LABELS[insight.type] ?? insight.type}</span>
+      <span className="lux-chip shrink-0 text-[#8fabc2]">{TYPE_LABELS[insight.type] ?? insight.type}</span>
       {closed && (
-        <span className="shrink-0 text-[11px] tabular-nums text-[#8fa0c2]/70">
+        <span className="shrink-0 text-[11px] tabular-nums text-[#8fabc2]/70">
           Clôturée le {fmtDate.format(closed)}
         </span>
       )}
       {propertyName && (
-        <span className="hidden truncate text-[11px] text-[#8fa0c2]/60 sm:block">{propertyName}</span>
+        <span className="hidden truncate text-[11px] text-[#8fabc2]/60 sm:block">{propertyName}</span>
       )}
     </motion.div>
   );
@@ -633,13 +633,13 @@ function AnalyticsTab({
                     <CartesianGrid strokeDasharray="3 6" stroke="rgba(148,170,214,0.14)" vertical={false} />
                     <XAxis
                       dataKey="name"
-                      tick={{ fill: '#8fa0c2', fontSize: 10.5 }}
+                      tick={{ fill: '#8fabc2', fontSize: 10.5 }}
                       axisLine={false}
                       tickLine={false}
                     />
                     <YAxis
                       allowDecimals={false}
-                      tick={{ fill: '#8fa0c2', fontSize: 10.5 }}
+                      tick={{ fill: '#8fabc2', fontSize: 10.5 }}
                       axisLine={false}
                       tickLine={false}
                     />
@@ -653,7 +653,7 @@ function AnalyticsTab({
                         color: '#ffffff',
                       }}
                     />
-                    <Legend wrapperStyle={{ fontSize: 11, color: '#8fa0c2' }} />
+                    <Legend wrapperStyle={{ fontSize: 11, color: '#8fabc2' }} />
                     <Bar dataKey="Générées" fill="#e9c47c" radius={[5, 5, 0, 0]} maxBarSize={22} />
                     <Bar dataKey="Traitées" fill="#34d399" radius={[5, 5, 0, 0]} maxBarSize={22} />
                   </BarChart>
@@ -661,7 +661,7 @@ function AnalyticsTab({
               ) : (
                 <div className="lux-empty h-full rounded-2xl">
                   <p className="lux-display text-lg">Pas encore d&apos;historique</p>
-                  <p className="mt-1 text-xs text-[#8fa0c2]">
+                  <p className="mt-1 text-xs text-[#8fabc2]">
                     Les compteurs se remplissent dès les premières recommandations du coach.
                   </p>
                 </div>
@@ -676,17 +676,17 @@ function AnalyticsTab({
               Répartition des détections — 90 jours
             </h2>
             {typeStats.length === 0 ? (
-              <p className="mt-4 text-xs text-[#8fa0c2]">Aucune détection sur la période.</p>
+              <p className="mt-4 text-xs text-[#8fabc2]">Aucune détection sur la période.</p>
             ) : (
               <ul className="mt-4 flex flex-col gap-3">
                 {typeStats.map((t) => (
                   <li key={t.type} className="flex items-center gap-3">
-                    <span className="w-28 shrink-0 text-xs text-[#8fa0c2]">
+                    <span className="w-28 shrink-0 text-xs text-[#8fabc2]">
                       {TYPE_LABELS[t.type] ?? t.type}
                     </span>
                     <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/6">
                       <div
-                        className="h-full rounded-full bg-[#5c8af0]/70"
+                        className="h-full rounded-full bg-[#5cadf0]/70"
                         style={{ width: `${Math.max(6, Math.round((t.count / maxType) * 100))}%` }}
                       />
                     </div>
@@ -790,7 +790,7 @@ function PreferencesTab() {
             <h2 className="lux-display mt-1 text-lg font-semibold text-white">
               Quand le coach trouve un problème urgent
             </h2>
-            <p className="mt-2 text-[13px] leading-relaxed text-[#8fa0c2]">
+            <p className="mt-2 text-[13px] leading-relaxed text-[#8fabc2]">
               Conflit ménage / arrivée, rupture de stock, dégâts non traités, invité mécontent :
               soyez prévenu immédiatement, par les canaux de votre choix.
             </p>
@@ -854,7 +854,7 @@ function PreferencesTab() {
             <h2 className="lux-display mt-1 text-lg font-semibold text-white">
               Votre résumé du matin
             </h2>
-            <p className="mt-2 text-[13px] leading-relaxed text-[#8fa0c2]">
+            <p className="mt-2 text-[13px] leading-relaxed text-[#8fabc2]">
               Chaque matin (ou chaque lundi), recevez le point complet de vos biens : urgences,
               recommandations actives et opportunités.
             </p>
@@ -862,7 +862,7 @@ function PreferencesTab() {
               <div>
                 <label
                   htmlFor="coach-frequency"
-                  className="mb-1.5 block text-[11px] font-medium uppercase tracking-wider text-[#8fa0c2]"
+                  className="mb-1.5 block text-[11px] font-medium uppercase tracking-wider text-[#8fabc2]"
                 >
                   Fréquence
                 </label>
@@ -880,7 +880,7 @@ function PreferencesTab() {
               <div>
                 <label
                   htmlFor="coach-time"
-                  className="mb-1.5 block text-[11px] font-medium uppercase tracking-wider text-[#8fa0c2]"
+                  className="mb-1.5 block text-[11px] font-medium uppercase tracking-wider text-[#8fabc2]"
                 >
                   Heure d&apos;envoi
                 </label>
@@ -925,8 +925,8 @@ function PreferencesTab() {
                     className={cn(
                       'lux-chip min-h-[36px] px-4 transition-colors',
                       enabled
-                        ? 'bg-[#5c8af0]/12 text-[#a9c4ff] ring-1 ring-[#5c8af0]/30'
-                        : 'text-[#8fa0c2] opacity-60',
+                        ? 'bg-[#5cadf0]/12 text-[#a9d8ff] ring-1 ring-[#5cadf0]/30'
+                        : 'text-[#8fabc2] opacity-60',
                     )}
                   >
                     {TYPE_LABELS[t]}
@@ -987,7 +987,7 @@ function PrefToggle({
         <span
           className={cn(
             'absolute top-0.5 h-4.5 w-4.5 rounded-full transition-all',
-            checked ? 'left-[22px] bg-[#34d399]' : 'left-0.5 bg-[#8fa0c2]',
+            checked ? 'left-[22px] bg-[#34d399]' : 'left-0.5 bg-[#8fabc2]',
           )}
           style={{ height: 18, width: 18 }}
         />

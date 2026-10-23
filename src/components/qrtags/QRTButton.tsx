@@ -3,7 +3,7 @@
 /**
  * Boutons B2B :
  * - variant="primary" : fond Slate 900 #0F172A, texte blanc
- * - variant="accent"  : fond Emerald 600 #0066EF, texte blanc (CTA hospitalité)
+ * - variant="accent"  : fond Emerald 600 #055492, texte blanc (CTA hospitalité)
  * - variant="secondary" : fond blanc, texte slate-900, bordure slate-300
  * Large, effet press léger (translateY 1px), ombre douce.
  */

@@ -41,7 +41,7 @@ export function AdminPacks() {
           <div>
             <p className="lux-eyebrow">Catalogue</p>
             <CardTitle className="lux-display mt-1 text-xl text-white">Packs pré-configurés</CardTitle>
-            <CardDescription className="text-sm text-[#8fa0c2]">
+            <CardDescription className="text-sm text-[#8fabc2]">
               Visualisation et gestion des packs d'inscription
             </CardDescription>
           </div>
@@ -49,16 +49,16 @@ export function AdminPacks() {
       </CardHeader>
       <CardContent className="space-y-6">
         {/* ── Info Banner ──────────────────────────────────────── */}
-        <div className="flex gap-3 rounded-xl border border-[#5c8af0]/25 bg-[#5c8af0]/[0.08] p-4">
-          <span className="lux-dot mt-1.5 shrink-0" style={{ backgroundColor: '#5c8af0' }} aria-hidden="true" />
+        <div className="flex gap-3 rounded-xl border border-[#5cadf0]/25 bg-[#5cadf0]/[0.08] p-4">
+          <span className="lux-dot mt-1.5 shrink-0" style={{ backgroundColor: '#5cadf0' }} aria-hidden="true" />
           <div>
-            <p className="text-sm font-medium text-[#a9c4ff]">
+            <p className="text-sm font-medium text-[#a9d8ff]">
               Configuration en code
             </p>
-            <p className="mt-1 text-sm text-[#8fa0c2]">
+            <p className="mt-1 text-sm text-[#8fabc2]">
               Les packs sont présentés lors de l'inscription. Le client choisit son profil
               et les modules sont installés automatiquement. Les packs sont configurés dans{' '}
-              <code className="rounded bg-white/10 px-1.5 py-0.5 text-xs font-mono text-[#a9c4ff]">
+              <code className="rounded bg-white/10 px-1.5 py-0.5 text-xs font-mono text-[#a9d8ff]">
                 packs-config.ts
               </code>
               .
@@ -74,7 +74,7 @@ export function AdminPacks() {
             <p className="lux-num mt-2 text-3xl leading-none text-white">{totalPacks}</p>
           </div>
           <div className="lux-card relative p-4">
-            <span className="lux-dot absolute right-4 top-4 opacity-70" style={{ backgroundColor: '#5c8af0' }} aria-hidden="true" />
+            <span className="lux-dot absolute right-4 top-4 opacity-70" style={{ backgroundColor: '#5cadf0' }} aria-hidden="true" />
             <p className="lux-eyebrow">Total QR codes</p>
             <p className="lux-num mt-2 text-3xl leading-none text-white">{totalModules}</p>
           </div>
@@ -108,7 +108,7 @@ export function AdminPacks() {
                   <CardTitle className="text-sm font-medium leading-snug text-[#c7d3ec]">
                     {pack.description}
                   </CardTitle>
-                  <CardDescription className="text-xs text-[#8fa0c2]">
+                  <CardDescription className="text-xs text-[#8fabc2]">
                     {pack.targetAudience}
                   </CardDescription>
                 </CardHeader>
@@ -116,10 +116,10 @@ export function AdminPacks() {
                 <CardContent className="space-y-4 pb-5">
                   {/* Module Count */}
                   <div className="flex items-center justify-between">
-                    <Badge variant="outline" className="border-white/12 bg-white/[0.03] text-xs text-[#8fa0c2]">
+                    <Badge variant="outline" className="border-white/12 bg-white/[0.03] text-xs text-[#8fabc2]">
                       {pack.qrCodes.length} QR code{pack.qrCodes.length > 1 ? 's' : ''}
                     </Badge>
-                    <Badge variant="outline" className="border-white/12 bg-white/[0.03] text-xs text-[#8fa0c2]">
+                    <Badge variant="outline" className="border-white/12 bg-white/[0.03] text-xs text-[#8fabc2]">
                       {new Set(pack.qrCodes.map((q) => q.moduleType)).size} module{new Set(pack.qrCodes.map((q) => q.moduleType)).size > 1 ? 's' : ''}
                     </Badge>
                   </div>
@@ -144,11 +144,11 @@ export function AdminPacks() {
                         {pack.qrCodes.map((qr, idx) => (
                           <tr key={idx} className="hover:bg-white/[0.04]">
                             <td className="px-3 py-2">
-                              <Badge variant="secondary" className="border border-[#5c8af0]/25 bg-[#5c8af0]/10 text-xs text-[#a9c4ff]">
+                              <Badge variant="secondary" className="border border-[#5cadf0]/25 bg-[#5cadf0]/10 text-xs text-[#a9d8ff]">
                                 {moduleLabel(qr.moduleType)}
                               </Badge>
                             </td>
-                            <td className="hidden sm:table-cell px-3 py-2 text-[#8fa0c2]">
+                            <td className="hidden sm:table-cell px-3 py-2 text-[#8fabc2]">
                               {qr.roomName}
                             </td>
                             <td className="px-3 py-2 font-medium text-white">
@@ -181,7 +181,7 @@ export function AdminPacks() {
         </div>
 
         {/* ── Future Note ──────────────────────────────────────── */}
-        <div className="lux-empty rounded-xl p-4 text-center text-sm text-[#8fa0c2]">
+        <div className="lux-empty rounded-xl p-4 text-center text-sm text-[#8fabc2]">
           <p>
             Fonctionnalité à venir : activation/désactivation des packs et personnalisation
             des modules par pack directement depuis cette interface.

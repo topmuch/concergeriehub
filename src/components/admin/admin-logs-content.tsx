@@ -42,23 +42,23 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 // ---------- Design « Saphir Luxe » : champs & portails sombres ----------
 const LUX_FIELD =
-  'rounded-xl! border-white/12! bg-white/[0.04]! text-white! placeholder:text-[#8fa0c2]/60! focus-visible:ring-[#5c8af0]/50!';
+  'rounded-xl! border-white/12! bg-white/[0.04]! text-white! placeholder:text-[#8fabc2]/60! focus-visible:ring-[#5cadf0]/50!';
 const LUX_SELECT_TRIGGER =
-  'rounded-xl! border-white/12! bg-white/[0.04]! text-white! focus-visible:ring-[#5c8af0]/50!';
+  'rounded-xl! border-white/12! bg-white/[0.04]! text-white! focus-visible:ring-[#5cadf0]/50!';
 const LUX_SELECT_CONTENT = 'border-white/10! bg-[#0b1226]! text-white!';
 const LUX_SELECT_ITEM = 'focus:bg-white/8! focus:text-white!';
 const LUX_TABS_LIST = 'h-auto rounded-full! border border-white/10! bg-white/[0.04]! p-1';
 const LUX_TABS_TRIGGER =
-  'rounded-full! px-4! text-[11px]! font-semibold uppercase tracking-[0.12em] text-[#8fa0c2]! data-[state=active]:bg-white/10! data-[state=active]:text-white!';
+  'rounded-full! px-4! text-[11px]! font-semibold uppercase tracking-[0.12em] text-[#8fabc2]! data-[state=active]:bg-white/10! data-[state=active]:text-white!';
 const LUX_BTN_GHOST_SM =
   'h-8 rounded-full! border-white/10! bg-white/[0.04]! px-3! text-xs! font-semibold text-white! hover:bg-white/[0.08]! hover:text-white!';
 
 // Pastille de statut ticket (design) — libellés métier inchangés.
 const TICKET_STATUS: Record<string, { label: string; dot: string }> = {
   OPEN: { label: 'Ouvert', dot: '#fbbf24' },
-  PENDING: { label: 'En cours', dot: '#5c8af0' },
+  PENDING: { label: 'En cours', dot: '#5cadf0' },
   RESOLVED: { label: 'Résolu', dot: '#34d399' },
-  CLOSED: { label: 'Fermé', dot: '#8fa0c2' },
+  CLOSED: { label: 'Fermé', dot: '#8fabc2' },
 };
 
 // Couleur de pastille priorité (design).
@@ -294,7 +294,7 @@ export function AdminLogsContent() {
               <div>
                 <p className="lux-eyebrow">Traçabilité</p>
                 <h2 className="lux-display mt-1 text-xl font-semibold text-white">Journal d&apos;audit</h2>
-                <p className="mt-1 text-sm text-[#8fa0c2]">
+                <p className="mt-1 text-sm text-[#8fabc2]">
                   Chaque action d'administration est tracée : acteur, cible, détails, IP. Les
                   erreurs runtime (serveur &amp; navigateur) sont marquées « Erreur runtime ».
                 </p>
@@ -351,12 +351,12 @@ export function AdminLogsContent() {
                           const runtimeDetails = isRuntimeError ? parseRuntimeDetails(a.details) : null;
                           return (
                             <TableRow key={a.id} className="border-white/8 hover:bg-white/[0.04]">
-                              <TableCell className="whitespace-nowrap text-xs text-[#8fa0c2]">
+                              <TableCell className="whitespace-nowrap text-xs text-[#8fabc2]">
                                 {new Date(a.createdAt).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}
                               </TableCell>
                               <TableCell className="text-xs font-semibold">
                                 {isRuntimeError ? (
-                                  <span className="font-mono text-[#8fa0c2]">{a.actorEmail}</span>
+                                  <span className="font-mono text-[#8fabc2]">{a.actorEmail}</span>
                                 ) : (
                                   <span className="text-white">{a.actorEmail}</span>
                                 )}
@@ -371,12 +371,12 @@ export function AdminLogsContent() {
                                   <span className="rounded-md border border-white/10 bg-white/[0.05] px-1.5 py-0.5 font-mono text-[10.5px] text-[#c7d3ea]">{a.action}</span>
                                 )}
                               </TableCell>
-                              <TableCell className="hidden text-xs text-[#8fa0c2] md:table-cell">
+                              <TableCell className="hidden text-xs text-[#8fabc2] md:table-cell">
                                 {isRuntimeError
                                   ? (RUNTIME_SOURCE_LABELS[a.entityType] ?? a.entityType)
                                   : <>{a.entityType}{a.entityId ? ` · ${a.entityId.slice(0, 10)}…` : ''}</>}
                               </TableCell>
-                              <TableCell className="hidden max-w-72 truncate font-mono text-[11px] text-[#8fa0c2]/70 xl:table-cell">
+                              <TableCell className="hidden max-w-72 truncate font-mono text-[11px] text-[#8fabc2]/70 xl:table-cell">
                                 {isRuntimeError
                                   ? runtimeDetails
                                     ? `${runtimeDetails.name}: ${runtimeDetails.message}`
@@ -402,7 +402,7 @@ export function AdminLogsContent() {
             <div>
               <p className="lux-eyebrow">Analytics</p>
               <h2 className="lux-display mt-1 text-xl font-semibold text-white">Logs de scan QR</h2>
-              <p className="mt-1 text-sm text-[#8fa0c2]">Analytics réels : chaque scan de QR dynamique est journalisé.</p>
+              <p className="mt-1 text-sm text-[#8fabc2]">Analytics réels : chaque scan de QR dynamique est journalisé.</p>
             </div>
             <div className="mt-4">
               {scanLoading ? (
@@ -426,7 +426,7 @@ export function AdminLogsContent() {
                       <TableBody>
                         {scans.map((s) => (
                           <TableRow key={s.id} className="border-white/8 hover:bg-white/[0.04]">
-                            <TableCell className="whitespace-nowrap text-xs text-[#8fa0c2]">
+                            <TableCell className="whitespace-nowrap text-xs text-[#8fabc2]">
                               {new Date(s.createdAt).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}
                             </TableCell>
                             <TableCell className="text-sm font-semibold text-white">{s.qrName}</TableCell>
@@ -436,10 +436,10 @@ export function AdminLogsContent() {
                                 <span className="rounded-md border border-white/10 bg-white/[0.05] px-1.5 py-0.5 font-mono text-[10.5px] text-[#c7d3ea]">{s.moduleType}</span>
                               ) : '—'}
                             </TableCell>
-                            <TableCell className="hidden font-mono text-xs text-[#8fa0c2] lg:table-cell">
+                            <TableCell className="hidden font-mono text-xs text-[#8fabc2] lg:table-cell">
                               {s.visitorIp ?? '—'}
                             </TableCell>
-                            <TableCell className="hidden max-w-64 truncate text-xs text-[#8fa0c2]/70 xl:table-cell">
+                            <TableCell className="hidden max-w-64 truncate text-xs text-[#8fabc2]/70 xl:table-cell">
                               {s.userAgent ?? '—'}
                             </TableCell>
                           </TableRow>
@@ -461,7 +461,7 @@ export function AdminLogsContent() {
               <div>
                 <p className="lux-eyebrow">Support</p>
                 <h2 className="lux-display mt-1 text-xl font-semibold text-white">Tickets support</h2>
-                <p className="mt-1 text-sm text-[#8fa0c2]">
+                <p className="mt-1 text-sm text-[#8fabc2]">
                   {ticketStats
                     ? `${ticketStats.open} ouvert(s) · ${ticketStats.pending} en cours · ${ticketStats.resolved} résolu(s)`
                     : '…'}
@@ -491,19 +491,19 @@ export function AdminLogsContent() {
                     </TableHeader>
                     <TableBody>
                       {tickets.map((t) => {
-                        const st = TICKET_STATUS[t.status] ?? { label: t.status, dot: '#8fa0c2' };
+                        const st = TICKET_STATUS[t.status] ?? { label: t.status, dot: '#8fabc2' };
                         return (
                           <TableRow key={t.id} className="border-white/8 hover:bg-white/[0.04]">
                             <TableCell>
                               <p className="font-semibold text-white">{t.subject}</p>
-                              {t.body && <p className="max-w-64 truncate text-xs text-[#8fa0c2]">{t.body}</p>}
+                              {t.body && <p className="max-w-64 truncate text-xs text-[#8fabc2]">{t.body}</p>}
                             </TableCell>
                             <TableCell className="hidden text-sm text-white/85 sm:table-cell">{t.email}</TableCell>
                             <TableCell>
                               <span className="lux-chip px-2! py-0.5! text-[10px]!">
                                 <span
                                   className="lux-dot"
-                                  style={{ backgroundColor: PRIORITY_DOT[t.priority] ?? '#8fa0c2' }}
+                                  style={{ backgroundColor: PRIORITY_DOT[t.priority] ?? '#8fabc2' }}
                                   aria-hidden="true"
                                 />
                                 {t.priority}
@@ -515,7 +515,7 @@ export function AdminLogsContent() {
                                 {st.label}
                               </span>
                             </TableCell>
-                            <TableCell className="hidden text-xs text-[#8fa0c2] md:table-cell">
+                            <TableCell className="hidden text-xs text-[#8fabc2] md:table-cell">
                               {new Date(t.createdAt).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}
                             </TableCell>
                             <TableCell>
@@ -548,7 +548,7 @@ export function AdminLogsContent() {
         <DialogContent className="border-white/10! bg-[#0b1226]! text-white!">
           <DialogHeader>
             <DialogTitle className="lux-display text-xl font-semibold text-white">Nouveau ticket support</DialogTitle>
-            <DialogDescription className="text-[#8fa0c2]!">Le suivi est assuré depuis cette console.</DialogDescription>
+            <DialogDescription className="text-[#8fabc2]!">Le suivi est assuré depuis cette console.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-2">
             <div className="grid gap-2">
@@ -579,7 +579,7 @@ export function AdminLogsContent() {
               <Label htmlFor="ticket-body">Description</Label>
               <textarea
                 id="ticket-body"
-                className="min-h-24 rounded-xl border border-white/12 bg-white/[0.04] px-3 py-2 text-sm text-white placeholder:text-[#8fa0c2]/60 outline-none focus:border-[#5c8af0]/50"
+                className="min-h-24 rounded-xl border border-white/12 bg-white/[0.04] px-3 py-2 text-sm text-white placeholder:text-[#8fabc2]/60 outline-none focus:border-[#5cadf0]/50"
                 value={ticketForm.body}
                 onChange={(e) => setTicketForm((f) => ({ ...f, body: e.target.value }))}
               />
@@ -604,7 +604,7 @@ function PaginationBar({ pagination, onPage }: { pagination: Pagination | null; 
   if (!pagination || pagination.totalPages <= 1) return null;
   return (
     <div className="mt-3 flex items-center justify-between">
-      <p className="text-sm text-[#8fa0c2]">
+      <p className="text-sm text-[#8fabc2]">
         Page {pagination.page} / {pagination.totalPages} — {pagination.total} entrée{pagination.total > 1 ? 's' : ''}
       </p>
       <div className="flex gap-2">
@@ -622,7 +622,7 @@ function PaginationBar({ pagination, onPage }: { pagination: Pagination | null; 
 function EmptyState({ text }: { text: string }) {
   return (
     <div className="lux-empty flex flex-col items-center justify-center rounded-2xl py-12 text-center">
-      <p className="max-w-md px-4 text-sm text-[#8fa0c2]">{text}</p>
+      <p className="max-w-md px-4 text-sm text-[#8fabc2]">{text}</p>
     </div>
   );
 }

@@ -49,7 +49,7 @@ export default function ApplicationShieldPage() {
         <section aria-label="Installation manuelle" className="grid gap-4 sm:grid-cols-2">
           <div className="luxe-card p-5">
             <p className="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-slate-100">
-              <MonitorSmartphone className="h-4 w-4 text-[#1e3a8a] dark:text-[#3b82f6]" aria-hidden="true" />
+              <MonitorSmartphone className="h-4 w-4 text-[#055492] dark:text-[#1173c7]" aria-hidden="true" />
               Android (Chrome)
             </p>
             <ol className="mt-3 list-decimal space-y-1.5 pl-5 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
@@ -67,7 +67,7 @@ export default function ApplicationShieldPage() {
           </div>
           <div className="luxe-card p-5">
             <p className="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-slate-100">
-              <MonitorSmartphone className="h-4 w-4 text-[#1e3a8a] dark:text-[#3b82f6]" aria-hidden="true" />
+              <MonitorSmartphone className="h-4 w-4 text-[#055492] dark:text-[#1173c7]" aria-hidden="true" />
               iPhone / iPad (Safari)
             </p>
             <ol className="mt-3 list-decimal space-y-1.5 pl-5 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
@@ -89,7 +89,7 @@ export default function ApplicationShieldPage() {
           L&apos;application s&apos;ouvre sans barre de navigateur, garde votre session et reste
           utilisable hors connexion sur les écrans de capture (check-in / check-out).
         </p>
-        <p className="flex items-center justify-center gap-1.5 text-center text-xs font-semibold text-[#1e3a8a] dark:text-[#3b82f6]">
+        <p className="flex items-center justify-center gap-1.5 text-center text-xs font-semibold text-[#055492] dark:text-[#1173c7]">
           <Download className="h-3.5 w-3.5" aria-hidden="true" />
           Astuce : le bouton « Installer maintenant » ci-dessus lance l&apos;installation directe
           sur Android.

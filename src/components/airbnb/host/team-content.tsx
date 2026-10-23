@@ -76,7 +76,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 /** Point coloré par rôle (design sans icône — remplace les bulles à emoji). */
 const ROLE_DOTS: Record<MemberRole, string> = {
   OWNER: '#cdb6ff',
-  MANAGER: '#5c8af0',
+  MANAGER: '#5cadf0',
   CLEANER: '#34d399',
   MAINTENANCE: '#fbbf24',
 };
@@ -279,7 +279,7 @@ export function TeamContent({ initialPropertyId }: { initialPropertyId: string |
         <div className="min-w-0">
           <p className="lux-eyebrow">Collaboration</p>
           <h1 className="lux-display mt-1 text-2xl font-semibold text-white sm:text-3xl">Équipe</h1>
-          <p className="mt-1.5 truncate text-sm text-[#8fa0c2]">
+          <p className="mt-1.5 truncate text-sm text-[#8fabc2]">
             {currentProperty
               ? `Membres et intervenants de ${currentProperty.name}`
               : 'Aucun bien dans votre portfolio'}
@@ -348,7 +348,7 @@ export function TeamContent({ initialPropertyId }: { initialPropertyId: string |
         <div className="min-w-0 flex-1">
           {/* Sélecteur de bien */}
           <div className="mb-4 flex flex-col gap-1.5 sm:max-w-xs">
-            <Label htmlFor="team-property-select" className="text-[#8fa0c2]">Bien</Label>
+            <Label htmlFor="team-property-select" className="text-[#8fabc2]">Bien</Label>
             <Select
               value={currentId ?? ''}
               onValueChange={(v) => {
@@ -373,9 +373,9 @@ export function TeamContent({ initialPropertyId }: { initialPropertyId: string |
           {/* Aucun bien */}
           {!propertiesLoading && properties.length === 0 && (
             <div className="lux-empty flex flex-col items-center gap-2 px-6 py-10 text-center">
-              <span className="lux-dot" style={{ backgroundColor: '#5c8af0' }} aria-hidden="true" />
+              <span className="lux-dot" style={{ backgroundColor: '#5cadf0' }} aria-hidden="true" />
               <p className="lux-display text-lg font-semibold text-white">Aucun bien dans votre portfolio</p>
-              <p className="max-w-md text-xs text-[#8fa0c2]">
+              <p className="max-w-md text-xs text-[#8fabc2]">
                 Ajoutez une propriété ou acceptez une invitation pour gérer une équipe.
               </p>
             </div>
@@ -431,11 +431,11 @@ export function TeamContent({ initialPropertyId }: { initialPropertyId: string |
           ) : members && members.length === 0 ? (
             /* Empty state */
             <div className="lux-empty flex flex-col items-center gap-2 px-6 py-10 text-center">
-              <span className="lux-dot" style={{ backgroundColor: '#5c8af0' }} aria-hidden="true" />
+              <span className="lux-dot" style={{ backgroundColor: '#5cadf0' }} aria-hidden="true" />
               <p className="lux-display text-lg font-semibold text-white">
                 Aucun membre dans l&apos;équipe de ce bien
               </p>
-              <p className="max-w-md text-xs text-[#8fa0c2]">
+              <p className="max-w-md text-xs text-[#8fabc2]">
                 Invitez votre premier intervenant : manager, personnel de ménage ou maintenance.
               </p>
               {canInviteSomewhere && (
@@ -471,13 +471,13 @@ export function TeamContent({ initialPropertyId }: { initialPropertyId: string |
                     />
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-white">{meta.label}</p>
-                      <p className="text-xs leading-relaxed text-[#8fa0c2]">{roleHint(role)}</p>
+                      <p className="text-xs leading-relaxed text-[#8fabc2]">{roleHint(role)}</p>
                     </div>
                   </li>
                 );
               })}
             </ul>
-            <p className="mt-4 border-t border-white/8 pt-3 text-xs leading-relaxed text-[#8fa0c2]">
+            <p className="mt-4 border-t border-white/8 pt-3 text-xs leading-relaxed text-[#8fabc2]">
               Ce mapping correspond au filtrage réel de la navigation du Dashboard : un Cleaner ne
               voit que le planning ménage, un membre Maintenance que les réclamations techniques.
             </p>
@@ -512,7 +512,7 @@ export function TeamContent({ initialPropertyId }: { initialPropertyId: string |
             <AlertDialogTitle className="lux-display text-lg font-semibold text-white">
               Retirer ce membre de l&apos;équipe ?
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-sm text-[#8fa0c2]">
+            <AlertDialogDescription className="text-sm text-[#8fabc2]">
               {removeTarget?.user.fullName?.trim() || removeTarget?.user.email} n&apos;aura plus
               accès à {currentProperty?.name ?? 'ce bien'}. Cette action est immédiate ;
               réinvitez la personne pour rétablir son accès.
@@ -607,7 +607,7 @@ function MemberRow({
       <div className="flex min-w-0 items-center gap-3">
         <span
           aria-hidden="true"
-          className="lux-num flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#3d6fe0]/15 text-sm font-semibold text-[#a9c4ff] ring-1 ring-[#5c8af0]/25"
+          className="lux-num flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#3d97e0]/15 text-sm font-semibold text-[#a9d8ff] ring-1 ring-[#5cadf0]/25"
         >
           {displayName.trim().charAt(0).toUpperCase()}
         </span>
@@ -615,10 +615,10 @@ function MemberRow({
           <p className="truncate text-sm font-semibold text-white">
             {displayName}
             {member.isSelf && (
-              <span className="ml-1.5 text-xs font-normal text-[#8fa0c2]">(vous)</span>
+              <span className="ml-1.5 text-xs font-normal text-[#8fabc2]">(vous)</span>
             )}
           </p>
-          <p className="truncate text-xs text-[#8fa0c2]">{member.user.email}</p>
+          <p className="truncate text-xs text-[#8fabc2]">{member.user.email}</p>
         </div>
       </div>
 
@@ -627,7 +627,7 @@ function MemberRow({
         {pending ? (
           <StatusBadge status="INVITED" />
         ) : (
-          <span className="whitespace-nowrap text-xs text-[#8fa0c2]">
+          <span className="whitespace-nowrap text-xs text-[#8fabc2]">
             depuis {formatDate(member.acceptedAt as string)}
           </span>
         )}
@@ -638,7 +638,7 @@ function MemberRow({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 shrink-0 rounded-full text-[#8fa0c2] hover:bg-white/8 hover:text-white"
+                className="h-8 w-8 shrink-0 rounded-full text-[#8fabc2] hover:bg-white/8 hover:text-white"
                 aria-label={`Actions pour ${displayName}`}
                 disabled={busy}
               >
@@ -674,7 +674,7 @@ function MemberRow({
                             <span className="ml-auto text-sm text-[#e9c47c]" aria-hidden="true">✓</span>
                           )}
                           {role === 'OWNER' && !isCurrent && (
-                            <span className="ml-auto text-[11px] text-[#8fa0c2]">réservé</span>
+                            <span className="ml-auto text-[11px] text-[#8fabc2]">réservé</span>
                           )}
                         </DropdownMenuItem>
                       );
@@ -800,13 +800,13 @@ function InviteMemberDialog({
           <DialogTitle className="lux-display text-xl font-semibold text-white">
             Inviter un membre
           </DialogTitle>
-          <DialogDescription className="text-sm text-[#8fa0c2]">
+          <DialogDescription className="text-sm text-[#8fabc2]">
             La personne doit disposer d'un compte RoomScan (gratuit) avec cet email. Elle reçoit l'invitation dans son Dashboard.
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="invite-email" className="text-[#8fa0c2]">Adresse email</Label>
+            <Label htmlFor="invite-email" className="text-[#8fabc2]">Adresse email</Label>
             <Input
               id="invite-email"
               type="email"
@@ -816,7 +816,7 @@ function InviteMemberDialog({
               autoComplete="email"
               aria-required="true"
               aria-invalid={email.length > 0 && !emailValid}
-              className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+              className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50"
             />
             {email.length > 0 && !emailValid && (
               <p className="text-xs text-[#f07d6a]" role="alert">
@@ -826,7 +826,7 @@ function InviteMemberDialog({
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="invite-role" className="text-[#8fa0c2]">Rôle</Label>
+            <Label htmlFor="invite-role" className="text-[#8fabc2]">Rôle</Label>
             <Select value={role} onValueChange={(v) => setRole(v as MemberRole)}>
               <SelectTrigger id="invite-role" className="w-full rounded-xl border-white/12 bg-white/[0.04] text-white">
                 <SelectValue />
@@ -839,7 +839,7 @@ function InviteMemberDialog({
                 ))}
               </SelectContent>
             </Select>
-            <p className="text-xs text-[#8fa0c2]">{MEMBER_ROLE_META[role].description}</p>
+            <p className="text-xs text-[#8fabc2]">{MEMBER_ROLE_META[role].description}</p>
           </div>
 
           <fieldset className="flex flex-col gap-2 rounded-xl border border-white/10 p-3">

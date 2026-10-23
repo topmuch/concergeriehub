@@ -43,7 +43,7 @@ import { cn } from '@/lib/utils';
 // =============================================================
 
 // ---------- Couleurs du graphe (thème saphir) ----------
-const SAPPHIRE = '#5c8af0';
+const SAPPHIRE = '#5cadf0';
 const TEAL = '#2dd4bf';
 
 // ---------- Types ----------
@@ -144,15 +144,15 @@ function statusMeta(status: string): { label: string; dot: string } {
     case 'PENDING':
       return { label: 'En attente', dot: '#fbbf24' };
     case 'COMPLETED':
-      return { label: 'Terminée', dot: '#8fa0c2' };
+      return { label: 'Terminée', dot: '#8fabc2' };
     default:
-      return { label: status.toLowerCase(), dot: '#8fa0c2' };
+      return { label: status.toLowerCase(), dot: '#8fabc2' };
   }
 }
 
 /** Point coloré par type d'événement du flux d'activité. */
 const ACTIVITY_DOT: Record<ActivityItem['type'], string> = {
-  scan: '#5c8af0',
+  scan: '#5cadf0',
   order: '#34d399',
   booking: '#a78bfa',
   message: '#fbbf24',
@@ -368,7 +368,7 @@ export function OverviewContent() {
                 >
                   {greeting(now)}, {userFirstName}
                 </h1>
-                <p className="mt-2.5 max-w-xl text-sm text-[#8fa0c2] sm:text-[15px]" suppressHydrationWarning>
+                <p className="mt-2.5 max-w-xl text-sm text-[#8fabc2] sm:text-[15px]" suppressHydrationWarning>
                   {data?.scope === 'single' && data.property ? (
                     <>
                       Activité de <span className="font-semibold text-white">{data.property.name}</span> — voici
@@ -585,7 +585,7 @@ export function OverviewContent() {
               ) : today.length === 0 ? (
                 <div className="lux-empty flex flex-1 flex-col items-center justify-center gap-2 rounded-2xl p-8 text-center">
                   <p className="lux-display text-lg text-white">Journée tranquille</p>
-                  <p className="max-w-xs text-xs text-[#8fa0c2]">
+                  <p className="max-w-xs text-xs text-[#8fabc2]">
                     Ni arrivée ni départ aujourd&apos;hui. Les réservations du calendrier apparaîtront ici.
                   </p>
                 </div>
@@ -602,13 +602,13 @@ export function OverviewContent() {
                         transition={{ delay: 0.04 * i, duration: 0.25 }}
                         className="flex items-center gap-3 rounded-xl border border-white/8 bg-white/[0.03] px-3.5 py-2.5"
                       >
-                        <span className="lux-eyebrow w-10 shrink-0 text-center !text-[13px] !tracking-normal" style={{ color: isArrival ? '#a9c4ff' : '#86e9cb' }}>
+                        <span className="lux-eyebrow w-10 shrink-0 text-center !text-[13px] !tracking-normal" style={{ color: isArrival ? '#a9d8ff' : '#86e9cb' }}>
                           {fmtHour.format(new Date(item.at))}
                         </span>
                         <span className="h-8 w-px shrink-0 bg-white/10" aria-hidden="true" />
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-semibold text-white">{item.guestName}</p>
-                          <p className="truncate text-xs text-[#8fa0c2]">
+                          <p className="truncate text-xs text-[#8fabc2]">
                             {item.propertyName} · {isArrival ? 'Arrivée' : 'Départ'} · {sourceLabel(item.source)}
                           </p>
                         </div>
@@ -638,7 +638,7 @@ export function OverviewContent() {
               ) : notifs.length === 0 ? (
                 <div className="lux-empty flex flex-1 flex-col items-center justify-center gap-2 rounded-2xl p-6 text-center">
                   <p className="lux-display text-lg text-white">Rien pour l&apos;instant</p>
-                  <p className="text-xs text-[#8fa0c2]">Réservations, ménages et réclamations arriveront ici.</p>
+                  <p className="text-xs text-[#8fabc2]">Réservations, ménages et réclamations arriveront ici.</p>
                 </div>
               ) : (
                 <ul className="lux-scroll flex max-h-[320px] flex-col gap-1 overflow-y-auto pr-1">
@@ -649,16 +649,16 @@ export function OverviewContent() {
                     >
                       <span
                         className="lux-dot mt-1.5 shrink-0"
-                        style={{ backgroundColor: n.isRead ? 'rgba(143,160,194,0.4)' : '#5c8af0' }}
+                        style={{ backgroundColor: n.isRead ? 'rgba(143,160,194,0.4)' : '#5cadf0' }}
                         aria-hidden="true"
                       />
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium text-white">{n.title}</p>
-                        {n.body && <p className="line-clamp-2 text-xs text-[#8fa0c2]">{n.body}</p>}
+                        {n.body && <p className="line-clamp-2 text-xs text-[#8fabc2]">{n.body}</p>}
                       </div>
                       <time
                         dateTime={n.createdAt}
-                        className="shrink-0 text-[11px] text-[#8fa0c2]"
+                        className="shrink-0 text-[11px] text-[#8fabc2]"
                         title={new Date(n.createdAt).toLocaleString('fr-FR')}
                       >
                         {relativeFrTime(new Date(n.createdAt))}
@@ -678,7 +678,7 @@ export function OverviewContent() {
                 <div>
                   <h2 className="lux-eyebrow">Tendance</h2>
                   <p className="lux-display mt-1 text-xl text-white">Activité des 30 derniers jours</p>
-                  <p className="mt-0.5 text-xs text-[#8fa0c2]">Scans de plaques et commandes invités</p>
+                  <p className="mt-0.5 text-xs text-[#8fabc2]">Scans de plaques et commandes invités</p>
                 </div>
               </div>
               {loading || propertiesLoading ? (
@@ -704,7 +704,7 @@ export function OverviewContent() {
                       <CartesianGrid strokeDasharray="3 6" stroke="rgba(148,170,214,0.14)" vertical={false} />
                       <XAxis
                         dataKey="label"
-                        tick={{ fontSize: 11, fill: '#8fa0c2' }}
+                        tick={{ fontSize: 11, fill: '#8fabc2' }}
                         tickLine={false}
                         axisLine={{ stroke: 'rgba(148,170,214,0.18)' }}
                         interval="preserveStartEnd"
@@ -712,7 +712,7 @@ export function OverviewContent() {
                       />
                       <YAxis
                         yAxisId="scans"
-                        tick={{ fontSize: 11, fill: '#8fa0c2' }}
+                        tick={{ fontSize: 11, fill: '#8fabc2' }}
                         tickLine={false}
                         axisLine={false}
                         allowDecimals={false}
@@ -720,7 +720,7 @@ export function OverviewContent() {
                       <YAxis
                         yAxisId="orders"
                         orientation="right"
-                        tick={{ fontSize: 11, fill: '#8fa0c2' }}
+                        tick={{ fontSize: 11, fill: '#8fabc2' }}
                         tickLine={false}
                         axisLine={false}
                         allowDecimals={false}
@@ -742,7 +742,7 @@ export function OverviewContent() {
                       />
                       <Legend
                         formatter={(value: string) => (
-                          <span className="text-xs font-medium text-[#8fa0c2]">
+                          <span className="text-xs font-medium text-[#8fabc2]">
                             {value === 'scans' ? 'Scans de plaques' : 'Commandes invités'}
                           </span>
                         )}
@@ -786,7 +786,7 @@ export function OverviewContent() {
               ) : (data?.activity.length ?? 0) === 0 ? (
                 <div className="lux-empty flex flex-1 flex-col items-center justify-center gap-2 rounded-2xl p-6 text-center">
                   <p className="lux-display text-lg text-white">Aucune activité</p>
-                  <p className="text-xs text-[#8fa0c2]">Scans, commandes et réservations apparaîtront ici.</p>
+                  <p className="text-xs text-[#8fabc2]">Scans, commandes et réservations apparaîtront ici.</p>
                 </div>
               ) : (
                 <ul className="lux-scroll flex max-h-[300px] flex-col gap-1 overflow-y-auto pr-1">
@@ -797,12 +797,12 @@ export function OverviewContent() {
                     >
                       <span
                         className="lux-dot mt-2 shrink-0"
-                        style={{ backgroundColor: ACTIVITY_DOT[item.type] ?? '#8fa0c2' }}
+                        style={{ backgroundColor: ACTIVITY_DOT[item.type] ?? '#8fabc2' }}
                         aria-hidden="true"
                       />
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium text-white">{item.title}</p>
-                        {item.detail && <p className="truncate text-xs text-[#8fa0c2]">{item.detail}</p>}
+                        {item.detail && <p className="truncate text-xs text-[#8fabc2]">{item.detail}</p>}
                       </div>
                       <div className="shrink-0 text-right">
                         {item.amount != null && (
@@ -812,7 +812,7 @@ export function OverviewContent() {
                         )}
                         <time
                           dateTime={item.at}
-                          className="text-[11px] text-[#8fa0c2]"
+                          className="text-[11px] text-[#8fabc2]"
                           title={new Date(item.at).toLocaleString('fr-FR')}
                         >
                           {relativeFrTime(new Date(item.at))}
@@ -838,7 +838,7 @@ export function OverviewContent() {
                 >
                   <Link
                     href={action.href}
-                    className="lux-card lux-card-hover group flex h-full items-center gap-3 p-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5c8af0]/60"
+                    className="lux-card lux-card-hover group flex h-full items-center gap-3 p-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5cadf0]/60"
                   >
                     <span
                       className="lux-dot shrink-0"
@@ -850,7 +850,7 @@ export function OverviewContent() {
                     </span>
                     <span
                       aria-hidden="true"
-                      className="shrink-0 text-[#8fa0c2] transition-transform group-hover:translate-x-0.5"
+                      className="shrink-0 text-[#8fabc2] transition-transform group-hover:translate-x-0.5"
                     >
                       →
                     </span>
@@ -879,7 +879,7 @@ export function OverviewContent() {
                     className="lux-card lux-card-hover p-4"
                   >
                     <p className="text-sm font-semibold text-white">{m.label}</p>
-                    <p className="mt-1 line-clamp-2 text-xs text-[#8fa0c2]">{m.description}</p>
+                    <p className="mt-1 line-clamp-2 text-xs text-[#8fabc2]">{m.description}</p>
                     <p className="mt-2.5 text-xs font-semibold" style={{ color: '#e9c47c' }}>
                       {m.qrCount} QR actif{m.qrCount > 1 ? 's' : ''}
                       {m.nearbyProviders != null && m.qrCount > 0 && (
@@ -920,10 +920,10 @@ export function OverviewContent() {
                   )}
                   <p className="lux-eyebrow mt-1">{s.label}</p>
                   {s.hint && !loading && !propertiesLoading && (
-                    <p className="mt-0.5 truncate text-[11px] text-[#8fa0c2]">{s.hint}</p>
+                    <p className="mt-0.5 truncate text-[11px] text-[#8fabc2]">{s.hint}</p>
                   )}
                 </div>
-                <span className="lux-dot" style={{ backgroundColor: '#5c8af0' }} aria-hidden="true" />
+                <span className="lux-dot" style={{ backgroundColor: '#5cadf0' }} aria-hidden="true" />
               </div>
             ))}
           </section>
@@ -945,7 +945,7 @@ export function OverviewContent() {
 }
 
 const QUICK_ACTIONS: { href: string; label: string; dot: string }[] = [
-  { href: '/airbnb/properties?new=1', label: 'Ajouter une propriété', dot: '#5c8af0' },
+  { href: '/airbnb/properties?new=1', label: 'Ajouter une propriété', dot: '#5cadf0' },
   { href: '/airbnb/plates?new=1', label: 'Générer une plaque QR', dot: '#2dd4bf' },
   { href: '/airbnb/orders', label: 'Voir les commandes', dot: '#86e9cb' },
   { href: '/airbnb/automations', label: 'Automatisations', dot: '#cdb6ff' },

@@ -397,7 +397,7 @@ export function CheckOutInspection({
               maxLength={80}
               autoComplete="name"
               placeholder="Votre nom"
-              className="mt-1 w-full min-h-[44px] rounded-xl border border-border bg-background px-3.5 text-sm text-card-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-[#0066EF]/50"
+              className="mt-1 w-full min-h-[44px] rounded-xl border border-border bg-background px-3.5 text-sm text-card-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-[#055492]/50"
             />
           </div>
           <div>
@@ -413,7 +413,7 @@ export function CheckOutInspection({
               autoComplete="email"
               inputMode="email"
               placeholder="vous@exemple.com"
-              className="mt-1 w-full min-h-[44px] rounded-xl border border-border bg-background px-3.5 text-sm text-card-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-[#0066EF]/50"
+              className="mt-1 w-full min-h-[44px] rounded-xl border border-border bg-background px-3.5 text-sm text-card-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-[#055492]/50"
             />
             <p className="mt-1 text-[11px] text-muted-foreground">
               Sans email, le document reste consultable en ligne auprès de votre hôte.
@@ -599,7 +599,7 @@ export function CheckOutInspection({
           rows={3}
           placeholder="Commentaires libres pour votre hôte (optionnel)"
           aria-label="Commentaires libres"
-          className="mt-3 w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm text-card-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-[#0066EF]/50 resize-none"
+          className="mt-3 w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm text-card-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-[#055492]/50 resize-none"
         />
       </section>
 
@@ -620,7 +620,7 @@ export function CheckOutInspection({
         type="button"
         onClick={() => void submit()}
         disabled={!canSubmit}
-        className="inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl bg-[#0066EF] px-5 py-3 text-sm font-bold text-white shadow-sm transition-all hover:bg-[#0052C4] active:scale-[0.99] cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+        className="inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl bg-[#055492] px-5 py-3 text-sm font-bold text-white shadow-sm transition-all hover:bg-[#04467a] active:scale-[0.99] cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
         aria-describedby="coi-submit-hint"
       >
         {submitting && (

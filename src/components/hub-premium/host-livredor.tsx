@@ -472,7 +472,7 @@ export function MiddleStayHostDialog({
         <div className="px-5 pb-6 pt-4">
           {loading && !data ? (
             <div className="flex flex-col items-center gap-3 py-10" aria-busy="true">
-              <Loader2 className="h-7 w-7 animate-spin text-[#0066EF]" />
+              <Loader2 className="h-7 w-7 animate-spin text-[#055492]" />
               <p className="text-sm text-slate-500">Chargement des demandes…</p>
             </div>
           ) : !data || data.middleStay.length === 0 ? (

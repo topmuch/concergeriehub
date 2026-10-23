@@ -212,10 +212,10 @@ function subscriptionStatusBadge(status: string) {
   const meta: Record<string, { label: string; dot: string }> = {
     active: { label: 'Actif', dot: '#34d399' },
     past_due: { label: 'Paiement en retard', dot: '#fbbf24' },
-    trialing: { label: 'Essai', dot: '#5c8af0' },
-    cancelled: { label: 'Annulé', dot: '#8fa0c2' },
+    trialing: { label: 'Essai', dot: '#5cadf0' },
+    cancelled: { label: 'Annulé', dot: '#8fabc2' },
   };
-  const m = meta[status] ?? { label: status, dot: '#8fa0c2' };
+  const m = meta[status] ?? { label: status, dot: '#8fabc2' };
   return (
     <span className="lux-chip">
       <span className="lux-dot" style={{ backgroundColor: m.dot }} aria-hidden="true" />
@@ -230,7 +230,7 @@ function transactionStatusBadge(status: string) {
     refunded: { label: 'Remboursé', dot: '#fbbf24' },
     failed: { label: 'Échec', dot: '#f07d6a' },
   };
-  const m = meta[status] ?? { label: status, dot: '#8fa0c2' };
+  const m = meta[status] ?? { label: status, dot: '#8fabc2' };
   return (
     <span className="lux-chip">
       <span className="lux-dot" style={{ backgroundColor: m.dot }} aria-hidden="true" />
@@ -259,7 +259,7 @@ function PlanBadge({ user }: { user: AdminUser }) {
   const plan = user.selectedPlan;
   if (!plan || plan === 'free') return <span className="lux-chip">Gratuit</span>;
   const dot =
-    plan === 'airbnb_pro' ? '#34d399' : plan === 'airbnb_solo' ? '#5c8af0' : plan === 'agency' ? '#fbbf24' : '#8fa0c2';
+    plan === 'airbnb_pro' ? '#34d399' : plan === 'airbnb_solo' ? '#5cadf0' : plan === 'agency' ? '#fbbf24' : '#8fabc2';
   const label = PLAN_LABELS[plan] ?? plan;
   return (
     <span className="lux-chip">
@@ -463,7 +463,7 @@ export function AdminUsers() {
       {/* ----- Stats réelles ----- */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {[
-          { label: 'Comptes totaux', value: stats?.totalAll, dot: '#5c8af0' },
+          { label: 'Comptes totaux', value: stats?.totalAll, dot: '#5cadf0' },
           { label: 'Comptes actifs', value: stats?.totalActive, dot: '#34d399' },
           { label: 'Hôtes', value: stats?.totalHosts, dot: '#e9c47c' },
         ].map((s) => (
@@ -486,7 +486,7 @@ export function AdminUsers() {
             <div>
               <p className="lux-eyebrow">Comptes</p>
               <h2 className="lux-display mt-1 text-xl text-white">Clients &amp; Hôtes</h2>
-              <p className="mt-0.5 text-xs text-[#8fa0c2]">
+              <p className="mt-0.5 text-xs text-[#8fabc2]">
                 Gestion complète des comptes : activation, plan, rôle, mot de passe.
               </p>
             </div>
@@ -505,30 +505,30 @@ export function AdminUsers() {
               <DialogContent className="border-white/10 bg-[#0b1226] text-white">
                 <DialogHeader>
                   <DialogTitle className="lux-display text-lg text-white">Nouvel utilisateur</DialogTitle>
-                  <DialogDescription className="text-[#8fa0c2]">Créer un compte sur la plateforme</DialogDescription>
+                  <DialogDescription className="text-[#8fabc2]">Créer un compte sur la plateforme</DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-2">
                   {createError && <p className="text-sm text-[#f07d6a]">{createError}</p>}
                   <div className="grid gap-2">
-                    <Label htmlFor="create-email" className="text-[#8fa0c2]">Email</Label>
+                    <Label htmlFor="create-email" className="text-[#8fabc2]">Email</Label>
                     <Input id="create-email" type="email" placeholder="user@example.com" value={createForm.email}
-                      className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+                      className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50"
                       onChange={(e) => setCreateForm((f) => ({ ...f, email: e.target.value }))} />
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="create-name" className="text-[#8fa0c2]">Nom complet</Label>
+                    <Label htmlFor="create-name" className="text-[#8fabc2]">Nom complet</Label>
                     <Input id="create-name" placeholder="Jean Dupont" value={createForm.fullName}
-                      className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+                      className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50"
                       onChange={(e) => setCreateForm((f) => ({ ...f, fullName: e.target.value }))} />
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="create-password" className="text-[#8fa0c2]">Mot de passe</Label>
+                    <Label htmlFor="create-password" className="text-[#8fabc2]">Mot de passe</Label>
                     <Input id="create-password" type="password" placeholder="8 caractères minimum (lettres et chiffres)" value={createForm.password}
-                      className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+                      className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50"
                       onChange={(e) => setCreateForm((f) => ({ ...f, password: e.target.value }))} />
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="create-role" className="text-[#8fa0c2]">Rôle</Label>
+                    <Label htmlFor="create-role" className="text-[#8fabc2]">Rôle</Label>
                     <Select value={createForm.role} onValueChange={(v) => setCreateForm((f) => ({ ...f, role: v as 'user' | 'superadmin' }))}>
                       <SelectTrigger className="w-full rounded-xl border-white/12 bg-white/[0.04] text-white"><SelectValue /></SelectTrigger>
                       <SelectContent className="border-white/10 bg-[#0b1226] text-white">
@@ -555,28 +555,28 @@ export function AdminUsers() {
                 aria-label="Rechercher un utilisateur"
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-                className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+                className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50"
               />
             </div>
             {/* FIX-10 — filtre par date d'inscription (plage createdAt) */}
             <div className="flex items-center gap-1.5">
-              <span className="hidden text-xs font-medium text-[#8fa0c2] xl:inline">Inscrit du</span>
+              <span className="hidden text-xs font-medium text-[#8fabc2] xl:inline">Inscrit du</span>
               <Input
                 type="date"
                 aria-label="Inscrit du (date de début)"
                 title="Filtrer les comptes inscrits à partir de cette date"
                 value={dateFrom}
                 onChange={(e) => { setDateFrom(e.target.value); setPage(1); }}
-                className="w-[9.5rem] rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+                className="w-[9.5rem] rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50"
               />
-              <span className="text-xs text-[#8fa0c2]/70" aria-hidden="true">au</span>
+              <span className="text-xs text-[#8fabc2]/70" aria-hidden="true">au</span>
               <Input
                 type="date"
                 aria-label="Inscrit au (date de fin)"
                 title="Filtrer les comptes inscrits jusqu'à cette date"
                 value={dateTo}
                 onChange={(e) => { setDateTo(e.target.value); setPage(1); }}
-                className="w-[9.5rem] rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+                className="w-[9.5rem] rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50"
               />
               {(dateFrom || dateTo) && (
                 <Button
@@ -585,7 +585,7 @@ export function AdminUsers() {
                   onClick={clearDateFilter}
                   aria-label="Effacer le filtre par date d'inscription"
                   title="Effacer le filtre par date d'inscription"
-                  className="shrink-0 text-[#8fa0c2] hover:bg-white/8 hover:text-white"
+                  className="shrink-0 text-[#8fabc2] hover:bg-white/8 hover:text-white"
                 >
                   Effacer
                 </Button>
@@ -621,7 +621,7 @@ export function AdminUsers() {
           {loading && <TableSkeleton />}
 
           {!loading && !error && pagination && (
-            <p className="text-sm text-[#8fa0c2]" role="status" aria-live="polite">
+            <p className="text-sm text-[#8fabc2]" role="status" aria-live="polite">
               {pagination.total} résultat{pagination.total > 1 ? 's' : ''}
               {(dateFrom || dateTo) && (
                 <>
@@ -643,7 +643,7 @@ export function AdminUsers() {
           {!loading && !error && users.length === 0 && (
             <div className="lux-empty rounded-2xl px-4 py-12 text-center">
               <h3 className="lux-display text-lg text-white">Aucun utilisateur</h3>
-              <p className="mt-1 text-sm text-[#8fa0c2]">Aucun compte ne correspond aux filtres.</p>
+              <p className="mt-1 text-sm text-[#8fabc2]">Aucun compte ne correspond aux filtres.</p>
             </div>
           )}
 
@@ -668,13 +668,13 @@ export function AdminUsers() {
                         <TableCell>
                           <button
                             type="button"
-                            className="text-left font-semibold text-white hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#5c8af0]"
+                            className="text-left font-semibold text-white hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#5cadf0]"
                             onClick={() => openDetail(user)}
                             aria-label={`Ouvrir la fiche de ${user.fullName || user.email}`}
                           >
                             {user.fullName || '—'}
                           </button>
-                          <p className="text-xs text-[#8fa0c2]">{user.email}</p>
+                          <p className="text-xs text-[#8fabc2]">{user.email}</p>
                           {user.role === 'superadmin' && (
                             <span className="lux-chip mt-1">
                               <span className="lux-dot" style={{ backgroundColor: '#fbbf24' }} aria-hidden="true" /> Superadmin
@@ -688,12 +688,12 @@ export function AdminUsers() {
                               <span className="lux-num text-xs font-semibold text-white">
                                 {user.subscription.amount.toFixed(2)} €
                               </span>{' '}
-                              <span className="text-xs text-[#8fa0c2]">
+                              <span className="text-xs text-[#8fabc2]">
                                 / {user.subscription.billingCycle === 'monthly' ? 'mois' : 'an'}
                               </span>
                             </>
                           ) : (
-                            <span className="text-xs text-[#8fa0c2]/60">—</span>
+                            <span className="text-xs text-[#8fabc2]/60">—</span>
                           )}
                         </TableCell>
                         <TableCell className="hidden text-center text-sm text-white sm:table-cell">{user.propertyCount}</TableCell>
@@ -708,18 +708,18 @@ export function AdminUsers() {
                             </span>
                           )}
                         </TableCell>
-                        <TableCell className="hidden text-sm text-[#8fa0c2] lg:table-cell">
+                        <TableCell className="hidden text-sm text-[#8fabc2] lg:table-cell">
                           {format(new Date(user.createdAt), 'dd MMM yyyy', { locale: fr })}
                         </TableCell>
                         <TableCell>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm" disabled={busyId === user.id} aria-label={`Actions pour ${user.email}`} className="text-[#8fa0c2] hover:bg-white/8 hover:text-white">
+                              <Button variant="ghost" size="sm" disabled={busyId === user.id} aria-label={`Actions pour ${user.email}`} className="text-[#8fabc2] hover:bg-white/8 hover:text-white">
                                 <span aria-hidden="true">▾</span>
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-56 border-white/10 bg-[#0b1226] text-white">
-                              <DropdownMenuLabel className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#8fa0c2]/70">
+                              <DropdownMenuLabel className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#8fabc2]/70">
                                 Actions compte
                               </DropdownMenuLabel>
                               <DropdownMenuItem className="cursor-pointer focus:bg-white/8 focus:text-white" onClick={() => openDetail(user)}>
@@ -765,7 +765,7 @@ export function AdminUsers() {
 
               {pagination && pagination.totalPages > 1 && (
                 <div className="flex items-center justify-between pt-2">
-                  <p className="text-sm text-[#8fa0c2]">
+                  <p className="text-sm text-[#8fabc2]">
                     Page {pagination.page} / {pagination.totalPages} — {pagination.total} résultat{pagination.total > 1 ? 's' : ''}
                   </p>
                   <div className="flex items-center gap-2">
@@ -788,12 +788,12 @@ export function AdminUsers() {
         <DialogContent className="border-white/10 bg-[#0b1226] text-white">
           <DialogHeader>
             <DialogTitle className="lux-display text-lg text-white">Changer de plan</DialogTitle>
-            <DialogDescription className="text-[#8fa0c2]">
+            <DialogDescription className="text-[#8fabc2]">
               {planTarget?.email} — l'abonnement actif éventuel sera annulé et le plan sélectionné mis à jour.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-2 py-2">
-            <Label htmlFor="plan-choice" className="text-[#8fa0c2]">Nouveau plan</Label>
+            <Label htmlFor="plan-choice" className="text-[#8fabc2]">Nouveau plan</Label>
             <Select value={planChoice} onValueChange={setPlanChoice}>
               <SelectTrigger id="plan-choice" className="w-full rounded-xl border-white/12 bg-white/[0.04] text-white"><SelectValue /></SelectTrigger>
               <SelectContent className="border-white/10 bg-[#0b1226] text-white">
@@ -824,7 +824,7 @@ export function AdminUsers() {
         <AlertDialogContent className="border-white/10 bg-[#0b1226] text-white">
           <AlertDialogHeader>
             <AlertDialogTitle className="lux-display text-lg text-white">Supprimer ce compte ?</AlertDialogTitle>
-            <AlertDialogDescription className="text-[#8fa0c2]">
+            <AlertDialogDescription className="text-[#8fabc2]">
               Action irréversible : le compte <strong>{deleteTarget?.email}</strong> et ses données associées
               seront définitivement supprimés. Les comptes possédant des biens sont refusés.
             </AlertDialogDescription>
@@ -849,7 +849,7 @@ export function AdminUsers() {
         <DialogContent className="border-white/10 bg-[#0b1226] text-white">
           <DialogHeader>
             <DialogTitle className="lux-display text-lg text-white">Mot de passe temporaire</DialogTitle>
-            <DialogDescription className="text-[#8fa0c2]">
+            <DialogDescription className="text-[#8fabc2]">
               Pour <strong>{tempPassword?.email}</strong>. Un email de notification a été mis en outbox.
               Copiez-le maintenant : il ne sera plus jamais affiché.
             </DialogDescription>
@@ -893,7 +893,7 @@ export function AdminUsers() {
             <SheetTitle className="lux-display text-lg font-bold text-white">
               Fiche client{detail ? ` — ${detail.user.fullName || detail.user.email}` : ''}
             </SheetTitle>
-            <SheetDescription id="user-detail-desc" className="text-[#8fa0c2]">
+            <SheetDescription id="user-detail-desc" className="text-[#8fabc2]">
               {detailTarget?.email} — équipe, facturation et informations du compte (données de la base).
             </SheetDescription>
           </SheetHeader>
@@ -950,13 +950,13 @@ export function AdminUsers() {
 
                 {/* ----- Profil (champs réels uniquement) ----- */}
                 <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                  <dt className="text-[#8fa0c2]">Inscrit le</dt>
+                  <dt className="text-[#8fabc2]">Inscrit le</dt>
                   <dd className="font-medium text-white">
                     {format(new Date(detail.user.createdAt), 'dd MMM yyyy', { locale: fr })}
                   </dd>
-                  <dt className="text-[#8fa0c2]">Téléphone</dt>
+                  <dt className="text-[#8fabc2]">Téléphone</dt>
                   <dd className="font-medium text-white">{detail.user.phone ?? '—'}</dd>
-                  <dt className="text-[#8fa0c2]">Adresse</dt>
+                  <dt className="text-[#8fabc2]">Adresse</dt>
                   <dd className="font-medium text-white">{detail.user.address ?? '—'}</dd>
                 </dl>
 
@@ -969,7 +969,7 @@ export function AdminUsers() {
                   {detail.team.ownedProperties.length === 0 && detail.team.memberships.length === 0 ? (
                     <div className="lux-empty rounded-xl p-6 text-center">
                       <p className="text-sm font-medium text-white">Aucun membre d&apos;équipe</p>
-                      <p className="mt-1 text-xs text-[#8fa0c2]">
+                      <p className="mt-1 text-xs text-[#8fabc2]">
                         Ce compte ne gère aucun bien et n&apos;appartient à l&apos;équipe d&apos;aucun autre hôte.
                       </p>
                     </div>
@@ -995,8 +995,8 @@ export function AdminUsers() {
                                   )}
                                 </span>
                               </div>
-                              {p.address && <p className="mt-0.5 text-xs text-[#8fa0c2]">{p.address}</p>}
-                              <p className="mt-1.5 text-xs font-medium text-[#8fa0c2]">
+                              {p.address && <p className="mt-0.5 text-xs text-[#8fabc2]">{p.address}</p>}
+                              <p className="mt-1.5 text-xs font-medium text-[#8fabc2]">
                                 {p.memberCount} membre{p.memberCount > 1 ? 's' : ''}
                               </p>
                               <ul className="mt-2 divide-y divide-white/8">
@@ -1009,7 +1009,7 @@ export function AdminUsers() {
                                           {m.user.fullName || m.user.email}
                                         </span>
                                         {m.user.fullName && (
-                                          <span className="truncate text-xs text-[#8fa0c2]/70">{m.user.email}</span>
+                                          <span className="truncate text-xs text-[#8fabc2]/70">{m.user.email}</span>
                                         )}
                                       </span>
                                       <span className="flex shrink-0 flex-wrap items-center gap-1">
@@ -1041,7 +1041,7 @@ export function AdminUsers() {
                                 <li key={m.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-sm">
                                   <span className="min-w-0">
                                     <span className="block truncate font-medium text-white">{m.property.name}</span>
-                                    <span className="block truncate text-xs text-[#8fa0c2]/70">
+                                    <span className="block truncate text-xs text-[#8fabc2]/70">
                                       hôte : {m.property.ownerName || m.property.ownerEmail}
                                     </span>
                                   </span>
@@ -1084,7 +1084,7 @@ export function AdminUsers() {
                         </span>{' '}
                         / {detail.billing.activeSubscription.billingCycle === 'monthly' ? 'mois' : 'an'}
                       </p>
-                      <p className="mt-0.5 text-xs text-[#8fa0c2]">
+                      <p className="mt-0.5 text-xs text-[#8fabc2]">
                         Échéance :{' '}
                         {detail.billing.activeSubscription.currentPeriodEnd
                           ? format(new Date(detail.billing.activeSubscription.currentPeriodEnd), 'dd MMM yyyy', { locale: fr })
@@ -1092,7 +1092,7 @@ export function AdminUsers() {
                       </p>
                     </div>
                   ) : (
-                    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-sm text-[#8fa0c2]">
+                    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-sm text-[#8fabc2]">
                       Aucun abonnement actif.
                     </div>
                   )}
@@ -1116,7 +1116,7 @@ export function AdminUsers() {
                       </dd>
                     </div>
                   </dl>
-                  <p className="-mt-2 text-[11px] text-[#8fa0c2]/70">
+                  <p className="-mt-2 text-[11px] text-[#8fabc2]/70">
                     Commandes de service (hors annulées) posées par les invités sur les biens du client.
                   </p>
 
@@ -1129,7 +1129,7 @@ export function AdminUsers() {
                           <li key={s.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-sm">
                             <span className="font-medium text-white">{planLabel(s.plan)}</span>
                             <span className="flex items-center gap-2">
-                              <span className="text-xs text-[#8fa0c2]">
+                              <span className="text-xs text-[#8fabc2]">
                                 {s.amount.toFixed(2)} € / {s.billingCycle === 'monthly' ? 'mois' : 'an'}
                                 {s.currentPeriodEnd
                                   ? ` — échéance ${format(new Date(s.currentPeriodEnd), 'dd MMM yyyy', { locale: fr })}`
@@ -1152,7 +1152,7 @@ export function AdminUsers() {
                       </span>
                     </h4>
                     {detail.billing.transactions.items.length === 0 ? (
-                      <p className="lux-empty rounded-xl p-3 text-xs text-[#8fa0c2]">
+                      <p className="lux-empty rounded-xl p-3 text-xs text-[#8fabc2]">
                         Aucun paiement enregistré pour ce compte.
                       </p>
                     ) : (
@@ -1163,7 +1163,7 @@ export function AdminUsers() {
                               <span className="block font-medium text-white">
                                 {TRANSACTION_TYPE_LABELS[t.type] ?? t.type} — {t.amount.toFixed(2)} €
                               </span>
-                              <span className="block text-xs text-[#8fa0c2]/70">
+                              <span className="block text-xs text-[#8fabc2]/70">
                                 {format(new Date(t.createdAt), 'dd MMM yyyy HH:mm', { locale: fr })}
                                 {t.stripePaymentId ? ` · ${t.stripePaymentId}` : ''}
                               </span>
@@ -1180,11 +1180,11 @@ export function AdminUsers() {
                     <h4 className="lux-eyebrow">Références Stripe</h4>
                     <dl className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-xs">
                       <div className="flex items-center justify-between gap-2 py-0.5">
-                        <dt className="text-[#8fa0c2]">Compte Connect (reversements)</dt>
+                        <dt className="text-[#8fabc2]">Compte Connect (reversements)</dt>
                         <dd className="truncate font-mono text-white">{detail.user.stripeAccountId ?? '—'}</dd>
                       </div>
                       <div className="flex items-center justify-between gap-2 py-0.5">
-                        <dt className="text-[#8fa0c2]">Abonnement Stripe</dt>
+                        <dt className="text-[#8fabc2]">Abonnement Stripe</dt>
                         <dd className="truncate font-mono text-white">
                           {detail.billing.activeSubscription?.stripeSubscriptionId ?? '—'}
                         </dd>

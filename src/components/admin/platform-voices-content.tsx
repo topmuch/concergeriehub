@@ -22,9 +22,9 @@ import { Textarea } from '@/components/ui/textarea';
 
 // ---------- Design « Saphir Luxe » : champs & boutons sombres ----------
 const LUX_FIELD =
-  'rounded-xl! border-white/12! bg-white/[0.04]! text-white! placeholder:text-[#8fa0c2]/60! focus-visible:ring-[#5c8af0]/50!';
+  'rounded-xl! border-white/12! bg-white/[0.04]! text-white! placeholder:text-[#8fabc2]/60! focus-visible:ring-[#5cadf0]/50!';
 const LUX_BTN_PRIMARY_SM =
-  'inline-flex h-8 items-center justify-center rounded-full bg-gradient-to-br from-[#3d6fe0] to-[#24479c] px-3 text-xs font-semibold text-white shadow-[0_8px_20px_-10px_rgba(61,111,224,0.6)] transition-[filter,transform] hover:brightness-110 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50';
+  'inline-flex h-8 items-center justify-center rounded-full bg-gradient-to-br from-[#3d97e0] to-[#24479c] px-3 text-xs font-semibold text-white shadow-[0_8px_20px_-10px_rgba(61,111,224,0.6)] transition-[filter,transform] hover:brightness-110 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50';
 const LUX_BTN_GHOST_SM =
   'inline-flex h-8 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] px-3 text-xs font-semibold text-white transition-colors hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-50';
 
@@ -203,7 +203,7 @@ export function PlatformVoicesContent() {
       <div className="lux-card p-6">
         <p className="lux-eyebrow">Plateforme</p>
         <h2 className="lux-display mt-2 text-2xl font-semibold text-white">Voix plateforme</h2>
-        <p className="mt-2 text-sm leading-relaxed text-[#8fa0c2]">
+        <p className="mt-2 text-sm leading-relaxed text-[#8fabc2]">
           Voix par défaut des messages vocaux du Hub, définies pour{' '}
           <strong>toutes les maisons</strong> de la plateforme. Un hôte qui configure
           sa propre voix dans son tableau de bord reste prioritaire — la voix
@@ -226,7 +226,7 @@ export function PlatformVoicesContent() {
               aria-label={KIND_META[kind].label}
             >
               <h3 className="lux-display text-lg font-semibold text-white">{displayKindLabel(KIND_META[kind].label)}</h3>
-              <p className="mt-0.5 text-xs text-[#8fa0c2]">{KIND_META[kind].hint}</p>
+              <p className="mt-0.5 text-xs text-[#8fabc2]">{KIND_META[kind].hint}</p>
 
               <div className="mt-4 grid gap-4 lg:grid-cols-2">
                 {LANGS.map((lang) => {
@@ -236,7 +236,7 @@ export function PlatformVoicesContent() {
                   return (
                     <div key={lang} className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
                       <div className="flex items-center justify-between gap-2">
-                        <Label className="text-xs font-bold uppercase tracking-[0.14em] text-[#8fa0c2]">
+                        <Label className="text-xs font-bold uppercase tracking-[0.14em] text-[#8fabc2]">
                           {LANG_LABELS[lang]}
                         </Label>
                         {item ? (
@@ -246,14 +246,14 @@ export function PlatformVoicesContent() {
                           </span>
                         ) : (
                           <span className="lux-chip px-2! py-0.5! text-[10px]!">
-                            <span className="lux-dot" style={{ backgroundColor: '#8fa0c2' }} aria-hidden="true" />
+                            <span className="lux-dot" style={{ backgroundColor: '#8fabc2' }} aria-hidden="true" />
                             Vide
                           </span>
                         )}
                       </div>
 
                       {item?.text && (
-                        <p className="mt-2 line-clamp-2 text-xs italic text-[#8fa0c2]">« {item.text} »</p>
+                        <p className="mt-2 line-clamp-2 text-xs italic text-[#8fabc2]">« {item.text} »</p>
                       )}
 
                       {/* Pré-écoute */}
@@ -324,7 +324,7 @@ export function PlatformVoicesContent() {
                           if (f) void uploadFile(kind, lang, f);
                         }}
                       />
-                      <p className="mt-2 text-[11px] text-[#8fa0c2]/70">
+                      <p className="mt-2 text-[11px] text-[#8fabc2]/70">
                         MP3, M4A, WAV, WEBM ou OGG — max 1 Mo.
                       </p>
                     </div>

@@ -171,7 +171,7 @@ export function MenageContent() {
         <div className="min-w-0">
           <p className="lux-eyebrow">Ménage &amp; stock</p>
           <h1 className="lux-display mt-1.5 text-2xl font-semibold text-white sm:text-3xl">Ménage</h1>
-          <p className="mt-1 text-sm text-[#8fa0c2]">
+          <p className="mt-1 text-sm text-[#8fabc2]">
             Planning, preuves horodatées et organisation — {scopeLabel}
           </p>
         </div>
@@ -221,7 +221,7 @@ export function MenageContent() {
               id={`menage-tab-${t.key}`}
               onClick={() => setActiveTab(t.key)}
               className={cn(
-                'inline-flex h-11 min-h-[44px] shrink-0 items-center gap-2 rounded-full border px-4 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5c8af0]/60',
+                'inline-flex h-11 min-h-[44px] shrink-0 items-center gap-2 rounded-full border px-4 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5cadf0]/60',
                 active
                   ? 'border-white bg-white text-[#c81e42] shadow-[0_10px_24px_-12px_rgba(255,255,255,0.35)]'
                   : 'border-white/12 bg-white/[0.04] text-[#d5def0] hover:bg-white/8 hover:text-white',

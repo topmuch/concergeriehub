@@ -278,8 +278,8 @@ function ShellRoot({
       <Image
         src="/brand/roomscan-icon-white.png"
         alt=""
-        width={124}
-        height={121}
+        width={171}
+        height={169}
         className="shrink-0"
         style={{ height: 40, width: 'auto' }}
       />
@@ -395,7 +395,7 @@ function ShellRoot({
 
         {/* ----- Footer collé en bas (mt-auto) ----- */}
         <footer className="mt-auto border-t border-white/8 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-          <p className="text-center text-xs text-[#8fa0c2]">
+          <p className="text-center text-xs text-[#8fabc2]">
             Copyright © <span className="lux-display font-semibold text-white/80">RoomScan</span> 2025
             — {t('La conciergerie digitale de vos locations, sans application')}
           </p>
@@ -442,11 +442,11 @@ function PropertySelector() {
         >
           <span
             className="lux-dot shrink-0"
-            style={{ backgroundColor: selectedId === 'all' ? '#2dd4bf' : '#5c8af0' }}
+            style={{ backgroundColor: selectedId === 'all' ? '#2dd4bf' : '#5cadf0' }}
             aria-hidden="true"
           />
           <span className="truncate">{label}</span>
-          <span className="shrink-0 text-[#8fa0c2]" aria-hidden="true">▾</span>
+          <span className="shrink-0 text-[#8fabc2]" aria-hidden="true">▾</span>
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-64 border-white/10 bg-[#0d1530] text-white">
@@ -474,13 +474,13 @@ function PropertySelector() {
             className="gap-2 focus:bg-white/8 focus:text-white"
             aria-selected={selectedId === p.id}
           >
-            <span className="lux-dot shrink-0" style={{ backgroundColor: '#5c8af0' }} aria-hidden="true" />
+            <span className="lux-dot shrink-0" style={{ backgroundColor: '#5cadf0' }} aria-hidden="true" />
             <span className="flex-1 truncate">{p.name}</span>
             {selectedId === p.id && <span className="text-[#e9c47c]" aria-hidden="true">✓</span>}
           </DropdownMenuItem>
         ))}
         {properties.length === 0 && (
-          <div className="px-2 py-3 text-center text-xs text-[#8fa0c2]">
+          <div className="px-2 py-3 text-center text-xs text-[#8fabc2]">
             {t("Aucune propriété pour l'instant — ajoutez-en une pour démarrer.")}
           </div>
         )}

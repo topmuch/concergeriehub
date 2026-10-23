@@ -93,13 +93,13 @@ function parseDesign(designConfig: string | null | undefined) {
 // Badges de statut « lux » — teintes sémantiques 8-10 % sur fond nuit.
 const STATUS_STYLES: Record<string, { label: string; cls: string }> = {
   active:     { label: 'Actif',     cls: 'border border-[#34d399]/25 bg-[#34d399]/10 text-[#86e9cb]' },
-  inactive:   { label: 'Inactif',   cls: 'border border-white/10 bg-white/[0.05] text-[#8fa0c2]' },
+  inactive:   { label: 'Inactif',   cls: 'border border-white/10 bg-white/[0.05] text-[#8fabc2]' },
   lost:       { label: 'Perdu',     cls: 'border border-[#f07d6a]/25 bg-[#f07d6a]/10 text-[#f07d6a]' },
   cancelled:  { label: 'Annulé',    cls: 'border border-[#fbbf24]/25 bg-[#fbbf24]/10 text-[#fbbf24]' },
 };
 
 function getStatusStyle(status: string) {
-  return STATUS_STYLES[status] ?? { label: status, cls: 'border border-white/10 bg-white/[0.05] text-[#8fa0c2]' };
+  return STATUS_STYLES[status] ?? { label: status, cls: 'border border-white/10 bg-white/[0.05] text-[#8fabc2]' };
 }
 
 /** FIX-11 — badge matériau d'une plaque/lot (designConfig JSON). */
@@ -107,7 +107,7 @@ function MaterialBadge({ designConfig }: { designConfig: string | null | undefin
   const material = parsePlaqueMaterial(designConfig);
   const meta = PLAQUE_MATERIAL_META[material];
   return (
-    <Badge variant="outline" className="border-white/12 bg-white/[0.03] text-xs text-[#8fa0c2]" title={`Matériau : ${meta.label}`}>
+    <Badge variant="outline" className="border-white/12 bg-white/[0.03] text-xs text-[#8fabc2]" title={`Matériau : ${meta.label}`}>
       {meta.label}
     </Badge>
   );
@@ -127,7 +127,7 @@ function StatusBadge({ _count, quantity }: { _count?: BatchListItem['_count']; q
   const allActivated = activated === quantity && quantity > 0;
   const noneActivated = activated === 0;
 
-  if (noneActivated) return <Badge variant="secondary" className="border border-white/10 bg-white/[0.05] text-[#8fa0c2]">{activated}/{quantity} activés</Badge>;
+  if (noneActivated) return <Badge variant="secondary" className="border border-white/10 bg-white/[0.05] text-[#8fabc2]">{activated}/{quantity} activés</Badge>;
   if (allActivated) return <Badge className="border border-[#34d399]/25 bg-[#34d399]/10 text-[#86e9cb]">{activated}/{quantity} activés</Badge>;
   return <Badge variant="outline" className="border border-[#fbbf24]/40 bg-[#fbbf24]/10 text-[#fbbf24]">{activated}/{quantity} activés</Badge>;
 }
@@ -171,7 +171,7 @@ function QrCard({ qr }: { qr: PhysicalQr }) {
           fgColor={design.fgColor}
         />
       </div>
-      <span className="font-mono text-[10px] font-semibold text-center break-all leading-tight text-[#8fa0c2]">
+      <span className="font-mono text-[10px] font-semibold text-center break-all leading-tight text-[#8fabc2]">
         {qr.activationCode}
       </span>
       <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${st.cls}`}>
@@ -180,7 +180,7 @@ function QrCard({ qr }: { qr: PhysicalQr }) {
       <Button
         variant="ghost"
         size="sm"
-        className="h-7 text-xs text-[#8fa0c2] hover:bg-white/[0.06] hover:text-white"
+        className="h-7 text-xs text-[#8fabc2] hover:bg-white/[0.06] hover:text-white"
         onClick={handleDownloadSingle}
       >
         PNG
@@ -251,7 +251,7 @@ function BatchDetailDialog({
           <DialogTitle className="lux-display text-lg text-white">
             Plaque QR Hub
           </DialogTitle>
-          <DialogDescription className="text-sm text-[#8fa0c2]">
+          <DialogDescription className="text-sm text-[#8fabc2]">
             Plaque <span className="font-mono">{batch.id.slice(0, 8)}</span> —{' '}
             Créée le {format(new Date(batch.createdAt), 'dd MMM yyyy HH:mm', { locale: fr })}
           </DialogDescription>
@@ -259,7 +259,7 @@ function BatchDetailDialog({
 
         <div className="flex items-center justify-between mb-2">
           <div className="flex gap-2">
-            <Badge variant="secondary" className="border border-white/10 bg-white/[0.05] text-[#8fa0c2]">Plaque Hub</Badge>
+            <Badge variant="secondary" className="border border-white/10 bg-white/[0.05] text-[#8fabc2]">Plaque Hub</Badge>
             {/* FIX-11 — matériau du lot */}
             <MaterialBadge designConfig={batch.designConfig} />
             <StatusBadge _count={batch._count} quantity={batch.quantity} />
@@ -426,7 +426,7 @@ export function ManageBatches() {
           <CardTitle className="lux-display text-xl text-white">
             Plaques QR Hub
           </CardTitle>
-          <CardDescription className="text-sm text-[#8fa0c2]">
+          <CardDescription className="text-sm text-[#8fabc2]">
             Toutes les plaques QR Hub générées
           </CardDescription>
         </CardHeader>
@@ -451,7 +451,7 @@ export function ManageBatches() {
           {!loading && !error && batches.length === 0 && (
             <div className="lux-empty rounded-2xl px-4 py-10 text-center">
               <h3 className="lux-display text-lg text-white">Aucune plaque</h3>
-              <p className="mt-1 text-sm text-[#8fa0c2]">
+              <p className="mt-1 text-sm text-[#8fabc2]">
                 Aucune plaque QR Hub n&apos;a été générée pour le moment.
               </p>
             </div>
@@ -476,14 +476,14 @@ export function ManageBatches() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-mono text-sm font-semibold text-white">{batch.id.slice(0, 8)}</span>
-                          <Badge variant="outline" className="border-white/12 text-xs text-[#8fa0c2]">
+                          <Badge variant="outline" className="border-white/12 text-xs text-[#8fabc2]">
                             1 plaque
                           </Badge>
                           {/* FIX-11 — matériau du lot (designConfig JSON) */}
                           <MaterialBadge designConfig={batch.designConfig} />
                           <StatusBadge _count={batch._count} quantity={batch.quantity} />
                         </div>
-                        <p className="text-xs text-[#8fa0c2] mt-0.5">
+                        <p className="text-xs text-[#8fabc2] mt-0.5">
                           Créé le {format(new Date(batch.createdAt), 'dd MMM yyyy à HH:mm', { locale: fr })}
                         </p>
                       </div>
@@ -536,7 +536,7 @@ export function ManageBatches() {
                             ))}
                           </div>
                         ) : (
-                          <p className="text-sm text-[#8fa0c2] text-center py-4">
+                          <p className="text-sm text-[#8fabc2] text-center py-4">
                             Erreur lors du chargement des QR codes
                           </p>
                         )}
@@ -562,7 +562,7 @@ export function ManageBatches() {
         <AlertDialogContent className="border-white/10 bg-[#0b1226] text-white">
           <AlertDialogHeader>
             <AlertDialogTitle className="lux-display text-lg text-white">Supprimer cette plaque ?</AlertDialogTitle>
-            <AlertDialogDescription className="text-sm text-[#8fa0c2]">
+            <AlertDialogDescription className="text-sm text-[#8fabc2]">
               Cette action est irréversible. La plaque{' '}
               <span className="font-mono font-semibold">{deleteTarget?.id.slice(0, 8)}</span> sera définitivement supprimée.
             </AlertDialogDescription>

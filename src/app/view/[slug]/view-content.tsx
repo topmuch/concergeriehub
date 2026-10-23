@@ -146,7 +146,7 @@ function RulesView({ content }: { content: Record<string, unknown> }) {
           <motion.div key={i} variants={itemVariants} initial="hidden" animate="visible" transition={{ delay: i * 0.05 }}>
             <QRTCard>
               <div className="flex items-start gap-3">
-                <span className="h-6 min-w-6 rounded-full bg-[#0066EF] text-white text-xs font-bold flex items-center justify-center mt-0.5">
+                <span className="h-6 min-w-6 rounded-full bg-[#055492] text-white text-xs font-bold flex items-center justify-center mt-0.5">
                   {i + 1}
                 </span>
                 <p className="text-sm text-black leading-relaxed flex-1">{rule}</p>
@@ -320,7 +320,7 @@ function RecipeView({ content }: { content: Record<string, unknown> }) {
             <ul className="space-y-1.5">
               {ingredients.map((ing, i) => (
                 <li key={i} className="flex items-start gap-2 text-sm text-black">
-                  <span className="text-[#0066EF] mt-0.5">•</span>
+                  <span className="text-[#055492] mt-0.5">•</span>
                   {ing}
                 </li>
               ))}
@@ -335,7 +335,7 @@ function RecipeView({ content }: { content: Record<string, unknown> }) {
           {steps.map((step, i) => (
             <QRTCard key={i}>
               <div className="flex items-start gap-3">
-                <span className="h-6 min-w-6 rounded-full bg-[#0066EF] text-white text-xs font-bold flex items-center justify-center mt-0.5">{i + 1}</span>
+                <span className="h-6 min-w-6 rounded-full bg-[#055492] text-white text-xs font-bold flex items-center justify-center mt-0.5">{i + 1}</span>
                 <p className="text-sm text-black leading-relaxed flex-1">{step}</p>
               </div>
             </QRTCard>
@@ -423,7 +423,7 @@ function ExternalLinkView({ content }: { content: Record<string, unknown> }) {
             href={url}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 h-12 bg-[#0066EF] text-white font-bold text-sm rounded-[8px] border-2 border-black shadow-[3px_3px_0_rgba(0,0,0,0.15)] active:translate-y-[1px] active:shadow-none transition-all hover:bg-[#0052C4]"
+            className="flex items-center justify-center gap-2 h-12 bg-[#055492] text-white font-bold text-sm rounded-[8px] border-2 border-black shadow-[3px_3px_0_rgba(0,0,0,0.15)] active:translate-y-[1px] active:shadow-none transition-all hover:bg-[#04467a]"
           >
             <ExternalLink className="h-4 w-4" />
             Ouvrir le lien
@@ -523,9 +523,9 @@ function UpsellingView({ content }: { content: Record<string, unknown> }) {
       <QRTCard header={{ emoji: '⭐', title, badge: price || 'Offre' }}>
         {body && <p className="text-sm text-black leading-relaxed whitespace-pre-wrap">{body}</p>}
         {price && (
-          <div className="mt-4 flex items-center justify-between bg-[#0066EF]/10 border-2 border-[#0066EF] rounded-[10px] px-4 py-3">
-            <span className="text-xs font-bold uppercase tracking-wide text-[#0052C4]">Prix</span>
-            <span className="text-lg font-black text-[#0052C4]">{price}</span>
+          <div className="mt-4 flex items-center justify-between bg-[#055492]/10 border-2 border-[#055492] rounded-[10px] px-4 py-3">
+            <span className="text-xs font-bold uppercase tracking-wide text-[#04467a]">Prix</span>
+            <span className="text-lg font-black text-[#04467a]">{price}</span>
           </div>
         )}
         <p className="text-xs text-black/40 mt-3">👋 Demandez à votre hôte pour en profiter</p>
@@ -549,7 +549,7 @@ function DirectoryView({ content }: { content: Record<string, unknown> }) {
         {phone && (
           <a
             href={`tel:${phone.replace(/\s/g, '')}`}
-            className="mt-4 flex items-center justify-center gap-2 h-12 bg-[#0066EF] text-white font-bold text-sm rounded-[8px] border-2 border-black shadow-[3px_3px_0_rgba(0,0,0,0.15)] active:translate-y-[1px] active:shadow-none transition-all hover:bg-[#0052C4]"
+            className="mt-4 flex items-center justify-center gap-2 h-12 bg-[#055492] text-white font-bold text-sm rounded-[8px] border-2 border-black shadow-[3px_3px_0_rgba(0,0,0,0.15)] active:translate-y-[1px] active:shadow-none transition-all hover:bg-[#04467a]"
           >
             📞 Appeler {name}
           </a>

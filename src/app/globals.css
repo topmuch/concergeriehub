@@ -47,16 +47,16 @@
   --radius-xl: calc(var(--radius) + 4px);
 
   /* ── RoomScan — brand tokens (B2B) — couleurs du LOGO ──
-     Bleu vif  #0066EF (« Scan ») — accent, actions, liens, focus
-     Marine    #07235B (« Room ») — autorité, texte de marque, CTA secondaires
+     Bleu vif  #055492 (« Scan ») — accent, actions, liens, focus
+     Marine    #043455 (« Room ») — autorité, texte de marque, CTA secondaires
      Surface   #F8FAFC (Slate 50) — fond de page
      Card      #FFFFFF — cartes
      Border    #E2E8F0 (Slate 200) */
-  --color-brand: #07235B;
+  --color-brand: #043455;
   --color-brand-foreground: #F8FAFC;
-  --color-brand-accent: #0066EF;
-  --color-brand-accent-hover: #0052C4;
-  --color-brand-accent-soft: #EAF2FF;
+  --color-brand-accent: #055492;
+  --color-brand-accent-hover: #04467a;
+  --color-brand-accent-soft: #dceaf5;
   --color-brand-surface: #F8FAFC;
   --color-brand-line: #E2E8F0;
 }
@@ -75,22 +75,22 @@
   --secondary-foreground: #0F172A;
   --muted: #F1F5F9;
   --muted-foreground: #64748B;
-  --accent: #0066EF;
+  --accent: #055492;
   --accent-foreground: #FFFFFF;
   --destructive: #DC2626;
   --border: #E2E8F0;
   --input: #E2E8F0;
-  --ring: #0066EF;
-  --chart-1: #0066EF;
-  --chart-2: #07235B;
+  --ring: #055492;
+  --chart-1: #055492;
+  --chart-2: #043455;
   --chart-3: #F59E0B;
   --chart-4: #10B981;
   --chart-5: #64748B;
   /* Thème sidebar « Travl » — marine du logo, texte blanc (Espace Hôte + Console Superadmin) */
-  --sidebar: #07235B;
+  --sidebar: #043455;
   --sidebar-foreground: #FFFFFF;
   --sidebar-primary: #FFFFFF;
-  --sidebar-primary-foreground: #0066EF;
+  --sidebar-primary-foreground: #055492;
   --sidebar-accent: #ffffff26;
   --sidebar-accent-foreground: #FFFFFF;
   --sidebar-border: #ffffff1f;
@@ -110,21 +110,21 @@
   --secondary-foreground: #F8FAFC;
   --muted: #1E293B;
   --muted-foreground: #94A3B8;
-  --accent: #3B82F6;
+  --accent: #1173c7;
   --accent-foreground: #FFFFFF;
   --destructive: #EF4444;
   --border: #334155;
   --input: #334155;
-  --ring: #3B82F6;
-  --chart-1: #3B82F6;
-  --chart-2: #DBEAFE;
+  --ring: #1173c7;
+  --chart-1: #1173c7;
+  --chart-2: #dceaf5;
   --chart-3: #F59E0B;
   --chart-4: #34D399;
   --chart-5: #94A3B8;
-  --sidebar: #07235B;
+  --sidebar: #043455;
   --sidebar-foreground: #FFFFFF;
   --sidebar-primary: #FFFFFF;
-  --sidebar-primary-foreground: #4C9AFF;
+  --sidebar-primary-foreground: #8fb8dc;
   --sidebar-accent: #ffffff26;
   --sidebar-accent-foreground: #FFFFFF;
   --sidebar-border: #ffffff1f;
@@ -145,11 +145,11 @@
    l'emporte sur les utilitaires data-[active=true] du composant. */
 [data-sidebar='menu-button'][data-active='true'] {
   background-color: #ffffff;
-  color: #0066ef;
+  color: #055492;
 }
 [data-sidebar='menu-button'][data-active='true']:hover {
   background-color: #ffffff;
-  color: #0066ef;
+  color: #055492;
 }
 
 /* Custom scrollbar for glassmorphism pages (hub, setup) */
@@ -222,12 +222,12 @@
   --secondary-foreground: #0F172A;
   --muted: #F1F5F9;
   --muted-foreground: #64748B;
-  --accent: #0066EF;
+  --accent: #055492;
   --accent-foreground: #FFFFFF;
   --destructive: #DC2626;
   --border: #E2E8F0;
   --input: #E2E8F0;
-  --ring: #0066EF;
+  --ring: #055492;
   background: var(--background);
   color: var(--foreground);
   color-scheme: light;
@@ -246,12 +246,12 @@
   --secondary-foreground: #F8FAFC;
   --muted: #1E293B;
   --muted-foreground: #94A3B8;
-  --accent: #3B82F6;
+  --accent: #1173c7;
   --accent-foreground: #FFFFFF;
   --destructive: #EF4444;
   --border: #334155;
   --input: #334155;
-  --ring: #3B82F6;
+  --ring: #1173c7;
   background: var(--background);
   color: var(--foreground);
   color-scheme: dark;
@@ -260,8 +260,8 @@
 /* ═══════════════════════════════════════════════════════════════
    DESIGN PREMIUM « LUXE TECH » (V4.10) — animations & utilitaires
    Inspiration : Apple (minimalisme) + Airbnb (chaleur) + Linear/Vercel
-   (micro-interactions). Palette HARMONISÉE SUR LE LOGO : bleu vif #0066EF
-   × marine #07235B, glassmorphism, gradients signature.
+   (micro-interactions). Palette HARMONISÉE SUR LE LOGO : bleu vif #055492
+   × marine #043455, glassmorphism, gradients signature.
    ═══════════════════════════════════════════════════════════════ */
 
 @theme {
@@ -316,14 +316,14 @@
 
   /* ── Texte en dégradé signature (or → rose) ────────────────── */
   .text-gradient-lux {
-    background-image: linear-gradient(110deg, #07235b 8%, #0066ef 48%, #07235b 92%);
+    background-image: linear-gradient(110deg, #043455 8%, #055492 48%, #043455 92%);
     background-size: 200% auto;
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
   }
   .dark .text-gradient-lux {
-    background-image: linear-gradient(110deg, #dbeafe 8%, #60a5fa 48%, #dbeafe 92%);
+    background-image: linear-gradient(110deg, #dceaf5 8%, #8fb8dc 48%, #dceaf5 92%);
     background-size: 200% auto;
   }
 
@@ -509,7 +509,7 @@
    v4.59 — DESIGN SYSTEM « AIRBNB PRO » (dashboards hôte + superadmin)
    Refonte complète : KPIs colorés, gradients signature, dark mode
    soigné. v5.1 : palette harmonisée sur le LOGO RoomScan —
-   bleu vif #0066EF (« Scan »), marine #07235B (« Room »).
+   bleu vif #055492 (« Scan »), marine #043455 (« Room »).
    Les classes .kpi-* donnent à CHAQUE carte KPI son identité
    chromatique (fond pastel + texte foncé assorti) et basculent
    automatiquement en dark via .dark.
@@ -519,25 +519,25 @@
 .dash-surface {
   background:
     radial-gradient(1200px 500px at 85% -10%, rgba(0, 102, 238, 0.06), transparent 60%),
-    radial-gradient(900px 420px at 0% 0%, rgba(7, 35, 91, 0.05), transparent 55%),
+    radial-gradient(900px 420px at 0% 0%, rgba(4, 52, 85, 0.05), transparent 55%),
     #F7F7F8;
 }
 .dark .dash-surface {
   background:
     radial-gradient(1200px 500px at 85% -10%, rgba(0, 102, 238, 0.10), transparent 60%),
-    radial-gradient(900px 420px at 0% 0%, rgba(7, 35, 91, 0.16), transparent 55%),
+    radial-gradient(900px 420px at 0% 0%, rgba(4, 52, 85, 0.16), transparent 55%),
     #0B1120;
 }
 
 /* ----- Gradient signature Airbnb (CTA, bandeaux, sidebar) ----- */
 .air-gradient {
-  background: linear-gradient(93deg, #0052C4 0%, #0066EF 45%, #0047B3 100%);
+  background: linear-gradient(93deg, #04467a 0%, #055492 45%, #033a66 100%);
 }
 .air-gradient-deep {
-  background: linear-gradient(160deg, #07235B 0%, #0A3D8F 55%, #0066EF 100%);
+  background: linear-gradient(160deg, #043455 0%, #0a538f 55%, #055492 100%);
 }
 .air-gradient-text {
-  background: linear-gradient(93deg, #0066EF, #0047B3);
+  background: linear-gradient(93deg, #055492, #033a66);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -557,7 +557,7 @@
 }
 
 /* ----- Bulle d'icône KPI (dégradé plein, blanc par dessus) ----- */
-.kpi-bubble-rausch  { background: linear-gradient(135deg, #0066EF, #0047B3); }
+.kpi-bubble-rausch  { background: linear-gradient(135deg, #055492, #033a66); }
 .kpi-bubble-emerald { background: linear-gradient(135deg, #00A699, #047857); }
 .kpi-bubble-amber   { background: linear-gradient(135deg, #F59E0B, #D97706); }
 .kpi-bubble-violet  { background: linear-gradient(135deg, #8B5CF6, #6D28D9); }
@@ -638,12 +638,12 @@
   --secondary-foreground: #0f172a;
   --muted: #f4f2ee;
   --muted-foreground: #64748b;
-  --accent: #0066ef;
+  --accent: #055492;
   --accent-foreground: #ffffff;
   --destructive: #dc2626;
   --border: #eae7e1;
   --input: #eae7e1;
-  --ring: #0066ef;
+  --ring: #055492;
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -669,13 +669,13 @@
   --secondary: #121b36;
   --secondary-foreground: #eef3fb;
   --muted: #121b36;
-  --muted-foreground: #8fa0c2;
-  --accent: #3d6fe0;
+  --muted-foreground: #8fabc2;
+  --accent: #3d97e0;
   --accent-foreground: #ffffff;
   --destructive: #f07d6a;
   --border: rgba(148, 170, 214, 0.14);
   --input: rgba(148, 170, 214, 0.18);
-  --ring: #5c8af0;
+  --ring: #5cadf0;
   --sidebar: #070d1d;
   --sidebar-foreground: #eef3fb;
   --sidebar-primary: #ffffff;
@@ -683,7 +683,7 @@
   --sidebar-accent: rgba(255, 255, 255, 0.06);
   --sidebar-accent-foreground: #ffffff;
   --sidebar-border: rgba(148, 170, 214, 0.12);
-  --sidebar-ring: #5c8af0;
+  --sidebar-ring: #5cadf0;
   background-color: var(--background);
   color: var(--foreground);
 }
@@ -1064,7 +1064,7 @@ html:not(.dark) .lux .lux-keep-dark .lux-chip {
   border-color: rgba(255, 255, 255, 0.30);
   color: #ffffff;
 }
-html:not(.dark) .lux .lux-keep-dark [class*='text-[#8fa0c2]'] { color: rgba(255, 255, 255, 0.80) !important; }
+html:not(.dark) .lux .lux-keep-dark [class*='text-[#8fabc2]'] { color: rgba(255, 255, 255, 0.80) !important; }
 html:not(.dark) .lux .lux-keep-dark [class*='bg-white/'] { background-color: rgba(255, 255, 255, 0.14) !important; }
 
 /* ----- Header glass luxueux + ACCENT COLORÉ sous le header (v6.0) -----
@@ -1135,7 +1135,7 @@ html:not(.dark) .lux .lux-keep-dark [class*='bg-white/'] { background-color: rgb
       neutres #101012 — plus de navy bleuté) ;
    2) correspondance des utilitaires blanchâtres codés en dur par
       la refonte v5.2 (bg-white/[0.04] → encre noire translucide,
-      text-white → noir, #8fa0c2 → gris neutre foncé…).
+      text-white → noir, #8fabc2 → gris neutre foncé…).
    Volontairement SANS TEINTE dans les encres (signature v6.1) :
    la sidebar (.lux-sidebar, variables --sb-*) et les portails Radix
    (Dialog/Sheet/Select/Popover explicitement sombres) ne sont pas
@@ -1162,8 +1162,8 @@ html:not(.dark) .lux {
   --destructive: #be123c;
   --border: rgba(17, 17, 19, 0.12);
   --input: rgba(17, 17, 19, 0.16);
-  --ring: var(--brand-ring, #2f5fd0);
-  --chart-1: #2f5fd0;
+  --ring: var(--brand-ring, #2f88d0);
+  --chart-1: #2f88d0;
   --chart-2: #8a6215;
   --chart-3: #0c7a5e;
   --chart-4: #6d28d9;
@@ -1359,18 +1359,18 @@ html:not(.dark) .lux [class*="border-white/40"] { border-color: rgba(17, 17, 19,
 html:not(.dark) .lux [class*="divide-white/"] > * { border-color: rgba(17, 17, 19, 0.09) !important; }
 html:not(.dark) .lux [class*="ring-white/"] { --tw-ring-color: rgba(17, 17, 19, 0.14) !important; }
 
-/* Ardoise bleutée #8fa0c2 → gris-ardoise lisible sur blanc */
-html:not(.dark) .lux [class*="text-[#8fa0c2]"] { color: #52525b !important; }
-html:not(.dark) .lux [class*="bg-[#8fa0c2]"] { background-color: rgba(82, 82, 91, 0.4) !important; }
+/* Ardoise bleutée #8fabc2 → gris-ardoise lisible sur blanc */
+html:not(.dark) .lux [class*="text-[#8fabc2]"] { color: #52525b !important; }
+html:not(.dark) .lux [class*="bg-[#8fabc2]"] { background-color: rgba(82, 82, 91, 0.4) !important; }
 
 /* Tons clairs pensés pour la nuit → encres profondes sur blanc */
-html:not(.dark) .lux [class*="text-[#a9c4ff]"] { color: #274b9f !important; }
+html:not(.dark) .lux [class*="text-[#a9d8ff]"] { color: #27699f !important; }
 html:not(.dark) .lux [class*="text-[#e9c47c]"] { color: #8a6215 !important; }
 html:not(.dark) .lux [class*="text-[#f07d6a]"] { color: #b8452f !important; }
 html:not(.dark) .lux [class*="text-[#34d399]"] { color: #0c7a5e !important; }
 html:not(.dark) .lux [class*="text-[#2dd4bf]"] { color: #0e7490 !important; }
 html:not(.dark) .lux [class*="text-[#fbbf24]"] { color: #a16207 !important; }
-html:not(.dark) .lux [class*="text-[#5c8af0]"] { color: #2f5fd0 !important; }
+html:not(.dark) .lux [class*="text-[#5cadf0]"] { color: #2f88d0 !important; }
 
 /* Encres pastel des joyaux (utilitaires et styles inline) → encres
    profondes équivalentes. NB : React sérialise les couleurs inline
@@ -1391,13 +1391,13 @@ html:not(.dark) .lux [style*="rgb(255, 171, 146)"] { color: #a03d24 !important; 
 html:not(.dark) .lux [class*="text-[#ffa1c8]"],
 html:not(.dark) .lux [style*="#ffa1c8"],
 html:not(.dark) .lux [style*="rgb(255, 161, 200)"] { color: #a63a6e !important; }
-html:not(.dark) .lux [style*="#a9c4ff"],
-html:not(.dark) .lux [style*="rgb(169, 196, 255)"] { color: #274b9f !important; }
+html:not(.dark) .lux [style*="#a9d8ff"],
+html:not(.dark) .lux [style*="rgb(169, 196, 255)"] { color: #27699f !important; }
 
 /* Pastilles à fond PLEIN (saphir/corail/émeraude/teal) : le texte
    redevient blanc par-dessus la couleur saturée (après la règle
    générale text-white ci-dessus, même spécificité — ordre gagne). */
-html:not(.dark) .lux [class*="bg-[#3d6fe0]"]:not([class*="bg-[#3d6fe0]/"]),
+html:not(.dark) .lux [class*="bg-[#3d97e0]"]:not([class*="bg-[#3d97e0]/"]),
 html:not(.dark) .lux [class*="bg-[#f07d6a]"]:not([class*="bg-[#f07d6a]/"]),
 html:not(.dark) .lux [class*="bg-[#34d399]"]:not([class*="bg-[#34d399]/"]),
 html:not(.dark) .lux [class*="bg-[#2dd4bf]"]:not([class*="bg-[#2dd4bf]/"]),
@@ -1414,7 +1414,7 @@ html:not(.dark) .lux [class*="bg-[#060a17]"] { background-color: rgba(17, 17, 19
 html:not(.dark) .lux input::placeholder,
 html:not(.dark) .lux textarea::placeholder { color: rgba(17, 17, 19, 0.38) !important; opacity: 1; }
 
-/* Graphiques recharts (attributs SVG #8fa0c2 / halos nuit) → jour */
+/* Graphiques recharts (attributs SVG #8fabc2 / halos nuit) → jour */
 html:not(.dark) .lux .recharts-cartesian-axis-tick text { fill: #52525b !important; }
 html:not(.dark) .lux .recharts-cartesian-axis-line,
 html:not(.dark) .lux .recharts-cartesian-axis-tick line { stroke: rgba(17, 17, 19, 0.14) !important; }
@@ -1491,16 +1491,16 @@ html:not(.dark) .tl-sticky-left { background: #ffffff; }
 /* Utilitaires scroll du module Bouclier V2 (restaure v4.156) */
 .shield-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: rgba(30, 58, 138, 0.30) transparent;
+  scrollbar-color: rgba(5, 84, 146, 0.30) transparent;
 }
 .shield-scrollbar::-webkit-scrollbar { width: 7px; height: 7px; }
 .shield-scrollbar::-webkit-scrollbar-track { background: transparent; }
 .shield-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(30, 58, 138, 0.28);
+  background: rgba(5, 84, 146, 0.28);
   border-radius: 9999px;
 }
 .shield-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(30, 58, 138, 0.45);
+  background: rgba(5, 84, 146, 0.45);
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -1514,15 +1514,15 @@ html:not(.dark) .tl-sticky-left { background: #ffffff; }
 /* ── Fond de page : dégradé bleuté clair / bleu nuit profond ── */
 .shield-page {
   background:
-    radial-gradient(1100px 500px at 88% -6%, rgba(37, 99, 235, 0.09), transparent 60%),
+    radial-gradient(1100px 500px at 88% -6%, rgba(5, 84, 146, 0.09), transparent 60%),
     radial-gradient(900px 420px at -8% 4%, rgba(196, 30, 58, 0.05), transparent 55%),
-    linear-gradient(180deg, #eef4ff 0%, #f8fafc 45%, #f2f6fb 100%);
+    linear-gradient(180deg, #e8f1f9 0%, #f8fafc 45%, #eef4fa 100%);
 }
 .dark .shield-page {
   background:
-    radial-gradient(1100px 560px at 88% -8%, rgba(59, 130, 246, 0.17), transparent 62%),
+    radial-gradient(1100px 560px at 88% -8%, rgba(17, 115, 199, 0.17), transparent 62%),
     radial-gradient(900px 480px at -8% 2%, rgba(217, 180, 91, 0.05), transparent 55%),
-    radial-gradient(1200px 780px at 50% 118%, rgba(30, 58, 138, 0.28), transparent 62%),
+    radial-gradient(1200px 780px at 50% 118%, rgba(5, 84, 146, 0.28), transparent 62%),
     #070c1c;
 }
 
@@ -1533,7 +1533,7 @@ html:not(.dark) .tl-sticky-left { background: #ffffff; }
   background: rgba(255, 255, 255, 0.93);
   box-shadow:
     0 1px 2px rgba(15, 23, 42, 0.05),
-    0 14px 34px -20px rgba(30, 58, 138, 0.28);
+    0 14px 34px -20px rgba(5, 84, 146, 0.28);
   backdrop-filter: blur(8px);
 }
 .dark .luxe-card {
@@ -1548,7 +1548,7 @@ html:not(.dark) .tl-sticky-left { background: #ffffff; }
 .luxe-title { color: #0f172a; }
 .dark .luxe-title { color: #eef2ff; }
 .luxe-muted { color: #64748b; }
-.dark .luxe-muted { color: #97a6c4; }
+.dark .luxe-muted { color: #97b0c4; }
 .luxe-faint { color: #94a3b8; }
 .dark .luxe-faint { color: #64748b; }
 
@@ -1567,8 +1567,8 @@ html:not(.dark) .tl-sticky-left { background: #ffffff; }
 .luxe-input:focus,
 .luxe-select:focus {
   outline: none;
-  border-color: #1e3a8a;
-  box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.15);
+  border-color: #055492;
+  box-shadow: 0 0 0 3px rgba(5, 84, 146, 0.15);
 }
 .dark .luxe-input,
 .dark .luxe-select {
@@ -1579,8 +1579,8 @@ html:not(.dark) .tl-sticky-left { background: #ffffff; }
 .dark .luxe-input::placeholder { color: #64748b; }
 .dark .luxe-input:focus,
 .dark .luxe-select:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.22);
+  border-color: #1173c7;
+  box-shadow: 0 0 0 3px rgba(17, 115, 199, 0.22);
 }
 
 /* ── Boutons ── */
@@ -1595,8 +1595,9 @@ html:not(.dark) .tl-sticky-left { background: #ffffff; }
   font-size: 0.875rem;
   font-weight: 600;
   color: #ffffff;
-  background: linear-gradient(135deg, #d92049 0%, #a01830 100%);
-  box-shadow: 0 6px 18px -8px rgba(196, 30, 58, 0.55);
+  /* v5.9 — CTA principal aux COULEURS DU LOGO (dégradé cobalt) */
+  background: linear-gradient(135deg, #1173c7 0%, #055492 55%, #04467a 100%);
+  box-shadow: 0 6px 18px -8px rgba(5, 84, 146, 0.55);
   transition: filter 0.15s ease, transform 0.15s ease;
 }
 .luxe-btn-primary:hover { filter: brightness(1.08); }
@@ -1717,7 +1718,7 @@ html:not(.dark) .tl-sticky-left { background: #ffffff; }
 
 /* ── Tableaux (dashboard : derniers séjours) ── */
 .luxe-table th { color: #64748b; }
-.dark .luxe-table th { color: #8fa0c0; }
+.dark .luxe-table th { color: #8faac0; }
 .luxe-table tbody tr { border-bottom: 1px solid rgba(241, 245, 249, 1); }
 .luxe-table tbody tr:hover { background: rgba(238, 242, 255, 0.6); }
 .dark .luxe-table tbody tr { border-bottom: 1px solid rgba(56, 76, 128, 0.28); }
@@ -1746,10 +1747,10 @@ html:not(.dark) .tl-sticky-left { background: #ffffff; }
 }
 .luxe-chip:hover { background: #f1f5f9; }
 .luxe-chip[aria-pressed='true'] {
-  background: linear-gradient(135deg, #1e3a8a 0%, #16307a 100%);
+  background: linear-gradient(135deg, #055492 0%, #164d7a 100%);
   border-color: transparent;
   color: #ffffff;
-  box-shadow: 0 8px 18px -10px rgba(30, 58, 138, 0.7);
+  box-shadow: 0 8px 18px -10px rgba(5, 84, 146, 0.7);
 }
 .dark .luxe-chip {
   border-color: rgba(56, 76, 128, 0.55);
@@ -1758,14 +1759,16 @@ html:not(.dark) .tl-sticky-left { background: #ffffff; }
 }
 .dark .luxe-chip:hover { background: rgba(23, 34, 70, 0.95); }
 .dark .luxe-chip[aria-pressed='true'] {
-  background: linear-gradient(135deg, #2456c8 0%, #1d3f9e 100%);
+  background: linear-gradient(135deg, #247ec8 0%, #1d649e 100%);
   color: #ffffff;
 }
 
 /* ── Sidebar « luxe bleuté » : dégradé bleu profond (clair) et
       bleu nuit (sombre) avec halo doré discret ── */
 .shield-sidebar {
-  background: linear-gradient(180deg, #16307a 0%, #12296a 42%, #0c1c4e 100%);
+  /* v5.9 — dégradé aux COULEURS DU LOGO : bleu #055492 en haut →
+      cobalt profond (l'identité du nouveau logo officiel) */
+  background: linear-gradient(180deg, #055492 0%, #04467a 48%, #03355c 100%);
 }
 .dark .shield-sidebar {
   background:

@@ -277,7 +277,7 @@ export function MenagePlanning({
       <div className="lux-empty flex flex-col items-center gap-3 rounded-2xl p-8 text-center" role="alert">
         <span className="lux-dot" style={{ backgroundColor: '#f07d6a' }} aria-hidden="true" />
         <p className="text-sm font-semibold text-white">Planning indisponible pour le moment</p>
-        <p className="max-w-md text-xs text-[#8fa0c2]">
+        <p className="max-w-md text-xs text-[#8fabc2]">
           Impossible de charger les interventions planifiées. Vos preuves de ménage restent
           accessibles dans l’onglet Journal.
         </p>
@@ -303,14 +303,14 @@ export function MenagePlanning({
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
-            className="lux-btn focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5c8af0]/60"
+            className="lux-btn focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5cadf0]/60"
             onClick={() => setFormOpen((o) => !o)}
             aria-expanded={formOpen}
           >
             {formOpen ? 'Annuler' : 'Nouvelle intervention'}
           </button>
           {!formOpen && (
-            <span className="text-xs text-[#8fa0c2]">
+            <span className="text-xs text-[#8fabc2]">
               Planifiez un passage pour votre équipe — elle le voit dans le Hub.
             </span>
           )}
@@ -328,7 +328,7 @@ export function MenagePlanning({
           <p className="lux-eyebrow">Nouveau passage</p>
           <h2 className="lux-display mt-1 text-lg text-white">Planifier une intervention</h2>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            <label className="flex flex-col gap-1.5 text-xs font-semibold text-[#8fa0c2]">
+            <label className="flex flex-col gap-1.5 text-xs font-semibold text-[#8fabc2]">
               Début — obligatoire
               <Input
                 type="datetime-local"
@@ -337,7 +337,7 @@ export function MenagePlanning({
                 className={cn('h-10 [color-scheme:dark]', LUX_FIELD)}
               />
             </label>
-            <label className="flex flex-col gap-1.5 text-xs font-semibold text-[#8fa0c2]">
+            <label className="flex flex-col gap-1.5 text-xs font-semibold text-[#8fabc2]">
               Fin prévue — optionnelle
               <Input
                 type="datetime-local"
@@ -346,12 +346,12 @@ export function MenagePlanning({
                 className={cn('h-10 [color-scheme:dark]', LUX_FIELD)}
               />
             </label>
-            <label className="flex flex-col gap-1.5 text-xs font-semibold text-[#8fa0c2]">
+            <label className="flex flex-col gap-1.5 text-xs font-semibold text-[#8fabc2]">
               Assignée à — optionnel
               <select
                 value={form.assigneeId}
                 onChange={(e) => setForm((f) => ({ ...f, assigneeId: e.target.value }))}
-                className="h-10 rounded-xl border border-white/12 bg-white/[0.04] px-3 text-sm text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5c8af0]/50"
+                className="h-10 rounded-xl border border-white/12 bg-white/[0.04] px-3 text-sm text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5cadf0]/50"
               >
                 <option value="">Non assignée</option>
                 {members.map((m) => (
@@ -361,7 +361,7 @@ export function MenagePlanning({
                 ))}
               </select>
             </label>
-            <label className="flex flex-col gap-1.5 text-xs font-semibold text-[#8fa0c2]">
+            <label className="flex flex-col gap-1.5 text-xs font-semibold text-[#8fabc2]">
               Note pour l’équipe — optionnelle
               <Input
                 value={form.note}
@@ -375,7 +375,7 @@ export function MenagePlanning({
           <div className="mt-4">
             <button
               type="button"
-              className="lux-btn focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5c8af0]/60 disabled:pointer-events-none disabled:opacity-60"
+              className="lux-btn focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5cadf0]/60 disabled:pointer-events-none disabled:opacity-60"
               onClick={() => void createTask()}
               disabled={creating}
             >
@@ -391,7 +391,7 @@ export function MenagePlanning({
         <div className="lux-empty flex flex-col items-center gap-2 rounded-2xl p-8 text-center">
           <span className="lux-dot" style={{ backgroundColor: '#e9c47c' }} aria-hidden="true" />
           <p className="text-sm font-semibold text-white">Aucune intervention planifiée</p>
-          <p className="max-w-md text-xs text-[#8fa0c2]">
+          <p className="max-w-md text-xs text-[#8fabc2]">
             {readOnly
               ? 'Créez des interventions depuis un bien précis (barre du haut) — elles apparaîtront ici, classées par jour et heure.'
               : 'Planifiez votre premier passage avec « Nouvelle intervention » — l’historique des passages réalisés vit dans l’onglet Journal.'}
@@ -408,7 +408,7 @@ export function MenagePlanning({
           >
             <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
               <h3 className="text-sm font-bold uppercase tracking-[0.14em] text-white">{g.label}</h3>
-              {g.sublabel && <span className="text-xs text-[#8fa0c2]">— {g.sublabel}</span>}
+              {g.sublabel && <span className="text-xs text-[#8fabc2]">— {g.sublabel}</span>}
               <span className="lux-chip">
                 {g.tasks.length} intervention{g.tasks.length > 1 ? 's' : ''}
               </span>
@@ -434,9 +434,9 @@ export function MenagePlanning({
                       <div className="shrink-0 sm:w-44">
                         <p className="lux-num text-2xl font-semibold leading-tight text-white">
                           {formatFrTime(start)}
-                          {end ? <span className="text-[#8fa0c2]"> → {formatFrTime(end)}</span> : null}
+                          {end ? <span className="text-[#8fabc2]"> → {formatFrTime(end)}</span> : null}
                         </p>
-                        <p className="mt-1 text-xs text-[#8fa0c2]">
+                        <p className="mt-1 text-xs text-[#8fabc2]">
                           {task.startedAt ? 'Heures réelles' : 'Créneau planifié'}
                         </p>
                         <div className="mt-2">
@@ -448,18 +448,18 @@ export function MenagePlanning({
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-semibold text-white">{task.propertyName}</p>
                         {task.guestName && (
-                          <p className="mt-0.5 flex items-center gap-2 text-xs text-[#8fa0c2]">
-                            <span className="lux-dot shrink-0" style={{ backgroundColor: '#5c8af0' }} aria-hidden="true" />
+                          <p className="mt-0.5 flex items-center gap-2 text-xs text-[#8fabc2]">
+                            <span className="lux-dot shrink-0" style={{ backgroundColor: '#5cadf0' }} aria-hidden="true" />
                             Invité sortant : {task.guestName}
                           </p>
                         )}
-                        <p className="mt-0.5 text-xs text-[#8fa0c2]">
+                        <p className="mt-0.5 text-xs text-[#8fabc2]">
                           Prévu le {formatFrDateTime(task.scheduledAt)}
                         </p>
 
                         {/* Assignation : select natif (hors lecture seule) ou texte */}
                         <div className="mt-2.5 flex flex-wrap items-center gap-2">
-                          <span className="text-xs font-semibold text-[#8fa0c2]">Assignée à :</span>
+                          <span className="text-xs font-semibold text-[#8fabc2]">Assignée à :</span>
                           {readOnly ? (
                             <span className="lux-chip">{task.assigneeName ?? 'Non assignée'}</span>
                           ) : (
@@ -468,7 +468,7 @@ export function MenagePlanning({
                               onChange={(e) => void submitAssign(task, e.target.value)}
                               disabled={busy}
                               aria-label={`Assignation de l’intervention ${task.propertyName} du ${formatFrDateTime(task.scheduledAt)}`}
-                              className="h-9 max-w-56 rounded-full border border-white/12 bg-white/[0.04] px-3 text-xs font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5c8af0]/50 disabled:opacity-60"
+                              className="h-9 max-w-56 rounded-full border border-white/12 bg-white/[0.04] px-3 text-xs font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5cadf0]/50 disabled:opacity-60"
                             >
                               <option value="">Non assignée</option>
                               {members.map((m) => (

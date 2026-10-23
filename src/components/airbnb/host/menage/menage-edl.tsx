@@ -95,7 +95,7 @@ export function CheckoutInspectionsSection({ selectedId }: { selectedId: string 
         <div className="min-w-0">
           <p className="lux-eyebrow">Signés par vos invités</p>
           <h3 className="lux-display mt-1 text-lg text-white">États des lieux de sortie</h3>
-          <p className="text-xs text-[#8fa0c2]">
+          <p className="text-xs text-[#8fabc2]">
             Inspections signées par vos invités avant leur départ — preuves horodatées de fin de séjour.
           </p>
         </div>
@@ -121,7 +121,7 @@ export function CheckoutInspectionsSection({ selectedId }: { selectedId: string 
         <div className="lux-empty mt-4 flex flex-col items-center gap-2 rounded-2xl py-8 text-center">
           <span className="lux-dot" style={{ backgroundColor: '#cdb6ff' }} aria-hidden="true" />
           <p className="text-sm font-semibold text-white">Aucun état des lieux pour le moment</p>
-          <p className="mt-1 max-w-md text-xs text-[#8fa0c2]">
+          <p className="mt-1 max-w-md text-xs text-[#8fabc2]">
             L&apos;invité signe son inspection depuis son Hub (« Je quitte le logement ») — le document
             apparaît ici instantanément.
           </p>
@@ -153,8 +153,8 @@ export function CheckoutInspectionsSection({ selectedId }: { selectedId: string 
                         {statusMeta.label}
                       </span>
                     </p>
-                    <p className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-[#8fa0c2]">
-                      <span className="lux-dot shrink-0" style={{ backgroundColor: '#5c8af0' }} aria-hidden="true" />
+                    <p className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-[#8fabc2]">
+                      <span className="lux-dot shrink-0" style={{ backgroundColor: '#5cadf0' }} aria-hidden="true" />
                       {i.propertyName ? `${i.propertyName} · ` : ''}
                       {formatFrDateTime(i.signedAt)} ·{' '}
                       <span className="text-[#e9c47c]">{stars(i.selfAssessment)}</span>{' '}
@@ -205,7 +205,7 @@ export function CheckoutInspectionsSection({ selectedId }: { selectedId: string 
                       <Button
                         type="button"
                         size="sm"
-                        className="h-9 rounded-full bg-gradient-to-br from-[#3d6fe0] to-[#24479c] px-4 text-xs font-semibold text-white shadow-[0_10px_28px_-12px_rgba(61,111,224,0.55)] hover:from-[#5c8af0] hover:to-[#2c56b8]"
+                        className="h-9 rounded-full bg-gradient-to-br from-[#3d97e0] to-[#24479c] px-4 text-xs font-semibold text-white shadow-[0_10px_28px_-12px_rgba(61,111,224,0.55)] hover:from-[#5cadf0] hover:to-[#2c56b8]"
                         disabled={patchingId === i.id}
                         onClick={() => void markResolved(i.id)}
                         aria-label={`Marquer l'inspection de ${i.guestName} comme traitée`}

@@ -94,7 +94,7 @@ export function pdfHeader(
   subtitle?: string,
 ): number {
   // Bandeau accent
-  pdf.setFillColor(5, 150, 105); // #0066EF — accent plateforme
+  pdf.setFillColor(5, 150, 105); // #055492 — accent plateforme
   pdf.rect(0, 0, 210, 26, 'F');
   pdf.setTextColor(255, 255, 255);
   pdf.setFontSize(9);

@@ -111,7 +111,7 @@ export function DataTable<T>({
                   <TableHead
                     key={col.key}
                     className={cn(
-                      'h-10 px-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8fa0c2]',
+                      'h-10 px-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8fabc2]',
                       col.hideBelow && HIDE_CLASS[col.hideBelow],
                       col.sortValue && 'cursor-pointer select-none hover:text-white',
                       col.className,
@@ -135,7 +135,7 @@ export function DataTable<T>({
           <TableBody>
             {paged.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-28 text-center text-sm text-[#8fa0c2]">
+                <TableCell colSpan={columns.length} className="h-28 text-center text-sm text-[#8fabc2]">
                   {emptyMessage}
                 </TableCell>
               </TableRow>
@@ -167,7 +167,7 @@ export function DataTable<T>({
       {/* ----- Pagination ----- */}
       {pageSize > 0 && total > effectivePageSize && (
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-xs text-[#8fa0c2]">
+          <p className="text-xs text-[#8fabc2]">
             {(safePage - 1) * pageSize + 1}–{Math.min(safePage * pageSize, total)} sur{' '}
             <span className="font-semibold text-white">{total}</span>
           </p>

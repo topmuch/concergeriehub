@@ -50,7 +50,7 @@ interface ReportInsight {
 const PRIORITY_META: Record<string, { label: string; color: string }> = {
   CRITICAL: { label: 'URGENT', color: '#f07d6a' },
   HIGH: { label: 'IMPORTANT', color: '#e9c47c' },
-  MEDIUM: { label: 'À NOTER', color: '#5c8af0' },
+  MEDIUM: { label: 'À NOTER', color: '#5cadf0' },
   LOW: { label: 'INFO', color: '#94a3b8' },
 };
 

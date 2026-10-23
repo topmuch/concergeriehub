@@ -21,7 +21,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 // ---------- Design « Saphir Luxe » : champs & boutons sombres ----------
 const LUX_FIELD =
-  'rounded-xl! border-white/12! bg-white/[0.04]! text-white! placeholder:text-[#8fa0c2]/60! focus-visible:ring-[#5c8af0]/50!';
+  'rounded-xl! border-white/12! bg-white/[0.04]! text-white! placeholder:text-[#8fabc2]/60! focus-visible:ring-[#5cadf0]/50!';
 const LUX_BTN_GHOST_SM =
   'inline-flex h-8 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] px-3 text-xs font-semibold text-white transition-colors hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-50';
 
@@ -198,7 +198,7 @@ export function AdminUniversalContent() {
       <div className="lux-card p-6">
         <p className="lux-eyebrow">Plateforme</p>
         <h2 className="lux-display mt-2 text-2xl font-semibold text-white">Contenu universel</h2>
-        <p className="mt-2 text-sm leading-relaxed text-[#8fa0c2]">
+        <p className="mt-2 text-sm leading-relaxed text-[#8fabc2]">
           Ce contenu de référence s&apos;affiche dans <strong>toutes les maisons</strong> de la
           plateforme dont l&apos;hôte n&apos;a pas encore rempli son propre guidebook ou son guide
           des appareils. Les hôtes peuvent aussi l&apos;importer en 1 clic puis le personnaliser.
@@ -222,7 +222,7 @@ export function AdminUniversalContent() {
               <div>
                 <p className="lux-eyebrow">Guidebook</p>
                 <h3 className="lux-display mt-1 text-lg font-semibold text-white">Guidebook universel</h3>
-                <p className="mt-0.5 text-xs text-[#8fa0c2]">
+                <p className="mt-0.5 text-xs text-[#8fabc2]">
                   Guide de bienvenue générique — première ligne de chaque section = titre.
                 </p>
               </div>
@@ -266,7 +266,7 @@ export function AdminUniversalContent() {
                     onClick={() => removeSection(i)}
                     aria-label={`Supprimer la section ${i + 1}`}
                     disabled={saving}
-                    className="absolute top-2 right-2 inline-flex h-7 w-7 items-center justify-center rounded-lg border border-white/10 bg-white/[0.04] text-[#8fa0c2] transition-colors hover:border-[#f07d6a]/40 hover:text-[#f07d6a] disabled:cursor-not-allowed disabled:opacity-50"
+                    className="absolute top-2 right-2 inline-flex h-7 w-7 items-center justify-center rounded-lg border border-white/10 bg-white/[0.04] text-[#8fabc2] transition-colors hover:border-[#f07d6a]/40 hover:text-[#f07d6a] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <span aria-hidden="true">×</span>
                   </button>
@@ -281,7 +281,7 @@ export function AdminUniversalContent() {
               <div>
                 <p className="lux-eyebrow">Appareils</p>
                 <h3 className="lux-display mt-1 text-lg font-semibold text-white">Pack universel d&apos;appareils</h3>
-                <p className="mt-0.5 text-xs text-[#8fa0c2]">
+                <p className="mt-0.5 text-xs text-[#8fabc2]">
                   Catalogue d&apos;appareils courants avec instructions génériques.
                 </p>
               </div>
@@ -330,7 +330,7 @@ export function AdminUniversalContent() {
                       onClick={() => removeAppliance(a.id)}
                       aria-label={`Supprimer l'appareil ${a.name || i + 1}`}
                       disabled={saving}
-                      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/[0.04] text-[#8fa0c2] transition-colors hover:border-[#f07d6a]/40 hover:text-[#f07d6a] disabled:cursor-not-allowed disabled:opacity-50"
+                      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/[0.04] text-[#8fabc2] transition-colors hover:border-[#f07d6a]/40 hover:text-[#f07d6a] disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <span aria-hidden="true">×</span>
                     </button>
@@ -351,7 +351,7 @@ export function AdminUniversalContent() {
 
           {/* ── Barre d'enregistrement ── */}
           <div className="sticky bottom-4 flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-[#0b1226]/95 p-4 shadow-[0_24px_60px_-24px_rgba(2,6,18,0.95)] backdrop-blur">
-            <p className="text-xs text-[#8fa0c2]">
+            <p className="text-xs text-[#8fabc2]">
               {content.guidebook.sections.length} section(s) · {content.appliances.length} appareil(s)
             </p>
             <button

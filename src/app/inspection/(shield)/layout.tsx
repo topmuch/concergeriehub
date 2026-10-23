@@ -16,7 +16,7 @@ import { ShieldShell } from '@/components/inspection/shield/shield-shell';
 // Les pages PUBLIQUES /inspection/[token] restent HORS de ce
 // groupe (aucune sidebar sur les partages invités).
 // Design system (master prompt client) : sidebar bleu profond
-// #1e3a8a + fond slate-50 — voir shield-shell.tsx.
+// #055492 + fond slate-50 — voir shield-shell.tsx.
 // =============================================================
 export default async function ShieldLayout({ children }: Readonly<{ children: ReactNode }>) {
   const session = await getServerSession(authOptions);

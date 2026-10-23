@@ -5,7 +5,7 @@
 // =============================================================
 // Modal de telechargement des 3 badges de confiance RoomScan que
 // l'hote peut afficher sur ses annonces, son site ou ses reseaux :
-//   1. Securite    — degrade bleu   #1e3a8a -> #1e40af
+//   1. Securite    — degrade bleu   #055492 -> #033a66
 //   2. Proprete    — degrade vert   #16a34a -> #15803d
 //   3. Technologie — degrade rouge  #C41E3A -> #a3122c
 //
@@ -16,7 +16,7 @@
 //
 // Le QR pointe vers /verify/<propertyId> (page rendue en
 // parallele par un autre agent). Design system badges :
-// bleu #1e3a8a / rouge #C41E3A / fond clair #f8fafc.
+// bleu #055492 / rouge #C41E3A / fond clair #f8fafc.
 // =============================================================
 
 import { useEffect, useRef, useState } from 'react';
@@ -51,8 +51,8 @@ const BADGES: BadgeDefinition[] = [
     id: 'securite',
     label: 'Sécurité',
     title: '🛡️ CAUTION PROTÉGÉE PAR ROOMSCAN',
-    from: '#1e3a8a',
-    to: '#1e40af',
+    from: '#055492',
+    to: '#033a66',
   },
   {
     id: 'proprete',
@@ -186,7 +186,7 @@ function BadgeCard({ badge, propertyName, propertyId, verifyUrl }: BadgeCardProp
 
   return (
     <div>
-      <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.14em] text-[#1e3a8a]">
+      <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.14em] text-[#055492]">
         Badge {badge.label}
       </p>
 
@@ -325,7 +325,7 @@ export function MarketingBadgesModal({
             {/* En-tete collant : titre + fermeture */}
             <div className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-slate-200 bg-white px-5 py-4">
               <div className="min-w-0">
-                <h2 className="text-xl font-bold text-[#1e3a8a]">🏅 Badges Marketing</h2>
+                <h2 className="text-xl font-bold text-[#055492]">🏅 Badges Marketing</h2>
                 <p className="mt-1 text-xs leading-snug text-slate-600 sm:text-sm">
                   Téléchargez et affichez vos badges de confiance sur vos annonces, votre site ou
                   vos réseaux

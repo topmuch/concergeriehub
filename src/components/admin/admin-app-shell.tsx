@@ -114,7 +114,7 @@ export function AdminAppShell({ children, adminName, adminEmail }: AdminAppShell
 
         {/* ----- Footer copyright (collé en bas : mt-auto) ----- */}
         <footer className="mt-auto border-t border-white/8 py-4">
-          <p className="text-center text-xs text-[#8fa0c2]">
+          <p className="text-center text-xs text-[#8fabc2]">
             Copyright © <span className="lux-display font-semibold text-white/80">RoomScan</span> 2025
             — Centre de contrôle de la plateforme, accès restreint
           </p>

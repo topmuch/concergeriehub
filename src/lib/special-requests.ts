@@ -73,7 +73,7 @@ export const SPECIAL_REQUEST_STATUS_META: Record<string, SpecialRequestStatusMet
     label: 'Annulé',
     className:
       'bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-300 border border-slate-200 dark:border-white/15',
-    dot: '#8fa0c2',
+    dot: '#8fabc2',
   },
 };
 

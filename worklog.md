@@ -5483,3 +5483,25 @@ Stage Summary:
 - Release v.10 « Version 10 » en ligne : https://github.com/topmuch/concergeriehub/releases/tag/v.10
 - Restauration garantie : tar v5.8 figé en asset de release (immutible) + tar racine + tag git v5.8 ; releases antérieures v.1-v.9 toujours disponibles
 - Note pipeline : création de release via API = AUCUN push sur main → pas de déclenchement de build Coolify
+
+---
+Task ID: V59-LOGO-HARMONISATION
+Agent: Z.ai Code (main)
+Task: v5.9 — Intégration du NOUVEAU logo officiel en grand format + harmonisation complète du site aux couleurs du logo
+
+Work Log:
+- Logo client reçu (upload/a8488259….jfif, 809×312) analysé : emblème maison au balcon + wordmark « Roomscan », UNE seule teinte (hue 200°, dominante #055592) → couleur marque canonique #055492
+- Assets régénérés depuis la source haute résolution (extraction alpha par canal vert, bords nets) : roomscan-logo.png 754×283, roomscan-logo-white.png (blanc), roomscan-icon.png 171×169 (emblème), roomscan-icon-white.png, icon-512.png régénérée (carré cobalt arrondi + emblème blanc) — mêmes noms de fichiers → TOUTES les références existantes (PDF EDL inclus) basculent automatiquement
+- brand-logo.tsx : dimensions intrinsèques mises à jour + tailles xl (120) et hero (176) ; dims 124×121→171×169 corrigées dans host-shell/admin-app-sidebar/guest-app
+- GRAND FORMAT : hero accueil (176 px, ombre douce bleu logo), navbar 54 px, footer 68 px, connexions (xl=120), sidebar Inventaire (tuile 48 px), header mobile conservé
+- HARMONISATION (script global, 107 fichiers) : #0066EF→#055492, #0052C4→#04467a, #07235B→#043455, #1E3A8A→#055492, #3B82F6→#1173c7, #4C9AFF/#60A5FA→#8fb8dc, teintes DBEAFE/EAF2FF→#dceaf5… + 33 rgba() + 210 classes Tailwind blue-N→valeurs arbitraires cobalt ; zéro reste vérifié
+- 2e passe (66 fichiers) : décalage de TEINTE des indigos restants (hue 219-231°→207°, S/V conservés : #16307a→#164d7a, #2456c8→#247ec8, #0a3d8f→#0a538f…) + rgb(37,99,235)/rgb(30,58,138)→cobalt
+- Design system : .shield-sidebar = dégradé LOGO (#055492→#04467a→#03355c), .luxe-btn-primary passe du ROUGE au dégradé cobalt (#1173c7→#055492→#04467a), .air-gradient-deep corrigé, .shield-page teintes cobalt ; shield-shell : indicateur actif OR (luxe) au lieu du rouge, mot « Inventaire » cobalt
+- icon.tsx réécrit : emblème RÉEL blanc embarqué en base64 (Satori <img>) sur carré cobalt #055492 — vérifié pixel : /icon/192 rend l'emblème maison ; manifest theme_color #055492
+- Tests : lint 0 erreur ; tsc 0 erreur (après kill du dev server — exit 137 avec 1,5 Go libre, 0 erreur à 3,1 Go, leçon v5.8 reconfirmée) ; agent-browser : accueil (logo géant cobalt + 0 erreur console), login EDL + login hôte (variante blanche), dashboard Inventaire clair (sidebar dégradé logo, CTA cobalt, indicateur or) + sombre (bleu nuit luxueux), mobile iPhone 14 accueil + dashboard — tous conformes
+- Pipeline : VERSION.txt v5.9, tar racine reconstruit (liste explicite 13 éléments racine, 1332 entrées, upload/[token] présent ×2, 5 376 776 o), Dockerfile cb=v5.8→v5.9
+
+Stage Summary:
+- v5.9 = nouveau logo officiel PARTOUT + site entièrement aux couleurs du logo (cobalt #055492, famille 207°) ; rouge réservé à la sémantique EDL (badge anomalie, tuile Check-outs, module États des Lieux)
+- Palette marque documentée : #055492 (core), #04467a (hover), #033a66/#043455 (profonds), #1173c7 (vif sombre), #8fb1cc/#c8dfef (teintes mesurées dans le logo), or #d9b45b (accent luxe)
+- Compte démo dev : demo@qrdomotik.roomscan.pro / demo1234 (MDP réinitialisé en local uniquement, DB dev)

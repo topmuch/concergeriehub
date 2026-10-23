@@ -181,7 +181,7 @@ export function PlaquePrint({
         >
           {/* Marque */}
           <p className="text-sm font-bold text-slate-900">
-            🗝️ RoomScan<span className="text-[#0066EF]">.</span>
+            🗝️ RoomScan<span className="text-[#055492]">.</span>
           </p>
 
           {/* Accueil */}

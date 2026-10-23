@@ -288,7 +288,7 @@ export function WebhooksManager() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="h-8 w-8 border-2 border-blue-300/30 border-t-blue-500 rounded-full animate-spin" />
+        <div className="h-8 w-8 border-2 border-[#8fb1cc]/30 border-t-[#1173c7] rounded-full animate-spin" />
       </div>
     );
   }
@@ -305,7 +305,7 @@ export function WebhooksManager() {
         </div>
         <Button
           onClick={() => setDialogOpen(true)}
-          className="bg-blue-600 hover:bg-blue-700"
+          className="bg-[#055492] hover:bg-[#04467a]"
           disabled={homes.length === 0}
         >
           <Plus className="h-4 w-4 mr-2" />
@@ -325,8 +325,8 @@ export function WebhooksManager() {
       {webhooks.length === 0 && homes.length > 0 && (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16 gap-6">
-            <div className="rounded-2xl bg-blue-100 dark:bg-blue-500/10 p-4">
-              <Globe className="h-8 w-8 text-blue-600" />
+            <div className="rounded-2xl bg-[#dceaf5] dark:bg-[#1173c7]/10 p-4">
+              <Globe className="h-8 w-8 text-[#055492]" />
             </div>
             <div className="text-center">
               <p className="font-medium">Aucun webhook configuré</p>
@@ -365,8 +365,8 @@ export function WebhooksManager() {
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
                   {/* Icon */}
-                  <div className="rounded-lg bg-blue-100 dark:bg-blue-500/10 p-2 mt-0.5">
-                    <Link className="h-5 w-5 text-blue-600" />
+                  <div className="rounded-lg bg-[#dceaf5] dark:bg-[#1173c7]/10 p-2 mt-0.5">
+                    <Link className="h-5 w-5 text-[#055492]" />
                   </div>
 
                   {/* Info */}
@@ -633,7 +633,7 @@ export function WebhooksManager() {
             <Button
               onClick={handleCreate}
               disabled={saving || !newName || !newUrl || newEvents.length === 0 || !selectedHomeId}
-              className="bg-blue-600 hover:bg-blue-700"
+              className="bg-[#055492] hover:bg-[#04467a]"
             >
               {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Zap className="h-4 w-4 mr-2" />}
               Créer

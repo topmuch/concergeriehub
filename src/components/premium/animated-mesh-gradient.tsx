@@ -20,22 +20,22 @@ type Blob = {
 
 const BLOBS: Blob[] = [
   {
-    className: 'bg-[#0066EF]/[0.12] dark:bg-blue-500/25',
+    className: 'bg-[#055492]/[0.12] dark:bg-[#1173c7]/25',
     animate: { x: ['0%', '12%', '-6%', '0%'], y: ['0%', '-10%', '8%', '0%'] },
     duration: 22,
   },
   {
-    className: 'bg-blue-200/40 dark:bg-blue-500/20',
+    className: 'bg-[#c8dfef]/40 dark:bg-[#1173c7]/20',
     animate: { x: ['0%', '-14%', '10%', '0%'], y: ['0%', '10%', '-8%', '0%'] },
     duration: 26,
   },
   {
-    className: 'bg-[#3B82F6]/[0.10] dark:bg-sky-500/20',
+    className: 'bg-[#1173c7]/[0.10] dark:bg-sky-500/20',
     animate: { x: ['0%', '10%', '-12%', '0%'], y: ['0%', '8%', '-6%', '0%'], scale: [1, 1.15, 0.95, 1] },
     duration: 30,
   },
   {
-    className: 'bg-[#07235B]/[0.08] dark:bg-blue-600/15',
+    className: 'bg-[#043455]/[0.08] dark:bg-[#055492]/15',
     animate: { x: ['0%', '-8%', '14%', '0%'], y: ['0%', '-12%', '6%', '0%'], scale: [1, 0.9, 1.1, 1] },
     duration: 34,
   },

@@ -83,7 +83,7 @@ export default async function OpengraphImage() {
             width: 480,
             height: 480,
             borderRadius: 9999,
-            backgroundColor: 'rgba(37, 99, 235, 0.10)',
+            backgroundColor: 'rgba(5, 84, 146, 0.10)',
             top: -180,
             left: -140,
             display: 'flex',
@@ -130,7 +130,7 @@ export default async function OpengraphImage() {
                 width: 22,
                 height: 22,
                 borderRadius: 7,
-                background: 'linear-gradient(135deg, #07235B 0%, #0066EF 100%)',
+                background: 'linear-gradient(135deg, #043455 0%, #055492 100%)',
                 display: 'flex',
               }}
             />
@@ -174,7 +174,7 @@ export default async function OpengraphImage() {
                 fontSize: 22,
                 fontWeight: 800,
                 color: '#ffffff',
-                background: 'linear-gradient(135deg, #07235B 0%, #0066EF 100%)',
+                background: 'linear-gradient(135deg, #043455 0%, #055492 100%)',
                 borderRadius: 9999,
                 padding: '12px 26px',
               }}
@@ -254,7 +254,7 @@ export default async function OpengraphImage() {
                 width: 280,
                 height: 8,
                 borderRadius: 9999,
-                background: 'linear-gradient(90deg, #07235B 0%, #0066EF 100%)',
+                background: 'linear-gradient(90deg, #043455 0%, #055492 100%)',
                 marginTop: 22,
               }}
             />

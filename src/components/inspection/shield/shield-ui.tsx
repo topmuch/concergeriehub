@@ -59,7 +59,7 @@ export function PageHeader({
         {icon && (
           <span
             aria-hidden="true"
-            className="luxe-tile bg-gradient-to-br from-[#1e3a8a] to-[#16307a] text-white"
+            className="luxe-tile bg-gradient-to-br from-[#055492] to-[#164d7a] text-white"
           >
             {icon}
           </span>
@@ -116,7 +116,7 @@ export function GhostButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`luxe-btn-ghost focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1e3a8a] dark:focus-visible:outline-[#3b82f6] ${className}`}
+      className={`luxe-btn-ghost focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#055492] dark:focus-visible:outline-[#1173c7] ${className}`}
     >
       {children}
     </button>
@@ -163,7 +163,7 @@ export function MailButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`luxe-btn-mail focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1e3a8a] dark:focus-visible:outline-[#3b82f6] ${className}`}
+      className={`luxe-btn-mail focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#055492] dark:focus-visible:outline-[#1173c7] ${className}`}
     >
       {children}
     </button>

@@ -21,7 +21,7 @@ export function CtaFinal({ onGoToAuth }: { onGoToAuth?: GoToAuth }) {
       {/* Halo signature local (voiles bleu logo → pastel) */}
       <div
         aria-hidden="true"
-        className="absolute left-1/2 top-1/2 h-[420px] w-[720px] max-w-[92vw] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[linear-gradient(120deg,rgba(0,102,239,0.16),rgba(0,82,196,0.10),rgba(59,130,246,0.10))] opacity-70 blur-3xl"
+        className="absolute left-1/2 top-1/2 h-[420px] w-[720px] max-w-[92vw] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[linear-gradient(120deg,rgba(5, 84, 146,0.16),rgba(4, 70, 122,0.10),rgba(17, 115, 199,0.10))] opacity-70 blur-3xl"
       />
 
       <Reveal className="relative z-10 mx-auto max-w-3xl px-4 text-center sm:px-6">

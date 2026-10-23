@@ -192,7 +192,7 @@ export function HubArrivalTeaser({
           {/* Arrivée prévue */}
           <div className="mt-6 flex items-center gap-3 rounded-2xl border border-white/15 bg-white/[0.07] px-4 py-3">
             <span
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0066EF]/25 text-sky-200"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#055492]/25 text-sky-200"
               aria-hidden="true"
             >
               <CalendarClock className="h-5 w-5" />

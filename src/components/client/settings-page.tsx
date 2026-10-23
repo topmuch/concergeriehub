@@ -99,7 +99,7 @@ export function SettingsPage() {
     </div>
   );
 
-  const cardClass = 'border-l-4 border-l-blue-500';
+  const cardClass = 'border-l-4 border-l-[#1173c7]';
 
   return (
     <div className="space-y-6">
@@ -146,7 +146,7 @@ export function SettingsPage() {
             </div>
 
             <Button
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+              className="w-full bg-[#055492] hover:bg-[#04467a] text-white"
               onClick={() => toast.success('Profil mis à jour')}
             >
               <Save className="mr-2 h-4 w-4" />
@@ -201,7 +201,7 @@ export function SettingsPage() {
             </div>
 
             <Button
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+              className="w-full bg-[#055492] hover:bg-[#04467a] text-white"
               onClick={() => toast.success('Préférences du Hub sauvegardées')}
             >
               <Save className="mr-2 h-4 w-4" />
@@ -392,7 +392,7 @@ export function SettingsPage() {
                     Annuler
                   </Button>
                   <Button
-                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                    className="bg-[#055492] hover:bg-[#04467a] text-white"
                     onClick={() => {
                       setPasswordDialogOpen(false);
                       setCurrentPassword('');
@@ -472,14 +472,14 @@ export function SettingsPage() {
             <div className="space-y-3">
               <p className="text-sm font-medium">Statistiques</p>
               <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-lg bg-gradient-to-br from-blue-500/10 to-blue-700/10 p-4 text-center">
-                  <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                <div className="rounded-lg bg-gradient-to-br from-[#1173c7]/10 to-[#04467a]/10 p-4 text-center">
+                  <p className="text-2xl font-bold text-[#055492] dark:text-[#6d9cc4]">
                     {statsLoading ? '…' : stats.qrCount}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">QR codes actifs</p>
                 </div>
-                <div className="rounded-lg bg-gradient-to-br from-blue-500/10 to-blue-700/10 p-4 text-center">
-                  <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                <div className="rounded-lg bg-gradient-to-br from-[#1173c7]/10 to-[#04467a]/10 p-4 text-center">
+                  <p className="text-2xl font-bold text-[#055492] dark:text-[#6d9cc4]">
                     {statsLoading ? '…' : stats.homeCount}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">Maisons</p>

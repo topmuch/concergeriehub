@@ -156,7 +156,7 @@ const SOURCE_META: Record<string, { color: string; badge: string; label: string 
 const SOURCE_FALLBACK = { color: '#fbbf24', badge: 'i.', label: 'Externe' };
 
 /** Pastilles rondes des biens (colonne sticky) — palette Saphir Luxe. */
-const AVATAR_COLORS = ['#e9c47c', '#2dd4bf', '#f07d6a', '#fbbf24', '#34d399', '#5c8af0', '#cdb6ff'];
+const AVATAR_COLORS = ['#e9c47c', '#2dd4bf', '#f07d6a', '#fbbf24', '#34d399', '#5cadf0', '#cdb6ff'];
 
 function startOfDay(d: Date): Date {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -235,7 +235,7 @@ function hubConnectionText(opts: {
 
 /** Teintes sémantiques (nuit saphir) des pastilles d'événements — texte blanc. */
 const EVT_STYLES: Record<'checkin' | 'checkout' | 'stay' | 'cleaning', string> = {
-  stay: 'border-[#5c8af0]/30 bg-[#5c8af0]/15 hover:bg-[#5c8af0]/25',
+  stay: 'border-[#5cadf0]/30 bg-[#5cadf0]/15 hover:bg-[#5cadf0]/25',
   checkin: 'border-[#34d399]/30 bg-[#34d399]/12 hover:bg-[#34d399]/22',
   checkout: 'border-[#fbbf24]/30 bg-[#fbbf24]/12 hover:bg-[#fbbf24]/22',
   cleaning: 'border-[#cdb6ff]/30 bg-[#cdb6ff]/12 hover:bg-[#cdb6ff]/22',
@@ -243,7 +243,7 @@ const EVT_STYLES: Record<'checkin' | 'checkout' | 'stay' | 'cleaning', string> =
 
 /** Point coloré de chaque type d'événement (remplace les emojis). */
 const EVT_DOT: Record<'checkin' | 'checkout' | 'stay' | 'cleaning', string> = {
-  stay: '#5c8af0',
+  stay: '#5cadf0',
   checkin: '#34d399',
   checkout: '#fbbf24',
   cleaning: '#cdb6ff',
@@ -251,7 +251,7 @@ const EVT_DOT: Record<'checkin' | 'checkout' | 'stay' | 'cleaning', string> = {
 
 /** Légende typographique (points colorés cohérents avec les pastilles). */
 const LEGEND = [
-  { color: '#5c8af0', label: 'Séjour' },
+  { color: '#5cadf0', label: 'Séjour' },
   { color: '#34d399', label: 'Arrivée (check-in)' },
   { color: '#fbbf24', label: 'Départ (check-out)' },
   { color: '#cdb6ff', label: 'Ménage à faire' },
@@ -267,7 +267,7 @@ const TL_LEGEND = [
 
 /** v5.2 — classes communes des champs de formulaire (portails sombres). */
 const LUX_FIELD =
-  'rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50';
+  'rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50';
 
 export function CalendarContent() {
   const { properties, propertiesLoading, selectedId, selectedProperty } = useHostContext();
@@ -670,7 +670,7 @@ export function CalendarContent() {
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="lux-empty max-w-md rounded-2xl p-8 text-center">
           <h1 className="lux-display text-xl font-semibold text-white">Aucun bien à afficher</h1>
-          <p className="mt-2 text-sm text-[#8fa0c2]">
+          <p className="mt-2 text-sm text-[#8fabc2]">
             Créez votre première propriété pour organiser votre planning.
           </p>
           <Link
@@ -691,7 +691,7 @@ export function CalendarContent() {
         <div>
           <p className="lux-eyebrow">Planning</p>
           <h1 className="lux-display mt-1.5 text-2xl font-semibold text-white sm:text-3xl">Calendrier</h1>
-          <p className="mt-1 text-sm text-[#8fa0c2]">
+          <p className="mt-1 text-sm text-[#8fabc2]">
             {property ? (
               isAllMode ? (
                 <>
@@ -759,7 +759,7 @@ export function CalendarContent() {
           <div className="flex items-center gap-1.5">
             <button
               type="button"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/[0.03] text-[#8fa0c2] transition-colors hover:bg-white/[0.06] hover:text-white"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/[0.03] text-[#8fabc2] transition-colors hover:bg-white/[0.06] hover:text-white"
               onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))}
               aria-label="Mois précédent"
             >
@@ -770,7 +770,7 @@ export function CalendarContent() {
             </span>
             <button
               type="button"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/[0.03] text-[#8fa0c2] transition-colors hover:bg-white/[0.06] hover:text-white"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/[0.03] text-[#8fabc2] transition-colors hover:bg-white/[0.06] hover:text-white"
               onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))}
               aria-label="Mois suivant"
             >
@@ -779,7 +779,7 @@ export function CalendarContent() {
             {!isCurrentMonth && (
               <button
                 type="button"
-                className="ml-1 inline-flex h-8 items-center rounded-full px-3 text-xs font-semibold text-[#a9c4ff] transition-colors hover:bg-white/[0.06] hover:text-white"
+                className="ml-1 inline-flex h-8 items-center rounded-full px-3 text-xs font-semibold text-[#a9d8ff] transition-colors hover:bg-white/[0.06] hover:text-white"
                 onClick={() => setCursor(new Date(today.getFullYear(), today.getMonth(), 1))}
               >
                 Aujourd&apos;hui
@@ -796,7 +796,7 @@ export function CalendarContent() {
                 'h-8 rounded-full px-4 text-xs font-semibold transition-colors',
                 view === 'timeline'
                   ? 'bg-[#e9c47c] text-[#1a1206] shadow-[0_6px_18px_-8px_rgba(233,196,124,0.7)]'
-                  : 'text-[#8fa0c2] hover:text-white',
+                  : 'text-[#8fabc2] hover:text-white',
               )}
               onClick={() => setView('timeline')}
             >
@@ -810,7 +810,7 @@ export function CalendarContent() {
                 'h-8 rounded-full px-4 text-xs font-semibold transition-colors',
                 view === 'month'
                   ? 'bg-[#e9c47c] text-[#1a1206] shadow-[0_6px_18px_-8px_rgba(233,196,124,0.7)]'
-                  : 'text-[#8fa0c2] hover:text-white',
+                  : 'text-[#8fabc2] hover:text-white',
               )}
               onClick={() => setView('month')}
             >
@@ -827,18 +827,18 @@ export function CalendarContent() {
             <div className="mb-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5" aria-label="Légende du calendrier">
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
                 {TL_LEGEND.map((l) => (
-                  <span key={l.label} className="inline-flex items-center gap-1.5 text-[11px] font-medium text-[#8fa0c2]">
+                  <span key={l.label} className="inline-flex items-center gap-1.5 text-[11px] font-medium text-[#8fabc2]">
                     <span aria-hidden="true" className="lux-dot" style={{ backgroundColor: l.color }} />
                     {l.label}
                   </span>
                 ))}
-                <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-[#8fa0c2]">
+                <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-[#8fabc2]">
                   <span aria-hidden="true" className="inline-block h-2 w-2 rounded-full bg-[#f43f5e]" />
                   Turnover serré
                 </span>
               </div>
               {canManage && (
-                <span className="text-[11px] text-[#8fa0c2]">
+                <span className="text-[11px] text-[#8fabc2]">
                   Cliquez sur une barre pour le détail · sur une case vide pour créer un séjour
                 </span>
               )}
@@ -864,7 +864,7 @@ export function CalendarContent() {
             {/* Légende historique (vue Mois) */}
             <div className="mb-4 flex flex-wrap items-center justify-end gap-x-4 gap-y-1.5" aria-label="Légende du calendrier">
               {LEGEND.map((l) => (
-                <span key={l.label} className="inline-flex items-center gap-1.5 text-[11px] font-medium text-[#8fa0c2]">
+                <span key={l.label} className="inline-flex items-center gap-1.5 text-[11px] font-medium text-[#8fabc2]">
                   <span aria-hidden="true" className="lux-dot" style={{ backgroundColor: l.color }} />
                   {l.label}
                 </span>
@@ -905,13 +905,13 @@ export function CalendarContent() {
                                 ? 'bg-[#f43f5e] text-white shadow'
                                 : inMonth
                                   ? 'text-white'
-                                  : 'text-[#8fa0c2]/50',
+                                  : 'text-[#8fabc2]/50',
                             )}
                           >
                             {day.getDate()}
                           </span>
                           {evts.length > 2 && (
-                            <span className="text-[10px] font-semibold text-[#8fa0c2]">+{evts.length - 2}</span>
+                            <span className="text-[10px] font-semibold text-[#8fabc2]">+{evts.length - 2}</span>
                           )}
                         </div>
                         <div className="flex flex-col gap-1">
@@ -957,14 +957,14 @@ export function CalendarContent() {
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h2 className="lux-display text-xl font-semibold text-white">{selected.guestName}</h2>
-                <p className="mt-0.5 text-sm text-[#8fa0c2]">
+                <p className="mt-0.5 text-sm text-[#8fabc2]">
                   {fmtDayFr(new Date(selected.checkIn))} → {fmtDayFr(new Date(selected.checkOut))} · {selected.guests} pers.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setSelected(null)}
-                className="rounded-full p-1.5 text-[#8fa0c2] transition-colors hover:bg-white/[0.06] hover:text-white"
+                className="rounded-full p-1.5 text-[#8fabc2] transition-colors hover:bg-white/[0.06] hover:text-white"
                 aria-label="Fermer"
               >
                 <span aria-hidden="true" className="text-lg leading-none">×</span>
@@ -989,7 +989,7 @@ export function CalendarContent() {
                         selected.cleaningStatus === 'DONE'
                           ? '#34d399'
                           : selected.cleaningStatus === 'IN_PROGRESS'
-                            ? '#5c8af0'
+                            ? '#5cadf0'
                             : '#cdb6ff',
                     }}
                     aria-hidden="true"
@@ -1011,7 +1011,7 @@ export function CalendarContent() {
               )}
             </dl>
             {selected.notes && (
-              <p className="mt-3 rounded-xl border border-white/10 bg-white/[0.03] p-3 text-sm text-[#8fa0c2]">
+              <p className="mt-3 rounded-xl border border-white/10 bg-white/[0.03] p-3 text-sm text-[#8fabc2]">
                 {selected.notes}
               </p>
             )}
@@ -1139,7 +1139,7 @@ export function CalendarContent() {
                   {selected.lateCheckOutUntil && (
                     <button
                       type="button"
-                      className="inline-flex h-9 items-center rounded-full px-3 text-xs text-[#8fa0c2] transition-colors hover:text-[#ffab92]"
+                      className="inline-flex h-9 items-center rounded-full px-3 text-xs text-[#8fabc2] transition-colors hover:text-[#ffab92]"
                       disabled={actionBusy}
                       onClick={() => void patchBooking(selected.propertyId, selected.id, { lateCheckOutUntil: '' })}
                     >
@@ -1184,7 +1184,7 @@ export function CalendarContent() {
                     <Button
                       size="sm"
                       variant="ghost"
-                      className="h-9 rounded-full px-3 text-xs text-[#8fa0c2] hover:bg-white/[0.06] hover:text-white"
+                      className="h-9 rounded-full px-3 text-xs text-[#8fabc2] hover:bg-white/[0.06] hover:text-white"
                       disabled={actionBusy}
                       onClick={() => setCancelArmed(false)}
                     >
@@ -1207,7 +1207,7 @@ export function CalendarContent() {
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="h-9 rounded-full px-4 text-xs text-[#8fa0c2] hover:bg-white/[0.06] hover:text-[#ffab92]"
+                  className="h-9 rounded-full px-4 text-xs text-[#8fabc2] hover:bg-white/[0.06] hover:text-[#ffab92]"
                   disabled={actionBusy}
                   onClick={() => void deleteBooking(selected.propertyId, selected.id)}
                 >
@@ -1310,7 +1310,7 @@ function TimelineView({
                     <span
                       className={cn(
                         'text-[9.5px] font-bold uppercase',
-                        weekend ? 'text-[#8fa0c2]/55' : 'text-[#8fa0c2]',
+                        weekend ? 'text-[#8fabc2]/55' : 'text-[#8fabc2]',
                       )}
                     >
                       {DAY_LETTERS[(d.getDay() + 6) % 7]}
@@ -1321,7 +1321,7 @@ function TimelineView({
                         isToday
                           ? 'bg-[#f43f5e] text-white shadow-[0_0_14px_rgba(244,63,94,0.55)]'
                           : weekend
-                            ? 'text-[#8fa0c2]/75'
+                            ? 'text-[#8fabc2]/75'
                             : 'text-white',
                       )}
                     >
@@ -1352,7 +1352,7 @@ function TimelineView({
                   <p className="truncate text-[13px] font-semibold leading-tight text-white" title={row.name}>
                     {row.name}
                   </p>
-                  <p className="mt-0.5 truncate text-[10.5px] leading-tight text-[#8fa0c2]">
+                  <p className="mt-0.5 truncate text-[10.5px] leading-tight text-[#8fabc2]">
                     {row.staysCount} séjour{row.staysCount > 1 ? 's' : ''} · {row.nights} nuit{row.nights > 1 ? 's' : ''}
                   </p>
                 </div>
@@ -1479,7 +1479,7 @@ function TimelineView({
                       className={cn(
                         'absolute z-10 inline-flex h-5 items-center whitespace-nowrap rounded-full border px-2 text-[10px] font-semibold leading-none transition-colors',
                         chip.inProgress
-                          ? 'border-[#5c8af0]/40 bg-[#5c8af0]/12 text-[#a9c4ff] hover:bg-[#5c8af0]/22'
+                          ? 'border-[#5cadf0]/40 bg-[#5cadf0]/12 text-[#a9d8ff] hover:bg-[#5cadf0]/22'
                           : 'border-[#fbbf24]/40 bg-[#fbbf24]/12 text-[#fbbf24] hover:bg-[#fbbf24]/22',
                       )}
                       style={{
@@ -1715,7 +1715,7 @@ function NewBookingDialog({
       <AlertDialogContent className="max-h-[90vh] overflow-y-auto border-white/10 bg-[#0b1226] text-white sm:max-w-lg">
         <AlertDialogHeader>
           <AlertDialogTitle className="lux-display font-semibold text-white">Nouvelle réservation</AlertDialogTitle>
-          <AlertDialogDescription className="text-[#8fa0c2]">
+          <AlertDialogDescription className="text-[#8fabc2]">
             Ajoutez un séjour manuellement (hors plateformes). Les séjours iCal ne doivent PAS être
             recréés ici — ils se synchronisent automatiquement.
           </AlertDialogDescription>
@@ -1741,7 +1741,7 @@ function NewBookingDialog({
               inputMode="tel"
               maxLength={20}
             />
-            <p className="text-xs text-[#8fa0c2]">
+            <p className="text-xs text-[#8fabc2]">
               Format international (+33…). Sert à l&apos;envoi automatique du Bouclier d&apos;avis le matin du départ
             </p>
           </div>
@@ -1763,7 +1763,7 @@ function NewBookingDialog({
               <Input id="bk-out-time" className={LUX_FIELD} type="time" value={checkOutTime} onChange={(e) => setCheckOutTime(e.target.value)} />
             </div>
           </div>
-          <p className="text-xs text-[#8fa0c2]">
+          <p className="text-xs text-[#8fabc2]">
             L’heure de départ exacte verrouille le hub à la fin du séjour (prolongable en cas de départ tardif).
           </p>
           <div className="grid grid-cols-2 gap-3">
@@ -1804,7 +1804,7 @@ function NewBookingDialog({
                   <p className="text-xs font-semibold text-white">
                     Envoyer directement les infos de connexion à l'invité ?
                   </p>
-                  <p className="mt-0.5 text-[11px] leading-relaxed text-[#8fa0c2]">
+                  <p className="mt-0.5 text-[11px] leading-relaxed text-[#8fabc2]">
                     Message enrichi : lien du hub, code d'accès, arrivée &amp; départ, votre contact.
                   </p>
                   <div className="mt-2 flex flex-col gap-2">
@@ -1852,7 +1852,7 @@ function NewBookingDialog({
           ) : null}
           <div className="flex w-full gap-2 sm:justify-end">
             <AlertDialogCancel
-              className="h-10 rounded-full border-white/12 bg-white/[0.04] text-[#8fa0c2] hover:bg-white/[0.08] hover:text-white"
+              className="h-10 rounded-full border-white/12 bg-white/[0.04] text-[#8fabc2] hover:bg-white/[0.08] hover:text-white"
               onClick={() => {
                 resetAll();
                 onOpenChange(false);
@@ -2009,7 +2009,7 @@ function IcalDialog({
         <AlertDialogContent className="max-h-[90vh] overflow-y-auto border-white/10 bg-[#0b1226] text-white sm:max-w-xl">
           <AlertDialogHeader>
             <AlertDialogTitle className="lux-display font-semibold text-white">Synchroniser iCal</AlertDialogTitle>
-            <AlertDialogDescription className="text-[#8fa0c2]">
+            <AlertDialogDescription className="text-[#8fabc2]">
               Connectez les calendriers externes de {activeName || 'votre bien'} (Airbnb, Booking.com,
               Abritel…). Collez l&apos;URL d&apos;export iCal fournie par la plateforme — les séjours
               s&apos;importent puis se mettent à jour à chaque synchronisation.
@@ -2040,7 +2040,7 @@ function IcalDialog({
             {loading ? (
               <Skeleton className="h-16 w-full rounded-xl bg-white/[0.06]" />
             ) : feeds.length === 0 ? (
-              <p className="lux-empty rounded-xl p-4 text-center text-sm font-medium text-[#8fa0c2]">
+              <p className="lux-empty rounded-xl p-4 text-center text-sm font-medium text-[#8fabc2]">
                 Aucun calendrier connecté pour ce bien.
               </p>
             ) : (
@@ -2049,31 +2049,31 @@ function IcalDialog({
                   <span
                     aria-hidden="true"
                     className="lux-dot mt-1.5 shrink-0"
-                    style={{ backgroundColor: f.lastStatus === 'ERROR' ? '#f07d6a' : f.lastStatus === 'OK' ? '#34d399' : '#8fa0c2' }}
+                    style={{ backgroundColor: f.lastStatus === 'ERROR' ? '#f07d6a' : f.lastStatus === 'OK' ? '#34d399' : '#8fabc2' }}
                   />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold text-white">{f.label}</p>
-                    <p className="truncate text-xs text-[#8fa0c2]" title={f.url}>{f.url}</p>
+                    <p className="truncate text-xs text-[#8fabc2]" title={f.url}>{f.url}</p>
                     <p className="mt-0.5 text-xs">
                       {f.lastSyncAt ? (
                         <>
                           <span className={cn('font-semibold', f.lastStatus === 'OK' ? 'text-[#86e9cb]' : 'text-[#f07d6a]')}>
                             {f.lastStatus === 'OK' ? '✓ Synchronisé' : '✗ Erreur'}
                           </span>{' '}
-                          <span className="text-[#8fa0c2]">{fmtDateTimeFr(f.lastSyncAt)} · {f.lastImported} séjour(s)</span>
+                          <span className="text-[#8fabc2]">{fmtDateTimeFr(f.lastSyncAt)} · {f.lastImported} séjour(s)</span>
                           {f.lastError && <span className="block text-[#f07d6a]">{f.lastError}</span>}
                         </>
                       ) : (
-                        <span className="text-[#8fa0c2]">Jamais synchronisé</span>
+                        <span className="text-[#8fabc2]">Jamais synchronisé</span>
                       )}
                     </p>
                   </div>
                   {canManage && (
                     <div className="flex shrink-0 flex-col gap-1">
-                      <Button size="sm" variant="outline" className="h-7 rounded-full border-white/12 bg-white/[0.04] px-3 text-[11px] text-[#8fa0c2] hover:bg-white/[0.08] hover:text-white" disabled={busy !== null} onClick={() => void resync(f)}>
+                      <Button size="sm" variant="outline" className="h-7 rounded-full border-white/12 bg-white/[0.04] px-3 text-[11px] text-[#8fabc2] hover:bg-white/[0.08] hover:text-white" disabled={busy !== null} onClick={() => void resync(f)}>
                         {busy === f.id ? '…' : 'Re-sync'}
                       </Button>
-                      <Button size="sm" variant="ghost" className="h-7 text-xs text-[#8fa0c2] hover:bg-white/[0.06] hover:text-[#ffab92]" disabled={busy !== null} onClick={() => setConfirmDelete(f)}>
+                      <Button size="sm" variant="ghost" className="h-7 text-xs text-[#8fabc2] hover:bg-white/[0.06] hover:text-[#ffab92]" disabled={busy !== null} onClick={() => setConfirmDelete(f)}>
                         Retirer
                       </Button>
                     </div>
@@ -2094,7 +2094,7 @@ function IcalDialog({
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="ic-url">URL d&apos;export iCal</Label>
                 <Input id="ic-url" className={LUX_FIELD} value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://fr.airbnb.com/calendar/ical/…" disabled={busy !== null} />
-                <p className="text-[11px] text-[#8fa0c2]">
+                <p className="text-[11px] text-[#8fabc2]">
                   Airbnb : Annonces → Calendrier → Disponibilité → Exporter le calendrier. Les URL
                   webcal:// sont converties automatiquement.
                 </p>
@@ -2111,7 +2111,7 @@ function IcalDialog({
           )}
 
           <AlertDialogFooter>
-            <AlertDialogCancel className="h-10 rounded-full border-white/12 bg-white/[0.04] text-[#8fa0c2] hover:bg-white/[0.08] hover:text-white">Fermer</AlertDialogCancel>
+            <AlertDialogCancel className="h-10 rounded-full border-white/12 bg-white/[0.04] text-[#8fabc2] hover:bg-white/[0.08] hover:text-white">Fermer</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -2121,13 +2121,13 @@ function IcalDialog({
         <AlertDialogContent className="border-white/10 bg-[#0b1226] text-white">
           <AlertDialogHeader>
             <AlertDialogTitle className="lux-display font-semibold text-white">Déconnecter ce calendrier ?</AlertDialogTitle>
-            <AlertDialogDescription className="text-[#8fa0c2]">
+            <AlertDialogDescription className="text-[#8fabc2]">
               {confirmDelete?.label} ne se synchronisera plus. Les séjours déjà importés restent dans
               le planning (traçabilité).
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="h-10 rounded-full border-white/12 bg-white/[0.04] text-[#8fa0c2] hover:bg-white/[0.08] hover:text-white">Annuler</AlertDialogCancel>
+            <AlertDialogCancel className="h-10 rounded-full border-white/12 bg-white/[0.04] text-[#8fabc2] hover:bg-white/[0.08] hover:text-white">Annuler</AlertDialogCancel>
             <AlertDialogAction
               className="h-10 rounded-full bg-[#f07d6a] font-semibold text-[#2a0c06] hover:bg-[#f07d6a]/85"
               onClick={() => confirmDelete && void removeFeed(confirmDelete)}

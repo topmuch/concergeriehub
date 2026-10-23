@@ -13,7 +13,7 @@ import { db } from '@/lib/db';
 // Page 100 % serveur (lecture directe en base — pas de fetch en
 // boucle locale) et STRICTEMENT publique : aucune donnée sensible
 // (email, téléphone, adresse exacte, propriétaire) n'est affichée.
-// Design system PWA : bleu #1e3a8a, rouge #C41E3A, fond #f8fafc,
+// Design system PWA : bleu #055492, rouge #C41E3A, fond #f8fafc,
 // cartes blanches rounded-2xl shadow-sm, mobile first.
 // =============================================================
 
@@ -218,11 +218,11 @@ function BrandHeader() {
     <header className="flex items-center justify-center gap-3">
       <span
         aria-hidden="true"
-        className="flex size-10 items-center justify-center rounded-xl bg-[#1e3a8a] text-white shadow-sm"
+        className="flex size-10 items-center justify-center rounded-xl bg-[#055492] text-white shadow-sm"
       >
         <ShieldCheck className="size-5" />
       </span>
-      <p className="text-lg font-bold tracking-tight text-[#1e3a8a]">
+      <p className="text-lg font-bold tracking-tight text-[#055492]">
         Room<span className="text-[#C41E3A]">Scan</span>
       </p>
     </header>
@@ -251,7 +251,7 @@ function NotFoundScreen() {
           </p>
           <a
             href="https://roomscan.pro"
-            className="mt-6 inline-flex min-h-[44px] items-center justify-center rounded-full bg-[#1e3a8a] px-6 text-sm font-bold text-white shadow-sm transition-colors hover:bg-[#1a3278]"
+            className="mt-6 inline-flex min-h-[44px] items-center justify-center rounded-full bg-[#055492] px-6 text-sm font-bold text-white shadow-sm transition-colors hover:bg-[#1a3278]"
           >
             Aller sur roomscan.pro
           </a>
@@ -298,7 +298,7 @@ export default async function VerifyPropertyPage({
               Informations limitées
             </p>
           ) : (
-            <p className="mx-auto inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-bold text-[#1e3a8a]">
+            <p className="mx-auto inline-flex items-center gap-1.5 rounded-full border border-[#c8dfef] bg-[#f0f7fc] px-3 py-1 text-xs font-bold text-[#055492]">
               <ShieldCheck className="size-4" aria-hidden="true" />
               Logement déclaré
             </p>
@@ -315,7 +315,7 @@ export default async function VerifyPropertyPage({
           {data.shield && (
             <p
               aria-label="Référence d'onboarding"
-              className="mx-auto mt-4 inline-block rounded-xl border border-[#1e3a8a]/20 bg-[#f8fafc] px-4 py-2 font-mono text-sm font-bold tracking-wider text-[#1e3a8a]"
+              className="mx-auto mt-4 inline-block rounded-xl border border-[#055492]/20 bg-[#f8fafc] px-4 py-2 font-mono text-sm font-bold tracking-wider text-[#055492]"
             >
               {data.shield.onboardingRef}
             </p>
@@ -336,7 +336,7 @@ export default async function VerifyPropertyPage({
           className="mt-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm"
         >
           <h2 className="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-gray-700">
-            <History className="size-4 text-[#1e3a8a]" aria-hidden="true" />
+            <History className="size-4 text-[#055492]" aria-hidden="true" />
             Derniers contrôles
           </h2>
 

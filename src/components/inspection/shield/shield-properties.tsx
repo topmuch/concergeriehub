@@ -70,7 +70,7 @@ export function ShieldProperties() {
     <div className="mx-auto w-full max-w-7xl space-y-5 p-4 sm:p-6">
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <div className="flex items-center gap-3">
-          <span aria-hidden="true" className="luxe-tile bg-gradient-to-br from-[#1e3a8a] to-[#2f6fed] text-white">
+          <span aria-hidden="true" className="luxe-tile bg-gradient-to-br from-[#055492] to-[#2f6fed] text-white">
             <Building2 className="h-5 w-5" />
           </span>
           <div>
@@ -97,7 +97,7 @@ export function ShieldProperties() {
 
       {data === null ? (
         <div className="flex min-h-[40vh] items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-[#1e3a8a] dark:text-[#3b82f6]" aria-label="Chargement" />
+          <Loader2 className="h-8 w-8 animate-spin text-[#055492] dark:text-[#1173c7]" aria-label="Chargement" />
         </div>
       ) : data.properties.length === 0 ? (
         <ShieldCard className="p-8 text-center sm:p-12">
@@ -126,7 +126,7 @@ export function ShieldProperties() {
                 <div className="flex items-start justify-between gap-3">
                   <span
                     aria-hidden="true"
-                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#2f6fed] text-white shadow-md"
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#055492] to-[#2f6fed] text-white shadow-md"
                   >
                     <Building2 className="h-5 w-5" />
                   </span>
@@ -180,8 +180,8 @@ export function ShieldProperties() {
 
                 {/* ── Prochain séjour planifié (v4.167) ── */}
                 {p.nextVisit && (
-                  <p className="mt-3 flex items-start gap-1.5 rounded-lg border border-blue-100 bg-blue-50/60 px-3 py-2 text-xs text-slate-600 dark:border-[#2f6fed]/30 dark:bg-[#2f6fed]/10 dark:text-slate-300">
-                    <CalendarClock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#1e3a8a] dark:text-[#60a5fa]" aria-hidden="true" />
+                  <p className="mt-3 flex items-start gap-1.5 rounded-lg border border-[#dceaf5] bg-[#f0f7fc]/60 px-3 py-2 text-xs text-slate-600 dark:border-[#2f6fed]/30 dark:bg-[#2f6fed]/10 dark:text-slate-300">
+                    <CalendarClock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#055492] dark:text-[#8fb8dc]" aria-hidden="true" />
                     <span>
                       Prochain {p.nextVisit.type === 'CHECK_IN' ? 'check-in' : 'check-out'} :{' '}
                       {p.nextVisit.guestName ?? 'Invité'} — {formatDateTime(p.nextVisit.scheduledDate)}

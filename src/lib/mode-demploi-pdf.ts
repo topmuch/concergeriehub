@@ -140,7 +140,7 @@ const NOTIFICATIONS: Notif[] = [
   { title: 'Certificat disponible', description: 'Votre Certificat Anti-Dégâts PDF scellé est téléchargeable depuis le dashboard.' },
 ];
 
-const BLEU = '#1e3a8a';
+const BLEU = '#055492';
 const ROUGE = '#C41E3A';
 const GRIS = '#64748b';
 const GRIS_CLAIR = '#eef2f7';

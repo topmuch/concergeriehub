@@ -18,9 +18,9 @@ import { laundryOrderSummary, pickupSlotLabel } from '@/lib/laundry';
 // v5.2 « SAPHIR LUXE » — pastilles de statut pressing (teintes sémantiques 10 %).
 const LAUNDRY_STATUS_HOST_META: Record<string, { label: string; className: string }> = {
   PENDING_PAYMENT: { label: 'Paiement en cours', className: 'border-[#fbbf24]/25 bg-[#fbbf24]/10 text-[#fbbf24]' },
-  REQUESTED: { label: 'Demandée', className: 'border-white/12 bg-white/[0.04] text-[#8fa0c2]' },
+  REQUESTED: { label: 'Demandée', className: 'border-white/12 bg-white/[0.04] text-[#8fabc2]' },
   PAID: { label: 'Réglée', className: 'border-[#34d399]/25 bg-[#34d399]/10 text-[#34d399]' },
-  IN_PROGRESS: { label: 'En cours', className: 'border-[#5c8af0]/25 bg-[#5c8af0]/10 text-[#a9c4ff]' },
+  IN_PROGRESS: { label: 'En cours', className: 'border-[#5cadf0]/25 bg-[#5cadf0]/10 text-[#a9d8ff]' },
   READY: { label: 'Prête à livrer', className: 'border-[#2dd4bf]/25 bg-[#2dd4bf]/10 text-[#2dd4bf]' },
   DELIVERED: { label: 'Livrée', className: 'border-[#34d399]/25 bg-[#34d399]/10 text-[#34d399]' },
   CANCELLED: { label: 'Annulée', className: 'border-[#f07d6a]/25 bg-[#f07d6a]/10 text-[#f07d6a]' },
@@ -312,7 +312,7 @@ export function OrdersContent() {
       cell: (o) => (
         <div className="min-w-0">
           <p className="whitespace-nowrap font-medium text-white">{shortDate(o.createdAt)}</p>
-          <p className="text-xs text-[#8fa0c2]">{shortTime(o.createdAt)}</p>
+          <p className="text-xs text-[#8fabc2]">{shortTime(o.createdAt)}</p>
         </div>
       ),
     },
@@ -326,7 +326,7 @@ export function OrdersContent() {
             {o.guestName || '—'}
           </p>
           {o.guestEmail && (
-            <p className="truncate text-xs text-[#8fa0c2]" title={o.guestEmail}>
+            <p className="truncate text-xs text-[#8fabc2]" title={o.guestEmail}>
               {o.guestEmail}
             </p>
           )}
@@ -343,7 +343,7 @@ export function OrdersContent() {
             {o.provider?.businessName ?? '—'}
           </p>
           {o.provider && (
-            <p className="truncate text-xs text-[#8fa0c2]">
+            <p className="truncate text-xs text-[#8fabc2]">
               {providerCategoryMeta(o.provider.category).label}
             </p>
           )}
@@ -356,7 +356,7 @@ export function OrdersContent() {
       hideBelow: 'md',
       cell: (o) => (
         <div className="min-w-0 max-w-[240px]">
-          <p className="truncate text-[#8fa0c2]" title={itemsLabel(o.items)}>
+          <p className="truncate text-[#8fabc2]" title={itemsLabel(o.items)}>
             {itemsLabel(o.items)}
           </p>
           {/* REFONTE SERVICES PREMIUM (V4.11) — créneau choisi + note invité */}
@@ -384,14 +384,14 @@ export function OrdersContent() {
       header: 'Commission',
       hideBelow: 'lg',
       sortValue: (o) => o.commission,
-      cell: (o) => <span className="text-[#8fa0c2]">{formatEur(o.commission)}</span>,
+      cell: (o) => <span className="text-[#8fabc2]">{formatEur(o.commission)}</span>,
     },
     {
       key: 'hostEarning',
       header: 'Part hôte',
       hideBelow: 'lg',
       sortValue: (o) => o.hostEarning,
-      cell: (o) => <span className="text-[#8fa0c2]">{formatEur(o.hostEarning)}</span>,
+      cell: (o) => <span className="text-[#8fabc2]">{formatEur(o.hostEarning)}</span>,
     },
     {
       key: 'status',
@@ -413,7 +413,7 @@ export function OrdersContent() {
         const targets = legalTargets(o.status);
         if (targets.length === 0) {
           return (
-            <span className="text-xs text-[#8fa0c2]/60" title="Statut terminal — aucune action">
+            <span className="text-xs text-[#8fabc2]/60" title="Statut terminal — aucune action">
               —
             </span>
           );
@@ -424,14 +424,14 @@ export function OrdersContent() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-9 w-9 rounded-full p-0 text-[#8fa0c2] hover:bg-white/8 hover:text-white"
+                className="h-9 w-9 rounded-full p-0 text-[#8fabc2] hover:bg-white/8 hover:text-white"
                 aria-label={`Actions pour la commande de ${o.guestName || 'un invité'}`}
               >
                 <span aria-hidden="true" className="text-base leading-none">⋯</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56 border-white/10 bg-[#0d1530] text-white">
-              <DropdownMenuLabel className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8fa0c2]">
+              <DropdownMenuLabel className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8fabc2]">
                 Transition de statut
               </DropdownMenuLabel>
               {targets.map((t) => (
@@ -443,7 +443,7 @@ export function OrdersContent() {
                     ACTION_META[t].destructive && 'text-[#f07d6a] focus:bg-[#f07d6a]/10 focus:text-[#f07d6a]',
                   )}
                 >
-                  <span className="lux-dot shrink-0" style={{ backgroundColor: ACTION_META[t].destructive ? '#f07d6a' : '#5c8af0' }} aria-hidden="true" />
+                  <span className="lux-dot shrink-0" style={{ backgroundColor: ACTION_META[t].destructive ? '#f07d6a' : '#5cadf0' }} aria-hidden="true" />
                   {ACTION_META[t].label}
                 </DropdownMenuItem>
               ))}
@@ -463,7 +463,7 @@ export function OrdersContent() {
           <h1 className="lux-display mt-1 text-2xl font-semibold text-white sm:text-3xl">
             Commandes &amp; Revenus
           </h1>
-          <p className="mt-1.5 text-sm text-[#8fa0c2]">
+          <p className="mt-1.5 text-sm text-[#8fabc2]">
             {loading && orders.length === 0 ? (
               'Chargement des commandes…'
             ) : (
@@ -471,7 +471,7 @@ export function OrdersContent() {
                 {orders.length} commande{orders.length > 1 ? 's' : ''} —{' '}
                 <span className="font-semibold text-white">{scopeLabel}</span>
                 {hasActiveFilters && (
-                  <span className="text-[#8fa0c2]/80">
+                  <span className="text-[#8fabc2]/80">
                     {' '}
                     · {filtered.length} affichée{filtered.length > 1 ? 's' : ''}
                   </span>
@@ -608,7 +608,7 @@ export function OrdersContent() {
           <Button
             variant="ghost"
             size="sm"
-            className="h-9 rounded-full text-[#8fa0c2] hover:bg-white/8 hover:text-white"
+            className="h-9 rounded-full text-[#8fabc2] hover:bg-white/8 hover:text-white"
             onClick={() => {
               setStatusFilter('all');
               setPaymentFilter('all');
@@ -620,7 +620,7 @@ export function OrdersContent() {
           </Button>
         )}
 
-        <span className="ml-auto hidden text-xs text-[#8fa0c2] sm:inline">
+        <span className="ml-auto hidden text-xs text-[#8fabc2] sm:inline">
           {filtered.length}/{rows.length} commande{rows.length > 1 ? 's' : ''}
         </span>
       </section>
@@ -650,7 +650,7 @@ export function OrdersContent() {
             <AlertDialogTitle className="lux-display text-lg font-semibold text-white">
               {pendingAction ? confirmTitle(pendingAction.target) : ''}
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-sm text-[#8fa0c2]">
+            <AlertDialogDescription className="text-sm text-[#8fabc2]">
               {pendingAction ? confirmDescription(pendingAction.order, pendingAction.target) : ''}
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -666,7 +666,7 @@ export function OrdersContent() {
                 'rounded-full font-semibold',
                 pendingAction?.target === 'CANCELLED'
                   ? 'bg-[#f07d6a] text-[#2a100a] hover:brightness-105 focus:ring-[#f07d6a]/50'
-                  : 'bg-[#5c8af0] text-white hover:bg-[#4a79e0] focus:ring-[#5c8af0]/50',
+                  : 'bg-[#5cadf0] text-white hover:bg-[#4a79e0] focus:ring-[#5cadf0]/50',
               )}
               disabled={transitionBusy}
               onClick={(e) => {
@@ -782,7 +782,7 @@ function LaundryOrdersPanel() {
           <h2 className="lux-display mt-1 text-lg font-semibold text-white">
             Pressing &amp; Blanchisserie Express
           </h2>
-          <p className="mt-0.5 text-xs text-[#8fa0c2]">
+          <p className="mt-0.5 text-xs text-[#8fabc2]">
             Commandes pressing de vos invités (repassage, lessive, pressing à sec) — {selectedProperty?.name ?? ''}.
           </p>
         </div>
@@ -801,9 +801,9 @@ function LaundryOrdersPanel() {
 
       {orders === null && !loading ? (
         <div className="lux-empty mt-4 flex flex-col items-center gap-2 p-6 text-center">
-          <span className="lux-dot" style={{ backgroundColor: '#5c8af0' }} aria-hidden="true" />
+          <span className="lux-dot" style={{ backgroundColor: '#5cadf0' }} aria-hidden="true" />
           <p className="text-sm font-semibold text-white">Aucune commande pressing</p>
-          <p className="text-xs text-[#8fa0c2]">
+          <p className="text-xs text-[#8fabc2]">
             Vos invités commandent depuis l&apos;onglet Services de leur Hub.
           </p>
         </div>
@@ -813,15 +813,15 @@ function LaundryOrdersPanel() {
         <div className="mt-4 space-y-3">
           {active.length === 0 && done.length === 0 && (
             <div className="lux-empty flex flex-col items-center gap-2 p-6 text-center">
-              <span className="lux-dot" style={{ backgroundColor: '#5c8af0' }} aria-hidden="true" />
+              <span className="lux-dot" style={{ backgroundColor: '#5cadf0' }} aria-hidden="true" />
               <p className="text-sm font-semibold text-white">Aucune commande pressing</p>
-              <p className="text-xs text-[#8fa0c2]">
+              <p className="text-xs text-[#8fabc2]">
                 Vos invités commandent depuis l&apos;onglet Services de leur Hub.
               </p>
             </div>
           )}
           {active.map((o) => {
-            const meta = LAUNDRY_STATUS_HOST_META[o.status] ?? { label: o.status, className: 'border-white/12 bg-white/[0.04] text-[#8fa0c2]' };
+            const meta = LAUNDRY_STATUS_HOST_META[o.status] ?? { label: o.status, className: 'border-white/12 bg-white/[0.04] text-[#8fabc2]' };
             return (
               <div
                 key={o.id}
@@ -834,13 +834,13 @@ function LaundryOrdersPanel() {
                       {meta.label}
                     </span>
                   </p>
-                  <p className="mt-1 text-xs text-[#8fa0c2]">
+                  <p className="mt-1 text-xs text-[#8fabc2]">
                     {o.guestName ?? 'Invité'} · récupération {pickupSlotLabel(o.pickupSlot)} ·{' '}
                     {new Date(o.createdAt).toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })} ·{' '}
                     <strong className="text-white">{o.amountEur.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}</strong>
                     {o.payment === 'stripe' ? ' · carte' : ' · à régler avec l\u2019hôte'}
                   </p>
-                  {o.notes && <p className="mt-1 text-xs italic text-[#8fa0c2]/80">« {o.notes.slice(0, 160)} »</p>}
+                  {o.notes && <p className="mt-1 text-xs italic text-[#8fabc2]/80">« {o.notes.slice(0, 160)} »</p>}
                 </div>
                 <div className="flex shrink-0 flex-wrap gap-1.5">
                   {o.status !== 'PAID' && o.payment !== 'stripe' && (
@@ -909,9 +909,9 @@ function LaundryOrdersPanel() {
               </summary>
               <ul className="mt-2.5 space-y-1.5">
                 {done.map((o) => {
-                  const meta = LAUNDRY_STATUS_HOST_META[o.status] ?? { label: o.status, className: 'border-white/12 bg-white/[0.04] text-[#8fa0c2]' };
+                  const meta = LAUNDRY_STATUS_HOST_META[o.status] ?? { label: o.status, className: 'border-white/12 bg-white/[0.04] text-[#8fabc2]' };
                   return (
-                    <li key={o.id} className="text-xs text-[#8fa0c2]">
+                    <li key={o.id} className="text-xs text-[#8fabc2]">
                       {laundryOrderSummary(o.serviceType, o.pieces)} — {o.guestName ?? 'Invité'} ·{' '}
                       <span className={`rounded-full border px-1.5 py-0.5 text-[10px] font-semibold ${meta.className}`}>{meta.label}</span> ·{' '}
                       {new Date(o.createdAt).toLocaleDateString('fr-FR')} ·{' '}

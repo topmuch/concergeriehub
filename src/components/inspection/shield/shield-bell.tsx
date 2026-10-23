@@ -65,7 +65,7 @@ export function ShieldBell({ variant = 'dark' }: { variant?: 'dark' | 'light' })
     variant === 'dark'
       ? 'text-white hover:bg-white/10'
       : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/10';
-  const badgeRing = variant === 'dark' ? 'ring-[#1e3a8a]' : 'ring-white dark:ring-[#0a1226]';
+  const badgeRing = variant === 'dark' ? 'ring-[#055492]' : 'ring-white dark:ring-[#0a1226]';
   const [data, setData] = useState<NotificationsResponse | null>(null);
   const [open, setOpen] = useState(false);
   const [seenAt, setSeenAt] = useState<number>(() => {
@@ -252,7 +252,7 @@ export function ShieldBell({ variant = 'dark' }: { variant?: 'dark' | 'light' })
                           onClick={() => setOpen(false)}
                           className="flex items-start gap-3 px-4 py-3 transition-colors hover:bg-slate-50 dark:hover:bg-[#13204a]"
                         >
-                          <span aria-hidden="true" className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-[#1e3a8a] dark:bg-[#2f6fed]/20 dark:text-[#60a5fa]">
+                          <span aria-hidden="true" className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#f0f7fc] text-[#055492] dark:bg-[#2f6fed]/20 dark:text-[#8fb8dc]">
                             <Camera className="h-4 w-4" />
                           </span>
                           <span className="min-w-0">

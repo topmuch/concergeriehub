@@ -98,7 +98,7 @@ const REFRESH_MS = 30_000;
 const SEVERITY_META: Record<string, { label: string; dot: string; ink: string }> = {
   CRITICAL: { label: 'Critique', dot: '#f07d6a', ink: 'text-[#ffab92]' },
   WARNING: { label: 'Avertissement', dot: '#e9c47c', ink: 'text-[#e9c47c]' },
-  INFO: { label: 'Info', dot: '#5c8af0', ink: 'text-[#a9c4ff]' },
+  INFO: { label: 'Info', dot: '#5cadf0', ink: 'text-[#a9d8ff]' },
 };
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -250,7 +250,7 @@ export function AdminMonitoringContent() {
                   (globalStatus === 'DEGRADED' || (globalStatus === 'OK' && hasIncidents)) &&
                     'bg-[#e9c47c]/12 text-[#e9c47c] ring-1 ring-[#e9c47c]/30',
                   globalStatus === 'DOWN' && 'bg-[#f07d6a]/12 text-[#ffab92] ring-1 ring-[#f07d6a]/35',
-                  globalStatus === 'UNKNOWN' && 'bg-white/6 text-[#8fa0c2] ring-1 ring-white/12',
+                  globalStatus === 'UNKNOWN' && 'bg-white/6 text-[#8fabc2] ring-1 ring-white/12',
                 )}
               >
                 <span
@@ -263,7 +263,7 @@ export function AdminMonitoringContent() {
                           ? '#e9c47c'
                           : globalStatus === 'OK'
                             ? '#34d399'
-                            : '#8fa0c2',
+                            : '#8fabc2',
                   }}
                   aria-hidden="true"
                 />
@@ -274,7 +274,7 @@ export function AdminMonitoringContent() {
                 {globalStatus === 'UNKNOWN' && 'Mesure en cours…'}
               </span>
               {data?.current.metric && (
-                <span className="text-[11px] text-[#8fa0c2]">
+                <span className="text-[11px] text-[#8fabc2]">
                   Dernier tick {fmtDayHour.format(new Date(data.current.metric.timestamp))}
                 </span>
               )}
@@ -326,7 +326,7 @@ export function AdminMonitoringContent() {
       ) : !data ? (
         <div className="lux-card lux-empty p-8 text-center">
           <p className="lux-display text-lg">Impossible de charger la surveillance</p>
-          <p className="mt-1 text-xs text-[#8fa0c2]">
+          <p className="mt-1 text-xs text-[#8fabc2]">
             Vérifiez votre connexion puis réessayez avec « Actualiser ».
           </p>
         </div>
@@ -338,7 +338,7 @@ export function AdminMonitoringContent() {
               eyebrow="Temps de réponse API"
               value={data.kpis.avgApiMs1h != null ? `${data.kpis.avgApiMs1h} ms` : '—'}
               hint="moyenne 1 h · /api/health"
-              dot="#5c8af0"
+              dot="#5cadf0"
             />
             <KpiTile
               eyebrow="Uptime base de données"
@@ -376,13 +376,13 @@ export function AdminMonitoringContent() {
                       <CartesianGrid strokeDasharray="3 6" stroke="rgba(148,170,214,0.14)" vertical={false} />
                       <XAxis
                         dataKey="time"
-                        tick={{ fill: '#8fa0c2', fontSize: 10 }}
+                        tick={{ fill: '#8fabc2', fontSize: 10 }}
                         axisLine={false}
                         tickLine={false}
                         minTickGap={40}
                       />
                       <YAxis
-                        tick={{ fill: '#8fa0c2', fontSize: 10 }}
+                        tick={{ fill: '#8fabc2', fontSize: 10 }}
                         axisLine={false}
                         tickLine={false}
                         unit=" ms"
@@ -396,12 +396,12 @@ export function AdminMonitoringContent() {
                           color: '#ffffff',
                         }}
                       />
-                      <Legend wrapperStyle={{ fontSize: 11, color: '#8fa0c2' }} />
+                      <Legend wrapperStyle={{ fontSize: 11, color: '#8fabc2' }} />
                       <Line
                         type="monotone"
                         dataKey="api"
                         name="API (ms)"
-                        stroke="#5c8af0"
+                        stroke="#5cadf0"
                         strokeWidth={2}
                         dot={false}
                       />
@@ -437,14 +437,14 @@ export function AdminMonitoringContent() {
                       <CartesianGrid strokeDasharray="3 6" stroke="rgba(148,170,214,0.14)" vertical={false} />
                       <XAxis
                         dataKey="hour"
-                        tick={{ fill: '#8fa0c2', fontSize: 10 }}
+                        tick={{ fill: '#8fabc2', fontSize: 10 }}
                         axisLine={false}
                         tickLine={false}
                         minTickGap={16}
                       />
                       <YAxis
                         allowDecimals={false}
-                        tick={{ fill: '#8fa0c2', fontSize: 10 }}
+                        tick={{ fill: '#8fabc2', fontSize: 10 }}
                         axisLine={false}
                         tickLine={false}
                       />
@@ -458,10 +458,10 @@ export function AdminMonitoringContent() {
                           color: '#ffffff',
                         }}
                       />
-                      <Legend wrapperStyle={{ fontSize: 11, color: '#8fa0c2' }} />
+                      <Legend wrapperStyle={{ fontSize: 11, color: '#8fabc2' }} />
                       <Bar dataKey="errors" name="Erreurs 500" fill="#f07d6a" radius={[4, 4, 0, 0]} maxBarSize={16} />
                       <Bar dataKey="payments" name="Paiements" fill="#e9c47c" radius={[4, 4, 0, 0]} maxBarSize={16} />
-                      <Bar dataKey="emails" name="Emails" fill="#5c8af0" radius={[4, 4, 0, 0]} maxBarSize={16} />
+                      <Bar dataKey="emails" name="Emails" fill="#5cadf0" radius={[4, 4, 0, 0]} maxBarSize={16} />
                     </BarChart>
                   </ResponsiveContainer>
                 ) : (
@@ -483,14 +483,14 @@ export function AdminMonitoringContent() {
                   Incidents actifs · {data.incidents.length}
                 </h2>
               </div>
-              <span className="text-[11px] text-[#8fa0c2]">
+              <span className="text-[11px] text-[#8fabc2]">
                 Un même problème récurrent est compté en occurrences — pas d&apos;alerte email en double.
               </span>
             </div>
             {data.incidents.length === 0 ? (
               <div className="lux-empty mx-5 mb-5 rounded-2xl sm:mx-6">
                 <p className="lux-display text-lg">Aucun incident en cours</p>
-                <p className="mt-1 text-xs text-[#8fa0c2]">
+                <p className="mt-1 text-xs text-[#8fabc2]">
                   La détection prédictive surveille : latences, erreurs, paiements, emails, disque et crons.
                 </p>
               </div>
@@ -498,7 +498,7 @@ export function AdminMonitoringContent() {
               <div className="lux-scroll max-h-[480px] overflow-y-auto">
                 <table className="w-full text-left text-[13px]">
                   <thead className="sticky top-0 z-10 bg-[#0d1530]">
-                    <tr className="lux-eyebrow !text-[9.5px] text-[#8fa0c2]">
+                    <tr className="lux-eyebrow !text-[9.5px] text-[#8fabc2]">
                       <th className="px-5 py-3 font-medium sm:px-6">Sévérité</th>
                       <th className="px-4 py-3 font-medium">Catégorie</th>
                       <th className="px-4 py-3 font-medium">Incident</th>
@@ -526,19 +526,19 @@ export function AdminMonitoringContent() {
                               {meta.label}
                             </span>
                           </td>
-                          <td className="px-4 py-4 text-[#8fa0c2]">
+                          <td className="px-4 py-4 text-[#8fabc2]">
                             {CATEGORY_LABELS[incident.category] ?? incident.category}
                           </td>
                           <td className="max-w-md px-4 py-4">
                             <p className="font-semibold text-white">{incident.title}</p>
-                            <p className="mt-1 text-xs leading-relaxed text-[#8fa0c2]">
+                            <p className="mt-1 text-xs leading-relaxed text-[#8fabc2]">
                               {incident.description}
                             </p>
                           </td>
                           <td className="hidden px-4 py-4 tabular-nums text-white md:table-cell">
                             {incident.occurrences}
                           </td>
-                          <td className="hidden px-4 py-4 tabular-nums text-[#8fa0c2] lg:table-cell">
+                          <td className="hidden px-4 py-4 tabular-nums text-[#8fabc2] lg:table-cell">
                             {fmtDayHour.format(new Date(incident.lastSeenAt))}
                           </td>
                           <td className="px-5 py-4 text-right sm:px-6">
@@ -572,7 +572,7 @@ export function AdminMonitoringContent() {
             {data.crons.length === 0 ? (
               <div className="lux-empty mt-4 rounded-2xl">
                 <p className="lux-display text-lg">Aucun cron journalisé</p>
-                <p className="mt-1 text-xs text-[#8fa0c2]">
+                <p className="mt-1 text-xs text-[#8fabc2]">
                   Les exécutions apparaissent ici dès le premier passage (tick de monitoring, automatisations, coach).
                 </p>
               </div>
@@ -581,7 +581,7 @@ export function AdminMonitoringContent() {
                 {data.crons.map((cron) => {
                   const meta = CRON_STATUS_META[cron.status] ?? {
                     label: cron.status,
-                    dot: '#8fa0c2',
+                    dot: '#8fabc2',
                   };
                   return (
                     <li
@@ -600,10 +600,10 @@ export function AdminMonitoringContent() {
                       >
                         {meta.label}
                       </span>
-                      <span className="shrink-0 tabular-nums text-[11px] text-[#8fa0c2]">
+                      <span className="shrink-0 tabular-nums text-[11px] text-[#8fabc2]">
                         {cron.duration} ms
                       </span>
-                      <span className="shrink-0 tabular-nums text-[11px] text-[#8fa0c2]/70">
+                      <span className="shrink-0 tabular-nums text-[11px] text-[#8fabc2]/70">
                         {fmtDayHour.format(new Date(cron.executedAt))}
                       </span>
                       {cron.errorMessage && (
@@ -673,7 +673,7 @@ function SchedulerStatusBanner({
         <p className="text-[13px] font-semibold text-white">
           Scheduler interne {active ? 'actif' : 'en attente du premier tick'}
         </p>
-        <p className="mt-0.5 text-[11px] leading-relaxed text-[#8fa0c2]">
+        <p className="mt-0.5 text-[11px] leading-relaxed text-[#8fabc2]">
           {active
             ? `La plateforme exécute elle-même ses traitements automatisés (tick de monitoring ${when}). Le cron externe devient optionnel.`
             : "L'application exécute ses ticks toutes les 5 min après démarrage (warm-up 35 s). Si aucun tick n'apparaît, vérifiez les logs serveur."}
@@ -720,11 +720,11 @@ function CheckChip({
     >
       <span
         className="lux-dot shrink-0"
-        style={{ backgroundColor: ok ? '#34d399' : muted ? '#8fa0c2' : '#f07d6a' }}
+        style={{ backgroundColor: ok ? '#34d399' : muted ? '#8fabc2' : '#f07d6a' }}
         aria-hidden="true"
       />
       <span className="min-w-0 flex-1 truncate text-white/90">{label}</span>
-      <span className="shrink-0 tabular-nums text-[11px] text-[#8fa0c2]">
+      <span className="shrink-0 tabular-nums text-[11px] text-[#8fabc2]">
         {muted
           ? 'non configuré'
           : check?.latencyMs != null
@@ -756,7 +756,7 @@ function KpiTile({
         <p className="lux-eyebrow !text-[9.5px]">{eyebrow}</p>
       </div>
       <p className="lux-num mt-2 text-3xl font-semibold text-white">{value}</p>
-      <p className="mt-1 text-[11px] leading-snug text-[#8fa0c2]">{hint}</p>
+      <p className="mt-1 text-[11px] leading-snug text-[#8fabc2]">{hint}</p>
     </div>
   );
 }
@@ -766,7 +766,7 @@ function ChartEmpty({ title, hint }: { title: string; hint: string }) {
   return (
     <div className="lux-empty flex h-full flex-col items-center justify-center rounded-2xl px-6 text-center">
       <p className="lux-display text-lg">{title}</p>
-      <p className="mt-1 max-w-sm text-xs leading-relaxed text-[#8fa0c2]">{hint}</p>
+      <p className="mt-1 max-w-sm text-xs leading-relaxed text-[#8fabc2]">{hint}</p>
     </div>
   );
 }

@@ -74,7 +74,7 @@ function planBadge(plan: string | null): { label: string; dot: string } {
     case 'airbnb_solo':
       return { label: 'Solo', dot: '#2dd4bf' };
     case 'airbnb_pro':
-      return { label: 'Pro', dot: '#5c8af0' };
+      return { label: 'Pro', dot: '#5cadf0' };
     case 'agency':
       return { label: 'Agence', dot: '#e9c47c' };
     default:
@@ -179,7 +179,7 @@ export function AdminHostsContent() {
         <div>
           <p className="lux-eyebrow">Annuaire</p>
           <h1 className="lux-display mt-1 text-2xl font-semibold text-white sm:text-3xl">Hôtes</h1>
-          <p className="text-sm text-[#8fa0c2] mt-1">
+          <p className="text-sm text-[#8fabc2] mt-1">
             Comptes, abonnements et biens — désactivez un compte en cas d&apos;abus.
           </p>
         </div>
@@ -196,7 +196,7 @@ export function AdminHostsContent() {
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Rechercher par nom ou email…"
             aria-label="Rechercher un hôte"
-            className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+            className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50"
           />
         </div>
       </section>
@@ -207,7 +207,7 @@ export function AdminHostsContent() {
           [0, 1, 2].map((i) => <Skeleton key={i} className="h-20 rounded-xl bg-white/8" />)
         ) : error ? (
           <div className="lux-card p-6 text-center">
-            <p className="text-sm text-[#8fa0c2]">{error}</p>
+            <p className="text-sm text-[#8fabc2]">{error}</p>
             <Button onClick={load} className="lux-btn mt-3 h-9 rounded-full px-4 text-xs">
               Réessayer
             </Button>
@@ -229,14 +229,14 @@ export function AdminHostsContent() {
                     onClick={() => toggleExpand(h.id)}
                     aria-expanded={expanded}
                     aria-label={`${expanded ? 'Masquer' : 'Voir'} les biens de ${h.fullName ?? h.email}`}
-                    className="h-8 w-8 shrink-0 inline-flex items-center justify-center rounded-lg text-[#8fa0c2] hover:bg-white/8 hover:text-white transition-colors"
+                    className="h-8 w-8 shrink-0 inline-flex items-center justify-center rounded-lg text-[#8fabc2] hover:bg-white/8 hover:text-white transition-colors"
                   >
                     <span aria-hidden="true">{expanded ? '▾' : '›'}</span>
                   </button>
 
                   <span
                     aria-hidden="true"
-                    className="lux-num h-10 w-10 rounded-full bg-[#3d6fe0]/15 text-xs font-semibold text-[#a9c4ff] ring-1 ring-[#5c8af0]/25 inline-flex items-center justify-center shrink-0"
+                    className="lux-num h-10 w-10 rounded-full bg-[#3d97e0]/15 text-xs font-semibold text-[#a9d8ff] ring-1 ring-[#5cadf0]/25 inline-flex items-center justify-center shrink-0"
                   >
                     {(h.fullName ?? h.email).slice(0, 2).toUpperCase()}
                   </span>
@@ -262,13 +262,13 @@ export function AdminHostsContent() {
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-[#8fa0c2] truncate">
+                    <p className="text-xs text-[#8fabc2] truncate">
                       {h.email} · inscrit le {formatDay(h.createdAt)}
                     </p>
                   </div>
 
                   <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 sm:gap-4 shrink-0">
-                    <span className="text-xs font-semibold text-[#8fa0c2] whitespace-nowrap">
+                    <span className="text-xs font-semibold text-[#8fabc2] whitespace-nowrap">
                       {h.propertyCount} bien{h.propertyCount > 1 ? 's' : ''}
                     </span>
                     <label className="flex items-center gap-2 cursor-pointer">
@@ -277,7 +277,7 @@ export function AdminHostsContent() {
                         onCheckedChange={(v) => toggleActive(h, v)}
                         aria-label={`Compte ${h.fullName ?? h.email} ${h.isActive ? 'actif' : 'désactivé'}`}
                       />
-                      <span className="text-xs font-semibold text-[#8fa0c2] sm:whitespace-nowrap">
+                      <span className="text-xs font-semibold text-[#8fabc2] sm:whitespace-nowrap">
                         {h.isActive ? 'Actif' : 'Désactivé'}
                       </span>
                     </label>
@@ -306,7 +306,7 @@ export function AdminHostsContent() {
                                 />
                                 <div className="flex-1 min-w-0">
                                   <p className="text-sm font-bold text-white truncate">{p.name}</p>
-                                  <p className="text-[11px] text-[#8fa0c2] mt-0.5">
+                                  <p className="text-[11px] text-[#8fabc2] mt-0.5">
                                     {p.address ?? tm.label}
                                   </p>
                                   <div className="mt-2 flex flex-wrap gap-1.5">
@@ -337,7 +337,7 @@ export function AdminHostsContent() {
                         })}
                       </div>
                     ) : (
-                      <p className="text-sm text-[#8fa0c2] text-center py-4">
+                      <p className="text-sm text-[#8fabc2] text-center py-4">
                         Aucune propriété pour cet hôte.
                       </p>
                     )}

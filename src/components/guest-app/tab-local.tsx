@@ -149,11 +149,11 @@ export function TabLocal({ spots, slug }: { spots: GuestSpot[]; slug: string }) 
               placeholder="Restaurant, boulangerie, parc…"
               aria-label="Rechercher une adresse"
               enterKeyHint="search"
-              className="min-w-0 flex-1 min-h-11 rounded-xl bg-secondary border border-border px-3.5 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0066EF]/60"
+              className="min-w-0 flex-1 min-h-11 rounded-xl bg-secondary border border-border px-3.5 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-[#055492]/60"
             />
             <button
               type="submit"
-              className="shrink-0 min-h-11 px-4 rounded-xl bg-[#0066EF] hover:bg-[#0052C4] text-white text-sm font-bold transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0066EF]"
+              className="shrink-0 min-h-11 px-4 rounded-xl bg-[#055492] hover:bg-[#04467a] text-white text-sm font-bold transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#055492]"
             >
               🔍 Rechercher
             </button>

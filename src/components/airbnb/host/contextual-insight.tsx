@@ -39,8 +39,8 @@ interface InsightRow {
 const PRIORITY_DOT: Record<InsightRow['priority'], string> = {
   CRITICAL: '#f07d6a',
   HIGH: '#e9c47c',
-  MEDIUM: '#5c8af0',
-  LOW: '#8fa0c2',
+  MEDIUM: '#5cadf0',
+  LOW: '#8fabc2',
 };
 
 export function ContextualInsight({ context }: { context: string }) {
@@ -127,9 +127,9 @@ export function ContextualInsight({ context }: { context: string }) {
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-white">
                 {insight.title}
-                {prop && <span className="ml-2 text-[11px] font-normal text-[#8fa0c2]">· {prop}</span>}
+                {prop && <span className="ml-2 text-[11px] font-normal text-[#8fabc2]">· {prop}</span>}
               </p>
-              <p className="mt-1 text-[13px] leading-relaxed text-[#8fa0c2]">{insight.message}</p>
+              <p className="mt-1 text-[13px] leading-relaxed text-[#8fabc2]">{insight.message}</p>
             </div>
             <div className="flex shrink-0 items-center gap-3">
               <Link
@@ -148,7 +148,7 @@ export function ContextualInsight({ context }: { context: string }) {
                 type="button"
                 onClick={() => void dismiss(insight.id)}
                 aria-label="Passer cette suggestion"
-                className="min-h-[36px] rounded-full px-2 text-xs font-medium text-[#8fa0c2] underline-offset-4 transition-colors hover:text-white hover:underline"
+                className="min-h-[36px] rounded-full px-2 text-xs font-medium text-[#8fabc2] underline-offset-4 transition-colors hover:text-white hover:underline"
               >
                 Passer
               </button>

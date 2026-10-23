@@ -159,7 +159,7 @@ export function OnboardingWizard({
         <div className="border-b border-slate-100 px-6 pb-5 pt-6 sm:px-8">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-[#0066EF]">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-[#055492]">
                 RoomScan
               </p>
               <h2 className="mt-0.5 text-lg font-bold text-slate-900">
@@ -168,7 +168,7 @@ export function OnboardingWizard({
             </div>
             <span
               aria-hidden="true"
-              className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#EAF2FF] text-[#0066EF]"
+              className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#dceaf5] text-[#055492]"
             >
               {(() => {
                 const StepIcon = STEPS[Math.min(step, 2)].icon;
@@ -185,7 +185,7 @@ export function OnboardingWizard({
                     className={cn(
                       'flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold transition-colors',
                       i < step
-                        ? 'bg-[#0066EF] text-white'
+                        ? 'bg-[#055492] text-white'
                         : i === step
                           ? 'bg-slate-900 text-white'
                           : 'bg-slate-100 text-slate-400',
@@ -205,7 +205,7 @@ export function OnboardingWizard({
                     <div
                       className={cn(
                         'h-0.5 flex-1 rounded-full',
-                        i < step ? 'bg-[#0066EF]' : 'bg-slate-100',
+                        i < step ? 'bg-[#055492]' : 'bg-slate-100',
                       )}
                     />
                   )}
@@ -337,7 +337,7 @@ export function OnboardingWizard({
                   <Label htmlFor="onb-slug" className="text-sm font-medium text-slate-700">
                     Lien de votre Hub <span className="font-normal text-slate-400">(déduit du nom)</span>
                   </Label>
-                  <div className="mt-1.5 flex items-center overflow-hidden rounded-xl border border-slate-200 focus-within:ring-2 focus-within:ring-[#0066EF]/20">
+                  <div className="mt-1.5 flex items-center overflow-hidden rounded-xl border border-slate-200 focus-within:ring-2 focus-within:ring-[#055492]/20">
                     <span className="shrink-0 border-r border-slate-100 bg-slate-50 px-3 py-2.5 text-xs text-slate-500">
                       /hub/
                     </span>
@@ -479,7 +479,7 @@ export function OnboardingWizard({
                 <Button
                   onClick={submit}
                   disabled={!canNext || loading}
-                  className="h-11 rounded-xl bg-[#0066EF] px-5 text-white hover:bg-[#0052C4]"
+                  className="h-11 rounded-xl bg-[#055492] px-5 text-white hover:bg-[#04467a]"
                 >
                   {loading ? (
                     <>

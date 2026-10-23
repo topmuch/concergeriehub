@@ -15,7 +15,7 @@ import {
 //
 // Design theme clair premium :
 //  - fond #f8fafc, cartes blanches rounded-2xl shadow-sm border-gray-200
-//  - accent Bleu #1e3a8a (numeros des questions, chevrons)
+//  - accent Bleu #055492 (numeros des questions, chevrons)
 //  - textes gray-900 / gray-600 / gray-500
 //  - Rouge #C41E3A non utilise ici (aucune alerte dans la FAQ)
 // Accordion shadcn/ui existant (src/components/ui/accordion.tsx),
@@ -111,11 +111,11 @@ export function FaqContent() {
                 value={`faq-${index + 1}`}
                 className="border-gray-200 dark:border-[#1a2749]"
               >
-                <AccordionTrigger className="min-h-[44px] gap-3 rounded-xl px-3 py-4 text-left text-[15px] font-semibold text-gray-900 hover:no-underline hover:text-[#1e3a8a] dark:text-slate-100 dark:hover:text-[#60a5fa] sm:px-4 [&>svg]:shrink-0 [&>svg]:text-[#1e3a8a] dark:[&>svg]:text-[#60a5fa]">
+                <AccordionTrigger className="min-h-[44px] gap-3 rounded-xl px-3 py-4 text-left text-[15px] font-semibold text-gray-900 hover:no-underline hover:text-[#055492] dark:text-slate-100 dark:hover:text-[#8fb8dc] sm:px-4 [&>svg]:shrink-0 [&>svg]:text-[#055492] dark:[&>svg]:text-[#8fb8dc]">
                   <span className="flex items-start gap-3">
                     <span
                       aria-hidden="true"
-                      className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-50 text-xs font-bold text-[#1e3a8a] dark:bg-[#2f6fed]/20 dark:text-[#60a5fa]"
+                      className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#f0f7fc] text-xs font-bold text-[#055492] dark:bg-[#2f6fed]/20 dark:text-[#8fb8dc]"
                     >
                       {index + 1}
                     </span>
@@ -137,11 +137,11 @@ export function FaqContent() {
           {...fadeUp}
           transition={{ ...fadeUp.transition, delay: 0.1 }}
           href="mailto:support@roomscan.pro"
-          className="mt-6 flex min-h-[64px] items-center gap-3.5 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm transition-colors hover:border-blue-200 hover:bg-blue-50/40 dark:border-[#22305a] dark:bg-[#0d1530]/90 dark:hover:border-[#2f6fed]/40 dark:hover:bg-[#13204a] sm:px-5"
+          className="mt-6 flex min-h-[64px] items-center gap-3.5 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm transition-colors hover:border-[#c8dfef] hover:bg-[#f0f7fc]/40 dark:border-[#22305a] dark:bg-[#0d1530]/90 dark:hover:border-[#2f6fed]/40 dark:hover:bg-[#13204a] sm:px-5"
         >
           <span
             aria-hidden="true"
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#1e3a8a] to-[#2f6fed] text-white shadow-sm"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#055492] to-[#2f6fed] text-white shadow-sm"
           >
             <Mail className="h-4 w-4" />
           </span>
@@ -151,7 +151,7 @@ export function FaqContent() {
             </span>
             <span className="block text-sm text-gray-500 dark:text-slate-400">
               Écrivez à{' '}
-              <span className="font-mono text-[13px] font-semibold text-[#1e3a8a] dark:text-[#60a5fa]">
+              <span className="font-mono text-[13px] font-semibold text-[#055492] dark:text-[#8fb8dc]">
                 support@roomscan.pro
               </span>{' '}
               — réponse sous 24 h ouvrées.

@@ -22,7 +22,7 @@ import type { ReactNode } from 'react';
 //
 // Design theme clair premium :
 //  - fond #f8fafc, cartes blanches rounded-2xl shadow-sm border-gray-200
-//  - accent Bleu #1e3a8a (titres, numeros, puces)
+//  - accent Bleu #055492 (titres, numeros, puces)
 //  - accent Rouge #C41E3A ponctuel (alerte prioritaire, badge Certificat)
 //  - textes gray-900 / gray-600 / gray-500
 // Contenu 100 % statique : aucune donnee, aucun fetch, aucune session.
@@ -41,7 +41,7 @@ interface GuideStep {
 /** Puce mono pour les jetons techniques du guide (liens, references). */
 function CodeChip({ children }: { children: ReactNode }) {
   return (
-    <code className="mx-0.5 rounded-md border border-gray-200 bg-gray-50 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-[#1e3a8a]">
+    <code className="mx-0.5 rounded-md border border-gray-200 bg-gray-50 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-[#055492]">
       {children}
     </code>
   );
@@ -212,7 +212,7 @@ export function ModeDEmploiContent() {
           <div className="flex items-start gap-3.5 sm:items-center">
             <span
               aria-hidden="true"
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#2f6fed] text-white shadow-sm"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#055492] to-[#2f6fed] text-white shadow-sm"
             >
               <ShieldCheck className="h-5 w-5" />
             </span>
@@ -235,7 +235,7 @@ export function ModeDEmploiContent() {
         {/* ---------- Section A : les 6 etapes (timeline) ---------- */}
         <motion.section {...fadeUp} transition={{ ...fadeUp.transition, delay: 0.1 }} className="mt-8">
           <h2 className="flex items-center gap-2.5 text-lg font-bold text-gray-900 dark:text-slate-100">
-            <span aria-hidden="true" className="h-5 w-1 rounded-full bg-[#1e3a8a]" />
+            <span aria-hidden="true" className="h-5 w-1 rounded-full bg-[#055492]" />
             Les 6 étapes
           </h2>
           <p className="mt-1 text-sm text-gray-500 dark:text-slate-400">
@@ -247,20 +247,20 @@ export function ModeDEmploiContent() {
             {/* Ligne verticale de la timeline */}
             <span
               aria-hidden="true"
-              className="absolute bottom-7 left-[19px] top-7 w-px bg-blue-100 dark:bg-[#22305a]"
+              className="absolute bottom-7 left-[19px] top-7 w-px bg-[#dceaf5] dark:bg-[#22305a]"
             />
             {GUIDE_STEPS.map((step, index) => (
               <li key={step.title} className="relative flex gap-3 sm:gap-4">
                 {/* Numero dans la pastille bleue */}
                 <span
                   aria-hidden="true"
-                  className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#1e3a8a] to-[#2f6fed] text-sm font-bold text-white shadow-sm ring-4 ring-[#f8fafc] dark:ring-[#070c1c]"
+                  className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#055492] to-[#2f6fed] text-sm font-bold text-white shadow-sm ring-4 ring-[#f8fafc] dark:ring-[#070c1c]"
                 >
                   {index + 1}
                 </span>
                 <div className="min-w-0 flex-1 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-[#22305a] dark:bg-[#0d1530]/90 sm:p-5">
                   <div className="flex items-center gap-2.5">
-                    <step.icon aria-hidden="true" className="h-4 w-4 shrink-0 text-[#1e3a8a] dark:text-[#3b82f6]" />
+                    <step.icon aria-hidden="true" className="h-4 w-4 shrink-0 text-[#055492] dark:text-[#1173c7]" />
                     <h3 className="min-w-0 flex-1 text-[15px] font-bold leading-snug text-gray-900 dark:text-slate-100">
                       {step.title}
                     </h3>
@@ -282,7 +282,7 @@ export function ModeDEmploiContent() {
         {/* ---------- Section B : les notifications ---------- */}
         <motion.section {...fadeUp} transition={{ ...fadeUp.transition, delay: 0.15 }} className="mt-8">
           <h2 className="flex items-center gap-2.5 text-lg font-bold text-gray-900 dark:text-slate-100">
-            <span aria-hidden="true" className="h-5 w-1 rounded-full bg-[#1e3a8a]" />
+            <span aria-hidden="true" className="h-5 w-1 rounded-full bg-[#055492]" />
             Les notifications
           </h2>
           <p className="mt-1 text-sm text-gray-500 dark:text-slate-400">
@@ -299,7 +299,7 @@ export function ModeDEmploiContent() {
                     className={
                       notif.alert
                         ? 'mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-red-50 text-[#C41E3A] dark:bg-red-500/15 dark:text-[#ff5a76]'
-                        : 'mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#1e3a8a] dark:bg-[#2f6fed]/20 dark:text-[#60a5fa]'
+                        : 'mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f0f7fc] text-[#055492] dark:bg-[#2f6fed]/20 dark:text-[#8fb8dc]'
                     }
                   >
                     <notif.icon className="h-4 w-4" />

@@ -49,7 +49,7 @@ export function AirbnbDisputeDialog({
           <DialogTitle className="lux-display text-lg">
             Message juridique pour Airbnb
           </DialogTitle>
-          <DialogDescription className="text-sm text-[#8fa0c2]">
+          <DialogDescription className="text-sm text-[#8fabc2]">
             Le PDF certifié a été téléchargé. Copiez ce message pré-rédigé, collez-le dans le
             Centre de Résolution Airbnb puis joignez le PDF.
           </DialogDescription>
@@ -60,7 +60,7 @@ export function AirbnbDisputeDialog({
           value={message}
           rows={12}
           aria-label="Message juridique pré-rédigé pour le litige Airbnb"
-          className="lux-scroll w-full resize-none rounded-xl border border-white/12 bg-white/[0.04] p-3 font-mono text-xs leading-relaxed text-white/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5c8af0]/50"
+          className="lux-scroll w-full resize-none rounded-xl border border-white/12 bg-white/[0.04] p-3 font-mono text-xs leading-relaxed text-white/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5cadf0]/50"
         />
         <div className="flex items-center justify-end gap-2">
           <Button

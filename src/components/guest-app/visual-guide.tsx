@@ -157,9 +157,9 @@ export function VisualGuideCard({
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Ouvrir l'itinéraire GPS vers l'appartement"
-          className="w-full mt-4 bg-[#0066EF] hover:bg-[#0052C4] text-white font-bold py-4 rounded-2xl
-                     flex items-center justify-center gap-3 shadow-lg shadow-[#0066EF]/30 hover:shadow-[#0066EF]/50 transition-all
-                     focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0066EF]"
+          className="w-full mt-4 bg-[#055492] hover:bg-[#04467a] text-white font-bold py-4 rounded-2xl
+                     flex items-center justify-center gap-3 shadow-lg shadow-[#055492]/30 hover:shadow-[#055492]/50 transition-all
+                     focus:outline-none focus-visible:ring-2 focus-visible:ring-[#055492]"
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
         >

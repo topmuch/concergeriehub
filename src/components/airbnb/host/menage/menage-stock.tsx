@@ -112,7 +112,7 @@ export function MenageStock({ enabled, propertyId }: MenageStockProps) {
       <div className="lux-empty flex flex-col items-center gap-2 rounded-2xl p-8 text-center">
         <span className="lux-dot" style={{ backgroundColor: '#e9c47c' }} aria-hidden="true" />
         <p className="text-sm font-semibold text-white">Alertes stock par bien</p>
-        <p className="max-w-md text-xs text-[#8fa0c2]">
+        <p className="max-w-md text-xs text-[#8fabc2]">
           Sélectionnez un bien précis dans la barre du haut pour consulter et résoudre les
           signalements de stock de ce logement.
         </p>
@@ -132,7 +132,7 @@ export function MenageStock({ enabled, propertyId }: MenageStockProps) {
         <div className="min-w-0">
           <p className="lux-eyebrow">Stock minibar &amp; consommables</p>
           <h2 className="lux-display mt-1 text-lg text-white">Alertes stock</h2>
-          <p className="mt-0.5 text-xs text-[#8fa0c2]">
+          <p className="mt-0.5 text-xs text-[#8fabc2]">
             Signalements de l&apos;équipe de ménage (serviettes, papier toilette, savon, capsules café) —
             résolvez-les après réapprovisionnement.
           </p>
@@ -155,7 +155,7 @@ export function MenageStock({ enabled, propertyId }: MenageStockProps) {
         <div className="lux-empty flex flex-col items-center gap-2 rounded-2xl p-6 text-center">
           <span className="lux-dot" style={{ backgroundColor: '#e9c47c' }} aria-hidden="true" />
           <p className="text-sm font-semibold text-white">Chargement impossible</p>
-          <p className="text-xs text-[#8fa0c2]">Réessayez avec le bouton Actualiser.</p>
+          <p className="text-xs text-[#8fabc2]">Réessayez avec le bouton Actualiser.</p>
         </div>
       ) : loading && alerts === null ? (
         <Skeleton className="h-24 w-full rounded-2xl bg-white/8" />
@@ -165,7 +165,7 @@ export function MenageStock({ enabled, propertyId }: MenageStockProps) {
             <div className="lux-empty flex flex-col items-center gap-2 rounded-2xl p-6 text-center">
               <span className="lux-dot" style={{ backgroundColor: '#e9c47c' }} aria-hidden="true" />
               <p className="text-sm font-semibold text-white">Aucune alerte pour le moment</p>
-              <p className="text-xs text-[#8fa0c2]">
+              <p className="text-xs text-[#8fabc2]">
                 L&apos;équipe signale le stock depuis le Mode Ménage du Hub (« Contrôle du stock »).
               </p>
             </div>
@@ -203,7 +203,7 @@ export function MenageStock({ enabled, propertyId }: MenageStockProps) {
                             {statusMeta.label}
                           </span>
                         </p>
-                        <p className="mt-1 flex items-center gap-2 text-xs text-[#8fa0c2]">
+                        <p className="mt-1 flex items-center gap-2 text-xs text-[#8fabc2]">
                           <span
                             className="lux-dot shrink-0"
                             style={{ backgroundColor: a.status === 'empty' ? '#f07d6a' : '#fbbf24' }}
@@ -216,7 +216,7 @@ export function MenageStock({ enabled, propertyId }: MenageStockProps) {
                       <Button
                         type="button"
                         size="sm"
-                        className="h-9 shrink-0 rounded-full bg-gradient-to-br from-[#3d6fe0] to-[#24479c] px-4 text-xs font-semibold text-white shadow-[0_10px_28px_-12px_rgba(61,111,224,0.55)] hover:from-[#5c8af0] hover:to-[#2c56b8]"
+                        className="h-9 shrink-0 rounded-full bg-gradient-to-br from-[#3d97e0] to-[#24479c] px-4 text-xs font-semibold text-white shadow-[0_10px_28px_-12px_rgba(61,111,224,0.55)] hover:from-[#5cadf0] hover:to-[#2c56b8]"
                         disabled={resolvingId === a.id}
                         onClick={() => void resolve(a.id)}
                         aria-label={`Marquer ${meta.label} comme réapprovisionné`}
@@ -245,14 +245,14 @@ export function MenageStock({ enabled, propertyId }: MenageStockProps) {
               <div className="mt-3 space-y-4">
                 {historyGroups.map((g) => (
                   <div key={g.label}>
-                    <p className="text-xs font-semibold text-[#8fa0c2]">{g.label}</p>
+                    <p className="text-xs font-semibold text-[#8fabc2]">{g.label}</p>
                     <ul className="mt-1.5 space-y-1.5">
                       {g.items.map((a) => {
                         const meta = inventoryItemMeta(a.item);
                         return (
                           <li
                             key={a.id}
-                            className="flex flex-wrap items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-xs text-[#8fa0c2]"
+                            className="flex flex-wrap items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-xs text-[#8fabc2]"
                           >
                             <span className="lux-dot shrink-0" style={{ backgroundColor: '#34d399' }} aria-hidden="true" />
                             <span className="font-semibold text-white">{meta.label}</span>

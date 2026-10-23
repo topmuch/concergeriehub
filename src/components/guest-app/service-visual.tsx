@@ -25,7 +25,7 @@ const CATEGORY_GRADIENTS: Record<string, string> = {
   'Chef à domicile': 'from-rose-400 to-red-500',
   'Bien-être': 'from-emerald-400 to-teal-500',
   'Visites & expériences': 'from-violet-400 to-fuchsia-500',
-  Transferts: 'from-blue-400 to-cyan-500',
+  Transferts: 'from-[#6d9cc4] to-cyan-500',
   'Baby-sitting': 'from-pink-300 to-rose-400',
 };
 

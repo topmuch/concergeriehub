@@ -233,7 +233,7 @@ function PhotoGallery({
 
   return (
     <div className="mt-3">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8fa0c2]">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8fabc2]">
         Photos du passage · {photoCount}
       </p>
       <ul className="mt-1.5 grid grid-cols-3 gap-1.5 sm:grid-cols-4 md:grid-cols-5">
@@ -243,7 +243,7 @@ function PhotoGallery({
               type="button"
               onClick={() => photos && onOpen(photos, i, title)}
               aria-label={`Agrandir la photo ${i + 1} — ${title}`}
-              className="group block w-full overflow-hidden rounded-xl border border-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5c8af0]/60"
+              className="group block w-full overflow-hidden rounded-xl border border-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5cadf0]/60"
             >
               <img
                 src={src}
@@ -371,7 +371,7 @@ export function MenageJournal({ tasks, reports, selectedId }: MenageJournalProps
         <div className="min-w-0">
           <p className="lux-eyebrow">Historique classé par date et heure</p>
           <h2 className="lux-display mt-1 text-lg text-white">Journal des passages</h2>
-          <p className="mt-0.5 text-xs text-[#8fa0c2]">
+          <p className="mt-0.5 text-xs text-[#8fabc2]">
             Chaque passage réalisé : horaires réels de l’équipe, photos, vocal et checklist validée.
           </p>
         </div>
@@ -388,11 +388,11 @@ export function MenageJournal({ tasks, reports, selectedId }: MenageJournalProps
 
       {groups.length === 0 ? (
         <div className="lux-empty flex flex-col items-center gap-2 rounded-2xl p-8 text-center">
-          <span className="lux-dot" style={{ backgroundColor: '#5c8af0' }} aria-hidden="true" />
+          <span className="lux-dot" style={{ backgroundColor: '#5cadf0' }} aria-hidden="true" />
           <p className="text-sm font-semibold text-white">
             {q ? 'Aucun passage ne correspond à ce filtre' : 'Aucun passage pour le moment'}
           </p>
-          <p className="max-w-md text-xs text-[#8fa0c2]">
+          <p className="max-w-md text-xs text-[#8fabc2]">
             {q
               ? 'Essayez un autre nom d’agent ou videz le champ de recherche.'
               : 'Votre femme de ménage valide son passage depuis le Mode Ménage du Hub (code staff) : les preuves apparaîtront ici, classées par jour.'}
@@ -429,9 +429,9 @@ export function MenageJournal({ tasks, reports, selectedId }: MenageJournalProps
                       <div className="shrink-0 sm:w-44">
                         <p className="lux-num text-2xl font-semibold leading-tight text-white">
                           {e.startIso ? formatFrTime(e.startIso) : '—'}
-                          {e.endIso ? <span className="text-[#8fa0c2]"> → {formatFrTime(e.endIso)}</span> : null}
+                          {e.endIso ? <span className="text-[#8fabc2]"> → {formatFrTime(e.endIso)}</span> : null}
                         </p>
-                        <p className="mt-1 text-xs text-[#8fa0c2]">Arrivée → départ</p>
+                        <p className="mt-1 text-xs text-[#8fabc2]">Arrivée → départ</p>
                         {formatDuration(e.startIso, e.endIso) && (
                           <span className="lux-chip mt-2">
                             <span className="lux-dot" style={{ backgroundColor: '#e9c47c' }} aria-hidden="true" />
@@ -447,7 +447,7 @@ export function MenageJournal({ tasks, reports, selectedId }: MenageJournalProps
                             <p className="text-sm font-semibold text-white">
                               {e.propertyName ?? 'Logement'}
                             </p>
-                            <p className="mt-0.5 text-xs text-[#8fa0c2]">
+                            <p className="mt-0.5 text-xs text-[#8fabc2]">
                               {formatFrDateTime(e.sortIso)}
                               {e.task ? ' · passage planifié' : ' · passage enregistré'}
                             </p>
@@ -505,7 +505,7 @@ export function MenageJournal({ tasks, reports, selectedId }: MenageJournalProps
                                 {r.checklist.map((c, i) => (
                                   <li
                                     key={`${e.key}-c-${i}`}
-                                    className={cn('flex items-center gap-2 text-sm', c.done ? 'text-white' : 'text-[#8fa0c2]/70')}
+                                    className={cn('flex items-center gap-2 text-sm', c.done ? 'text-white' : 'text-[#8fabc2]/70')}
                                   >
                                     <span
                                       className="lux-dot shrink-0"
@@ -540,7 +540,7 @@ export function MenageJournal({ tasks, reports, selectedId }: MenageJournalProps
 
                         {/* Tâche DONE sans rapport lié — transparence */}
                         {!r && e.task && (
-                          <p className="mt-2 rounded-xl border border-dashed border-white/15 bg-white/[0.02] px-3 py-2 text-xs text-[#8fa0c2]">
+                          <p className="mt-2 rounded-xl border border-dashed border-white/15 bg-white/[0.02] px-3 py-2 text-xs text-[#8fabc2]">
                             Passage marqué fait sans preuve photo : aucun rapport de ménage n’a été
                             déposé par l’équipe.
                           </p>

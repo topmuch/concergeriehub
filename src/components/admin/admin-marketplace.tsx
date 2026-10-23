@@ -65,7 +65,7 @@ const CATEGORIES = ['Boulangerie', 'Boucherie', 'Épicerie', 'Pharmacie', 'Resta
 const FLASH_STATUS: Record<string, { label: string; cls: string }> = {
   scheduled: { label: 'Programmée', cls: 'border border-[#fbbf24]/25 bg-[#fbbf24]/10 text-[#fbbf24]' },
   active: { label: 'Active', cls: 'border border-[#34d399]/25 bg-[#34d399]/10 text-[#86e9cb]' },
-  expired: { label: 'Expirée', cls: 'border border-white/10 bg-white/[0.05] text-[#8fa0c2]' },
+  expired: { label: 'Expirée', cls: 'border border-white/10 bg-white/[0.05] text-[#8fabc2]' },
   cancelled: { label: 'Annulée', cls: 'border border-[#f07d6a]/25 bg-[#f07d6a]/10 text-[#f07d6a]' },
 };
 
@@ -73,12 +73,12 @@ const TXN_STATUS: Record<string, { label: string; cls: string }> = {
   pending: { label: 'En attente', cls: 'border border-[#fbbf24]/25 bg-[#fbbf24]/10 text-[#fbbf24]' },
   completed: { label: 'Terminé', cls: 'border border-[#34d399]/25 bg-[#34d399]/10 text-[#86e9cb]' },
   failed: { label: 'Échoué', cls: 'border border-[#f07d6a]/25 bg-[#f07d6a]/10 text-[#f07d6a]' },
-  refunded: { label: 'Remboursé', cls: 'border border-white/10 bg-white/[0.05] text-[#8fa0c2]' },
+  refunded: { label: 'Remboursé', cls: 'border border-white/10 bg-white/[0.05] text-[#8fabc2]' },
 };
 
 const COUPON_STATUS: Record<string, { label: string; cls: string }> = {
   active: { label: 'Actif', cls: 'border border-[#34d399]/25 bg-[#34d399]/10 text-[#86e9cb]' },
-  used: { label: 'Utilisé', cls: 'border border-white/10 bg-white/[0.05] text-[#8fa0c2]' },
+  used: { label: 'Utilisé', cls: 'border border-white/10 bg-white/[0.05] text-[#8fabc2]' },
   expired: { label: 'Expiré', cls: 'border border-[#fbbf24]/25 bg-[#fbbf24]/10 text-[#fbbf24]' },
   cancelled: { label: 'Annulé', cls: 'border border-[#f07d6a]/25 bg-[#f07d6a]/10 text-[#f07d6a]' },
 };
@@ -104,9 +104,9 @@ function StatCard({ label, value }: { label: string; value: number | string }) {
 
 // Champs de formulaire « lux » (sombre bleuté).
 const LUX_INPUT =
-  'h-10 rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50';
+  'h-10 rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50';
 const LUX_SELECT_TRIGGER =
-  'h-10 rounded-xl border-white/12 bg-white/[0.04] text-white focus-visible:ring-[#5c8af0]/50';
+  'h-10 rounded-xl border-white/12 bg-white/[0.04] text-white focus-visible:ring-[#5cadf0]/50';
 const LUX_SELECT_CONTENT = 'border-white/10 bg-[#0d1530] text-white';
 const LUX_SELECT_ITEM = 'focus:bg-white/8 focus:text-white';
 
@@ -263,7 +263,7 @@ export function AdminMarketplace() {
   };
 
   const PROMO_STATUS_ACTIVE = { label: 'Active', cls: 'border border-[#34d399]/25 bg-[#34d399]/10 text-[#86e9cb]' };
-  const PROMO_STATUS_EXPIRED = { label: 'Expirée', cls: 'border border-white/10 bg-white/[0.05] text-[#8fa0c2]' };
+  const PROMO_STATUS_EXPIRED = { label: 'Expirée', cls: 'border border-white/10 bg-white/[0.05] text-[#8fabc2]' };
 
   if (loading) return (
     <div className="space-y-4">
@@ -277,16 +277,16 @@ export function AdminMarketplace() {
     <Card className="lux-card">
       <CardHeader>
         <CardTitle className="lux-display text-xl text-white">Marketplace</CardTitle>
-        <CardDescription className="text-sm text-[#8fa0c2]">Gestion des commerçants, promotions, ventes flash, coupons et transactions</CardDescription>
+        <CardDescription className="text-sm text-[#8fabc2]">Gestion des commerçants, promotions, ventes flash, coupons et transactions</CardDescription>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="merchants">
           <TabsList className="mb-4 w-full flex-wrap h-auto gap-1 rounded-full border border-white/10 bg-white/[0.04] p-1">
-            <TabsTrigger value="merchants" className="rounded-full text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fa0c2] transition-colors data-[state=active]:bg-white/10 data-[state=active]:text-white">Commerçants</TabsTrigger>
-            <TabsTrigger value="promos" className="rounded-full text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fa0c2] transition-colors data-[state=active]:bg-white/10 data-[state=active]:text-white">Promotions</TabsTrigger>
-            <TabsTrigger value="flash" className="rounded-full text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fa0c2] transition-colors data-[state=active]:bg-white/10 data-[state=active]:text-white">Ventes Flash</TabsTrigger>
-            <TabsTrigger value="coupons" className="rounded-full text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fa0c2] transition-colors data-[state=active]:bg-white/10 data-[state=active]:text-white">Coupons</TabsTrigger>
-            <TabsTrigger value="transactions" className="rounded-full text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fa0c2] transition-colors data-[state=active]:bg-white/10 data-[state=active]:text-white">Transactions</TabsTrigger>
+            <TabsTrigger value="merchants" className="rounded-full text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fabc2] transition-colors data-[state=active]:bg-white/10 data-[state=active]:text-white">Commerçants</TabsTrigger>
+            <TabsTrigger value="promos" className="rounded-full text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fabc2] transition-colors data-[state=active]:bg-white/10 data-[state=active]:text-white">Promotions</TabsTrigger>
+            <TabsTrigger value="flash" className="rounded-full text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fabc2] transition-colors data-[state=active]:bg-white/10 data-[state=active]:text-white">Ventes Flash</TabsTrigger>
+            <TabsTrigger value="coupons" className="rounded-full text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fabc2] transition-colors data-[state=active]:bg-white/10 data-[state=active]:text-white">Coupons</TabsTrigger>
+            <TabsTrigger value="transactions" className="rounded-full text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fabc2] transition-colors data-[state=active]:bg-white/10 data-[state=active]:text-white">Transactions</TabsTrigger>
           </TabsList>
 
           {/* ── Commerçants ──────────────────────────────────────── */}
@@ -303,7 +303,7 @@ export function AdminMarketplace() {
               </div>
               <Dialog open={merchantDlg} onOpenChange={o => { setMerchantDlg(o); if (!o) { setEditId(null); rstM(); } }}>
                 <DialogTrigger asChild><Button size="sm" className="lux-btn h-9 rounded-full px-4 text-xs">Ajouter</Button></DialogTrigger>
-                <DialogContent className="border-white/10 bg-[#0b1226] text-white"><DialogHeader><DialogTitle className="lux-display text-lg text-white">{editId ? 'Modifier le commerçant' : 'Nouveau commerçant'}</DialogTitle><DialogDescription className="text-sm text-[#8fa0c2]">{editId ? 'Modifier les informations' : 'Ajouter un commerçant'}</DialogDescription></DialogHeader>
+                <DialogContent className="border-white/10 bg-[#0b1226] text-white"><DialogHeader><DialogTitle className="lux-display text-lg text-white">{editId ? 'Modifier le commerçant' : 'Nouveau commerçant'}</DialogTitle><DialogDescription className="text-sm text-[#8fabc2]">{editId ? 'Modifier les informations' : 'Ajouter un commerçant'}</DialogDescription></DialogHeader>
                   <div className="grid gap-3 py-2">
                     <div className="grid gap-1.5"><Label className="text-xs font-semibold text-[#c7d3ec]">Nom *</Label><Input className={LUX_INPUT} value={mf.name} onChange={e => setMf(f => ({ ...f, name: e.target.value }))} /></div>
                     <div className="grid gap-1.5"><Label className="text-xs font-semibold text-[#c7d3ec]">Catégorie</Label><Select value={mf.category} onValueChange={v => setMf(f => ({ ...f, category: v }))}><SelectTrigger className={LUX_SELECT_TRIGGER}><SelectValue placeholder="Choisir" /></SelectTrigger><SelectContent className={LUX_SELECT_CONTENT}>{CATEGORIES.map(c => <SelectItem className={LUX_SELECT_ITEM} key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select></div>
@@ -322,17 +322,17 @@ export function AdminMarketplace() {
                   <TableRow className="border-white/8 hover:bg-transparent"><TableHead className="lux-eyebrow !text-[9.5px]">Nom</TableHead><TableHead className="lux-eyebrow !text-[9.5px]">Catégorie</TableHead><TableHead className="lux-eyebrow !text-[9.5px]">Adresse</TableHead><TableHead className="lux-eyebrow !text-[9.5px] hidden md:table-cell">Tél</TableHead><TableHead className="lux-eyebrow !text-[9.5px] hidden lg:table-cell">Note</TableHead><TableHead className="lux-eyebrow !text-[9.5px]">Vérifié</TableHead><TableHead className="lux-eyebrow !text-[9.5px]">Actif</TableHead><TableHead className="lux-eyebrow !text-[9.5px] text-right">Actions</TableHead></TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredMerchants.length === 0 && <TableRow className="border-white/8 hover:bg-white/[0.04]"><TableCell colSpan={8} className="text-center py-8 text-[#8fa0c2]">Aucun commerçant</TableCell></TableRow>}
+                  {filteredMerchants.length === 0 && <TableRow className="border-white/8 hover:bg-white/[0.04]"><TableCell colSpan={8} className="text-center py-8 text-[#8fabc2]">Aucun commerçant</TableCell></TableRow>}
                   {filteredMerchants.map(m => (
                     <TableRow key={m.id} className="border-white/8 hover:bg-white/[0.04]">
                       <TableCell className="font-medium text-white">{m.name}</TableCell>
-                      <TableCell><Badge variant="outline" className="border-white/12 bg-white/[0.03] text-[#8fa0c2]">{m.category || '—'}</Badge></TableCell>
-                      <TableCell className="text-sm text-[#8fa0c2] max-w-28 truncate">{m.address || '—'}</TableCell>
+                      <TableCell><Badge variant="outline" className="border-white/12 bg-white/[0.03] text-[#8fabc2]">{m.category || '—'}</Badge></TableCell>
+                      <TableCell className="text-sm text-[#8fabc2] max-w-28 truncate">{m.address || '—'}</TableCell>
                       <TableCell className="hidden md:table-cell text-sm text-[#c7d3ec]">{m.phone || '—'}</TableCell>
                       <TableCell className="hidden lg:table-cell"><div className="flex items-center gap-1"><span className="text-[#e9c47c]" aria-hidden="true">★</span><span className="text-sm text-white">{m.ratingAvg?.toFixed(1) || '—'}</span></div></TableCell>
-                      <TableCell><Button variant="ghost" size="sm" className="h-8 w-8" onClick={() => toggleMerchant(m, 'isVerified')} title="Basculer vérifié"><span aria-hidden="true" className={m.isVerified ? 'text-[#86e9cb]' : 'text-[#8fa0c2]/50'}>✓</span></Button></TableCell>
-                      <TableCell><Button variant="ghost" size="sm" className="h-8 w-8" onClick={() => toggleMerchant(m, 'isActive')} title="Basculer actif"><span aria-hidden="true" className={m.isActive ? 'text-[#86e9cb]' : 'text-[#8fa0c2]/50'}>✓</span></Button></TableCell>
-                      <TableCell className="text-right"><div className="flex justify-end gap-1"><Button variant="ghost" size="sm" className="h-8 text-xs text-[#8fa0c2] hover:bg-white/[0.06] hover:text-white" onClick={() => editMerchant(m)}>Modifier</Button><Button variant="ghost" size="sm" className="h-8 text-xs text-[#f07d6a] hover:bg-[#f07d6a]/10 hover:text-[#f07d6a]" onClick={() => deleteMerchant(m.id)}>Supprimer</Button></div></TableCell>
+                      <TableCell><Button variant="ghost" size="sm" className="h-8 w-8" onClick={() => toggleMerchant(m, 'isVerified')} title="Basculer vérifié"><span aria-hidden="true" className={m.isVerified ? 'text-[#86e9cb]' : 'text-[#8fabc2]/50'}>✓</span></Button></TableCell>
+                      <TableCell><Button variant="ghost" size="sm" className="h-8 w-8" onClick={() => toggleMerchant(m, 'isActive')} title="Basculer actif"><span aria-hidden="true" className={m.isActive ? 'text-[#86e9cb]' : 'text-[#8fabc2]/50'}>✓</span></Button></TableCell>
+                      <TableCell className="text-right"><div className="flex justify-end gap-1"><Button variant="ghost" size="sm" className="h-8 text-xs text-[#8fabc2] hover:bg-white/[0.06] hover:text-white" onClick={() => editMerchant(m)}>Modifier</Button><Button variant="ghost" size="sm" className="h-8 text-xs text-[#f07d6a] hover:bg-[#f07d6a]/10 hover:text-[#f07d6a]" onClick={() => deleteMerchant(m.id)}>Supprimer</Button></div></TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -354,7 +354,7 @@ export function AdminMarketplace() {
               </div>
               <Dialog open={promoDlg} onOpenChange={o => { setPromoDlg(o); if (!o) { setEditId(null); rstP(); } }}>
                 <DialogTrigger asChild><Button size="sm" className="lux-btn h-9 rounded-full px-4 text-xs">Ajouter</Button></DialogTrigger>
-                <DialogContent className="border-white/10 bg-[#0b1226] text-white"><DialogHeader><DialogTitle className="lux-display text-lg text-white">{editId ? 'Modifier la promotion' : 'Nouvelle promotion'}</DialogTitle><DialogDescription className="text-sm text-[#8fa0c2]">{editId ? 'Modifier les détails' : 'Créer une promotion'}</DialogDescription></DialogHeader>
+                <DialogContent className="border-white/10 bg-[#0b1226] text-white"><DialogHeader><DialogTitle className="lux-display text-lg text-white">{editId ? 'Modifier la promotion' : 'Nouvelle promotion'}</DialogTitle><DialogDescription className="text-sm text-[#8fabc2]">{editId ? 'Modifier les détails' : 'Créer une promotion'}</DialogDescription></DialogHeader>
                   <div className="grid gap-3 py-2">
                     <div className="grid gap-1.5"><Label className="text-xs font-semibold text-[#c7d3ec]">Commerçant</Label><Select value={pf.merchantId} onValueChange={v => setPf(f => ({ ...f, merchantId: v }))}><SelectTrigger className={LUX_SELECT_TRIGGER}><SelectValue placeholder="Choisir" /></SelectTrigger><SelectContent className={LUX_SELECT_CONTENT}>{merchants.map(m => <SelectItem className={LUX_SELECT_ITEM} key={m.id} value={m.id}>{m.name}</SelectItem>)}</SelectContent></Select></div>
                     <div className="grid gap-1.5"><Label className="text-xs font-semibold text-[#c7d3ec]">Titre *</Label><Input className={LUX_INPUT} value={pf.title} onChange={e => setPf(f => ({ ...f, title: e.target.value }))} /></div>
@@ -372,17 +372,17 @@ export function AdminMarketplace() {
                   <TableRow className="border-white/8 hover:bg-transparent"><TableHead className="lux-eyebrow !text-[9.5px]">Titre</TableHead><TableHead className="lux-eyebrow !text-[9.5px]">Commerçant</TableHead><TableHead className="lux-eyebrow !text-[9.5px]">Prix</TableHead><TableHead className="lux-eyebrow !text-[9.5px] hidden md:table-cell">Vues</TableHead><TableHead className="lux-eyebrow !text-[9.5px] hidden md:table-cell">Utilisations</TableHead><TableHead className="lux-eyebrow !text-[9.5px]">Statut</TableHead><TableHead className="lux-eyebrow !text-[9.5px] hidden lg:table-cell">Expire</TableHead><TableHead className="lux-eyebrow !text-[9.5px] text-right">Actions</TableHead></TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredPromos.length === 0 && <TableRow className="border-white/8 hover:bg-white/[0.04]"><TableCell colSpan={8} className="text-center py-8 text-[#8fa0c2]">Aucune promotion</TableCell></TableRow>}
+                  {filteredPromos.length === 0 && <TableRow className="border-white/8 hover:bg-white/[0.04]"><TableCell colSpan={8} className="text-center py-8 text-[#8fabc2]">Aucune promotion</TableCell></TableRow>}
                   {filteredPromos.map(p => (
                     <TableRow key={p.id} className="border-white/8 hover:bg-white/[0.04]">
                       <TableCell className="font-medium text-white">{p.title}</TableCell>
-                      <TableCell className="text-sm text-[#8fa0c2]">{p.merchant?.name || '—'}</TableCell>
-                      <TableCell>{p.originalPrice && p.promoPrice ? <><span className="line-through text-[#8fa0c2] mr-1.5">{fmtEur(p.originalPrice)}</span><span className="font-semibold text-[#86e9cb]">{fmtEur(p.promoPrice)}</span></> : (p.promoPrice ? fmtEur(p.promoPrice) : '—')}</TableCell>
+                      <TableCell className="text-sm text-[#8fabc2]">{p.merchant?.name || '—'}</TableCell>
+                      <TableCell>{p.originalPrice && p.promoPrice ? <><span className="line-through text-[#8fabc2] mr-1.5">{fmtEur(p.originalPrice)}</span><span className="font-semibold text-[#86e9cb]">{fmtEur(p.promoPrice)}</span></> : (p.promoPrice ? fmtEur(p.promoPrice) : '—')}</TableCell>
                       <TableCell className="hidden md:table-cell text-sm text-[#c7d3ec]">{p.viewsCount}</TableCell>
                       <TableCell className="hidden md:table-cell text-sm text-[#c7d3ec]">{p.redemptionsCount}</TableCell>
                       <TableCell><SB cfg={isPromoActive(p) ? PROMO_STATUS_ACTIVE : PROMO_STATUS_EXPIRED} /></TableCell>
-                      <TableCell className="hidden lg:table-cell text-sm text-[#8fa0c2]">{p.validUntil ? fmtDate(p.validUntil) : '—'}</TableCell>
-                      <TableCell className="text-right"><div className="flex justify-end gap-1"><Button variant="ghost" size="sm" className="h-8 text-xs text-[#8fa0c2] hover:bg-white/[0.06] hover:text-white" onClick={() => editPromo(p)}>Modifier</Button><Button variant="ghost" size="sm" className="h-8 text-xs text-[#f07d6a] hover:bg-[#f07d6a]/10 hover:text-[#f07d6a]" onClick={() => deletePromo(p.id)}>Supprimer</Button></div></TableCell>
+                      <TableCell className="hidden lg:table-cell text-sm text-[#8fabc2]">{p.validUntil ? fmtDate(p.validUntil) : '—'}</TableCell>
+                      <TableCell className="text-right"><div className="flex justify-end gap-1"><Button variant="ghost" size="sm" className="h-8 text-xs text-[#8fabc2] hover:bg-white/[0.06] hover:text-white" onClick={() => editPromo(p)}>Modifier</Button><Button variant="ghost" size="sm" className="h-8 text-xs text-[#f07d6a] hover:bg-[#f07d6a]/10 hover:text-[#f07d6a]" onClick={() => deletePromo(p.id)}>Supprimer</Button></div></TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -401,7 +401,7 @@ export function AdminMarketplace() {
             <div className="flex justify-end">
               <Dialog open={flashDlg} onOpenChange={o => { setFlashDlg(o); if (!o) rstF(); }}>
                 <DialogTrigger asChild><Button size="sm" className="lux-btn h-9 rounded-full px-4 text-xs">Créer</Button></DialogTrigger>
-                <DialogContent className="border-white/10 bg-[#0b1226] text-white"><DialogHeader><DialogTitle className="lux-display text-lg text-white">Nouvelle vente flash</DialogTitle><DialogDescription className="text-sm text-[#8fa0c2]">Planifier une vente flash géolocalisée</DialogDescription></DialogHeader>
+                <DialogContent className="border-white/10 bg-[#0b1226] text-white"><DialogHeader><DialogTitle className="lux-display text-lg text-white">Nouvelle vente flash</DialogTitle><DialogDescription className="text-sm text-[#8fabc2]">Planifier une vente flash géolocalisée</DialogDescription></DialogHeader>
                   <div className="grid gap-3 py-2">
                     <div className="grid gap-1.5"><Label className="text-xs font-semibold text-[#c7d3ec]">Commerçant *</Label><Select value={ff.merchantId} onValueChange={v => setFf(f => ({ ...f, merchantId: v }))}><SelectTrigger className={LUX_SELECT_TRIGGER}><SelectValue placeholder="Choisir" /></SelectTrigger><SelectContent className={LUX_SELECT_CONTENT}>{merchants.map(m => <SelectItem className={LUX_SELECT_ITEM} key={m.id} value={m.id}>{m.name}</SelectItem>)}</SelectContent></Select></div>
                     <div className="grid gap-1.5"><Label className="text-xs font-semibold text-[#c7d3ec]">Promo liée</Label><Select value={ff.promoId} onValueChange={v => setFf(f => ({ ...f, promoId: v }))}><SelectTrigger className={LUX_SELECT_TRIGGER}><SelectValue placeholder="Optionnelle" /></SelectTrigger><SelectContent className={LUX_SELECT_CONTENT}><SelectItem className={LUX_SELECT_ITEM} value="">Aucune</SelectItem>{merchantPromosForFlash.map(p => <SelectItem className={LUX_SELECT_ITEM} key={p.id} value={p.id}>{p.title}</SelectItem>)}</SelectContent></Select></div>
@@ -419,20 +419,20 @@ export function AdminMarketplace() {
                   <TableRow className="border-white/8 hover:bg-transparent"><TableHead className="lux-eyebrow !text-[9.5px]">Titre</TableHead><TableHead className="lux-eyebrow !text-[9.5px]">Commerçant</TableHead><TableHead className="lux-eyebrow !text-[9.5px]">Prix</TableHead><TableHead className="lux-eyebrow !text-[9.5px]">Statut</TableHead><TableHead className="lux-eyebrow !text-[9.5px]">Compte à rebours</TableHead><TableHead className="lux-eyebrow !text-[9.5px] hidden md:table-cell">Progression</TableHead><TableHead className="lux-eyebrow !text-[9.5px] text-right">Actions</TableHead></TableRow>
                 </TableHeader>
                 <TableBody>
-                  {flashSales.length === 0 && <TableRow className="border-white/8 hover:bg-white/[0.04]"><TableCell colSpan={7} className="text-center py-8 text-[#8fa0c2]">Aucune vente flash</TableCell></TableRow>}
+                  {flashSales.length === 0 && <TableRow className="border-white/8 hover:bg-white/[0.04]"><TableCell colSpan={7} className="text-center py-8 text-[#8fabc2]">Aucune vente flash</TableCell></TableRow>}
                   {flashSales.map(f => {
                     const cfg = FLASH_STATUS[f.status] || FLASH_STATUS.expired;
                     const pct = f.maxRedemptions ? Math.min(100, (f.currentRedemptions / f.maxRedemptions) * 100) : 0;
                     return (
                       <TableRow key={f.id} className="border-white/8 hover:bg-white/[0.04]">
                         <TableCell className="font-medium text-white">{f.title || 'Sans titre'}</TableCell>
-                        <TableCell className="text-sm text-[#8fa0c2]">{f.merchant?.name || '—'}</TableCell>
+                        <TableCell className="text-sm text-[#8fabc2]">{f.merchant?.name || '—'}</TableCell>
                         <TableCell className="font-semibold text-[#86e9cb]">{fmtEur(f.flashPrice)}</TableCell>
                         <TableCell><SB cfg={cfg} /></TableCell>
-                        <TableCell><span className={`font-mono text-sm ${f.status === 'active' ? 'text-[#f07d6a] font-semibold' : 'text-[#8fa0c2]'}`}>{f.status === 'active' ? getCountdown(f.endsAt) : fmtDate(f.endsAt)}</span></TableCell>
-                        <TableCell className="hidden md:table-cell"><div className="w-24 space-y-1"><Progress value={pct} className="h-2 bg-white/10 [&_[data-slot=progress-indicator]]:bg-[#5c8af0]" /><span className="text-xs text-[#8fa0c2]">{f.currentRedemptions}{f.maxRedemptions ? `/${f.maxRedemptions}` : ''}</span></div></TableCell>
+                        <TableCell><span className={`font-mono text-sm ${f.status === 'active' ? 'text-[#f07d6a] font-semibold' : 'text-[#8fabc2]'}`}>{f.status === 'active' ? getCountdown(f.endsAt) : fmtDate(f.endsAt)}</span></TableCell>
+                        <TableCell className="hidden md:table-cell"><div className="w-24 space-y-1"><Progress value={pct} className="h-2 bg-white/10 [&_[data-slot=progress-indicator]]:bg-[#5cadf0]" /><span className="text-xs text-[#8fabc2]">{f.currentRedemptions}{f.maxRedemptions ? `/${f.maxRedemptions}` : ''}</span></div></TableCell>
                         <TableCell className="text-right"><div className="flex justify-end gap-1">
-                          {f.status === 'scheduled' && <Button variant="ghost" size="sm" className="h-8 text-xs text-[#5c8af0] hover:bg-[#5c8af0]/10 hover:text-[#a9c4ff]" onClick={() => flashAction(f.id, 'active')} title="Activer">Activer</Button>}
+                          {f.status === 'scheduled' && <Button variant="ghost" size="sm" className="h-8 text-xs text-[#5cadf0] hover:bg-[#5cadf0]/10 hover:text-[#a9d8ff]" onClick={() => flashAction(f.id, 'active')} title="Activer">Activer</Button>}
                           {(f.status === 'active' || f.status === 'scheduled') && <Button variant="ghost" size="sm" className="h-8 text-xs text-[#fbbf24] hover:bg-[#fbbf24]/10 hover:text-[#fbbf24]" onClick={() => flashAction(f.id, 'cancelled')} title="Annuler">Annuler</Button>}
                           <Button variant="ghost" size="sm" className="h-8 text-xs text-[#f07d6a] hover:bg-[#f07d6a]/10 hover:text-[#f07d6a]" onClick={() => flashAction(f.id, 'delete')} title="Supprimer">Supprimer</Button>
                         </div></TableCell>
@@ -459,7 +459,7 @@ export function AdminMarketplace() {
               </div>
               <Dialog open={couponDlg} onOpenChange={o => { setCouponDlg(o); if (!o) rstC(); }}>
                 <DialogTrigger asChild><Button size="sm" className="lux-btn h-9 rounded-full px-4 text-xs">Créer</Button></DialogTrigger>
-                <DialogContent className="border-white/10 bg-[#0b1226] text-white"><DialogHeader><DialogTitle className="lux-display text-lg text-white">Nouveau coupon</DialogTitle><DialogDescription className="text-sm text-[#8fa0c2]">Générer un code de réduction</DialogDescription></DialogHeader>
+                <DialogContent className="border-white/10 bg-[#0b1226] text-white"><DialogHeader><DialogTitle className="lux-display text-lg text-white">Nouveau coupon</DialogTitle><DialogDescription className="text-sm text-[#8fabc2]">Générer un code de réduction</DialogDescription></DialogHeader>
                   <div className="grid gap-3 py-2">
                     <div className="grid gap-1.5"><Label className="text-xs font-semibold text-[#c7d3ec]">Commerçant *</Label><Select value={cf.merchantId} onValueChange={v => setCf(f => ({ ...f, merchantId: v }))}><SelectTrigger className={LUX_SELECT_TRIGGER}><SelectValue placeholder="Choisir" /></SelectTrigger><SelectContent className={LUX_SELECT_CONTENT}>{merchants.map(m => <SelectItem className={LUX_SELECT_ITEM} key={m.id} value={m.id}>{m.name}</SelectItem>)}</SelectContent></Select></div>
                     <div className="grid grid-cols-2 gap-3"><div className="grid gap-1.5"><Label className="text-xs font-semibold text-[#c7d3ec]">Type</Label><Select value={cf.discountType} onValueChange={v => setCf(f => ({ ...f, discountType: v }))}><SelectTrigger className={LUX_SELECT_TRIGGER}><SelectValue /></SelectTrigger><SelectContent className={LUX_SELECT_CONTENT}><SelectItem className={LUX_SELECT_ITEM} value="percentage">Pourcentage</SelectItem><SelectItem className={LUX_SELECT_ITEM} value="fixed">Montant fixe</SelectItem></SelectContent></Select></div><div className="grid gap-1.5"><Label className="text-xs font-semibold text-[#c7d3ec]">Valeur *</Label><Input className={LUX_INPUT} type="number" step="0.01" value={cf.discountValue} onChange={e => setCf(f => ({ ...f, discountValue: e.target.value }))} /></div></div>
@@ -475,15 +475,15 @@ export function AdminMarketplace() {
                   <TableRow className="border-white/8 hover:bg-transparent"><TableHead className="lux-eyebrow !text-[9.5px]">Code</TableHead><TableHead className="lux-eyebrow !text-[9.5px]">Commerçant</TableHead><TableHead className="lux-eyebrow !text-[9.5px]">Remise</TableHead><TableHead className="lux-eyebrow !text-[9.5px]">Statut</TableHead><TableHead className="lux-eyebrow !text-[9.5px] hidden md:table-cell">Utilisations</TableHead><TableHead className="lux-eyebrow !text-[9.5px] hidden lg:table-cell">Expire</TableHead><TableHead className="lux-eyebrow !text-[9.5px] text-right">Actions</TableHead></TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredCoupons.length === 0 && <TableRow className="border-white/8 hover:bg-white/[0.04]"><TableCell colSpan={7} className="text-center py-8 text-[#8fa0c2]">Aucun coupon</TableCell></TableRow>}
+                  {filteredCoupons.length === 0 && <TableRow className="border-white/8 hover:bg-white/[0.04]"><TableCell colSpan={7} className="text-center py-8 text-[#8fabc2]">Aucun coupon</TableCell></TableRow>}
                   {filteredCoupons.map(c => (
                     <TableRow key={c.id} className="border-white/8 hover:bg-white/[0.04]">
                       <TableCell><code className="cursor-pointer rounded border border-white/10 bg-white/[0.06] px-2 py-0.5 font-mono text-sm font-semibold text-white hover:bg-white/[0.09]" onClick={() => { navigator.clipboard.writeText(c.code); toast.success('Code copié !'); }}>{c.code}</code></TableCell>
-                      <TableCell className="text-sm text-[#8fa0c2]">{c.merchant?.name || '—'}</TableCell>
+                      <TableCell className="text-sm text-[#8fabc2]">{c.merchant?.name || '—'}</TableCell>
                       <TableCell className="font-semibold text-white">{c.discountType === 'percentage' ? `${c.discountValue}%` : fmtEur(c.discountValue)}</TableCell>
                       <TableCell><SB cfg={COUPON_STATUS[c.status] || COUPON_STATUS.active} /></TableCell>
                       <TableCell className="hidden md:table-cell text-sm text-[#c7d3ec]">{c.currentUses}{c.maxUses ? `/${c.maxUses}` : ''}</TableCell>
-                      <TableCell className="hidden lg:table-cell text-sm text-[#8fa0c2]">{c.validUntil ? fmtDate(c.validUntil) : '—'}</TableCell>
+                      <TableCell className="hidden lg:table-cell text-sm text-[#8fabc2]">{c.validUntil ? fmtDate(c.validUntil) : '—'}</TableCell>
                       <TableCell className="text-right">{c.status === 'active' && <Button variant="ghost" size="sm" className="lux-btn-ghost h-8 rounded-full px-3.5 text-xs" onClick={() => scanCoupon(c.id)}>Scanner</Button>}</TableCell>
                     </TableRow>
                   ))}
@@ -509,15 +509,15 @@ export function AdminMarketplace() {
                   <TableRow className="border-white/8 hover:bg-transparent"><TableHead className="lux-eyebrow !text-[9.5px]">Date</TableHead><TableHead className="lux-eyebrow !text-[9.5px]">Type</TableHead><TableHead className="lux-eyebrow !text-[9.5px]">Montant</TableHead><TableHead className="lux-eyebrow !text-[9.5px]">Statut</TableHead><TableHead className="lux-eyebrow !text-[9.5px] hidden md:table-cell">Payeur</TableHead><TableHead className="lux-eyebrow !text-[9.5px] hidden md:table-cell">Receveur</TableHead></TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredTxns.length === 0 && <TableRow className="border-white/8 hover:bg-white/[0.04]"><TableCell colSpan={6} className="text-center py-8 text-[#8fa0c2]">Aucune transaction</TableCell></TableRow>}
+                  {filteredTxns.length === 0 && <TableRow className="border-white/8 hover:bg-white/[0.04]"><TableCell colSpan={6} className="text-center py-8 text-[#8fabc2]">Aucune transaction</TableCell></TableRow>}
                   {filteredTxns.map(t => (
                     <TableRow key={t.id} className="border-white/8 hover:bg-white/[0.04]">
                       <TableCell className="text-sm text-[#c7d3ec]">{fmtDateTime(t.createdAt)}</TableCell>
-                      <TableCell><Badge variant="outline" className="border-white/12 bg-white/[0.03] text-[#8fa0c2]">{t.type.replace(/_/g, ' ')}</Badge></TableCell>
+                      <TableCell><Badge variant="outline" className="border-white/12 bg-white/[0.03] text-[#8fabc2]">{t.type.replace(/_/g, ' ')}</Badge></TableCell>
                       <TableCell className="font-semibold text-white">{fmtEur(t.amount)}</TableCell>
                       <TableCell><SB cfg={TXN_STATUS[t.status] || TXN_STATUS.pending} /></TableCell>
-                      <TableCell className="hidden md:table-cell text-sm text-[#8fa0c2] font-mono">{t.payerId ? `${t.payerId.slice(0, 8)}...` : '—'}</TableCell>
-                      <TableCell className="hidden md:table-cell text-sm text-[#8fa0c2] font-mono">{t.receiverId ? `${t.receiverId.slice(0, 8)}...` : '—'}</TableCell>
+                      <TableCell className="hidden md:table-cell text-sm text-[#8fabc2] font-mono">{t.payerId ? `${t.payerId.slice(0, 8)}...` : '—'}</TableCell>
+                      <TableCell className="hidden md:table-cell text-sm text-[#8fabc2] font-mono">{t.receiverId ? `${t.receiverId.slice(0, 8)}...` : '—'}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

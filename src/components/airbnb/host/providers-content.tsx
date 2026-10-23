@@ -195,7 +195,7 @@ function ProviderCard({
           className={cn(
             'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-lg',
             provider.audience === 'GUEST_EXPERIENCE'
-              ? 'bg-[#3d6fe0]/15 text-[#a9c4ff] ring-1 ring-[#5c8af0]/25'
+              ? 'bg-[#3d97e0]/15 text-[#a9d8ff] ring-1 ring-[#5cadf0]/25'
               : 'bg-white/[0.05] text-[#c7d3ec] ring-1 ring-white/10',
           )}
         >
@@ -203,7 +203,7 @@ function ProviderCard({
         </span>
         <div className="min-w-0 flex-1">
           <h3 className="truncate font-semibold text-white">{provider.businessName}</h3>
-          <p className="truncate text-xs text-[#8fa0c2]">
+          <p className="truncate text-xs text-[#8fabc2]">
             {provider.categoryLabel}
             {provider.subcategory ? ` · ${provider.subcategory}` : ''}
           </p>
@@ -223,7 +223,7 @@ function ProviderCard({
           <span
             className={cn(
               'text-[9px] font-bold uppercase tracking-wide',
-              provider.enabled ? 'text-[#34d399]' : 'text-[#8fa0c2]',
+              provider.enabled ? 'text-[#34d399]' : 'text-[#8fabc2]',
             )}
           >
             {provider.enabled ? 'Activé' : 'Désactivé'}
@@ -236,7 +236,7 @@ function ProviderCard({
         {provider.totalReviews > 0 ? (
           <span className="inline-flex items-center gap-1 whitespace-nowrap text-xs font-semibold text-white">
             {provider.ratingAvg.toFixed(1)}/5
-            <span className="font-normal text-[#8fa0c2]">({provider.totalReviews} avis)</span>
+            <span className="font-normal text-[#8fabc2]">({provider.totalReviews} avis)</span>
           </span>
         ) : (
           <span className="lux-chip whitespace-nowrap">
@@ -251,7 +251,7 @@ function ProviderCard({
       </div>
 
       {/* --- Distance / rayon / taux / missions / réponse --- */}
-      <ul className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#8fa0c2]">
+      <ul className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#8fabc2]">
         <li className="inline-flex min-w-0 items-center gap-1" title="Distance depuis votre bien">
           à {provider.distanceKm.toFixed(1)} km · rayon {provider.serviceRadiusKm} km
         </li>
@@ -272,7 +272,7 @@ function ProviderCard({
       </ul>
 
       {provider.description && (
-        <p className="line-clamp-2 text-sm text-[#8fa0c2]">{provider.description}</p>
+        <p className="line-clamp-2 text-sm text-[#8fabc2]">{provider.description}</p>
       )}
 
       {/* --- Contact --- */}
@@ -349,7 +349,7 @@ function HostProviderCard({
           className={cn(
             'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-lg',
             provider.audience === 'GUEST_EXPERIENCE'
-              ? 'bg-[#3d6fe0]/15 text-[#a9c4ff] ring-1 ring-[#5c8af0]/25'
+              ? 'bg-[#3d97e0]/15 text-[#a9d8ff] ring-1 ring-[#5cadf0]/25'
               : 'bg-white/[0.05] text-[#c7d3ec] ring-1 ring-white/10',
           )}
         >
@@ -363,7 +363,7 @@ function HostProviderCard({
             Mon prestataire
           </Badge>
           <h3 className="truncate font-semibold text-white">{provider.name}</h3>
-          <p className="truncate text-xs text-[#8fa0c2]">{provider.category || 'Autre'}</p>
+          <p className="truncate text-xs text-[#8fabc2]">{provider.category || 'Autre'}</p>
         </div>
         {/* Toggle d'activation — isActive=false = masqué côté invités. */}
         <span className="flex shrink-0 flex-col items-end gap-1">
@@ -380,7 +380,7 @@ function HostProviderCard({
           <span
             className={cn(
               'text-[9px] font-bold uppercase tracking-wide',
-              provider.isActive ? 'text-[#34d399]' : 'text-[#8fa0c2]',
+              provider.isActive ? 'text-[#34d399]' : 'text-[#8fabc2]',
             )}
           >
             {provider.isActive ? 'Activé' : 'Désactivé'}
@@ -392,12 +392,12 @@ function HostProviderCard({
       {provider.isUrgentAvailable && <StatusBadge status="unverified" tone="danger" label="Urgences" />}
 
       {provider.description && (
-        <p className="line-clamp-2 text-sm text-[#8fa0c2]">{provider.description}</p>
+        <p className="line-clamp-2 text-sm text-[#8fabc2]">{provider.description}</p>
       )}
 
       {/* --- Contacts : email / téléphone / site --- */}
       {(provider.contactEmail || provider.contactPhone || provider.website) && (
-        <ul className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#8fa0c2]">
+        <ul className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#8fabc2]">
           {provider.contactName && (
             <li className="inline-flex items-center gap-1 text-[#c7d3ec]">
               {provider.contactName}
@@ -407,7 +407,7 @@ function HostProviderCard({
             <li>
               <a
                 href={`mailto:${provider.contactEmail}`}
-                className="font-medium text-[#a9c4ff] hover:underline"
+                className="font-medium text-[#a9d8ff] hover:underline"
                 aria-label={`Envoyer un email à ${provider.name}`}
               >
                 Email
@@ -431,7 +431,7 @@ function HostProviderCard({
                 href={provider.website.startsWith('http') ? provider.website : `https://${provider.website}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-medium text-[#a9c4ff] hover:underline"
+                className="font-medium text-[#a9d8ff] hover:underline"
                 aria-label={`Visiter le site de ${provider.name}`}
               >
                 Site web
@@ -639,9 +639,9 @@ function HostProviderDialog({
                 aria-pressed={active}
                 aria-label={`Pastille ${emoji}`}
                 className={cn(
-                  'flex h-10 w-10 items-center justify-center rounded-xl border text-lg transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5c8af0]/50',
+                  'flex h-10 w-10 items-center justify-center rounded-xl border text-lg transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5cadf0]/50',
                   active
-                    ? 'border-[#5c8af0]/60 bg-[#5c8af0]/10 shadow-sm'
+                    ? 'border-[#5cadf0]/60 bg-[#5cadf0]/10 shadow-sm'
                     : 'border-border bg-background hover:bg-muted',
                 )}
               >
@@ -936,7 +936,7 @@ export function ProvidersContent() {
           <h1 className="lux-display text-2xl font-semibold tracking-tight text-white sm:text-3xl">
             Prestataires
           </h1>
-          <p className="mt-1.5 truncate text-sm text-[#8fa0c2]">{subtitle}</p>
+          <p className="mt-1.5 truncate text-sm text-[#8fabc2]">{subtitle}</p>
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-2">
           {/* v4.69 — PHASE 2 · bouton primaire « Mon prestataire » */}
@@ -1005,7 +1005,7 @@ export function ProvidersContent() {
       {!propertiesLoading && properties.length === 0 && (
         <div className="lux-empty flex flex-col items-center gap-3 rounded-2xl px-6 py-10 text-center">
           <p className="lux-display text-lg text-white">Aucun bien dans votre portfolio</p>
-          <p className="max-w-md text-sm text-[#8fa0c2]">
+          <p className="max-w-md text-sm text-[#8fabc2]">
             Ajoutez votre première propriété pour découvrir les prestataires autour d&apos;elle.
           </p>
           <Link
@@ -1027,12 +1027,12 @@ export function ProvidersContent() {
                 <TabsTrigger
                   key={key}
                   value={key}
-                  className="gap-1.5 rounded-full px-3.5 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fa0c2] data-[state=active]:bg-white/10 data-[state=active]:text-white"
+                  className="gap-1.5 rounded-full px-3.5 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fabc2] data-[state=active]:bg-white/10 data-[state=active]:text-white"
                   aria-label={`${meta.label} : ${counts[key]} prestataire${counts[key] > 1 ? 's' : ''}`}
                 >
                   <span className="hidden sm:inline">{meta.label}</span>
                   <span className="sm:hidden">{meta.label.split(' ')[1] ?? meta.label}</span>
-                  <span className="ml-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-white/8 px-1.5 text-[10px] font-semibold text-[#8fa0c2]">
+                  <span className="ml-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-white/8 px-1.5 text-[10px] font-semibold text-[#8fabc2]">
                     {counts[key]}
                   </span>
                 </TabsTrigger>
@@ -1048,7 +1048,7 @@ export function ProvidersContent() {
             const hostList = hostProviders.filter((h) => h.audience === key);
             return (
               <TabsContent key={key} value={key} className="mt-4 min-w-0">
-                <p className="mb-4 text-sm text-[#8fa0c2]">{meta.hint}</p>
+                <p className="mb-4 text-sm text-[#8fabc2]">{meta.hint}</p>
 
                 {loading || hostLoading ? (
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3" aria-busy="true" aria-label="Chargement des prestataires">
@@ -1073,7 +1073,7 @@ export function ProvidersContent() {
                       Aucun prestataire {meta.label.toLowerCase()} à moins de {SEARCH_RADIUS_KM} km
                       autour de ce bien
                     </p>
-                    <p className="max-w-md text-sm text-[#8fa0c2]">{meta.hint}</p>
+                    <p className="max-w-md text-sm text-[#8fabc2]">{meta.hint}</p>
                     <div className="flex flex-wrap items-center justify-center gap-2">
                       <button
                         type="button"
@@ -1156,7 +1156,7 @@ export function ProvidersContent() {
             <AlertDialogTitle className="lux-display text-lg font-semibold text-white">
               Supprimer ce prestataire ?
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-[#8fa0c2]">
+            <AlertDialogDescription className="text-[#8fabc2]">
               « {deletingHostProvider?.name ?? ''} » sera définitivement retiré de ce bien
               {deletingHostProvider?.audience === 'GUEST_EXPERIENCE'
                 ? ' et disparaîtra des services invités du hub.'

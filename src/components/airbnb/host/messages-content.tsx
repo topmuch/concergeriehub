@@ -491,7 +491,7 @@ export function MessagesContent() {
         <div>
           <p className="lux-eyebrow">Espace hôte</p>
           <h1 className="lux-display mt-1.5 text-2xl font-semibold text-white">Messagerie</h1>
-          <p className="mt-1 text-sm text-[#8fa0c2]">
+          <p className="mt-1 text-sm text-[#8fabc2]">
             Vocaux et signalements — {propertiesLoading ? 'chargement…' : scopeLabel}
           </p>
         </div>
@@ -505,7 +505,7 @@ export function MessagesContent() {
           {refreshing && (
             <span
               className="lux-dot animate-pulse"
-              style={{ backgroundColor: '#a9c4ff' }}
+              style={{ backgroundColor: '#a9d8ff' }}
               aria-hidden="true"
             />
           )}
@@ -531,7 +531,7 @@ export function MessagesContent() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Rechercher un nom…"
-                className="h-10 rounded-full border-white/12 bg-white/[0.04] pl-4 text-sm text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+                className="h-10 rounded-full border-white/12 bg-white/[0.04] pl-4 text-sm text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50"
                 aria-label="Rechercher une conversation par nom"
               />
             </div>
@@ -549,14 +549,14 @@ export function MessagesContent() {
               {conversations.length === 0 ? (
                 <div className="lux-empty flex flex-col items-center rounded-2xl p-6 text-center">
                   <h3 className="lux-display text-base font-semibold text-white">Aucun message vocal</h3>
-                  <p className="mt-1.5 max-w-[240px] text-xs text-[#8fa0c2]">
+                  <p className="mt-1.5 max-w-[240px] text-xs text-[#8fabc2]">
                     Les messages vocaux laissés par vos invités (bouton « Contacter l&apos;hôte »
                     de la plaque QR) apparaîtront ici.
                   </p>
                 </div>
               ) : filteredConversations.length === 0 ? (
                 <div className="lux-empty flex flex-col items-center rounded-2xl p-6 text-center">
-                  <p className="mt-2 text-xs text-[#8fa0c2]">
+                  <p className="mt-2 text-xs text-[#8fabc2]">
                     Aucune conversation pour « {search.trim()} ».
                   </p>
                 </div>
@@ -572,9 +572,9 @@ export function MessagesContent() {
                           onClick={() => openConversation(c.key)}
                           aria-current={active || undefined}
                           className={cn(
-                            'flex w-full items-center gap-3 rounded-xl border p-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5c8af0]/50',
+                            'flex w-full items-center gap-3 rounded-xl border p-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5cadf0]/50',
                             active
-                              ? 'border-[#5c8af0]/40 bg-[#5c8af0]/10'
+                              ? 'border-[#5cadf0]/40 bg-[#5cadf0]/10'
                               : 'border-transparent hover:bg-white/[0.04]',
                           )}
                         >
@@ -583,7 +583,7 @@ export function MessagesContent() {
                             {c.unread > 0 && (
                               <span
                                 aria-label={`${c.unread} message${c.unread > 1 ? 's' : ''} non lu${c.unread > 1 ? 's' : ''}`}
-                                className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-[#0b1226] bg-[#5c8af0] px-1 text-[9px] font-bold text-white"
+                                className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-[#0b1226] bg-[#5cadf0] px-1 text-[9px] font-bold text-white"
                               >
                                 {c.unread > 9 ? '9+' : c.unread}
                               </span>
@@ -599,7 +599,7 @@ export function MessagesContent() {
                               >
                                 {c.senderName}
                               </span>
-                              <span className="shrink-0 text-[10px] tabular-nums text-[#8fa0c2]/70">
+                              <span className="shrink-0 text-[10px] tabular-nums text-[#8fabc2]/70">
                                 {relativeFrTime(new Date(c.lastAt).toISOString())}
                               </span>
                             </span>
@@ -607,14 +607,14 @@ export function MessagesContent() {
                               <span
                                 className={cn(
                                   'truncate text-xs',
-                                  c.unread > 0 ? 'font-semibold text-[#a9c4ff]' : 'text-[#8fa0c2]',
+                                  c.unread > 0 ? 'font-semibold text-[#a9d8ff]' : 'text-[#8fabc2]',
                                 )}
                               >
                                 {previewOf(last)}
                               </span>
                             </span>
                             {c.propertyName && (
-                              <span className="mt-0.5 block truncate text-[10px] font-medium text-[#8fa0c2]/70">
+                              <span className="mt-0.5 block truncate text-[10px] font-medium text-[#8fabc2]/70">
                                 {c.propertyName}
                               </span>
                             )}
@@ -646,7 +646,7 @@ export function MessagesContent() {
                     type="button"
                     onClick={() => setSelectedKey(null)}
                     aria-label="Retour à la liste des conversations"
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/12 text-white/80 transition-colors hover:bg-white/8 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5c8af0]/50 lg:hidden"
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/12 text-white/80 transition-colors hover:bg-white/8 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5cadf0]/50 lg:hidden"
                   >
                     <span aria-hidden="true">←</span>
                   </button>
@@ -655,7 +655,7 @@ export function MessagesContent() {
                     <p className="lux-display truncate text-base font-semibold text-white">
                       {selectedConversation.senderName}
                     </p>
-                    <p className="truncate text-[11px] text-[#8fa0c2]">
+                    <p className="truncate text-[11px] text-[#8fabc2]">
                       {selectedConversation.propertyName ?? 'Bien'} ·{' '}
                       {selectedConversation.messages.length} message
                       {selectedConversation.messages.length > 1 ? 's' : ''} ·{' '}
@@ -664,7 +664,7 @@ export function MessagesContent() {
                   </div>
                   {selectedConversation.unread > 0 && (
                     <span className="lux-chip shrink-0">
-                      <span className="lux-dot" style={{ backgroundColor: '#5c8af0' }} aria-hidden="true" />
+                      <span className="lux-dot" style={{ backgroundColor: '#5cadf0' }} aria-hidden="true" />
                       {selectedConversation.unread} non lu
                       {selectedConversation.unread > 1 ? 's' : ''}
                     </span>
@@ -696,7 +696,7 @@ export function MessagesContent() {
                         type="button"
                         variant="ghost"
                         size="sm"
-                        className="h-7 self-center rounded-full text-[#8fa0c2] hover:bg-white/8 hover:text-white"
+                        className="h-7 self-center rounded-full text-[#8fabc2] hover:bg-white/8 hover:text-white"
                         onClick={() => setShowReply(false)}
                         aria-label="Annuler la réponse vocale"
                       >
@@ -708,12 +708,12 @@ export function MessagesContent() {
                       type="button"
                       onClick={() => setShowReply(true)}
                       aria-label="Répondre par message vocal"
-                      className="flex w-full items-center justify-between gap-3 rounded-full border border-white/12 bg-white/[0.04] py-1.5 pl-4 pr-1.5 text-left transition-colors hover:border-[#5c8af0]/40 hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5c8af0]/50"
+                      className="flex w-full items-center justify-between gap-3 rounded-full border border-white/12 bg-white/[0.04] py-1.5 pl-4 pr-1.5 text-left transition-colors hover:border-[#5cadf0]/40 hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5cadf0]/50"
                     >
-                      <span className="text-sm text-[#8fa0c2]">Répondre par vocal…</span>
+                      <span className="text-sm text-[#8fabc2]">Répondre par vocal…</span>
                       <span
                         aria-hidden="true"
-                        className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[#3d6fe0] to-[#24479c] text-sm text-white shadow"
+                        className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[#3d97e0] to-[#24479c] text-sm text-white shadow"
                       >
                         →
                       </span>
@@ -726,7 +726,7 @@ export function MessagesContent() {
                 <h3 className="lux-display text-lg font-semibold text-white">
                   Sélectionnez une conversation
                 </h3>
-                <p className="mt-1.5 max-w-xs text-xs text-[#8fa0c2]">
+                <p className="mt-1.5 max-w-xs text-xs text-[#8fabc2]">
                   Choisissez un échange dans la liste de gauche pour écouter les vocaux et
                   répondre.
                 </p>
@@ -746,7 +746,7 @@ export function MessagesContent() {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Rechercher un signalement…"
-                  className="h-10 rounded-full border-white/12 bg-white/[0.04] pl-4 text-sm text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+                  className="h-10 rounded-full border-white/12 bg-white/[0.04] pl-4 text-sm text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50"
                   aria-label="Rechercher un signalement"
                 />
               </div>
@@ -762,14 +762,14 @@ export function MessagesContent() {
               {(complaints ?? []).length === 0 ? (
                 <div className="lux-empty flex flex-col items-center rounded-2xl p-8 text-center">
                   <h3 className="lux-display text-lg font-semibold text-white">Aucun signalement</h3>
-                  <p className="mt-1.5 max-w-sm text-xs text-[#8fa0c2]">
+                  <p className="mt-1.5 max-w-sm text-xs text-[#8fabc2]">
                     Les problèmes signalés par vos invités (bouton « Signaler un problème »
                     de la plaque QR) arriveront ici, connectés au bouton Messages.
                   </p>
                 </div>
               ) : filteredComplaints.length === 0 ? (
                 <div className="lux-empty flex flex-col items-center rounded-2xl p-8 text-center">
-                  <p className="mt-2 text-xs text-[#8fa0c2]">
+                  <p className="mt-2 text-xs text-[#8fabc2]">
                     Aucun signalement pour « {search.trim()} ».
                   </p>
                 </div>
@@ -796,7 +796,7 @@ export function MessagesContent() {
                               <span
                                 className="lux-dot shrink-0"
                                 style={{
-                                  backgroundColor: isOpen && c.isUrgent ? '#f07d6a' : isOpen ? '#fbbf24' : '#8fa0c2',
+                                  backgroundColor: isOpen && c.isUrgent ? '#f07d6a' : isOpen ? '#fbbf24' : '#8fabc2',
                                 }}
                                 aria-hidden="true"
                               />
@@ -819,7 +819,7 @@ export function MessagesContent() {
                                 </span>
                               )}
                             </p>
-                            <p className="mt-0.5 text-[11px] text-[#8fa0c2]">
+                            <p className="mt-0.5 text-[11px] text-[#8fabc2]">
                               {relativeFrTime(c.createdAt)}
                               {c.propertyName ? ` · ${c.propertyName}` : ''}
                               {c.guestName ? ` · ${c.guestName}` : ''}
@@ -856,12 +856,12 @@ export function MessagesContent() {
                               variant="outline"
                               disabled={resolvingId === c.id}
                               onClick={() => void resolveComplaint(c.id)}
-                              className="h-8 rounded-full border-white/12 bg-transparent font-semibold text-[#a9c4ff] hover:bg-white/[0.06] hover:text-white"
+                              className="h-8 rounded-full border-white/12 bg-transparent font-semibold text-[#a9d8ff] hover:bg-white/[0.06] hover:text-white"
                             >
                               {resolvingId === c.id ? (
                                 <span
                                   className="lux-dot animate-pulse"
-                                  style={{ backgroundColor: '#a9c4ff' }}
+                                  style={{ backgroundColor: '#a9d8ff' }}
                                   aria-hidden="true"
                                 />
                               ) : (
@@ -877,7 +877,7 @@ export function MessagesContent() {
                               size="sm"
                               variant="outline"
                               onClick={() => openInsuranceDialog(c)}
-                              className="h-8 rounded-full border-white/12 bg-transparent font-semibold text-[#8fa0c2] hover:bg-white/[0.06] hover:text-white"
+                              className="h-8 rounded-full border-white/12 bg-transparent font-semibold text-[#8fabc2] hover:bg-white/[0.06] hover:text-white"
                               aria-label="Générer la fiche assurance PDF"
                             >
                               Fiche assurance
@@ -902,7 +902,7 @@ export function MessagesContent() {
             <DialogTitle className="lux-display text-xl font-semibold text-white">
               Fiche assurance / dépôt de garantie
             </DialogTitle>
-            <DialogDescription className="text-[#8fa0c2]">
+            <DialogDescription className="text-[#8fabc2]">
               Le rapport PDF est pré-rempli avec le signalement, les photos et le logement.
               Complétez l&apos;estimation des dégâts — le document est prêt pour Airbnb ou votre
               assurance habitation.
@@ -910,7 +910,7 @@ export function MessagesContent() {
           </DialogHeader>
 
           <div className="space-y-3">
-            <div className="rounded-xl border border-white/10 bg-white/[0.04] p-3 text-xs text-[#8fa0c2]">
+            <div className="rounded-xl border border-white/10 bg-white/[0.04] p-3 text-xs text-[#8fabc2]">
               <p className="font-semibold text-white">
                 {insuranceComplaint ? complaintMeta(insuranceComplaint.category).label : ''}
                 {insuranceComplaint?.guestName ? ` — ${insuranceComplaint.guestName}` : ''}
@@ -929,7 +929,7 @@ export function MessagesContent() {
               </p>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="insurance-items" className="text-xs font-semibold text-[#8fa0c2]">
+              <Label htmlFor="insurance-items" className="text-xs font-semibold text-[#8fabc2]">
                 Objet(s) endommagé(s)
               </Label>
               <Input
@@ -938,11 +938,11 @@ export function MessagesContent() {
                 onChange={(e) => setInsuranceItems(e.target.value)}
                 maxLength={120}
                 placeholder="Ex. : machine à café Delonghi, verre à pied…"
-                className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+                className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50"
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="insurance-estimate" className="text-xs font-semibold text-[#8fa0c2]">
+              <Label htmlFor="insurance-estimate" className="text-xs font-semibold text-[#8fabc2]">
                 Estimation des dégâts (€)
               </Label>
               <Input
@@ -952,11 +952,11 @@ export function MessagesContent() {
                 onChange={(e) => setInsuranceEstimate(e.target.value)}
                 maxLength={10}
                 placeholder="89,99"
-                className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+                className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50"
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="insurance-comment" className="text-xs font-semibold text-[#8fa0c2]">
+              <Label htmlFor="insurance-comment" className="text-xs font-semibold text-[#8fabc2]">
                 Commentaire (optionnel)
               </Label>
               <Textarea
@@ -966,7 +966,7 @@ export function MessagesContent() {
                 maxLength={600}
                 rows={3}
                 placeholder="Contexte, échanges avec l'invité, remplacement prévu…"
-                className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+                className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50"
               />
             </div>
           </div>
@@ -975,7 +975,7 @@ export function MessagesContent() {
             <Button
               type="button"
               variant="outline"
-              className="rounded-full border-white/12 bg-transparent text-[#8fa0c2] hover:bg-white/[0.06] hover:text-white"
+              className="rounded-full border-white/12 bg-transparent text-[#8fabc2] hover:bg-white/[0.06] hover:text-white"
               onClick={() => setInsuranceComplaint(null)}
             >
               Annuler
@@ -989,7 +989,7 @@ export function MessagesContent() {
               {insuranceBusy && (
                 <span
                   className="lux-dot animate-pulse"
-                  style={{ backgroundColor: '#a9c4ff' }}
+                  style={{ backgroundColor: '#a9d8ff' }}
                   aria-hidden="true"
                 />
               )}
@@ -1012,7 +1012,7 @@ function Avatar({ name, className }: { name: string; className?: string }) {
     <span
       aria-hidden="true"
       className={cn(
-        'flex shrink-0 items-center justify-center rounded-full bg-[#3d6fe0]/15 font-bold text-[#a9c4ff] ring-1 ring-[#5c8af0]/25',
+        'flex shrink-0 items-center justify-center rounded-full bg-[#3d97e0]/15 font-bold text-[#a9d8ff] ring-1 ring-[#5cadf0]/25',
         className ?? 'h-9 w-9 text-xs',
       )}
     >
@@ -1034,7 +1034,7 @@ function SegmentedTabs({
   complaintsOpen: number;
 }) {
   const base =
-    'flex h-8 items-center justify-center gap-1.5 rounded-full px-3 text-[11px] font-semibold uppercase tracking-[0.12em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5c8af0]/50';
+    'flex h-8 items-center justify-center gap-1.5 rounded-full px-3 text-[11px] font-semibold uppercase tracking-[0.12em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5cadf0]/50';
   return (
     <div className="grid grid-cols-2 gap-1 rounded-full border border-white/10 bg-white/[0.04] p-1" role="tablist" aria-label="Filtrer les messages">
       <button
@@ -1042,11 +1042,11 @@ function SegmentedTabs({
         role="tab"
         aria-selected={tab === 'voice'}
         onClick={() => onChange('voice')}
-        className={cn(base, tab === 'voice' ? 'bg-white/10 text-white' : 'text-[#8fa0c2] hover:text-white')}
+        className={cn(base, tab === 'voice' ? 'bg-white/10 text-white' : 'text-[#8fabc2] hover:text-white')}
       >
         Vocaux
         {voiceUnread > 0 && (
-          <span className="ml-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#5c8af0] px-1 text-[10px] font-bold text-white">
+          <span className="ml-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#5cadf0] px-1 text-[10px] font-bold text-white">
             {voiceUnread > 9 ? '9+' : voiceUnread}
           </span>
         )}
@@ -1056,7 +1056,7 @@ function SegmentedTabs({
         role="tab"
         aria-selected={tab === 'complaints'}
         onClick={() => onChange('complaints')}
-        className={cn(base, tab === 'complaints' ? 'bg-white/10 text-white' : 'text-[#8fa0c2] hover:text-white')}
+        className={cn(base, tab === 'complaints' ? 'bg-white/10 text-white' : 'text-[#8fabc2] hover:text-white')}
       >
         Signalements
         {complaintsOpen > 0 && (
@@ -1110,7 +1110,7 @@ function VoiceBubble({
           className={cn(
             'flex items-center gap-2 rounded-2xl px-2.5 py-2',
             isHost
-              ? 'rounded-tr-md border border-[#5c8af0]/30 bg-[#5c8af0]/12'
+              ? 'rounded-tr-md border border-[#5cadf0]/30 bg-[#5cadf0]/12'
               : 'rounded-tl-md border border-white/10 bg-white/[0.05]',
           )}
         >
@@ -1118,7 +1118,7 @@ function VoiceBubble({
             type="button"
             onClick={togglePlay}
             aria-label={playing ? `Mettre en pause le message de ${m.senderName}` : `Écouter le message de ${m.senderName}`}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#3d6fe0] to-[#24479c] text-white shadow transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5c8af0]/50"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#3d97e0] to-[#24479c] text-white shadow transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5cadf0]/50"
           >
             {playing ? (
               <Pause className="h-4 w-4" aria-hidden="true" />
@@ -1133,13 +1133,13 @@ function VoiceBubble({
                 style={{ height: `${h}px` }}
                 className={cn(
                   'w-[3px] rounded-full transition-colors',
-                  playing ? 'bg-[#5c8af0]' : 'bg-[#8fa0c2]/40',
+                  playing ? 'bg-[#5cadf0]' : 'bg-[#8fabc2]/40',
                 )}
               />
             ))}
           </span>
           {m.durationSec > 0 && (
-            <span className="shrink-0 text-[11px] font-bold tabular-nums text-[#8fa0c2]">
+            <span className="shrink-0 text-[11px] font-bold tabular-nums text-[#8fabc2]">
               {m.durationSec} s
             </span>
           )}
@@ -1165,7 +1165,7 @@ function VoiceBubble({
           )}
         </button>
       </div>
-      <p className={cn('px-1 text-[10px] text-[#8fa0c2]/70', isHost && 'text-right')}>
+      <p className={cn('px-1 text-[10px] text-[#8fabc2]/70', isHost && 'text-right')}>
         {relativeFrTime(m.createdAt)}
         {m.fileSizeKb > 0 ? ` · ${m.fileSizeKb} Ko` : ''}
       </p>

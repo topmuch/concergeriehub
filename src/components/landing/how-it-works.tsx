@@ -5,7 +5,7 @@
 // Garde l'ancre #how-it-works et le contenu commercial d'origine
 // (plaque livrée 48 h → wizard 2 min → invités autonomes).
 // v4.61 — version claire « AIRBNB PRO » : pastilles d'étapes en
-// dégradés de la famille bleu logo (#0066EF → #07235B), eyebrow
+// dégradés de la famille bleu logo (#055492 → #043455), eyebrow
 // bleu, pill « Zéro application » émeraude (sémantique succès).
 // =============================================================
 
@@ -20,7 +20,7 @@ const STEPS = [
     title: 'Recevez votre plaque',
     description:
       'Design premium en aluminium gravé, prête à poser. Livrée chez vous en 48 h.',
-    gradient: 'from-[#0066EF] to-[#0052C4]',
+    gradient: 'from-[#055492] to-[#04467a]',
   },
   {
     number: '02',
@@ -28,7 +28,7 @@ const STEPS = [
     title: 'Scannez pour configurer',
     description:
       'Wizard guidé : Wi-Fi, guidebook, règles, PIN. 2 minutes chrono, sans compétence technique.',
-    gradient: 'from-[#0052C4] to-[#0047B3]',
+    gradient: 'from-[#04467a] to-[#033a66]',
   },
   {
     number: '03',
@@ -36,7 +36,7 @@ const STEPS = [
     title: 'Vos invités sont autonomes',
     description:
       'Ils scannent, commandent, s\'informent. Vous pilotez tout à distance, depuis votre dashboard.',
-    gradient: 'from-[#0047B3] to-[#07235B]',
+    gradient: 'from-[#033a66] to-[#043455]',
   },
 ];
 
@@ -50,7 +50,7 @@ export function HowItWorks() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
         {/* En-tête */}
         <Reveal className="mb-14 text-center">
-          <p className="mb-3 text-xs font-bold uppercase tracking-[0.25em] text-[#0052C4]">
+          <p className="mb-3 text-xs font-bold uppercase tracking-[0.25em] text-[#04467a]">
             {t('Comment ça marche')}
           </p>
           <h2 className="display-title font-serif! mb-4 text-4xl font-bold text-slate-900 md:text-5xl">
@@ -79,7 +79,7 @@ export function HowItWorks() {
                   <div className="group relative h-full rounded-3xl border border-slate-200/70 bg-white/95 p-7 air-shadow backdrop-blur-xl backdrop-saturate-[1.4] transition-transform duration-500 hover:-translate-y-1.5 sm:p-8">
                     <div className="mb-6 flex items-start justify-between">
                       <span
-                        className={`flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${step.gradient} text-2xl shadow-[0_8px_20px_rgba(0,82,196,0.30)] transition-transform duration-500 group-hover:scale-110`}
+                        className={`flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${step.gradient} text-2xl shadow-[0_8px_20px_rgba(4, 70, 122,0.30)] transition-transform duration-500 group-hover:scale-110`}
                         aria-hidden="true"
                       >
                         {step.icon}
@@ -103,7 +103,7 @@ export function HowItWorks() {
                     className="absolute -right-5 top-1/2 z-10 hidden -translate-y-1/2 lg:block"
                   >
                     <span className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200/70 bg-white/95 backdrop-blur-xl">
-                      <ArrowRight className="h-4 w-4 text-[#0052C4] rtl:rotate-180" />
+                      <ArrowRight className="h-4 w-4 text-[#04467a] rtl:rotate-180" />
                     </span>
                   </div>
                 )}

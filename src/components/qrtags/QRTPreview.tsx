@@ -21,7 +21,7 @@ export function QRTPreview() {
         <div className="flex justify-center">
           <div className="bg-white border-2 border-black rounded-[12px] px-8 py-2.5 shadow-[3px_3px_0_rgba(0,0,0,0.15)]">
             <span className="text-2xl font-black tracking-tight">
-              QR <span className="text-[#0066EF]">Hub</span>
+              QR <span className="text-[#055492]">Hub</span>
             </span>
           </div>
         </div>
@@ -87,7 +87,7 @@ export function QRTPreview() {
 
         {/* 8. Numeric Keypad */}
         <QRTCard header={{ emoji: '🔐', title: 'Code secret' }} subtitle="4 chiffres pour protéger l\'espace Famille">
-          {pin && <p className="text-center text-sm font-bold text-[#0066EF] mb-4">PIN saisi : {pin}</p>}
+          {pin && <p className="text-center text-sm font-bold text-[#055492] mb-4">PIN saisi : {pin}</p>}
           <QRTNumericKeypad onComplete={(p) => setPin(p)} />
         </QRTCard>
 

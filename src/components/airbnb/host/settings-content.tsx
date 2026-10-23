@@ -80,7 +80,7 @@ function SettingsCard({
         <div className="min-w-0">
           <h2 className="lux-display text-lg font-semibold text-white">{title}</h2>
           {description ? (
-            <p className="mt-1 text-xs text-[#8fa0c2] sm:text-sm">{description}</p>
+            <p className="mt-1 text-xs text-[#8fabc2] sm:text-sm">{description}</p>
           ) : null}
         </div>
         {children}
@@ -101,7 +101,7 @@ export function SettingsContent() {
       >
         <p className="lux-eyebrow">Compte</p>
         <h1 className="lux-display mt-1 text-2xl font-semibold text-white">Paramètres</h1>
-        <p className="mt-1.5 text-sm text-[#8fa0c2]">
+        <p className="mt-1.5 text-sm text-[#8fabc2]">
           Gérez votre profil, votre abonnement, vos notifications et vos intégrations.
         </p>
       </motion.div>
@@ -110,37 +110,37 @@ export function SettingsContent() {
         <TabsList className="h-auto w-full flex-wrap justify-start gap-1 rounded-full border border-white/10 bg-white/[0.04] p-1.5 sm:flex-nowrap">
           <TabsTrigger
             value="profile"
-            className="rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fa0c2] data-[state=active]:bg-white/10 data-[state=active]:text-white dark:data-[state=active]:bg-white/10 dark:data-[state=active]:text-white"
+            className="rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fabc2] data-[state=active]:bg-white/10 data-[state=active]:text-white dark:data-[state=active]:bg-white/10 dark:data-[state=active]:text-white"
           >
             Profil
           </TabsTrigger>
           <TabsTrigger
             value="properties"
-            className="rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fa0c2] data-[state=active]:bg-white/10 data-[state=active]:text-white dark:data-[state=active]:bg-white/10 dark:data-[state=active]:text-white"
+            className="rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fabc2] data-[state=active]:bg-white/10 data-[state=active]:text-white dark:data-[state=active]:bg-white/10 dark:data-[state=active]:text-white"
           >
             Propriétés
           </TabsTrigger>
           <TabsTrigger
             value="white-label"
-            className="rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fa0c2] data-[state=active]:bg-white/10 data-[state=active]:text-white dark:data-[state=active]:bg-white/10 dark:data-[state=active]:text-white"
+            className="rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fabc2] data-[state=active]:bg-white/10 data-[state=active]:text-white dark:data-[state=active]:bg-white/10 dark:data-[state=active]:text-white"
           >
             White-Label
           </TabsTrigger>
           <TabsTrigger
             value="notifications"
-            className="rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fa0c2] data-[state=active]:bg-white/10 data-[state=active]:text-white dark:data-[state=active]:bg-white/10 dark:data-[state=active]:text-white"
+            className="rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fabc2] data-[state=active]:bg-white/10 data-[state=active]:text-white dark:data-[state=active]:bg-white/10 dark:data-[state=active]:text-white"
           >
             Notifications
           </TabsTrigger>
           <TabsTrigger
             value="security"
-            className="rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fa0c2] data-[state=active]:bg-white/10 data-[state=active]:text-white dark:data-[state=active]:bg-white/10 dark:data-[state=active]:text-white"
+            className="rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fabc2] data-[state=active]:bg-white/10 data-[state=active]:text-white dark:data-[state=active]:bg-white/10 dark:data-[state=active]:text-white"
           >
             Sécurité
           </TabsTrigger>
           <TabsTrigger
             value="integrations"
-            className="rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fa0c2] data-[state=active]:bg-white/10 data-[state=active]:text-white dark:data-[state=active]:bg-white/10 dark:data-[state=active]:text-white"
+            className="rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fabc2] data-[state=active]:bg-white/10 data-[state=active]:text-white dark:data-[state=active]:bg-white/10 dark:data-[state=active]:text-white"
           >
             Intégrations
           </TabsTrigger>
@@ -159,7 +159,7 @@ export function SettingsContent() {
             <div className="lux-empty flex flex-col items-center gap-3 p-8 text-center">
               <span className="lux-dot" style={{ backgroundColor: '#e9c47c' }} aria-hidden="true" />
               <h2 className="lux-display text-xl font-semibold text-white">White-Label réservé au plan Pro</h2>
-              <p className="mx-auto max-w-md text-sm text-[#8fa0c2]">
+              <p className="mx-auto max-w-md text-sm text-[#8fabc2]">
                 Personnalisez le Hub invité avec votre logo, vos couleurs et votre propre domaine
                 en passant à l&apos;offre Airbnb Pro.
               </p>
@@ -254,42 +254,42 @@ function ProfileTab() {
       ) : (
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="st-email" className="text-[#8fa0c2]">Email (identifiant de connexion)</Label>
+            <Label htmlFor="st-email" className="text-[#8fabc2]">Email (identifiant de connexion)</Label>
             <Input
               id="st-email"
               value={profile?.email ?? ''}
               disabled
-              className="rounded-xl border-white/12 bg-white/[0.04] text-[#8fa0c2]"
+              className="rounded-xl border-white/12 bg-white/[0.04] text-[#8fabc2]"
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="st-name" className="text-[#8fa0c2]">Nom complet *</Label>
+            <Label htmlFor="st-name" className="text-[#8fabc2]">Nom complet *</Label>
             <Input
               id="st-name"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               maxLength={80}
-              className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+              className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50"
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="st-phone" className="text-[#8fa0c2]">Téléphone</Label>
+            <Label htmlFor="st-phone" className="text-[#8fabc2]">Téléphone</Label>
             <Input
               id="st-phone"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="06 12 34 56 78"
-              className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+              className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50"
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="st-address" className="text-[#8fa0c2]">Adresse</Label>
+            <Label htmlFor="st-address" className="text-[#8fabc2]">Adresse</Label>
             <Input
               id="st-address"
               value={address}
               onChange={(e) => setAddress(e.target.value)}
               placeholder="12 rue de Exemple, Paris"
-              className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+              className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50"
             />
           </div>
           <div>
@@ -327,17 +327,17 @@ function PropertiesTab() {
           >
             <span
               aria-hidden="true"
-              className="lux-num flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#3d6fe0]/15 text-sm font-semibold text-[#a9c4ff] ring-1 ring-[#5c8af0]/25"
+              className="lux-num flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#3d97e0]/15 text-sm font-semibold text-[#a9d8ff] ring-1 ring-[#5cadf0]/25"
             >
               {p.name.trim().charAt(0).toUpperCase()}
             </span>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold text-white">{p.name}</p>
-              <p className="truncate text-xs text-[#8fa0c2]">{p.address ?? 'Adresse non renseignée'}</p>
+              <p className="truncate text-xs text-[#8fabc2]">{p.address ?? 'Adresse non renseignée'}</p>
             </div>
             <Link
               href="/airbnb/properties"
-              className="shrink-0 text-xs font-semibold text-[#a9c4ff] transition-colors hover:text-white"
+              className="shrink-0 text-xs font-semibold text-[#a9d8ff] transition-colors hover:text-white"
             >
               Gérer <span aria-hidden="true">→</span>
             </Link>
@@ -345,7 +345,7 @@ function PropertiesTab() {
         ))}
       </ul>
       {plan && (
-        <p className="text-xs text-[#8fa0c2]">
+        <p className="text-xs text-[#8fabc2]">
           Plan {plan.planName} — {plan.ownedCount}/{plan.maxProperties} biens.
         </p>
       )}
@@ -387,7 +387,7 @@ function PushDeviceCard() {
           <p className="text-sm font-semibold text-white">
             Notifications push sur cet appareil
           </p>
-          <p className="mt-0.5 text-xs text-[#8fa0c2]">{statusLine}</p>
+          <p className="mt-0.5 text-xs text-[#8fabc2]">{statusLine}</p>
           {push.error && <p className="mt-1 text-xs font-semibold text-[#f07d6a]">{push.error}</p>}
         </div>
         <Switch
@@ -400,7 +400,7 @@ function PushDeviceCard() {
           aria-label="Activer les notifications push sur cet appareil"
         />
       </div>
-      <p className="mt-2 text-[11px] leading-relaxed text-[#8fa0c2]">
+      <p className="mt-2 text-[11px] leading-relaxed text-[#8fabc2]">
         Sur iOS / iPadOS : ajoutez d&apos;abord le site à l&apos;écran d&apos;accueil
         (bouton Partager → « Sur l&apos;écran d&apos;accueil ») pour que les
         notifications push fonctionnent.
@@ -483,15 +483,15 @@ function NotificationsTab() {
               <li key={ev.key} className="flex items-center gap-3 py-3">
                 <span
                   className="lux-dot shrink-0"
-                  style={{ backgroundColor: '#5c8af0' }}
+                  style={{ backgroundColor: '#5cadf0' }}
                   aria-hidden="true"
                 />
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-white">{ev.label}</p>
-                  <p className="text-xs text-[#8fa0c2]">{ev.description}</p>
+                  <p className="text-xs text-[#8fabc2]">{ev.description}</p>
                 </div>
                 <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-                  <label className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8fa0c2]">
+                  <label className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8fabc2]">
                     Email
                     <Switch
                       checked={prefs[ev.key]?.email ?? true}
@@ -499,7 +499,7 @@ function NotificationsTab() {
                       aria-label={`Email pour ${ev.label}`}
                     />
                   </label>
-                  <label className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8fa0c2]">
+                  <label className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8fabc2]">
                     Push
                     <Switch
                       checked={prefs[ev.key]?.push ?? false}
@@ -520,7 +520,7 @@ function NotificationsTab() {
               {saving ? 'Enregistrement…' : 'Enregistrer les préférences'}
             </Button>
             {!dirty && (
-              <span className="lux-chip text-[#8fa0c2]">
+              <span className="lux-chip text-[#8fabc2]">
                 Aucune modification en attente
               </span>
             )}
@@ -571,25 +571,25 @@ function SecurityTab() {
       <SettingsCard title="Changer de mot de passe">
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="sec-cur" className="text-[#8fa0c2]">Mot de passe actuel</Label>
+            <Label htmlFor="sec-cur" className="text-[#8fabc2]">Mot de passe actuel</Label>
             <Input
               id="sec-cur"
               type="password"
               value={current}
               onChange={(e) => setCurrent(e.target.value)}
               autoComplete="current-password"
-              className="rounded-xl border-white/12 bg-white/[0.04] text-white focus-visible:ring-[#5c8af0]/50"
+              className="rounded-xl border-white/12 bg-white/[0.04] text-white focus-visible:ring-[#5cadf0]/50"
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="sec-new" className="text-[#8fa0c2]">Nouveau mot de passe</Label>
+            <Label htmlFor="sec-new" className="text-[#8fabc2]">Nouveau mot de passe</Label>
             <Input
               id="sec-new"
               type="password"
               value={next}
               onChange={(e) => setNext(e.target.value)}
               autoComplete="new-password"
-              className="rounded-xl border-white/12 bg-white/[0.04] text-white focus-visible:ring-[#5c8af0]/50"
+              className="rounded-xl border-white/12 bg-white/[0.04] text-white focus-visible:ring-[#5cadf0]/50"
             />
             {next.length > 0 && (
               <p className={cn('text-xs', strengthOk ? 'text-[#34d399]' : 'text-[#fbbf24]')}>
@@ -600,14 +600,14 @@ function SecurityTab() {
             )}
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="sec-conf" className="text-[#8fa0c2]">Confirmer le nouveau mot de passe</Label>
+            <Label htmlFor="sec-conf" className="text-[#8fabc2]">Confirmer le nouveau mot de passe</Label>
             <Input
               id="sec-conf"
               type="password"
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
               autoComplete="new-password"
-              className="rounded-xl border-white/12 bg-white/[0.04] text-white focus-visible:ring-[#5c8af0]/50"
+              className="rounded-xl border-white/12 bg-white/[0.04] text-white focus-visible:ring-[#5cadf0]/50"
             />
             {confirm.length > 0 && confirm !== next && (
               <p className="text-xs text-[#f07d6a]">Les mots de passe ne correspondent pas.</p>
@@ -626,14 +626,14 @@ function SecurityTab() {
       </SettingsCard>
 
       <SettingsCard title="Double authentification (2FA)">
-        <p className="text-sm text-[#8fa0c2]">
+        <p className="text-sm text-[#8fabc2]">
           État actuel :{' '}
           <span className="inline-flex items-center rounded-full border border-[#fbbf24]/25 bg-[#fbbf24]/10 px-2.5 py-0.5 text-xs font-semibold text-[#fbbf24]">
             Non configurée
           </span>{' '}
           sur ce compte.
         </p>
-        <p className="rounded-xl border border-white/10 bg-white/[0.03] p-3.5 text-xs leading-relaxed text-[#8fa0c2]">
+        <p className="rounded-xl border border-white/10 bg-white/[0.03] p-3.5 text-xs leading-relaxed text-[#8fabc2]">
           La 2FA TOTP (application d&apos;authentification) sera disponible prochainement — elle
           nécessite l&apos;intégration de l&apos;étape de vérification à la connexion. Le changement
           de mot de passe ci-dessus est effectif immédiatement et appliqué par bcrypt côté serveur.
@@ -879,7 +879,7 @@ function IntegrationsTab() {
           {webhooks === null && <Skeleton className="h-20 w-full rounded-xl bg-white/8" />}
 
           {webhooks && webhooks.length === 0 && (
-            <p className="rounded-xl border border-dashed border-white/15 bg-white/[0.02] p-4 text-xs text-[#8fa0c2]">
+            <p className="rounded-xl border border-dashed border-white/15 bg-white/[0.02] p-4 text-xs text-[#8fabc2]">
               Créez votre premier webhook : RoomScan enverra un POST JSON à votre URL à chaque
               événement sélectionné (scan, message, livre d&apos;or…).
             </p>
@@ -926,7 +926,7 @@ function IntegrationsTab() {
                           <button
                             type="button"
                             onClick={() => setConfirmDeleteId(null)}
-                            className="rounded-full border border-white/12 px-2 py-1 text-xs text-[#8fa0c2] transition-colors hover:bg-white/8 hover:text-white"
+                            className="rounded-full border border-white/12 px-2 py-1 text-xs text-[#8fabc2] transition-colors hover:bg-white/8 hover:text-white"
                           >
                             Annuler
                           </button>
@@ -936,15 +936,15 @@ function IntegrationsTab() {
                           type="button"
                           aria-label={`Supprimer ${w.name}`}
                           onClick={() => setConfirmDeleteId(w.id)}
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/12 text-[#8fa0c2] transition-colors hover:bg-[#f07d6a]/10 hover:text-[#f07d6a]"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/12 text-[#8fabc2] transition-colors hover:bg-[#f07d6a]/10 hover:text-[#f07d6a]"
                         >
                           <span aria-hidden="true" className="text-sm leading-none">×</span>
                         </button>
                       )}
                     </div>
                   </div>
-                  <p className="truncate font-mono text-xs text-[#8fa0c2]">{w.url}</p>
-                  <p className="mt-0.5 text-[11px] text-[#8fa0c2]">
+                  <p className="truncate font-mono text-xs text-[#8fabc2]">{w.url}</p>
+                  <p className="mt-0.5 text-[11px] text-[#8fabc2]">
                     {w.property?.name ? `${w.property.name} · ` : ''}
                     {w.successCount} succès · {w.failCount} échec(s)
                     {w.lastTriggerAt
@@ -966,7 +966,7 @@ function IntegrationsTab() {
               Ajouter un webhook
             </Button>
             {properties.length === 0 && (
-              <p className="mt-2 text-[11px] text-[#8fa0c2]">
+              <p className="mt-2 text-[11px] text-[#8fabc2]">
                 Créez d&apos;abord un bien pour rattacher vos webhooks.
               </p>
             )}
@@ -981,14 +981,14 @@ function IntegrationsTab() {
             <DialogTitle className="lux-display text-xl font-semibold text-white">
               {editing ? 'Modifier le webhook' : 'Nouveau webhook'}
             </DialogTitle>
-            <DialogDescription className="text-sm text-[#8fa0c2]">
+            <DialogDescription className="text-sm text-[#8fabc2]">
               RoomScan enverra un POST JSON à votre URL à chaque événement sélectionné.
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-4">
             {!editing && (
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="wh-property" className="text-[#8fa0c2]">Bien concerné</Label>
+                <Label htmlFor="wh-property" className="text-[#8fabc2]">Bien concerné</Label>
                 <Select
                   value={form.propertyId}
                   onValueChange={(v) => setForm((f) => ({ ...f, propertyId: v }))}
@@ -1011,29 +1011,29 @@ function IntegrationsTab() {
               </div>
             )}
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="wh-name" className="text-[#8fa0c2]">Nom</Label>
+              <Label htmlFor="wh-name" className="text-[#8fabc2]">Nom</Label>
               <Input
                 id="wh-name"
                 value={form.name}
                 onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                 placeholder="Ex. Zapier — alertes scans"
                 maxLength={60}
-                className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+                className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50"
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="wh-url" className="text-[#8fa0c2]">URL de réception (https)</Label>
+              <Label htmlFor="wh-url" className="text-[#8fabc2]">URL de réception (https)</Label>
               <Input
                 id="wh-url"
                 value={form.url}
                 onChange={(e) => setForm((f) => ({ ...f, url: e.target.value }))}
                 placeholder="https://hooks.zapier.com/…"
                 inputMode="url"
-                className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+                className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50"
               />
             </div>
             <div className="flex flex-col gap-2">
-              <Label className="text-[#8fa0c2]">Événements déclencheurs</Label>
+              <Label className="text-[#8fabc2]">Événements déclencheurs</Label>
               {WEBHOOK_EVENTS.map((ev) => (
                 <label
                   key={ev.key}

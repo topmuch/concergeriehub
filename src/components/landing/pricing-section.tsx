@@ -6,7 +6,7 @@
 //   Solo : carte blanche bordure slate + .air-shadow.
 //   Pro  : carte blanche + BORDURE GRADIENT ANIMÉE BLEU LOGO
 //          (technique double div : wrapper p-[1px] à fond gradient
-//          animé #0052C4→#0047B3→#0052C4 + carte intérieure
+//          animé #04467a→#033a66→#04467a + carte intérieure
 //          blanche), badge « Populaire » air-gradient pulsant,
 //          glow bleu doux, features avec coches qui se dessinent.
 //   EDL  : module standalone vendu DIRECTEMENT (PayPal, 299 €/an,
@@ -65,24 +65,24 @@ export function PricingSection({ onGoToAuth }: { onGoToAuth?: GoToAuth }) {
       className="relative scroll-mt-24 overflow-hidden bg-[#F7F7F8] py-24 text-slate-900"
     >
       {/* Texture + halos d'ambiance bleu logo (section opaque) */}
-      <div aria-hidden="true" className="absolute inset-0 bg-[radial-gradient(rgba(0,102,239,0.14)_1px,transparent_1px)] bg-[length:14px_14px] opacity-40" />
+      <div aria-hidden="true" className="absolute inset-0 bg-[radial-gradient(rgba(5, 84, 146,0.14)_1px,transparent_1px)] bg-[length:14px_14px] opacity-40" />
       <div
         aria-hidden="true"
-        className="absolute -top-44 left-1/2 h-[480px] w-[820px] max-w-none -translate-x-1/2 rounded-full bg-[#0066EF]/[0.08] blur-[140px]"
+        className="absolute -top-44 left-1/2 h-[480px] w-[820px] max-w-none -translate-x-1/2 rounded-full bg-[#055492]/[0.08] blur-[140px]"
       />
       <div
         aria-hidden="true"
-        className="absolute bottom-0 left-[12%] h-72 w-72 rounded-full bg-[#0052C4]/[0.07] blur-[120px]"
+        className="absolute bottom-0 left-[12%] h-72 w-72 rounded-full bg-[#04467a]/[0.07] blur-[120px]"
       />
       <div
         aria-hidden="true"
-        className="absolute bottom-0 right-[12%] h-72 w-72 rounded-full bg-[#3B82F6]/[0.07] blur-[120px]"
+        className="absolute bottom-0 right-[12%] h-72 w-72 rounded-full bg-[#1173c7]/[0.07] blur-[120px]"
       />
 
       <div className="relative z-10 mx-auto max-w-5xl px-4 sm:px-6">
         {/* En-tête */}
         <Reveal className="mb-16 text-center">
-          <p className="mb-3 text-xs font-bold uppercase tracking-[0.25em] text-[#0052C4]">
+          <p className="mb-3 text-xs font-bold uppercase tracking-[0.25em] text-[#04467a]">
             {t('Tarifs')}
           </p>
           <h2 className="display-title font-serif! mb-4 text-4xl font-bold md:text-5xl">
@@ -147,17 +147,17 @@ export function PricingSection({ onGoToAuth }: { onGoToAuth?: GoToAuth }) {
           <Reveal delay={0.2} className="h-full">
             <div className="relative h-full">
               {/* Wrapper padding 1px + fond gradient animé BLEU LOGO = bordure */}
-              <div className="animate-gradient h-full rounded-[1.7rem] bg-[linear-gradient(110deg,#0052C4,#0047B3,#0052C4)] bg-[length:200%_auto] p-[1px] shadow-[0_0_80px_rgba(0,82,196,0.22)]">
+              <div className="animate-gradient h-full rounded-[1.7rem] bg-[linear-gradient(110deg,#04467a,#033a66,#04467a)] bg-[length:200%_auto] p-[1px] shadow-[0_0_80px_rgba(4, 70, 122,0.22)]">
                 <div className="relative flex h-full flex-col overflow-hidden rounded-[calc(1.7rem-1px)] bg-white p-8">
                   <div
                     aria-hidden="true"
-                    className="pointer-events-none absolute -top-24 left-1/2 h-48 w-72 -translate-x-1/2 rounded-full bg-[#0066EF]/[0.10] blur-3xl"
+                    className="pointer-events-none absolute -top-24 left-1/2 h-48 w-72 -translate-x-1/2 rounded-full bg-[#055492]/[0.10] blur-3xl"
                   />
                   <div className="mb-6 flex items-center justify-between">
                     <span className="text-4xl" aria-hidden="true">
                       🏢
                     </span>
-                    <span className="air-gradient animate-pulse-slow rounded-full px-3.5 py-1 text-[11px] font-bold uppercase tracking-wider text-white shadow-[0_8px_24px_rgba(0,82,196,0.30)]">
+                    <span className="air-gradient animate-pulse-slow rounded-full px-3.5 py-1 text-[11px] font-bold uppercase tracking-wider text-white shadow-[0_8px_24px_rgba(4, 70, 122,0.30)]">
                       {t('Populaire')}
                     </span>
                   </div>
@@ -197,16 +197,16 @@ export function PricingSection({ onGoToAuth }: { onGoToAuth?: GoToAuth }) {
 
           {/* ── ÉTATS DES LIEUX — module vendu directement (PayPal) ── */}
           <Reveal delay={0.3} className="h-full md:col-span-2 lg:col-span-1">
-            <div className="relative flex h-full flex-col rounded-3xl border-2 border-[#0066EF]/25 bg-white p-8 shadow-[0_6px_16px_rgba(0,0,0,0.08),0_1px_2px_rgba(0,0,0,0.04)] transition-all duration-500 hover:border-[#0066EF]/45 hover:shadow-[0_12px_32px_rgba(0,82,196,0.14),0_2px_6px_rgba(0,0,0,0.06)]">
+            <div className="relative flex h-full flex-col rounded-3xl border-2 border-[#055492]/25 bg-white p-8 shadow-[0_6px_16px_rgba(0,0,0,0.08),0_1px_2px_rgba(0,0,0,0.04)] transition-all duration-500 hover:border-[#055492]/45 hover:shadow-[0_12px_32px_rgba(4, 70, 122,0.14),0_2px_6px_rgba(0,0,0,0.06)]">
               <div
                 aria-hidden="true"
-                className="pointer-events-none absolute -top-16 right-8 h-36 w-56 rounded-full bg-[#0066EF]/[0.07] blur-3xl"
+                className="pointer-events-none absolute -top-16 right-8 h-36 w-56 rounded-full bg-[#055492]/[0.07] blur-3xl"
               />
               <div className="mb-6 flex items-center justify-between">
                 <span className="text-4xl" aria-hidden="true">
                   📋
                 </span>
-                <span className="rounded-full border border-[#0066EF]/30 bg-[#0066EF]/[0.06] px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-[#0052C4]">
+                <span className="rounded-full border border-[#055492]/30 bg-[#055492]/[0.06] px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-[#04467a]">
                   {t('Module indépendant')}
                 </span>
               </div>
@@ -236,7 +236,7 @@ export function PricingSection({ onGoToAuth }: { onGoToAuth?: GoToAuth }) {
               <div className="mt-auto">
                 <a
                   href="/edl/abonnement"
-                  className="flex w-full items-center justify-center gap-2.5 rounded-2xl bg-[linear-gradient(135deg,#0066EF,#0047B3)] py-4 font-semibold text-white shadow-[0_8px_24px_rgba(0,82,196,0.28)] transition-all hover:scale-[1.02] hover:shadow-[0_12px_32px_rgba(0,82,196,0.35)]"
+                  className="flex w-full items-center justify-center gap-2.5 rounded-2xl bg-[linear-gradient(135deg,#055492,#033a66)] py-4 font-semibold text-white shadow-[0_8px_24px_rgba(4, 70, 122,0.28)] transition-all hover:scale-[1.02] hover:shadow-[0_12px_32px_rgba(4, 70, 122,0.35)]"
                 >
                   <FileText className="h-5 w-5" aria-hidden="true" />
                   {t('Payer 299 € — PDF illimités')}
@@ -261,7 +261,7 @@ export function PricingSection({ onGoToAuth }: { onGoToAuth?: GoToAuth }) {
                   .querySelector('#contact')
                   ?.scrollIntoView({ behavior: 'smooth' });
               }}
-              className="font-medium text-[#0052C4] underline decoration-[#0052C4]/40 underline-offset-4 transition-colors hover:text-[#0047B3]"
+              className="font-medium text-[#04467a] underline decoration-[#04467a]/40 underline-offset-4 transition-colors hover:text-[#033a66]"
             >
               {t('contactez-nous')}
             </a>{' '}

@@ -40,17 +40,17 @@ const DEMO_HOST_ROOMS: RoomData[] = [
 ];
 
 const GRADIENT_COLORS: Record<string, { from: string; to: string }> = {
-  wifi: { from: '#0066EF', to: '#0052C4' },
+  wifi: { from: '#055492', to: '#04467a' },
   house_rules: { from: '#f59e0b', to: '#f97316' },
   emergency: { from: '#ef4444', to: '#f43f5e' },
-  guestbook: { from: '#0052C4', to: '#0047B3' },
+  guestbook: { from: '#04467a', to: '#033a66' },
   recipe: { from: '#f97316', to: '#ef4444' },
   contact: { from: '#0f172a', to: '#334155' },
   shopping_list: { from: '#ec4899', to: '#f43f5e' },
   inventory: { from: '#64748b', to: '#475569' },
 };
 
-function getGradient(type: string) { return GRADIENT_COLORS[type] || { from: '#0066EF', to: '#0047B3' }; }
+function getGradient(type: string) { return GRADIENT_COLORS[type] || { from: '#055492', to: '#033a66' }; }
 
 // ══════════════════════════════════════════════════════════
 // SETUP DEMO (B2B wizard — light surface)
@@ -70,12 +70,12 @@ function SetupDemo() {
   const handlePinDelete = () => setPin((p) => p.slice(0, -1));
   useEffect(() => { if (pin.length === 4) { setTimeout(next, 400); } }, [pin]);
 
-  const inputCls = 'w-full bg-white border border-slate-300 rounded-xl p-4 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0066EF] focus:ring-2 focus:ring-[#0066EF]/10';
+  const inputCls = 'w-full bg-white border border-slate-300 rounded-xl p-4 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#055492] focus:ring-2 focus:ring-[#055492]/10';
 
   const steps = [
     // Step 0: Welcome
     <div key="welcome" className="text-center space-y-6">
-      <div className="mx-auto w-20 h-20 rounded-2xl bg-[#EAF2FF] border border-[#0066EF]/20 shadow-sm flex items-center justify-center text-4xl">🗝️</div>
+      <div className="mx-auto w-20 h-20 rounded-2xl bg-[#dceaf5] border border-[#055492]/20 shadow-sm flex items-center justify-center text-4xl">🗝️</div>
       <h1 className="text-2xl font-bold text-slate-900">Bienvenue !</h1>
       <p className="text-slate-500 text-sm leading-relaxed px-4">Scannez votre plaque QR et configurez votre RoomScan en 2 minutes.</p>
       <div className="flex items-center justify-center gap-2 text-slate-400 text-xs">
@@ -96,7 +96,7 @@ function SetupDemo() {
       <p className="text-slate-500 text-sm">4 chiffres pour protéger le Mode Hôte</p>
       <div className="flex justify-center gap-3">
         {[0, 1, 2, 3].map((i) => (
-          <div key={i} className={`h-14 w-14 rounded-2xl border-2 flex items-center justify-center text-2xl font-bold transition-all ${pin[i] ? 'bg-[#EAF2FF] border-[#0066EF] text-[#0052C4]' : 'bg-white border-slate-300 text-transparent'}
+          <div key={i} className={`h-14 w-14 rounded-2xl border-2 flex items-center justify-center text-2xl font-bold transition-all ${pin[i] ? 'bg-[#dceaf5] border-[#055492] text-[#04467a]' : 'bg-white border-slate-300 text-transparent'}
             `}>
             {pin[i] || '●'}
           </div>
@@ -116,7 +116,7 @@ function SetupDemo() {
       <h2 className="text-xl font-bold text-slate-900">Configuration rapide</h2>
       <input placeholder="Nom du logement" defaultValue="Le Petit Nid" className={inputCls} />
       <div className="grid grid-cols-1 gap-2">
-        {[{ id: 'solo', name: '🏠 Airbnb Solo', price: '9,90€/mois', color: 'bg-[#0066EF]' }, { id: 'agency', name: '🏢 Agence — multi-biens', price: '49€/mois', color: 'bg-slate-900' }].map((plan) => (
+        {[{ id: 'solo', name: '🏠 Airbnb Solo', price: '9,90€/mois', color: 'bg-[#055492]' }, { id: 'agency', name: '🏢 Agence — multi-biens', price: '49€/mois', color: 'bg-slate-900' }].map((plan) => (
           <button key={plan.id} className={`w-full p-4 rounded-xl ${plan.color} text-white text-left flex justify-between items-center shadow-sm cursor-pointer`}>
             <span className="font-semibold text-sm">{plan.name}</span>
             <span className="text-sm opacity-90">{plan.price}</span>
@@ -143,11 +143,11 @@ function SetupDemo() {
         <div className="max-w-md mx-auto">
           <div className="flex items-center gap-2 mb-4">
             <div className="h-8 w-8 rounded-lg bg-slate-900 flex items-center justify-center text-sm">🗝️</div>
-            <span className="text-sm font-bold text-slate-900">RoomScan<span className="text-[#0066EF]">.</span></span>
+            <span className="text-sm font-bold text-slate-900">RoomScan<span className="text-[#055492]">.</span></span>
           </div>
           {step < 4 && (
             <div className="h-1 rounded-full bg-slate-200 overflow-hidden">
-              <div className="h-full rounded-full bg-[#0066EF] transition-all duration-300" style={{ width: `${(step / 4) * 100}%` }} />
+              <div className="h-full rounded-full bg-[#055492] transition-all duration-300" style={{ width: `${(step / 4) * 100}%` }} />
             </div>
           )}
         </div>
@@ -163,7 +163,7 @@ function SetupDemo() {
             {step > 0 && (
               <button onClick={back} className="flex-1 h-12 rounded-xl bg-white border border-slate-300 text-slate-700 text-sm font-semibold hover:bg-slate-50 transition-colors cursor-pointer">Retour</button>
             )}
-            <button onClick={next} className={`${step > 0 ? 'flex-1' : 'w-full'} h-12 rounded-xl bg-[#0066EF] text-white text-sm font-bold hover:bg-[#0052C4] transition-colors cursor-pointer`}>Continuer</button>
+            <button onClick={next} className={`${step > 0 ? 'flex-1' : 'w-full'} h-12 rounded-xl bg-[#055492] text-white text-sm font-bold hover:bg-[#04467a] transition-colors cursor-pointer`}>Continuer</button>
           </div>
         </div>
       )}
@@ -180,9 +180,9 @@ function WifiCard({ content }: { content: Record<string, unknown> }) {
   const [showPw, setShowPw] = useState(false);
   const copy = () => { navigator.clipboard.writeText((content.password as string) || '').then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); }); };
   return (
-    <div className="rounded-2xl bg-white/10 backdrop-blur-xl border border-[#3B82F6]/40 p-5">
+    <div className="rounded-2xl bg-white/10 backdrop-blur-xl border border-[#1173c7]/40 p-5">
       <div className="flex items-center gap-3 mb-3">
-        <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-[#0066EF] to-[#0052C4] flex items-center justify-center">📶</div>
+        <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-[#055492] to-[#04467a] flex items-center justify-center">📶</div>
         <div><p className="text-sm font-bold text-white">WiFi</p><p className="text-xs text-white/50">{content.network_name as string}</p></div>
       </div>
       <div className="flex items-center gap-2">
@@ -252,7 +252,7 @@ function HubDemo() {
   // Room detail view
   if (view === 'hub-room' && selectedRoom) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#0066EF] via-[#0052C4] to-[#0047B3] flex flex-col">
+      <div className="min-h-screen bg-gradient-to-br from-[#055492] via-[#04467a] to-[#033a66] flex flex-col">
         <div className="px-5 py-4 flex items-center gap-3">
           <button onClick={() => { setView(pinVerified ? 'hub-host' : 'hub-guest'); setSelectedRoom(null); }} className="h-10 w-10 rounded-xl bg-white/10 flex items-center justify-center text-white/70 hover:bg-white/20 cursor-pointer">←</button>
           <div className="flex-1"><p className="text-base font-bold text-white">{selectedRoom.icon} {selectedRoom.name}</p><p className="text-xs text-white/40">{selectedRoom.qrs.length} module(s)</p></div>
@@ -267,7 +267,7 @@ function HubDemo() {
   // Mode selection + PIN modal
   if (view === 'hub-mode') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#0066EF] via-[#0052C4] to-[#0047B3] flex flex-col">
+      <div className="min-h-screen bg-gradient-to-br from-[#055492] via-[#04467a] to-[#033a66] flex flex-col">
         <div className="flex-1 flex items-center justify-center px-6">
           <div className="w-full max-w-sm space-y-6 text-center">
             <div className="mx-auto w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-xl border border-white/30 flex items-center justify-center text-3xl">🏠</div>
@@ -277,7 +277,7 @@ function HubDemo() {
           </div>
         </div>
         <div className="px-6 pb-8 space-y-4">
-          <button onClick={() => setView('hub-guest')} className="w-full h-14 rounded-2xl bg-white text-[#0052C4] font-bold text-sm shadow-xl cursor-pointer hover:bg-white/90 transition-colors">🏠 Mode Invité</button>
+          <button onClick={() => setView('hub-guest')} className="w-full h-14 rounded-2xl bg-white text-[#04467a] font-bold text-sm shadow-xl cursor-pointer hover:bg-white/90 transition-colors">🏠 Mode Invité</button>
           <button onClick={() => setView('hub-host')} className="w-full h-14 rounded-2xl bg-slate-900/80 backdrop-blur-xl border border-slate-700 text-white font-bold text-sm cursor-pointer hover:bg-slate-900 transition-colors">🗝️ Mode Hôte</button>
           <p className="text-center text-white/30 text-[10px]">RoomScan • La conciergerie digitale des hôtes</p>
         </div>
@@ -294,7 +294,7 @@ function HubDemo() {
           <p className="text-white/50 text-sm">Entrez le code à 4 chiffres (n'importe lequel en démo)</p>
           <div className="flex justify-center gap-3">
             {[0, 1, 2, 3].map((i) => (
-              <div key={i} className={`h-14 w-14 rounded-2xl border-2 flex items-center justify-center text-2xl font-bold transition-all ${pin[i] ? 'bg-[#0066EF]/20 border-[#3B82F6]/60 text-white' : 'bg-white/5 border-white/15 text-transparent'}
+              <div key={i} className={`h-14 w-14 rounded-2xl border-2 flex items-center justify-center text-2xl font-bold transition-all ${pin[i] ? 'bg-[#055492]/20 border-[#1173c7]/60 text-white' : 'bg-white/5 border-white/15 text-transparent'}
               `}>{pin[i] || '●'}</div>
             ))}
           </div>
@@ -315,12 +315,12 @@ function HubDemo() {
   // Guest or Host room list
   const isHost = view === 'hub-host' && pinVerified;
   return (
-    <div className={`min-h-screen flex flex-col ${isHost ? 'bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950' : 'bg-gradient-to-br from-[#0066EF] via-[#0052C4] to-[#0047B3]'}`}>
+    <div className={`min-h-screen flex flex-col ${isHost ? 'bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950' : 'bg-gradient-to-br from-[#055492] via-[#04467a] to-[#033a66]'}`}>
       <div className="px-5 py-4">
         <div className="flex items-center gap-3 mb-4">
           <button onClick={() => { setView('hub-mode'); setPinVerified(false); setPin(''); }} className="h-10 w-10 rounded-xl bg-white/10 flex items-center justify-center text-white/70 hover:bg-white/20 cursor-pointer">←</button>
           <div className="flex-1"><p className="text-base font-bold text-white">{isHost ? '🗝️ Hôte' : '🏠 Invité'}</p><p className="text-xs text-white/40">Le Petit Nid</p></div>
-          <div className="bg-[#3B82F6]/15 border border-[#3B82F6]/30 px-2.5 py-1 rounded-full flex items-center gap-1.5"><div className="h-1.5 w-1.5 rounded-full bg-[#8FB8FF] animate-pulse" /><span className="text-[10px] font-bold text-[#8FB8FF]">DÉMO</span></div>
+          <div className="bg-[#1173c7]/15 border border-[#1173c7]/30 px-2.5 py-1 rounded-full flex items-center gap-1.5"><div className="h-1.5 w-1.5 rounded-full bg-[#8FB8FF] animate-pulse" /><span className="text-[10px] font-bold text-[#8FB8FF]">DÉMO</span></div>
         </div>
       </div>
       <div className="flex-1 px-5 pb-6 space-y-4 overflow-y-auto">

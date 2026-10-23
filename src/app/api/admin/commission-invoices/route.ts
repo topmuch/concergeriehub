@@ -78,8 +78,8 @@ async function sendCommissionInvoiceEmail(params: {
     `</table>` +
     `<p style="margin:14px 0 4px;font-size:14px">Échéance de paiement : <strong>${params.dueDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</strong>.</p>` +
     `<p style="margin:18px 0">` +
-    `<a href="${params.pdfUrl}" style="display:inline-block;background:#0066EF;color:#ffffff;text-decoration:none;padding:11px 18px;border-radius:8px;font-size:14px">📄 Télécharger la facture PDF</a>` +
-    `&nbsp;&nbsp;<a href="${dashboardUrl}" style="display:inline-block;color:#0066EF;text-decoration:none;padding:11px 6px;font-size:14px">Voir mon espace facturation</a>` +
+    `<a href="${params.pdfUrl}" style="display:inline-block;background:#055492;color:#ffffff;text-decoration:none;padding:11px 18px;border-radius:8px;font-size:14px">📄 Télécharger la facture PDF</a>` +
+    `&nbsp;&nbsp;<a href="${dashboardUrl}" style="display:inline-block;color:#055492;text-decoration:none;padding:11px 6px;font-size:14px">Voir mon espace facturation</a>` +
     `</p>` +
     `<p style="margin:14px 0 0;color:#64748b;font-size:12px">Paiement par virement — facturation@roomscan.pro. Ce lien PDF reste consultable à vie.</p>` +
     `</div>`;

@@ -75,7 +75,7 @@ interface PaginationMeta {
 
 // Badges de statut « lux » — teintes sémantiques 8-10 % sur fond nuit.
 const STATUS_MAP: Record<string, { label: string; variant: 'secondary' | 'default' | 'destructive' | 'outline'; className?: string }> = {
-  inactive: { label: 'Inactif', variant: 'secondary', className: 'border border-white/10 bg-white/[0.05] text-[#8fa0c2]' },
+  inactive: { label: 'Inactif', variant: 'secondary', className: 'border border-white/10 bg-white/[0.05] text-[#8fabc2]' },
   active: { label: 'Actif', variant: 'default', className: 'border border-[#34d399]/25 bg-[#34d399]/10 text-[#86e9cb] hover:bg-[#34d399]/15' },
   lost: { label: 'Perdu', variant: 'destructive', className: 'border border-[#f07d6a]/25 bg-[#f07d6a]/10 text-[#f07d6a]' },
   cancelled: { label: 'Annulé', variant: 'outline', className: 'border border-[#fbbf24]/25 bg-[#fbbf24]/10 text-[#fbbf24]' },
@@ -213,14 +213,14 @@ export function ManagePhysicalQr() {
   };
 
   const getStatusInfo = (status: string) => {
-    return STATUS_MAP[status] || { label: status, variant: 'outline' as const, className: 'border-white/12 text-[#8fa0c2]' };
+    return STATUS_MAP[status] || { label: status, variant: 'outline' as const, className: 'border-white/12 text-[#8fabc2]' };
   };
 
   return (
     <Card className="lux-card">
       <CardHeader>
         <CardTitle className="lux-display text-xl text-white">QR codes physiques</CardTitle>
-        <CardDescription className="text-sm text-[#8fa0c2]">
+        <CardDescription className="text-sm text-[#8fabc2]">
           Gérez et suivez l&apos;état de tous les QR codes physiques
         </CardDescription>
       </CardHeader>
@@ -231,7 +231,7 @@ export function ManagePhysicalQr() {
             placeholder="Rechercher un code d'activation..."
             value={search}
             onChange={handleSearchChange}
-            className="h-10 rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50 sm:max-w-xs"
+            className="h-10 rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50 sm:max-w-xs"
           />
           <Select value={statusFilter} onValueChange={handleStatusChange}>
             <SelectTrigger className="h-10 w-full rounded-xl border-white/12 bg-white/[0.04] text-white sm:w-44">
@@ -264,9 +264,9 @@ export function ManagePhysicalQr() {
         {/* Empty */}
         {!loading && !error && qrs.length === 0 && (
           <div className="lux-empty flex flex-col items-center justify-center rounded-2xl px-4 py-12 text-center">
-            <span className="lux-dot mb-4 opacity-70" style={{ backgroundColor: '#8fa0c2' }} aria-hidden="true" />
+            <span className="lux-dot mb-4 opacity-70" style={{ backgroundColor: '#8fabc2' }} aria-hidden="true" />
             <h3 className="lux-display text-lg text-white">Aucun QR code</h3>
-            <p className="mt-1 text-sm text-[#8fa0c2]">
+            <p className="mt-1 text-sm text-[#8fabc2]">
               Aucun QR code ne correspond à vos critères de recherche.
             </p>
           </div>
@@ -297,7 +297,7 @@ export function ManagePhysicalQr() {
                         <TableCell className="font-mono text-sm font-medium text-white">
                           {qr.activationCode}
                         </TableCell>
-                        <TableCell className="font-mono text-xs text-[#8fa0c2]">
+                        <TableCell className="font-mono text-xs text-[#8fabc2]">
                           {qr.batchId.slice(0, 8)}…
                         </TableCell>
                         <TableCell>
@@ -307,7 +307,7 @@ export function ManagePhysicalQr() {
                             return (
                               <Badge
                                 variant="outline"
-                                className="whitespace-nowrap border-white/12 bg-white/[0.03] text-xs text-[#8fa0c2]"
+                                className="whitespace-nowrap border-white/12 bg-white/[0.03] text-xs text-[#8fabc2]"
                                 title={`Matériau : ${meta.label}`}
                               >
                                 {meta.label}
@@ -323,7 +323,7 @@ export function ManagePhysicalQr() {
                             {statusInfo.label}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-sm text-[#8fa0c2]">
+                        <TableCell className="text-sm text-[#8fabc2]">
                           {qr.activatedBy?.email ? (
                             <span className="text-xs">{qr.activatedBy.email}</span>
                           ) : qr.activatedByUserId ? (
@@ -331,16 +331,16 @@ export function ManagePhysicalQr() {
                               {qr.activatedByUserId.slice(0, 8)}…
                             </span>
                           ) : (
-                            <span className="text-[#8fa0c2]/50">—</span>
+                            <span className="text-[#8fabc2]/50">—</span>
                           )}
                         </TableCell>
-                        <TableCell className="text-sm text-[#8fa0c2]">
+                        <TableCell className="text-sm text-[#8fabc2]">
                           {qr.activatedAt
                             ? format(new Date(qr.activatedAt), 'dd MMM yyyy', {
                                 locale: fr,
                               })
                             : (
-                                <span className="text-[#8fa0c2]/50">—</span>
+                                <span className="text-[#8fabc2]/50">—</span>
                               )}
                         </TableCell>
                         <TableCell className="text-right">
@@ -360,7 +360,7 @@ export function ManagePhysicalQr() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="text-xs text-[#8fa0c2] hover:bg-white/[0.06] hover:text-white"
+                                className="text-xs text-[#8fabc2] hover:bg-white/[0.06] hover:text-white"
                                 onClick={() => handleStatusAction(qr, 'inactive')}
                                 title="Réinitialiser"
                               >
@@ -390,7 +390,7 @@ export function ManagePhysicalQr() {
             {/* Pagination */}
             {pagination && pagination.totalPages > 1 && (
               <div className="flex items-center justify-between pt-4">
-                <p className="text-sm text-[#8fa0c2]">
+                <p className="text-sm text-[#8fabc2]">
                   Page {pagination.page} sur {pagination.totalPages} —{' '}
                   {pagination.total} résultat{pagination.total > 1 ? 's' : ''}
                 </p>
@@ -429,7 +429,7 @@ export function ManagePhysicalQr() {
           <AlertDialogContent className="border-white/10 bg-[#0b1226] text-white">
             <AlertDialogHeader>
               <AlertDialogTitle className="lux-display text-lg text-white">{pendingAction?.label}</AlertDialogTitle>
-              <AlertDialogDescription className="text-sm text-[#8fa0c2]">
+              <AlertDialogDescription className="text-sm text-[#8fabc2]">
                 {pendingAction?.description}
               </AlertDialogDescription>
             </AlertDialogHeader>

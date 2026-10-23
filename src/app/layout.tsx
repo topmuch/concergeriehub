@@ -129,7 +129,7 @@ export const metadata: Metadata = {
 // PWA (Task 42-a) — thème couleur bleu marque pour la barre système
 // (mobile) et l'écran de démarrage Android/Chrome installé.
 export const viewport: Viewport = {
-  themeColor: "#1e3a8a",
+  themeColor: "#055492",
 };
 
 export default function RootLayout({

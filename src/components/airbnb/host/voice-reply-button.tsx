@@ -210,7 +210,7 @@ export function VoiceReplyButton({
           <Button
             type="button"
             size="sm"
-            className="h-8 flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+            className="h-8 flex-1 bg-[#055492] hover:bg-[#04467a] text-white font-semibold"
             onClick={send}
             disabled={sending}
           >
@@ -255,7 +255,7 @@ export function VoiceReplyButton({
       type="button"
       size="sm"
       variant="outline"
-      className={`h-9 border-blue-300 text-blue-700 hover:bg-blue-50 font-semibold ${compact ? 'w-full' : ''}`}
+      className={`h-9 border-[#8fb1cc] text-[#04467a] hover:bg-[#f0f7fc] font-semibold ${compact ? 'w-full' : ''}`}
       onClick={() => void startRecording()}
       aria-label="Répondre par message vocal"
     >

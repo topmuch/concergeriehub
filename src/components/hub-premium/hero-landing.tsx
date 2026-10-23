@@ -308,7 +308,7 @@ export function HeroLanding({
             subtitle="Deux espaces protégés, deux codes distincts"
             badge="2 espaces"
             delay={0.5}
-            ctaClass="bg-white text-[#07235B] hover:bg-white/90"
+            ctaClass="bg-white text-[#043455] hover:bg-white/90"
             subOptions={[
               { emoji: '🔐', label: 'Hôte', hint: 'Code PIN du bien' },
               { emoji: '🧹', label: 'Ménage', hint: 'Code staff de l\u2019équipe' },

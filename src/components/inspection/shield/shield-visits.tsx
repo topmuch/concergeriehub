@@ -450,7 +450,7 @@ export function ShieldVisits() {
       {/* ── Liste des séjours planifiés ── */}
       {visits === null ? (
         <div className="flex min-h-[40vh] items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-[#1e3a8a] dark:text-[#3b82f6]" aria-label="Chargement" />
+          <Loader2 className="h-8 w-8 animate-spin text-[#055492] dark:text-[#1173c7]" aria-label="Chargement" />
         </div>
       ) : visits.length === 0 ? (
         <ShieldCard className="p-8 text-center sm:p-12">
@@ -488,7 +488,7 @@ export function ShieldVisits() {
                     <span
                       className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${
                         v.type === 'CHECK_IN'
-                          ? 'bg-blue-50 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300'
+                          ? 'bg-[#f0f7fc] text-[#04467a] dark:bg-[#1173c7]/15 dark:text-[#8fb1cc]'
                           : 'bg-rose-50 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300'
                       }`}
                     >
@@ -510,7 +510,7 @@ export function ShieldVisits() {
                   {v.guestEmail && (
                     <p className="mt-0.5 flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
                       <Mail className="h-3 w-3 shrink-0" aria-hidden="true" />
-                      <a href={`mailto:${v.guestEmail}`} className="truncate hover:text-[#1e3a8a] hover:underline dark:hover:text-[#3b82f6]">
+                      <a href={`mailto:${v.guestEmail}`} className="truncate hover:text-[#055492] hover:underline dark:hover:text-[#1173c7]">
                         {v.guestEmail}
                       </a>
                     </p>

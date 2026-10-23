@@ -20,7 +20,7 @@ export type KPITone = 'rausch' | 'emerald' | 'amber' | 'violet' | 'teal' | 'oran
 
 /** Accent coloré du point (design sans icône — le chiffre est le héros). */
 const TONE_DOTS: Record<KPITone, string> = {
-  rausch: '#5c8af0',
+  rausch: '#5cadf0',
   emerald: '#86e9cb',
   amber: '#e9c47c',
   violet: '#cdb6ff',
@@ -97,14 +97,14 @@ export function KPICard({
         // préserve l'encre blanche des textes internes en mode Jour.
         'lux-card lux-card-hover kpi-solid lux-keep-dark group relative p-5',
         interactive &&
-          'cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5c8af0]/60',
+          'cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5cadf0]/60',
         className,
       )}
       aria-label={`${label} : ${loading ? 'chargement' : value}`}
     >
       <span
         className="lux-dot absolute right-4 top-5 opacity-80"
-        style={{ backgroundColor: tone ? TONE_DOTS[tone] : '#5c8af0' }}
+        style={{ backgroundColor: tone ? TONE_DOTS[tone] : '#5cadf0' }}
         aria-hidden="true"
       />
       <p className="lux-eyebrow">{label}</p>
@@ -117,13 +117,13 @@ export function KPICard({
         <span className="lux-chip mt-3 inline-flex">
           <span
             className="lux-dot"
-            style={{ backgroundColor: resolvedChip.tone === 'positive' ? '#34d399' : resolvedChip.tone === 'negative' ? '#f07d6a' : '#8fa0c2' }}
+            style={{ backgroundColor: resolvedChip.tone === 'positive' ? '#34d399' : resolvedChip.tone === 'negative' ? '#f07d6a' : '#8fabc2' }}
             aria-hidden="true"
           />
           {resolvedChip.text}
         </span>
       )}
-      {hint && !loading && <p className="mt-2 text-[11.5px] text-[#8fa0c2]">{hint}</p>}
+      {hint && !loading && <p className="mt-2 text-[11.5px] text-[#8fabc2]">{hint}</p>}
     </motion.div>
   );
 }

@@ -349,7 +349,7 @@ export function NotificationsContent({ initialPropertyId }: { initialPropertyId:
           <h1 className="lux-display mt-1.5 text-2xl font-semibold text-white">
             Notifications intelligentes
           </h1>
-          <p className="mt-1 text-sm text-[#8fa0c2]">
+          <p className="mt-1 text-sm text-[#8fabc2]">
             Des cartes élégantes s&rsquo;affichent automatiquement dans le hub de vos invités au bon
             moment — repas, veille de départ — pour booster vos commandes.
           </p>
@@ -402,7 +402,7 @@ export function NotificationsContent({ initialPropertyId }: { initialPropertyId:
             <div className="flex items-start gap-3">
               <div className="min-w-0">
                 <h2 className="lux-display text-lg font-semibold text-white">Aperçu en direct</h2>
-                <p className="mt-0.5 text-xs text-[#8fa0c2] sm:text-sm">
+                <p className="mt-0.5 text-xs text-[#8fabc2] sm:text-sm">
                   Exactement ce que verront vos invités — la carte se met à jour au fil de vos
                   réglages.
                 </p>
@@ -424,10 +424,10 @@ export function NotificationsContent({ initialPropertyId }: { initialPropertyId:
                     aria-pressed={active}
                     onClick={() => setPreviewType(c.type)}
                     className={cn(
-                      'inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5c8af0]/50',
+                      'inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5cadf0]/50',
                       active
-                        ? 'border-[#5c8af0]/50 bg-[#5c8af0]/15 text-white'
-                        : 'border-white/10 bg-white/[0.03] text-[#8fa0c2] hover:bg-white/[0.06] hover:text-white',
+                        ? 'border-[#5cadf0]/50 bg-[#5cadf0]/15 text-white'
+                        : 'border-white/10 bg-white/[0.03] text-[#8fabc2] hover:bg-white/[0.06] hover:text-white',
                     )}
                   >
                     {c.label}
@@ -527,13 +527,13 @@ export function NotificationsContent({ initialPropertyId }: { initialPropertyId:
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <h2 className="lux-display text-lg font-semibold text-white">{c.label}</h2>
-                      <p className="mt-0.5 text-xs text-[#8fa0c2] sm:text-sm">{c.hint}</p>
+                      <p className="mt-0.5 text-xs text-[#8fabc2] sm:text-sm">{c.hint}</p>
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
                       <span
                         className={cn(
                           'text-xs font-semibold',
-                          enabled ? 'text-[#86e9cb]' : 'text-[#8fa0c2]',
+                          enabled ? 'text-[#86e9cb]' : 'text-[#8fabc2]',
                         )}
                       >
                         {enabled ? 'Activée' : 'Désactivée'}
@@ -559,7 +559,7 @@ export function NotificationsContent({ initialPropertyId }: { initialPropertyId:
                     )}
                   >
                     <div className="flex flex-col gap-1.5">
-                      <Label htmlFor={`notif-time-${c.type}`} className="text-xs font-semibold text-[#8fa0c2]">
+                      <Label htmlFor={`notif-time-${c.type}`} className="text-xs font-semibold text-[#8fabc2]">
                         Heure d&rsquo;affichage
                       </Label>
                       <Input
@@ -567,14 +567,14 @@ export function NotificationsContent({ initialPropertyId }: { initialPropertyId:
                         type="time"
                         value={settings[c.timeKey]}
                         onChange={(e) => setCardField(c, 'time', e.target.value)}
-                        className="w-40 rounded-xl border-white/12 bg-white/[0.04] text-white focus-visible:ring-[#5c8af0]/50"
+                        className="w-40 rounded-xl border-white/12 bg-white/[0.04] text-white focus-visible:ring-[#5cadf0]/50"
                       />
-                      <p className="text-xs text-[#8fa0c2]/70">
+                      <p className="text-xs text-[#8fabc2]/70">
                         La carte apparaît ±5 minutes autour de cette heure.
                       </p>
                     </div>
                     <div className="flex flex-col gap-1.5">
-                      <Label htmlFor={`notif-message-${c.type}`} className="text-xs font-semibold text-[#8fa0c2]">
+                      <Label htmlFor={`notif-message-${c.type}`} className="text-xs font-semibold text-[#8fabc2]">
                         Message personnalisé
                       </Label>
                       <Textarea
@@ -584,9 +584,9 @@ export function NotificationsContent({ initialPropertyId }: { initialPropertyId:
                         maxLength={MESSAGE_MAX}
                         rows={3}
                         placeholder={c.placeholder}
-                        className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+                        className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50"
                       />
-                      <p className="text-xs text-[#8fa0c2]/70">
+                      <p className="text-xs text-[#8fabc2]/70">
                         {settings[c.messageKey].length}/{MESSAGE_MAX}
                       </p>
                     </div>
@@ -600,7 +600,7 @@ export function NotificationsContent({ initialPropertyId }: { initialPropertyId:
           <section className="lux-card rounded-2xl p-5 sm:p-6" aria-label="Réglages globaux">
             <div className="min-w-0">
               <h2 className="lux-display text-lg font-semibold text-white">Affichage &amp; options</h2>
-              <p className="mt-0.5 text-xs text-[#8fa0c2] sm:text-sm">
+              <p className="mt-0.5 text-xs text-[#8fabc2] sm:text-sm">
                 Communs à toutes les cartes — discrétion garantie : le hub reste utilisable
                 dessous.
               </p>
@@ -634,11 +634,11 @@ export function NotificationsContent({ initialPropertyId }: { initialPropertyId:
                 aria-label="Durée d'affichage des notifications"
                 className="mt-3 w-full max-w-md"
               />
-              <div className="mt-1 flex max-w-md justify-between text-[11px] text-[#8fa0c2]/70">
+              <div className="mt-1 flex max-w-md justify-between text-[11px] text-[#8fabc2]/70">
                 <span>{DISPLAY_MIN} min</span>
                 <span>{DISPLAY_MAX} min</span>
               </div>
-              <p className="mt-1.5 text-xs text-[#8fa0c2]/70">
+              <p className="mt-1.5 text-xs text-[#8fabc2]/70">
                 Après ce délai, la carte disparaît d&rsquo;elle-même (fermable à tout moment par
                 l&rsquo;invité).
               </p>
@@ -654,7 +654,7 @@ export function NotificationsContent({ initialPropertyId }: { initialPropertyId:
                   >
                     Inclure les recommandations de restaurants à proximité
                   </Label>
-                  <p className="mt-0.5 text-xs text-[#8fa0c2]">
+                  <p className="mt-0.5 text-xs text-[#8fabc2]">
                     Ajoute sous les cartes repas des adresses recommandées autour du logement.
                   </p>
                 </div>
@@ -688,7 +688,7 @@ export function NotificationsContent({ initialPropertyId }: { initialPropertyId:
               {saving && (
                 <span
                   className="lux-dot animate-pulse"
-                  style={{ backgroundColor: '#a9c4ff' }}
+                  style={{ backgroundColor: '#a9d8ff' }}
                   aria-hidden="true"
                 />
               )}
@@ -700,7 +700,7 @@ export function NotificationsContent({ initialPropertyId }: { initialPropertyId:
           {properties.length === 0 && (
             <div className="lux-empty rounded-2xl p-10 text-center">
               <h2 className="lux-display text-lg font-semibold text-white">Aucun bien</h2>
-              <p className="mt-1 text-xs text-[#8fa0c2]">
+              <p className="mt-1 text-xs text-[#8fabc2]">
                 Ajoutez d&rsquo;abord un bien pour configurer ses notifications intelligentes.
               </p>
             </div>

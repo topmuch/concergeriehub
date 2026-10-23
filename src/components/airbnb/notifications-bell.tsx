@@ -173,12 +173,12 @@ export function NotificationsBell() {
               onClick={() => void markAllRead()}
               disabled={markingAll}
               aria-label="Tout marquer comme lu"
-              className="inline-flex items-center rounded-full px-3 py-2 text-xs font-semibold text-[#a9c4ff] transition-colors hover:bg-white/8 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5c8af0]/50 disabled:cursor-wait disabled:opacity-60"
+              className="inline-flex items-center rounded-full px-3 py-2 text-xs font-semibold text-[#a9d8ff] transition-colors hover:bg-white/8 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5cadf0]/50 disabled:cursor-wait disabled:opacity-60"
             >
               {markingAll && (
                 <span
                   className="lux-dot mr-1.5 animate-pulse"
-                  style={{ backgroundColor: '#a9c4ff' }}
+                  style={{ backgroundColor: '#a9d8ff' }}
                   aria-hidden="true"
                 />
               )}
@@ -191,7 +191,7 @@ export function NotificationsBell() {
           {items.length === 0 ? (
             <div className="px-4 py-10 text-center">
               <p className="lux-display text-sm font-semibold text-white">Aucune notification</p>
-              <p className="mt-1 text-xs text-[#8fa0c2]">
+              <p className="mt-1 text-xs text-[#8fabc2]">
                 Réservations, ménages et réclamations arriveront ici.
               </p>
             </div>
@@ -225,11 +225,11 @@ export function NotificationsBell() {
                         </span>
                       </span>
                       {n.body && (
-                        <span className="mt-0.5 block text-xs text-[#8fa0c2] line-clamp-2">
+                        <span className="mt-0.5 block text-xs text-[#8fabc2] line-clamp-2">
                           {n.body}
                         </span>
                       )}
-                      <span className="mt-1 block text-[11px] text-[#8fa0c2]/70">
+                      <span className="mt-1 block text-[11px] text-[#8fabc2]/70">
                         {relativeFrTime(n.createdAt)}
                       </span>
                     </span>
@@ -244,7 +244,7 @@ export function NotificationsBell() {
           <Link
             href="/airbnb/dashboard/automations"
             onClick={() => setOpen(false)}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#8fa0c2] transition-colors hover:text-white"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#8fabc2] transition-colors hover:text-white"
           >
             Gérer les automatisations
             <span aria-hidden="true">→</span>

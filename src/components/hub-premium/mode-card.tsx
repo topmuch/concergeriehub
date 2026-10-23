@@ -39,8 +39,8 @@ interface ModeCardProps {
 }
 
 const GRADIENTS: Record<ModeVariant, string> = {
-  guest: 'from-[#0066EF] to-[#0052C4] shadow-[0_18px_50px_-16px_rgba(0,102,239,0.6)]',
-  host: 'from-[#07235B] to-[#0A3273] shadow-[0_18px_50px_-16px_rgba(7,35,91,0.6)]',
+  guest: 'from-[#055492] to-[#04467a] shadow-[0_18px_50px_-16px_rgba(5, 84, 146,0.6)]',
+  host: 'from-[#043455] to-[#0A3273] shadow-[0_18px_50px_-16px_rgba(4, 52, 85,0.6)]',
 };
 
 export function ModeCard({

@@ -74,7 +74,7 @@ export function ActivityLogViewer() {
   const actionColor = (type: string) => {
     if (type.includes('activ')) return 'bg-emerald-500/15 text-emerald-700';
     if (type.includes('deactiv')) return 'bg-red-500/15 text-red-700';
-    if (type.includes('creat')) return 'bg-blue-500/15 text-blue-700';
+    if (type.includes('creat')) return 'bg-[#1173c7]/15 text-[#04467a]';
     if (type.includes('invit')) return 'bg-emerald-500/15 text-emerald-700';
     return 'bg-muted text-muted-foreground';
   };

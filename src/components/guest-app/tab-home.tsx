@@ -209,7 +209,7 @@ export function TabHome({
 // v5.0 « ÉTAT DES LIEUX DE SORTIE » — Carte CTA de l'Accueil :
 // « Je quitte le logement » ouvre la sous-vue du même nom
 // (formulaire signé → PDF + preuve publique). Icône ClipboardCheck,
-// bouton bleu logo #0066EF (accent marque de l'app invitée), bordure
+// bouton bleu logo #055492 (accent marque de l'app invitée), bordure
 // accentuée quand le départ est imminent (aujourd'hui / demain).
 // =============================================================
 function CheckoutInspectionCta({
@@ -223,12 +223,12 @@ function CheckoutInspectionCta({
     <section
       aria-label="État des lieux de sortie"
       className={`rounded-2xl border bg-card p-5 shadow-sm transition-colors ${
-        departureImminent ? 'border-[#0066EF]/60 ring-1 ring-[#0066EF]/25' : 'border-border'
+        departureImminent ? 'border-[#055492]/60 ring-1 ring-[#055492]/25' : 'border-border'
       }`}
     >
       <div className="flex items-start gap-3.5">
         <span
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#EAF2FF] text-[#0052C4] dark:bg-[#0066EF]/15 dark:text-[#3B82F6]"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#dceaf5] text-[#04467a] dark:bg-[#055492]/15 dark:text-[#1173c7]"
           aria-hidden="true"
         >
           <ClipboardCheck className="h-5 w-5" />
@@ -245,7 +245,7 @@ function CheckoutInspectionCta({
           <button
             type="button"
             onClick={onClick}
-            className="mt-3 inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-[#0066EF] px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-[#0052C4] active:scale-[0.98] cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0066EF]/60"
+            className="mt-3 inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-[#055492] px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-[#04467a] active:scale-[0.98] cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#055492]/60"
           >
             <ClipboardCheck className="h-4 w-4" aria-hidden="true" />
             Faire l'état des lieux

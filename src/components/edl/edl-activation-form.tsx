@@ -64,7 +64,7 @@ export function EdlActivationForm({ token }: { token: string }) {
   };
 
   const inputClass =
-    'w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-[15px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-[#0066EF] focus:ring-2 focus:ring-[#0066EF]/25';
+    'w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-[15px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-[#055492] focus:ring-2 focus:ring-[#055492]/25';
 
   return (
     <form onSubmit={submit} className="space-y-4" noValidate>
@@ -152,7 +152,7 @@ export function EdlActivationForm({ token }: { token: string }) {
       <button
         type="submit"
         disabled={phase !== 'idle'}
-        className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[linear-gradient(135deg,#0066EF,#0047B3)] py-4 font-semibold text-white shadow-[0_8px_24px_rgba(0,82,196,0.30)] transition-all hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-80 disabled:hover:scale-100"
+        className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[linear-gradient(135deg,#055492,#033a66)] py-4 font-semibold text-white shadow-[0_8px_24px_rgba(4, 70, 122,0.30)] transition-all hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-80 disabled:hover:scale-100"
       >
         {phase === 'idle' ? (
           <>

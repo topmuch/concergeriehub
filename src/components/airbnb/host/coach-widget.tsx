@@ -40,8 +40,8 @@ interface InsightRow {
 const PRIORITY_META: Record<InsightRow['priority'], { label: string; dot: string; ink: string }> = {
   CRITICAL: { label: 'Urgent', dot: '#f07d6a', ink: 'text-[#ffab92]' },
   HIGH: { label: 'Important', dot: '#e9c47c', ink: 'text-[#e9c47c]' },
-  MEDIUM: { label: 'À noter', dot: '#5c8af0', ink: 'text-[#a9c4ff]' },
-  LOW: { label: 'Info', dot: '#8fa0c2', ink: 'text-[#8fa0c2]' },
+  MEDIUM: { label: 'À noter', dot: '#5cadf0', ink: 'text-[#a9d8ff]' },
+  LOW: { label: 'Info', dot: '#8fabc2', ink: 'text-[#8fabc2]' },
 };
 
 const TYPE_LABELS: Record<string, string> = {
@@ -143,7 +143,7 @@ export function CoachWidget({ refreshKey = 0 }: { refreshKey?: number }) {
         <div className="flex items-center gap-2">
           <Link
             href="/airbnb/dashboard/coach"
-            className="hidden text-xs font-semibold text-[#a9c4ff] underline-offset-4 transition-colors hover:text-white hover:underline sm:block"
+            className="hidden text-xs font-semibold text-[#a9d8ff] underline-offset-4 transition-colors hover:text-white hover:underline sm:block"
           >
             Voir tout
           </Link>
@@ -151,7 +151,7 @@ export function CoachWidget({ refreshKey = 0 }: { refreshKey?: number }) {
             <span
               className={cn(
                 'lux-chip',
-                criticalCount > 0 ? 'text-[#ffab92]' : 'text-[#8fa0c2]',
+                criticalCount > 0 ? 'text-[#ffab92]' : 'text-[#8fabc2]',
               )}
             >
               <span
@@ -175,7 +175,7 @@ export function CoachWidget({ refreshKey = 0 }: { refreshKey?: number }) {
         </div>
       </div>
 
-      <p className="mt-2 max-w-2xl text-[13px] leading-relaxed text-[#8fa0c2]">
+      <p className="mt-2 max-w-2xl text-[13px] leading-relaxed text-[#8fabc2]">
         {selectedProperty
           ? (
             <>
@@ -207,7 +207,7 @@ export function CoachWidget({ refreshKey = 0 }: { refreshKey?: number }) {
         <div className="mt-5 flex flex-col items-center gap-2 rounded-2xl border border-white/8 bg-white/[0.02] px-4 py-8 text-center">
           <span className="lux-dot" style={{ backgroundColor: '#34d399' }} aria-hidden="true" />
           <p className="lux-display text-lg text-white">Tout est sous contrôle</p>
-          <p className="max-w-sm text-xs leading-relaxed text-[#8fa0c2]">
+          <p className="max-w-sm text-xs leading-relaxed text-[#8fabc2]">
             Aucune recommandation pour le moment. Le coach vous préviendra dès qu&apos;une urgence
             ou une opportunité se présentera.
           </p>
@@ -241,12 +241,12 @@ export function CoachWidget({ refreshKey = 0 }: { refreshKey?: number }) {
                     {insight.title}
                   </p>
                   <span className={cn('lux-chip shrink-0', meta.ink)}>{meta.label}</span>
-                  <span className="lux-chip shrink-0 text-[#8fa0c2]">
+                  <span className="lux-chip shrink-0 text-[#8fabc2]">
                     {TYPE_LABELS[insight.type] ?? insight.type}
                   </span>
                 </div>
 
-                <p className="mt-2 text-[13px] leading-relaxed text-[#8fa0c2]">{insight.message}</p>
+                <p className="mt-2 text-[13px] leading-relaxed text-[#8fabc2]">{insight.message}</p>
 
                 <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
                   <Link
@@ -273,12 +273,12 @@ export function CoachWidget({ refreshKey = 0 }: { refreshKey?: number }) {
                     type="button"
                     disabled={busyId === insight.id}
                     onClick={() => void act(insight.id, 'DISMISSED')}
-                    className="h-8 px-2 text-[11px] font-medium text-[#8fa0c2] underline-offset-4 transition-colors hover:text-white hover:underline disabled:opacity-50"
+                    className="h-8 px-2 text-[11px] font-medium text-[#8fabc2] underline-offset-4 transition-colors hover:text-white hover:underline disabled:opacity-50"
                   >
                     Passer
                   </button>
                   {prop && (
-                    <span className="ml-auto hidden truncate text-[11px] text-[#8fa0c2]/70 sm:block">
+                    <span className="ml-auto hidden truncate text-[11px] text-[#8fabc2]/70 sm:block">
                       {prop}
                     </span>
                   )}
@@ -294,7 +294,7 @@ export function CoachWidget({ refreshKey = 0 }: { refreshKey?: number }) {
         <button
           type="button"
           onClick={() => setShowAll((v) => !v)}
-          className="mt-4 text-xs font-semibold text-[#a9c4ff] underline-offset-4 transition-colors hover:text-white hover:underline"
+          className="mt-4 text-xs font-semibold text-[#a9d8ff] underline-offset-4 transition-colors hover:text-white hover:underline"
         >
           {showAll
             ? 'Réduire la liste'

@@ -52,7 +52,7 @@ import { formatEur } from '@/lib/b2b';
 // =============================================================
 
 // ---------- Palette graphique (saphir / teal sur nuit bleutée) ----------
-const SAPPHIRE = '#5c8af0';
+const SAPPHIRE = '#5cadf0';
 const TEAL = '#2dd4bf';
 
 const revenueConfig = {
@@ -185,7 +185,7 @@ const HEALTH_KIND_DOT: Record<string, string> = {
   email_failed: '#f07d6a',
   order_unpaid: '#fbbf24',
   sub_past_due: '#cdb6ff',
-  plaque_lost: '#8fa0c2',
+  plaque_lost: '#8fabc2',
 };
 const HEALTH_KIND_LABEL: Record<string, string> = {
   email_failed: 'Emails',
@@ -254,7 +254,7 @@ interface FeedItem {
 function buildFeed(data: KpisData): FeedItem[] {
   const activities: FeedItem[] = data.recentActivity.map((a) => ({
     id: a.id,
-    dot: ACTION_DOT[a.actionType] ?? '#8fa0c2',
+    dot: ACTION_DOT[a.actionType] ?? '#8fabc2',
     label: actionLabel(a.actionType),
     who: a.userName ?? 'Système',
     detail: a.propertyName,
@@ -394,7 +394,7 @@ function LuxStat({
         {chip && <span className="lux-chip !px-2 !py-0.5 !text-[10px]">{chip}</span>}
       </div>
       <p className="lux-num mt-2 truncate text-3xl leading-none text-white">{value}</p>
-      {hint && <p className="mt-2 truncate text-[11.5px] text-[#8fa0c2]">{hint}</p>}
+      {hint && <p className="mt-2 truncate text-[11.5px] text-[#8fabc2]">{hint}</p>}
       <span className="lux-dot absolute right-4 top-4 opacity-70" style={{ backgroundColor: dot }} aria-hidden="true" />
     </motion.div>
   );
@@ -495,7 +495,7 @@ export function AdminDashboardContent() {
           <div className="lux-card w-full max-w-md p-8 text-center" role="alert">
             <span className="lux-dot mx-auto" style={{ backgroundColor: '#f07d6a' }} aria-hidden="true" />
             <p className="lux-display mt-3 text-xl text-white">Erreur de chargement</p>
-            <p className="mt-1 text-sm text-[#8fa0c2]">{error || 'Données indisponibles'}</p>
+            <p className="mt-1 text-sm text-[#8fabc2]">{error || 'Données indisponibles'}</p>
             <button type="button" onClick={load} className="lux-btn mt-5">
               Réessayer
             </button>
@@ -550,7 +550,7 @@ export function AdminDashboardContent() {
               <h2 id="admin-greeting" className="lux-display mt-2 text-3xl font-semibold text-white sm:text-[38px]">
                 Vue d&apos;ensemble
               </h2>
-              <p className="mt-2 text-sm text-[#8fa0c2]" suppressHydrationWarning>
+              <p className="mt-2 text-sm text-[#8fabc2]" suppressHydrationWarning>
                 Santé de la plateforme RoomScan{today ? ` — ${today}` : ''}.
               </p>
             </div>
@@ -689,7 +689,7 @@ export function AdminDashboardContent() {
               <Link href={action.href} className="lux-card lux-card-hover group flex items-center gap-3 p-4">
                 <span className="lux-dot shrink-0" style={{ backgroundColor: action.dot }} aria-hidden="true" />
                 <span className="min-w-0 flex-1 truncate text-sm font-medium text-white">{action.label}</span>
-                <span aria-hidden="true" className="shrink-0 text-[#8fa0c2] transition-transform group-hover:translate-x-0.5">
+                <span aria-hidden="true" className="shrink-0 text-[#8fabc2] transition-transform group-hover:translate-x-0.5">
                   →
                 </span>
               </Link>
@@ -717,7 +717,7 @@ export function AdminDashboardContent() {
           <LuxStat
             index={2}
             label="Propriétés"
-            value={<>{stats.activePropertiesCount} <span className="text-lg text-[#8fa0c2]">/ {stats.propertiesCount}</span></>}
+            value={<>{stats.activePropertiesCount} <span className="text-lg text-[#8fabc2]">/ {stats.propertiesCount}</span></>}
             hint="Biens actifs équipés d'une plaque QR"
             dot="#cdb6ff"
           />
@@ -754,28 +754,28 @@ export function AdminDashboardContent() {
           <LuxStat
             index={2}
             label="Plaques activées"
-            value={<>{stats.plaquesActive} <span className="text-lg text-[#8fa0c2]">/ {stats.plaquesTotal}</span></>}
+            value={<>{stats.plaquesActive} <span className="text-lg text-[#8fabc2]">/ {stats.plaquesTotal}</span></>}
             hint={`${stats.plaquesInactive} inactive${stats.plaquesInactive > 1 ? 's' : ''} · ${stats.plaquesLost} perdue${stats.plaquesLost > 1 ? 's' : ''}`}
             dot="#e9c47c"
           />
           <LuxStat
             index={3}
             label="Prestataires actifs"
-            value={<>{stats.providersActive} <span className="text-lg text-[#8fa0c2]">/ {stats.providersTotal}</span></>}
+            value={<>{stats.providersActive} <span className="text-lg text-[#8fabc2]">/ {stats.providersTotal}</span></>}
             hint={`${stats.providersOwner} owner · ${stats.providersGuest} guest`}
             dot="#5eead4"
           />
           <LuxStat
             index={4}
             label="Séjours en cours"
-            value={<>{stats.bookingsActive} <span className="text-lg text-[#8fa0c2]">+ {stats.bookingsUpcoming} à venir</span></>}
+            value={<>{stats.bookingsActive} <span className="text-lg text-[#8fabc2]">+ {stats.bookingsUpcoming} à venir</span></>}
             hint="Check-ins en cours et confirmés"
             dot={SAPPHIRE}
           />
           <LuxStat
             index={5}
             label="Commandes 30 j"
-            value={<>{stats.orders30d} <span className="text-lg text-[#8fa0c2]">/ {stats.ordersTotal}</span></>}
+            value={<>{stats.orders30d} <span className="text-lg text-[#8fabc2]">/ {stats.ordersTotal}</span></>}
             hint={`${stats.ordersRefunded} remboursée${stats.ordersRefunded > 1 ? 's' : ''} (${refundRate} %)`}
             dot="#fbbf24"
           />
@@ -789,7 +789,7 @@ export function AdminDashboardContent() {
               <div>
                 <p className="lux-eyebrow">Finance</p>
                 <p className="lux-display mt-1 text-xl text-white">Revenus des 30 derniers jours</p>
-                <p className="mt-0.5 text-xs text-[#8fa0c2]">
+                <p className="mt-0.5 text-xs text-[#8fabc2]">
                   Volume acheté par les invités (GMV) et commission retenue par la plateforme
                 </p>
               </div>
@@ -803,14 +803,14 @@ export function AdminDashboardContent() {
                   axisLine={{ stroke: 'rgba(148,170,214,0.18)' }}
                   tickMargin={8}
                   minTickGap={28}
-                  tick={{ fontSize: 11, fill: '#8fa0c2' }}
+                  tick={{ fontSize: 11, fill: '#8fabc2' }}
                   tickFormatter={(v: string) => fmtDay.format(new Date(`${v}T12:00:00`))}
                 />
                 <YAxis
                   tickLine={false}
                   axisLine={false}
                   width={44}
-                  tick={{ fontSize: 11, fill: '#8fa0c2' }}
+                  tick={{ fontSize: 11, fill: '#8fabc2' }}
                   tickFormatter={(v: number) => `${Math.round(v)}€`}
                 />
                 <ChartTooltip
@@ -839,7 +839,7 @@ export function AdminDashboardContent() {
           <div className="lux-card p-5 sm:p-6">
             <p className="lux-eyebrow">Paiements</p>
             <p className="lux-display mt-1 text-xl text-white">Statuts de paiement</p>
-            <p className="mt-0.5 text-xs text-[#8fa0c2]">Répartition des {totalOrdersForDonut} commandes</p>
+            <p className="mt-0.5 text-xs text-[#8fabc2]">Répartition des {totalOrdersForDonut} commandes</p>
             <div className="relative mt-4">
               <ChartContainer config={paymentConfig} className="h-56 w-full">
                 <PieChart>
@@ -868,7 +868,7 @@ export function AdminDashboardContent() {
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
               {paymentDistribution.map((d) => {
-                const meta = metaOf(PAYMENT_META, d.key, { label: d.key, dot: '#8fa0c2' });
+                const meta = metaOf(PAYMENT_META, d.key, { label: d.key, dot: '#8fabc2' });
                 if (d.count === 0) return null;
                 return (
                   <span key={d.key} className="lux-chip">
@@ -889,7 +889,7 @@ export function AdminDashboardContent() {
               <div>
                 <p className="lux-eyebrow">Croissance</p>
                 <p className="lux-display mt-1 text-xl text-white">Inscriptions des hôtes</p>
-                <p className="mt-0.5 text-xs text-[#8fa0c2]">Nouveaux comptes créés sur les 30 derniers jours</p>
+                <p className="mt-0.5 text-xs text-[#8fabc2]">Nouveaux comptes créés sur les 30 derniers jours</p>
               </div>
               <span className="lux-chip">
                 <span className="lux-dot" style={{ backgroundColor: '#34d399' }} aria-hidden="true" />
@@ -911,7 +911,7 @@ export function AdminDashboardContent() {
                   axisLine={{ stroke: 'rgba(148,170,214,0.18)' }}
                   tickMargin={8}
                   minTickGap={28}
-                  tick={{ fontSize: 11, fill: '#8fa0c2' }}
+                  tick={{ fontSize: 11, fill: '#8fabc2' }}
                   tickFormatter={(v: string) => fmtDay.format(new Date(`${v}T12:00:00`))}
                 />
                 <YAxis
@@ -919,7 +919,7 @@ export function AdminDashboardContent() {
                   axisLine={false}
                   width={32}
                   allowDecimals={false}
-                  tick={{ fontSize: 11, fill: '#8fa0c2' }}
+                  tick={{ fontSize: 11, fill: '#8fabc2' }}
                 />
                 <ChartTooltip
                   content={
@@ -947,10 +947,10 @@ export function AdminDashboardContent() {
           <div className="lux-card p-5 sm:p-6">
             <p className="lux-eyebrow">Abonnements</p>
             <p className="lux-display mt-1 text-xl text-white">Répartition des abonnements</p>
-            <p className="mt-0.5 text-xs text-[#8fa0c2]">Comptes hôtes par plan sélectionné</p>
+            <p className="mt-0.5 text-xs text-[#8fabc2]">Comptes hôtes par plan sélectionné</p>
             {data.planDistribution.length === 0 ? (
               <div className="lux-empty mt-4 rounded-2xl px-4 py-10 text-center">
-                <p className="text-sm text-[#8fa0c2]">Aucun hôte inscrit pour le moment.</p>
+                <p className="text-sm text-[#8fabc2]">Aucun hôte inscrit pour le moment.</p>
               </div>
             ) : (
               <>
@@ -997,10 +997,10 @@ export function AdminDashboardContent() {
           <div className="lux-card p-5 sm:p-6">
             <p className="lux-eyebrow">Prestations</p>
             <p className="lux-display mt-1 text-xl text-white">GMV par catégorie</p>
-            <p className="mt-0.5 text-xs text-[#8fa0c2]">Chiffre d&apos;affaires invités par type de prestation</p>
+            <p className="mt-0.5 text-xs text-[#8fabc2]">Chiffre d&apos;affaires invités par type de prestation</p>
             {categoryRevenue.length === 0 ? (
               <div className="lux-empty mt-4 rounded-2xl px-4 py-10 text-center">
-                <p className="text-sm text-[#8fa0c2]">Aucune commande payée pour le moment.</p>
+                <p className="text-sm text-[#8fabc2]">Aucune commande payée pour le moment.</p>
               </div>
             ) : (
               <ChartContainer config={categoryConfig} className="mt-4 h-64 w-full">
@@ -1010,7 +1010,7 @@ export function AdminDashboardContent() {
                     type="number"
                     tickLine={false}
                     axisLine={false}
-                    tick={{ fontSize: 11, fill: '#8fa0c2' }}
+                    tick={{ fontSize: 11, fill: '#8fabc2' }}
                     tickFormatter={(v: number) => `${Math.round(v)}€`}
                   />
                   <YAxis
@@ -1019,7 +1019,7 @@ export function AdminDashboardContent() {
                     width={150}
                     tickLine={false}
                     axisLine={false}
-                    tick={{ fontSize: 11, fill: '#8fa0c2' }}
+                    tick={{ fontSize: 11, fill: '#8fabc2' }}
                   />
                   <ChartTooltip content={<ChartTooltipContent />} />
                   <Bar dataKey="gmv" fill="var(--color-gmv)" radius={[0, 6, 6, 0]} maxBarSize={22} />
@@ -1032,10 +1032,10 @@ export function AdminDashboardContent() {
           <div className="lux-card p-5 sm:p-6">
             <p className="lux-eyebrow">Classement</p>
             <p className="lux-display mt-1 text-xl text-white">Top prestataires</p>
-            <p className="mt-0.5 text-xs text-[#8fa0c2]">Classement par GMV encaissée (commandes payées)</p>
+            <p className="mt-0.5 text-xs text-[#8fabc2]">Classement par GMV encaissée (commandes payées)</p>
             {providerRevenue.length === 0 ? (
               <div className="lux-empty mt-4 rounded-2xl px-4 py-10 text-center">
-                <p className="text-sm text-[#8fa0c2]">Aucune commande payée pour le moment.</p>
+                <p className="text-sm text-[#8fabc2]">Aucune commande payée pour le moment.</p>
               </div>
             ) : (
               <ul className="mt-4 space-y-3.5">
@@ -1049,7 +1049,7 @@ export function AdminDashboardContent() {
                             'lux-num flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px]',
                             i === 0
                               ? 'bg-[#e9c47c] text-[#1a1206]'
-                              : 'bg-white/6 text-[#8fa0c2] ring-1 ring-white/10',
+                              : 'bg-white/6 text-[#8fabc2] ring-1 ring-white/10',
                           )}
                         >
                           {i + 1}
@@ -1058,12 +1058,12 @@ export function AdminDashboardContent() {
                       </span>
                       <span className="shrink-0 text-right">
                         <span className="lux-num font-semibold text-white">{formatEur(p.gmv)}</span>
-                        <span className="ml-1.5 text-[11px] text-[#8fa0c2]">{p.orders} cmd</span>
+                        <span className="ml-1.5 text-[11px] text-[#8fabc2]">{p.orders} cmd</span>
                       </span>
                     </div>
                     <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/6">
                       <div
-                        className="h-full rounded-full bg-gradient-to-r from-[#5c8af0] to-[#2dd4bf]"
+                        className="h-full rounded-full bg-gradient-to-r from-[#5cadf0] to-[#2dd4bf]"
                         style={{ width: `${Math.max((p.gmv / maxProviderGmv) * 100, 6)}%` }}
                       />
                     </div>
@@ -1080,10 +1080,10 @@ export function AdminDashboardContent() {
           <div className="lux-card p-5 sm:p-6 lg:col-span-2">
             <p className="lux-eyebrow">Finance</p>
             <p className="lux-display mt-1 text-xl text-white">Transactions récentes</p>
-            <p className="mt-0.5 text-xs text-[#8fa0c2]">Les 8 dernières transactions passées depuis les QR Hubs</p>
+            <p className="mt-0.5 text-xs text-[#8fabc2]">Les 8 dernières transactions passées depuis les QR Hubs</p>
             {data.recentOrders.length === 0 ? (
               <div className="lux-empty mt-4 rounded-2xl px-4 py-10 text-center">
-                <p className="text-sm text-[#8fa0c2]">Aucune commande pour le moment.</p>
+                <p className="text-sm text-[#8fabc2]">Aucune commande pour le moment.</p>
               </div>
             ) : (
               <div className="lux-scroll mt-4 max-h-96 overflow-y-auto rounded-2xl border border-white/8">
@@ -1100,7 +1100,7 @@ export function AdminDashboardContent() {
                   </TableHeader>
                   <TableBody>
                     {data.recentOrders.map((o) => {
-                      const pay = metaOf(PAYMENT_META, o.paymentStatus, { label: o.paymentStatus, dot: '#8fa0c2' });
+                      const pay = metaOf(PAYMENT_META, o.paymentStatus, { label: o.paymentStatus, dot: '#8fabc2' });
                       return (
                         <TableRow key={o.id} className="border-white/8 hover:bg-white/[0.04]">
                           <TableCell className="whitespace-nowrap font-medium text-white">
@@ -1108,7 +1108,7 @@ export function AdminDashboardContent() {
                           </TableCell>
                           <TableCell className="max-w-[180px]">
                             <p className="truncate text-white">{o.itemName}</p>
-                            <p className="truncate text-[11px] text-[#8fa0c2]">{o.providerName}</p>
+                            <p className="truncate text-[11px] text-[#8fabc2]">{o.providerName}</p>
                           </TableCell>
                           <TableCell className="whitespace-nowrap text-right font-semibold tabular-nums text-white">
                             {formatEur(o.totalAmount)}
@@ -1122,7 +1122,7 @@ export function AdminDashboardContent() {
                               {pay.label}
                             </span>
                           </TableCell>
-                          <TableCell className="whitespace-nowrap text-right text-[11px] text-[#8fa0c2]">
+                          <TableCell className="whitespace-nowrap text-right text-[11px] text-[#8fabc2]">
                             {fmtDateTime.format(new Date(o.createdAt))}
                           </TableCell>
                         </TableRow>
@@ -1138,10 +1138,10 @@ export function AdminDashboardContent() {
           <div className="lux-card p-5 sm:p-6">
             <p className="lux-eyebrow">Temps réel</p>
             <p className="lux-display mt-1 text-xl text-white">Dernières activités</p>
-            <p className="mt-0.5 text-xs text-[#8fa0c2]">Activations de plaques, scans &amp; actions hôtes</p>
+            <p className="mt-0.5 text-xs text-[#8fabc2]">Activations de plaques, scans &amp; actions hôtes</p>
             {feed.length === 0 ? (
               <div className="lux-empty mt-4 rounded-2xl px-4 py-10 text-center">
-                <p className="text-sm text-[#8fa0c2]">Aucune activité enregistrée pour le moment.</p>
+                <p className="text-sm text-[#8fabc2]">Aucune activité enregistrée pour le moment.</p>
               </div>
             ) : (
               <ul className="lux-scroll -mx-2 mt-2 max-h-96 divide-y divide-white/6 overflow-y-auto">
@@ -1150,12 +1150,12 @@ export function AdminDashboardContent() {
                     <span className="lux-dot mt-2 shrink-0" style={{ backgroundColor: a.dot }} aria-hidden="true" />
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium text-white">{a.label}</p>
-                      <p className="truncate text-xs text-[#8fa0c2]">
+                      <p className="truncate text-xs text-[#8fabc2]">
                         {a.who}
                         {a.detail ? ` · ${a.detail}` : ''}
                       </p>
                     </div>
-                    <span className="shrink-0 text-[11px] text-[#8fa0c2]">
+                    <span className="shrink-0 text-[11px] text-[#8fabc2]">
                       {fmtDateTime.format(new Date(a.createdAt))}
                     </span>
                   </li>
@@ -1172,7 +1172,7 @@ export function AdminDashboardContent() {
               <div>
                 <p className="lux-eyebrow">Monitoring</p>
                 <p className="lux-display mt-1 text-xl text-white">Santé plateforme</p>
-                <p className="mt-0.5 text-xs text-[#8fa0c2]">
+                <p className="mt-0.5 text-xs text-[#8fabc2]">
                   Incidents réels détectés : emails en échec, commandes impayées &gt; 48 h, abonnements en impayé,
                   plaques perdues
                 </p>
@@ -1196,20 +1196,20 @@ export function AdminDashboardContent() {
                 ))}
               </div>
             ) : healthState === 'error' ? (
-              <p className="lux-empty mt-4 rounded-2xl px-4 py-6 text-center text-sm text-[#8fa0c2]">
+              <p className="lux-empty mt-4 rounded-2xl px-4 py-6 text-center text-sm text-[#8fabc2]">
                 Monitoring momentanément indisponible.
               </p>
             ) : !health || health.length === 0 ? (
               <div className="lux-empty mt-4 rounded-2xl px-4 py-8 text-center">
                 <p className="lux-display text-lg text-white">Aucun incident — la plateforme est saine.</p>
-                <p className="mt-1 text-xs text-[#8fa0c2]">
+                <p className="mt-1 text-xs text-[#8fabc2]">
                   Emails, paiements, abonnements et plaques : tout roule.
                 </p>
               </div>
             ) : (
               <ul className="mt-4 divide-y divide-white/6">
                 {health.map((n, i) => {
-                  const dot = HEALTH_KIND_DOT[n.kind] ?? '#8fa0c2';
+                  const dot = HEALTH_KIND_DOT[n.kind] ?? '#8fabc2';
                   const label = HEALTH_KIND_LABEL[n.kind] ?? n.kind;
                   return (
                     <li key={`${n.kind}-${i}`}>
@@ -1220,11 +1220,11 @@ export function AdminDashboardContent() {
                         <span className="lux-dot mt-2 shrink-0" style={{ backgroundColor: dot }} aria-hidden="true" />
                         <span className="min-w-0 flex-1">
                           <span className="block truncate text-sm font-medium text-white">{n.title}</span>
-                          <span className="block truncate text-xs text-[#8fa0c2]">{n.detail}</span>
+                          <span className="block truncate text-xs text-[#8fabc2]">{n.detail}</span>
                         </span>
                         <span className="flex shrink-0 flex-col items-end gap-1">
                           <span className="lux-chip">{label}</span>
-                          <span className="text-[11px] text-[#8fa0c2]">{fmtDateTime.format(new Date(n.at))}</span>
+                          <span className="text-[11px] text-[#8fabc2]">{fmtDateTime.format(new Date(n.at))}</span>
                         </span>
                       </Link>
                     </li>
@@ -1241,11 +1241,11 @@ export function AdminDashboardContent() {
             <div className="px-5 pb-3 pt-5 sm:px-6">
               <p className="lux-eyebrow">Croissance</p>
               <p className="lux-display mt-1 text-xl text-white">Dernières inscriptions</p>
-              <p className="mt-0.5 text-xs text-[#8fa0c2]">Les 6 comptes hôtes les plus récents</p>
+              <p className="mt-0.5 text-xs text-[#8fabc2]">Les 6 comptes hôtes les plus récents</p>
             </div>
             {data.recentHosts.length === 0 ? (
               <div className="lux-empty mx-5 mb-5 rounded-2xl px-4 py-8 text-center sm:mx-6">
-                <p className="text-sm text-[#8fa0c2]">Aucun hôte inscrit pour le moment.</p>
+                <p className="text-sm text-[#8fabc2]">Aucun hôte inscrit pour le moment.</p>
               </div>
             ) : (
               <ul className="lux-scroll max-h-96 divide-y divide-white/6 overflow-y-auto">
@@ -1253,7 +1253,7 @@ export function AdminDashboardContent() {
                   <li key={h.id} className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-white/[0.04] sm:px-6">
                     <span
                       aria-hidden="true"
-                      className="lux-num inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#3d6fe0]/15 text-xs font-semibold text-[#a9c4ff] ring-1 ring-[#5c8af0]/25"
+                      className="lux-num inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#3d97e0]/15 text-xs font-semibold text-[#a9d8ff] ring-1 ring-[#5cadf0]/25"
                     >
                       {(h.fullName ?? h.email).slice(0, 2).toUpperCase()}
                     </span>
@@ -1266,11 +1266,11 @@ export function AdminDashboardContent() {
                           </span>
                         )}
                       </p>
-                      <p className="truncate text-xs text-[#8fa0c2]">{h.email}</p>
+                      <p className="truncate text-xs text-[#8fabc2]">{h.email}</p>
                     </div>
                     <div className="flex shrink-0 flex-col items-end gap-1">
                       <span className="lux-chip">{planLabel(h.selectedPlan)}</span>
-                      <span className="text-[11px] text-[#8fa0c2]">
+                      <span className="text-[11px] text-[#8fabc2]">
                         {h.propertyCount} bien{h.propertyCount > 1 ? 's' : ''} · {formatDay(h.createdAt)}
                       </span>
                     </div>

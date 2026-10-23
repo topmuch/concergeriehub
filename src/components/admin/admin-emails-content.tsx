@@ -43,14 +43,14 @@ import {
 
 // ---------- Design « Saphir Luxe » : champs & portails sombres ----------
 const LUX_FIELD =
-  'rounded-xl! border-white/12! bg-white/[0.04]! text-white! placeholder:text-[#8fa0c2]/60! focus-visible:ring-[#5c8af0]/50!';
+  'rounded-xl! border-white/12! bg-white/[0.04]! text-white! placeholder:text-[#8fabc2]/60! focus-visible:ring-[#5cadf0]/50!';
 const LUX_SELECT_TRIGGER =
-  'rounded-xl! border-white/12! bg-white/[0.04]! text-white! focus-visible:ring-[#5c8af0]/50!';
+  'rounded-xl! border-white/12! bg-white/[0.04]! text-white! focus-visible:ring-[#5cadf0]/50!';
 const LUX_SELECT_CONTENT = 'border-white/10! bg-[#0b1226]! text-white!';
 const LUX_SELECT_ITEM = 'focus:bg-white/8! focus:text-white!';
 const LUX_TABS_LIST = 'h-auto rounded-full! border border-white/10! bg-white/[0.04]! p-1';
 const LUX_TABS_TRIGGER =
-  'rounded-full! px-4! text-[11px]! font-semibold uppercase tracking-[0.12em] text-[#8fa0c2]! data-[state=active]:bg-white/10! data-[state=active]:text-white!';
+  'rounded-full! px-4! text-[11px]! font-semibold uppercase tracking-[0.12em] text-[#8fabc2]! data-[state=active]:bg-white/10! data-[state=active]:text-white!';
 
 interface EmailRow {
   id: string;
@@ -122,7 +122,7 @@ function statusChip(status: string) {
     case 'QUEUED':
       return { label: 'En file', dot: '#fbbf24' };
     default:
-      return { label: status, dot: '#8fa0c2' };
+      return { label: status, dot: '#8fabc2' };
   }
 }
 
@@ -272,7 +272,7 @@ export function AdminEmailsContent() {
       <div>
         <p className="lux-eyebrow">Console plateforme</p>
         <h1 className="lux-display mt-2 text-2xl font-semibold text-white sm:text-3xl">Emails transactionnels</h1>
-        <p className="mt-2 text-sm text-[#8fa0c2]">
+        <p className="mt-2 text-sm text-[#8fabc2]">
           Outbox des notifications et reçus — provider configurable dans l&apos;onglet
           Configuration (SMTP ou Resend), sinon mode démo en dev.
         </p>
@@ -382,7 +382,7 @@ export function AdminEmailsContent() {
           ) : filtered.length === 0 ? (
             <div className="lux-empty m-4 rounded-2xl px-4 py-10 text-center">
               <p className="text-sm font-semibold text-white">Aucun email</p>
-              <p className="mx-auto mt-1 max-w-sm text-xs text-[#8fa0c2]">
+              <p className="mx-auto mt-1 max-w-sm text-xs text-[#8fabc2]">
                 Les notifications d&apos;équipe, reçus de paiement et remboursements apparaîtront ici automatiquement.
               </p>
             </div>
@@ -409,7 +409,7 @@ export function AdminEmailsContent() {
                           <p className="truncate text-sm font-medium text-white" title={row.to}>
                             {row.to}
                           </p>
-                          <p className="truncate text-xs text-[#8fa0c2] sm:hidden" title={row.subject}>
+                          <p className="truncate text-xs text-[#8fabc2] sm:hidden" title={row.subject}>
                             {row.subject}
                           </p>
                           {row.status === 'FAILED' && row.lastError ? (
@@ -432,13 +432,13 @@ export function AdminEmailsContent() {
                               <span className="lux-dot" style={{ backgroundColor: chip.dot }} aria-hidden="true" />
                               {chip.label}
                             </span>
-                            <span className="text-[11px] text-[#8fa0c2]/70">
+                            <span className="text-[11px] text-[#8fabc2]/70">
                               {row.provider ? (PROVIDER_LABEL[row.provider] ?? row.provider) : '—'}
                               {row.attempts > 1 ? ` · ${row.attempts} tentatives` : ''}
                             </span>
                           </div>
                         </TableCell>
-                        <TableCell className="hidden whitespace-nowrap text-sm text-[#8fa0c2] sm:table-cell">
+                        <TableCell className="hidden whitespace-nowrap text-sm text-[#8fabc2] sm:table-cell">
                           {fmtDate(row.sentAt ?? row.createdAt)}
                         </TableCell>
                         <TableCell className="text-right">
@@ -448,7 +448,7 @@ export function AdminEmailsContent() {
                               size="sm"
                               onClick={() => void openPreview(row)}
                               aria-label={`Aperçu de « ${row.subject} »`}
-                              className="h-8 rounded-full! px-3! text-xs! text-[#8fa0c2]! hover:bg-white/[0.08]! hover:text-white!"
+                              className="h-8 rounded-full! px-3! text-xs! text-[#8fabc2]! hover:bg-white/[0.08]! hover:text-white!"
                             >
                               Aperçu
                             </Button>
@@ -480,7 +480,7 @@ export function AdminEmailsContent() {
           <DialogContent className="max-w-2xl border-white/10! bg-[#0b1226]! text-white!">
             <DialogHeader>
               <DialogTitle className="lux-display pr-6 text-left text-xl font-semibold text-white">{preview?.subject}</DialogTitle>
-              <DialogDescription className="text-left text-[#8fa0c2]!">
+              <DialogDescription className="text-left text-[#8fabc2]!">
                 Aperçu du rendu HTML envoyé au destinataire.
               </DialogDescription>
             </DialogHeader>
@@ -546,8 +546,8 @@ interface EmailConfigState {
 
 const SOURCE_META: Record<string, { label: string; dot: string }> = {
   database: { label: 'Config Superadmin', dot: '#34d399' },
-  env: { label: "Variable d'environnement", dot: '#5c8af0' },
-  default: { label: 'Défaut', dot: '#8fa0c2' },
+  env: { label: "Variable d'environnement", dot: '#5cadf0' },
+  default: { label: 'Défaut', dot: '#8fabc2' },
 };
 
 function sourceChip(source: string | undefined) {
@@ -684,7 +684,7 @@ function EmailConfigTab() {
           <h2 className="lux-display text-lg font-semibold text-white">Expéditeur des emails</h2>
           {sourceChip(cfg?.fromSource)}
         </div>
-        <p className="mt-1 text-sm text-[#8fa0c2]">
+        <p className="mt-1 text-sm text-[#8fabc2]">
           Adresse utilisée pour <strong>tous</strong> les emails sortants — notifications hôtes (ménage,
           stock, pressing, check-out…), emails invités, reçus. Format libre :{' '}
           <code className="rounded bg-white/10 px-1 font-mono text-[#c7d3ea]">Nom &lt;email@domaine&gt;</code> ou{' '}
@@ -700,7 +700,7 @@ function EmailConfigTab() {
             autoComplete="off"
             className={LUX_FIELD}
           />
-          <p className="text-xs text-[#8fa0c2]">
+          <p className="text-xs text-[#8fabc2]">
             Valeur effective actuelle : <span className="font-medium text-white">{cfg?.from}</span>
           </p>
           <p className="rounded-lg border border-[#34d399]/25 bg-[#34d399]/10 p-3 text-xs text-[#86e9cb]">
@@ -730,7 +730,7 @@ function EmailConfigTab() {
             )}
           </div>
         </div>
-        <p className="mt-1 text-sm text-[#8fa0c2]">
+        <p className="mt-1 text-sm text-[#8fabc2]">
           Le service qui expédie physiquement les emails. Sans provider, les emails sont en échec en
           production (consultables dans le journal d&apos;envoi ci-dessus).
         </p>
@@ -802,7 +802,7 @@ function EmailConfigTab() {
                 autoComplete="new-password"
                 className={LUX_FIELD}
               />
-              <p className="text-xs text-[#8fa0c2]">
+              <p className="text-xs text-[#8fabc2]">
                 Gmail : activez la validation en 2 étapes puis créez un « mot de passe d&apos;application ».
                 Port 587 (TLS) ou 465 (SSL direct).
               </p>
@@ -823,7 +823,7 @@ function EmailConfigTab() {
                 autoComplete="new-password"
                 className={LUX_FIELD}
               />
-              <p className="text-xs text-[#8fa0c2]">
+              <p className="text-xs text-[#8fabc2]">
                 Créez la clé sur <strong>resend.com → API Keys → Create API Key</strong>. Resend
                 n&apos;affiche une clé qu&apos;<strong>une seule fois</strong>, à sa création : si votre
                 ancienne clé n&apos;est plus copiable (affichée <code className="rounded bg-white/10 px-1 font-mono text-[#c7d3ea]">re_****…</code>),
@@ -853,7 +853,7 @@ function EmailConfigTab() {
       {/* ----- Email de test (v4.57) ----- */}
       <div className="lux-card p-5">
         <h2 className="lux-display text-lg font-semibold text-white">Tester l&apos;envoi</h2>
-        <p className="mt-1 text-sm text-[#8fa0c2]">
+        <p className="mt-1 text-sm text-[#8fabc2]">
           Envoie un email de test via le provider configuré ci-dessus, exactement comme les vrais
           emails (mêmes expéditeur et route d&apos;envoi).
         </p>
@@ -875,7 +875,7 @@ function EmailConfigTab() {
             {sendingTest ? 'Envoi en cours…' : 'Envoyer un email de test'}
           </Button>
         </div>
-        <p className="mt-2 text-xs text-[#8fa0c2]/70">
+        <p className="mt-2 text-xs text-[#8fabc2]/70">
           Astuce : enregistrez d&apos;abord la configuration, puis envoyez le test.
         </p>
       </div>
@@ -886,7 +886,7 @@ function EmailConfigTab() {
           variant="outline"
           onClick={() => void load()}
           disabled={saving}
-          className="rounded-full! border-white/10! bg-white/[0.04]! px-4! text-xs! font-semibold text-[#8fa0c2]! hover:bg-white/[0.08]! hover:text-white!"
+          className="rounded-full! border-white/10! bg-white/[0.04]! px-4! text-xs! font-semibold text-[#8fabc2]! hover:bg-white/[0.08]! hover:text-white!"
         >
           Annuler
         </Button>
@@ -1019,7 +1019,7 @@ function EmailTemplatesTab() {
           <h2 className="lux-display text-lg font-semibold text-white">Modèles d&apos;emails</h2>
           <span className="lux-chip px-2! py-0.5! text-[10px]!">{items.length}</span>
         </div>
-        <p className="text-xs text-[#8fa0c2]">
+        <p className="text-xs text-[#8fabc2]">
           Les envois réels utilisent en priorité ces modèles (sujet + corps HTML, variables{' '}
           <code className="rounded bg-white/10 px-1 font-mono text-[11px] text-[#c7d3ea]">{'{{variable}}'}</code>) —
           sinon repli automatique sur le template intégré.
@@ -1036,7 +1036,7 @@ function EmailTemplatesTab() {
         ) : items.length === 0 ? (
           <div className="lux-empty m-4 rounded-2xl px-4 py-10 text-center">
             <p className="text-sm font-semibold text-white">Aucun modèle</p>
-            <p className="mx-auto mt-1 max-w-sm text-xs text-[#8fa0c2]">
+            <p className="mx-auto mt-1 max-w-sm text-xs text-[#8fabc2]">
               Exécutez <code className="rounded bg-white/10 px-1 font-mono">bun run scripts/seed-email-templates.ts</code>{' '}
               pour importer les modèles intégrés.
             </p>
@@ -1060,7 +1060,7 @@ function EmailTemplatesTab() {
                       {row.key}
                     </code>
                     {row.variables.length > 0 ? (
-                      <p className="mt-1 max-w-56 truncate text-[11px] text-[#8fa0c2]/70" title={row.variables.map((v) => `{{${v}}}`).join(' ')}>
+                      <p className="mt-1 max-w-56 truncate text-[11px] text-[#8fabc2]/70" title={row.variables.map((v) => `{{${v}}}`).join(' ')}>
                         {row.variables.map((v) => `{{${v}}}`).join(' ')}
                       </p>
                     ) : null}
@@ -1074,13 +1074,13 @@ function EmailTemplatesTab() {
                     <span className="lux-chip px-2! py-0.5! text-[10px]!">
                       <span
                         className="lux-dot"
-                        style={{ backgroundColor: row.isActive ? '#34d399' : '#8fa0c2' }}
+                        style={{ backgroundColor: row.isActive ? '#34d399' : '#8fabc2' }}
                         aria-hidden="true"
                       />
                       {row.isActive ? 'Actif' : 'Inactif'}
                     </span>
                   </TableCell>
-                  <TableCell className="hidden whitespace-nowrap text-sm text-[#8fa0c2] sm:table-cell">
+                  <TableCell className="hidden whitespace-nowrap text-sm text-[#8fabc2] sm:table-cell">
                     {fmtDate(row.updatedAt)}
                   </TableCell>
                   <TableCell className="text-right">
@@ -1090,7 +1090,7 @@ function EmailTemplatesTab() {
                         size="sm"
                         onClick={() => void openEdit(row)}
                         aria-label={`Modifier le modèle ${row.key}`}
-                        className="h-8 rounded-full! px-3! text-xs! text-[#8fa0c2]! hover:bg-white/[0.08]! hover:text-white!"
+                        className="h-8 rounded-full! px-3! text-xs! text-[#8fabc2]! hover:bg-white/[0.08]! hover:text-white!"
                       >
                         Modifier
                       </Button>
@@ -1120,7 +1120,7 @@ function EmailTemplatesTab() {
             <DialogTitle className="lux-display pr-6 text-left text-xl font-semibold text-white">
               Modifier le modèle <code className="rounded bg-white/10 px-1.5 py-0.5 font-mono text-sm text-[#c7d3ea]">{editing?.key}</code>
             </DialogTitle>
-            <DialogDescription className="text-left text-[#8fa0c2]!">
+            <DialogDescription className="text-left text-[#8fabc2]!">
               {editing?.description ?? 'Sujet et corps HTML envoyés aux destinataires.'}
             </DialogDescription>
           </DialogHeader>
@@ -1156,7 +1156,7 @@ function EmailTemplatesTab() {
               </div>
               {editing && editing.variables.length > 0 ? (
                 <div className="flex flex-wrap items-center gap-1.5">
-                  <span className="text-xs font-medium text-[#8fa0c2]">Variables réelles :</span>
+                  <span className="text-xs font-medium text-[#8fabc2]">Variables réelles :</span>
                   {editing.variables.map((v) => (
                     <code
                       key={v}
@@ -1172,7 +1172,7 @@ function EmailTemplatesTab() {
                   variant="outline"
                   onClick={() => setEditing(null)}
                   disabled={saving}
-                  className="rounded-full! border-white/10! bg-white/[0.04]! px-4! text-xs! font-semibold text-[#8fa0c2]! hover:bg-white/[0.08]! hover:text-white!"
+                  className="rounded-full! border-white/10! bg-white/[0.04]! px-4! text-xs! font-semibold text-[#8fabc2]! hover:bg-white/[0.08]! hover:text-white!"
                 >
                   Annuler
                 </Button>

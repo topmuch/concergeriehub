@@ -253,9 +253,9 @@ export function HubManager() {
             <div className="flex flex-col sm:flex-row sm:items-center gap-6">
               {/* QR Code visual placeholder */}
               <div className="flex-shrink-0">
-                <div className="h-28 w-28 rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200 flex flex-col items-center justify-center gap-1.5">
-                  <QrCode className="h-8 w-8 text-blue-600" />
-                  <span className="text-[10px] font-medium text-blue-500 uppercase tracking-wider">Hub</span>
+                <div className="h-28 w-28 rounded-2xl bg-gradient-to-br from-[#f0f7fc] to-[#dceaf5] border-2 border-[#c8dfef] flex flex-col items-center justify-center gap-1.5">
+                  <QrCode className="h-8 w-8 text-[#055492]" />
+                  <span className="text-[10px] font-medium text-[#1173c7] uppercase tracking-wider">Hub</span>
                 </div>
               </div>
 
@@ -314,8 +314,8 @@ export function HubManager() {
         <Card className="rounded-2xl">
           <CardContent className="p-5">
             <div className="flex items-center justify-between mb-3">
-              <div className="h-9 w-9 rounded-xl bg-blue-50 flex items-center justify-center">
-                <Eye className="h-4.5 w-4.5 text-blue-600" />
+              <div className="h-9 w-9 rounded-xl bg-[#f0f7fc] flex items-center justify-center">
+                <Eye className="h-4.5 w-4.5 text-[#055492]" />
               </div>
             </div>
             <p className="text-2xl font-bold tabular-nums">{stats?.totalScans ?? 0}</p>
@@ -327,8 +327,8 @@ export function HubManager() {
         <Card className="rounded-2xl">
           <CardContent className="p-5">
             <div className="flex items-center justify-between mb-3">
-              <div className="h-9 w-9 rounded-xl bg-blue-50 flex items-center justify-center">
-                <LayoutDashboard className="h-4.5 w-4.5 text-blue-600" />
+              <div className="h-9 w-9 rounded-xl bg-[#f0f7fc] flex items-center justify-center">
+                <LayoutDashboard className="h-4.5 w-4.5 text-[#055492]" />
               </div>
             </div>
             <p className="text-2xl font-bold tabular-nums">{stats?.scansThisMonth ?? 0}</p>
@@ -457,7 +457,7 @@ export function HubManager() {
           className="h-auto py-4 rounded-2xl gap-3 justify-start px-5"
           onClick={() => window.dispatchEvent(new CustomEvent('navigate', { detail: 'client-settings' }))}
         >
-          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center flex-shrink-0">
+          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-[#1173c7] to-[#055492] flex items-center justify-center flex-shrink-0">
             <Settings2 className="h-5 w-5 text-white" />
           </div>
           <div className="text-left">

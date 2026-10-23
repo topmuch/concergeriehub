@@ -85,7 +85,7 @@ export function EdlCheckout() {
 
       {/* ── Carte offre ── */}
       <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_6px_16px_rgba(0,0,0,0.08),0_1px_2px_rgba(0,0,0,0.04)]">
-        <div className="border-b border-slate-100 bg-[linear-gradient(135deg,#0066EF_0%,#0047B3_100%)] px-6 py-8 text-white sm:px-8">
+        <div className="border-b border-slate-100 bg-[linear-gradient(135deg,#055492_0%,#033a66_100%)] px-6 py-8 text-white sm:px-8">
           <p className="mb-2 text-xs font-bold uppercase tracking-[0.25em] text-white/80">
             Module indépendant
           </p>
@@ -118,7 +118,7 @@ export function EdlCheckout() {
             type="button"
             onClick={startPayment}
             disabled={phase !== 'idle'}
-            className="flex w-full items-center justify-center gap-3 rounded-2xl bg-[linear-gradient(135deg,#0066EF,#0047B3)] py-4 font-semibold text-white shadow-[0_8px_24px_rgba(0,82,196,0.30)] transition-all hover:scale-[1.01] hover:shadow-[0_12px_32px_rgba(0,82,196,0.35)] disabled:cursor-not-allowed disabled:opacity-80 disabled:hover:scale-100"
+            className="flex w-full items-center justify-center gap-3 rounded-2xl bg-[linear-gradient(135deg,#055492,#033a66)] py-4 font-semibold text-white shadow-[0_8px_24px_rgba(4, 70, 122,0.30)] transition-all hover:scale-[1.01] hover:shadow-[0_12px_32px_rgba(4, 70, 122,0.35)] disabled:cursor-not-allowed disabled:opacity-80 disabled:hover:scale-100"
           >
             {phase === 'idle' ? (
               <>
@@ -158,7 +158,7 @@ export function EdlCheckout() {
               <li key={step.title} className="flex items-start gap-3">
                 <span
                   aria-hidden="true"
-                  className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#0066EF]/10 text-[#0052C4]"
+                  className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#055492]/10 text-[#04467a]"
                 >
                   <step.icon className="h-4 w-4" />
                 </span>
@@ -174,7 +174,7 @@ export function EdlCheckout() {
 
       <p className="mt-6 text-center text-xs text-slate-400">
         Déjà un compte et un abonnement actif ?{' '}
-        <a href="/inspection/dashboard" className="font-medium text-[#0052C4] hover:underline">
+        <a href="/inspection/dashboard" className="font-medium text-[#04467a] hover:underline">
           Ouvrir mon tableau de bord
         </a>
       </p>

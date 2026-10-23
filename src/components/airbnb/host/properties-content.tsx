@@ -101,7 +101,7 @@ export function PropertiesContent({ openWizardOnInit = false }: { openWizardOnIn
           <h1 className="lux-display mt-1 text-2xl font-semibold text-white sm:text-3xl">
             Mes Propriétés
           </h1>
-          <p className="mt-1.5 text-xs text-[#8fa0c2] sm:text-sm">
+          <p className="mt-1.5 text-xs text-[#8fabc2] sm:text-sm">
             {properties.length} bien{properties.length > 1 ? 's' : ''} géré
             {properties.length > 1 ? 's' : ''}
             {plan ? (
@@ -273,7 +273,7 @@ function PropertyCard({ property: p, index, onView, onEdit, onTeam, onBadges }: 
       <div className="relative flex h-20 shrink-0 items-center gap-3 border-b border-white/8 bg-white/[0.03] px-4">
         <span
           aria-hidden="true"
-          className="lux-num flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#3d6fe0]/15 text-lg font-semibold text-[#a9c4ff] ring-1 ring-[#5c8af0]/25"
+          className="lux-num flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#3d97e0]/15 text-lg font-semibold text-[#a9d8ff] ring-1 ring-[#5cadf0]/25"
         >
           {p.name.trim().charAt(0).toUpperCase()}
         </span>
@@ -296,7 +296,7 @@ function PropertyCard({ property: p, index, onView, onEdit, onTeam, onBadges }: 
             className="shrink-0"
           />
         </div>
-        <p className="mt-1.5 truncate text-sm text-[#8fa0c2]" title={p.address ?? undefined}>
+        <p className="mt-1.5 truncate text-sm text-[#8fabc2]" title={p.address ?? undefined}>
           {p.address ?? 'Adresse non renseignée'}
         </p>
         {p.qrHubSlug && (
@@ -304,7 +304,7 @@ function PropertyCard({ property: p, index, onView, onEdit, onTeam, onBadges }: 
             href={`/hub/${p.qrHubSlug}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-[#a9c4ff] transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5c8af0]/50"
+            className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-[#a9d8ff] transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5cadf0]/50"
             aria-label={`Ouvrir le Hub public de ${p.name} dans un nouvel onglet`}
           >
             <span aria-hidden="true">→</span>
@@ -319,7 +319,7 @@ function PropertyCard({ property: p, index, onView, onEdit, onTeam, onBadges }: 
           <p className="lux-num truncate text-sm font-semibold text-white" title={`${p.stats.scans30d}`}>
             {p.stats.scans30d}
           </p>
-          <p className="text-[10px] uppercase tracking-[0.14em] text-[#8fa0c2]/70">scans</p>
+          <p className="text-[10px] uppercase tracking-[0.14em] text-[#8fabc2]/70">scans</p>
         </div>
         <div className="min-w-0">
           <p
@@ -328,19 +328,19 @@ function PropertyCard({ property: p, index, onView, onEdit, onTeam, onBadges }: 
           >
             {Math.round(p.stats.upsellRevenue30d)} €
           </p>
-          <p className="text-[10px] uppercase tracking-[0.14em] text-[#8fa0c2]/70">upsell 30j</p>
+          <p className="text-[10px] uppercase tracking-[0.14em] text-[#8fabc2]/70">upsell 30j</p>
         </div>
         <div className="min-w-0">
           <p className="lux-num truncate text-sm font-semibold text-white">
             {Math.round(p.stats.occupancyRate * 100)}%
           </p>
-          <p className="text-[10px] uppercase tracking-[0.14em] text-[#8fa0c2]/70">occ.</p>
+          <p className="text-[10px] uppercase tracking-[0.14em] text-[#8fabc2]/70">occ.</p>
         </div>
         <div className="min-w-0">
           <p className="lux-num truncate text-sm font-semibold text-white" title={`${p.stats.qrCount}`}>
             {p.stats.qrCount}
           </p>
-          <p className="text-[10px] uppercase tracking-[0.14em] text-[#8fa0c2]/70">QR</p>
+          <p className="text-[10px] uppercase tracking-[0.14em] text-[#8fabc2]/70">QR</p>
         </div>
       </div>
 
@@ -397,11 +397,11 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
       transition={{ duration: 0.35, ease: 'easeOut' }}
       className="lux-empty flex flex-col items-center gap-2 px-6 py-12 text-center"
     >
-      <span aria-hidden="true" className="lux-dot" style={{ backgroundColor: '#5c8af0' }} />
+      <span aria-hidden="true" className="lux-dot" style={{ backgroundColor: '#5cadf0' }} />
       <h2 className="lux-display mt-2 text-lg font-semibold text-white">
         Créez votre première propriété
       </h2>
-      <p className="mx-auto mt-1 max-w-md text-xs text-[#8fa0c2]">
+      <p className="mx-auto mt-1 max-w-md text-xs text-[#8fabc2]">
         Ajoutez votre bien pour générer sa plaque QR, son Hub public voyageurs et centraliser
         scans, services, équipe et calendrier.
       </p>
@@ -432,9 +432,9 @@ function Stepper({ step }: { step: number }) {
               aria-current={current ? 'step' : undefined}
               className={cn(
                 'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold transition-colors',
-                done && 'bg-[#3d6fe0] text-white',
+                done && 'bg-[#3d97e0] text-white',
                 current && 'border border-[#e9c47c] bg-[#e9c47c]/10 text-[#e9c47c]',
-                !done && !current && 'bg-white/[0.05] text-[#8fa0c2]',
+                !done && !current && 'bg-white/[0.05] text-[#8fabc2]',
               )}
             >
               {done ? '✓' : n}
@@ -442,7 +442,7 @@ function Stepper({ step }: { step: number }) {
             <span
               className={cn(
                 'hidden text-xs font-semibold sm:block',
-                current ? 'text-white' : 'text-[#8fa0c2]',
+                current ? 'text-white' : 'text-[#8fabc2]',
               )}
             >
               {label}
@@ -450,7 +450,7 @@ function Stepper({ step }: { step: number }) {
             {n < WIZARD_STEPS.length && (
               <span
                 aria-hidden="true"
-                className={cn('h-0.5 min-w-4 flex-1 rounded-full', done ? 'bg-[#5c8af0]/50' : 'bg-white/10')}
+                className={cn('h-0.5 min-w-4 flex-1 rounded-full', done ? 'bg-[#5cadf0]/50' : 'bg-white/10')}
               />
             )}
           </li>
@@ -645,7 +645,7 @@ function AddPropertyWizard({ open, onOpenChange }: AddPropertyWizardProps) {
           <DialogTitle className="lux-display text-xl font-semibold text-white">
             {stepTitles[step].title}
           </DialogTitle>
-          <DialogDescription className="text-sm text-[#8fa0c2]">
+          <DialogDescription className="text-sm text-[#8fabc2]">
             {stepTitles[step].description}
           </DialogDescription>
         </DialogHeader>
@@ -656,7 +656,7 @@ function AddPropertyWizard({ open, onOpenChange }: AddPropertyWizardProps) {
           {step === 1 && (
             <div className="flex flex-col gap-4">
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="wizard-name" className="text-[#8fa0c2]">Nom du bien *</Label>
+                <Label htmlFor="wizard-name" className="text-[#8fabc2]">Nom du bien *</Label>
                 <Input
                   id="wizard-name"
                   value={name}
@@ -665,7 +665,7 @@ function AddPropertyWizard({ open, onOpenChange }: AddPropertyWizardProps) {
                   maxLength={80}
                   aria-invalid={Boolean(errors.name)}
                   aria-describedby={errors.name ? 'wizard-name-error' : undefined}
-                  className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+                  className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50"
                 />
                 {errors.name && (
                   <p id="wizard-name-error" className="text-xs font-medium text-[#f07d6a]">
@@ -674,7 +674,7 @@ function AddPropertyWizard({ open, onOpenChange }: AddPropertyWizardProps) {
                 )}
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="wizard-address" className="text-[#8fa0c2]">Adresse *</Label>
+                <Label htmlFor="wizard-address" className="text-[#8fabc2]">Adresse *</Label>
                 {/* v4.43 — autocomplétion : l'hôte tape les premières lettres,
                     choisit l'adresse → texte complet + lat/lng remplis auto. */}
                 <AddressAutocomplete
@@ -693,7 +693,7 @@ function AddPropertyWizard({ open, onOpenChange }: AddPropertyWizardProps) {
                   invalid={Boolean(errors.address)}
                   describedBy={errors.address ? 'wizard-address-error' : undefined}
                 />
-                <p className="text-[11px] text-[#8fa0c2]">
+                <p className="text-[11px] text-[#8fabc2]">
                   Tapez les premières lettres : l&apos;adresse se complète et la position GPS
                   (latitude/longitude) est extraite automatiquement — activée pour le bouton
                   « Retour à la maison » des invités.
@@ -705,7 +705,7 @@ function AddPropertyWizard({ open, onOpenChange }: AddPropertyWizardProps) {
                 )}
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="wizard-type" className="text-[#8fa0c2]">Type de bien</Label>
+                <Label htmlFor="wizard-type" className="text-[#8fabc2]">Type de bien</Label>
                 <Select value={propertyType} onValueChange={setPropertyType}>
                   <SelectTrigger
                     id="wizard-type"
@@ -740,7 +740,7 @@ function AddPropertyWizard({ open, onOpenChange }: AddPropertyWizardProps) {
               )}
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="flex flex-col gap-1.5">
-                  <Label htmlFor="wizard-lat" className="text-[#8fa0c2]">Latitude</Label>
+                  <Label htmlFor="wizard-lat" className="text-[#8fabc2]">Latitude</Label>
                   <Input
                     id="wizard-lat"
                     value={latitude}
@@ -749,7 +749,7 @@ function AddPropertyWizard({ open, onOpenChange }: AddPropertyWizardProps) {
                     inputMode="decimal"
                     aria-invalid={Boolean(errors.latitude)}
                     aria-describedby={errors.latitude ? 'wizard-lat-error' : 'wizard-coords-help'}
-                    className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+                    className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50"
                   />
                   {errors.latitude && (
                     <p id="wizard-lat-error" className="text-xs font-medium text-[#f07d6a]">
@@ -758,7 +758,7 @@ function AddPropertyWizard({ open, onOpenChange }: AddPropertyWizardProps) {
                   )}
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <Label htmlFor="wizard-lng" className="text-[#8fa0c2]">Longitude</Label>
+                  <Label htmlFor="wizard-lng" className="text-[#8fabc2]">Longitude</Label>
                   <Input
                     id="wizard-lng"
                     value={longitude}
@@ -767,7 +767,7 @@ function AddPropertyWizard({ open, onOpenChange }: AddPropertyWizardProps) {
                     inputMode="decimal"
                     aria-invalid={Boolean(errors.longitude)}
                     aria-describedby={errors.longitude ? 'wizard-lng-error' : 'wizard-coords-help'}
-                    className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+                    className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50"
                   />
                   {errors.longitude && (
                     <p id="wizard-lng-error" className="text-xs font-medium text-[#f07d6a]">
@@ -776,12 +776,12 @@ function AddPropertyWizard({ open, onOpenChange }: AddPropertyWizardProps) {
                   )}
                 </div>
               </div>
-              <p id="wizard-coords-help" className="text-xs text-[#8fa0c2]">
+              <p id="wizard-coords-help" className="text-xs text-[#8fabc2]">
                 Utilisez maps.google.com pour trouver les coordonnées — nécessaires pour
                 l&apos;annuaire de prestataires géolocalisé.
               </p>
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="wizard-pin" className="text-[#8fa0c2]">PIN Mode Hôte (optionnel)</Label>
+                <Label htmlFor="wizard-pin" className="text-[#8fabc2]">PIN Mode Hôte (optionnel)</Label>
                 <Input
                   id="wizard-pin"
                   type="password"
@@ -793,7 +793,7 @@ function AddPropertyWizard({ open, onOpenChange }: AddPropertyWizardProps) {
                   aria-invalid={Boolean(errors.hubPin)}
                   aria-describedby={errors.hubPin ? 'wizard-pin-error' : 'wizard-pin-help'}
                   className={cn(
-                    'w-40 rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50',
+                    'w-40 rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50',
                     errors.hubPin && 'border-[#f07d6a]/60 focus-visible:ring-[#f07d6a]/50',
                   )}
                 />
@@ -802,7 +802,7 @@ function AddPropertyWizard({ open, onOpenChange }: AddPropertyWizardProps) {
                     {errors.hubPin}
                   </p>
                 ) : (
-                  <p id="wizard-pin-help" className="text-xs text-[#8fa0c2]">
+                  <p id="wizard-pin-help" className="text-xs text-[#8fabc2]">
                     Protège l&apos;accès tablette/QR du Hub — hashing bcrypt côté serveur.
                   </p>
                 )}
@@ -818,7 +818,7 @@ function AddPropertyWizard({ open, onOpenChange }: AddPropertyWizardProps) {
                 <span className="lux-dot mt-1.5 shrink-0" style={{ backgroundColor: '#34d399' }} aria-hidden="true" />
                 <div className="min-w-0">
                   <p className="lux-display font-semibold text-white">{created.name}</p>
-                  <p className="mt-0.5 truncate text-sm text-[#8fa0c2]">
+                  <p className="mt-0.5 truncate text-sm text-[#8fabc2]">
                     {address.trim()} · {propertyTypeMeta(propertyType).label}
                   </p>
                 </div>
@@ -826,7 +826,7 @@ function AddPropertyWizard({ open, onOpenChange }: AddPropertyWizardProps) {
 
               {!plaque ? (
                 <div className="lux-empty flex flex-col items-center gap-3 p-6 text-center">
-                  <p className="text-xs text-[#8fa0c2]">
+                  <p className="text-xs text-[#8fabc2]">
                     Générez la plaque QR de ce bien : son Hub public sera accessible par scan
                     (Wi-Fi, guidebook, upselling…).
                   </p>
@@ -882,7 +882,7 @@ function AddPropertyWizard({ open, onOpenChange }: AddPropertyWizardProps) {
                         href={`/hub/${plaque.hubSlug}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex min-w-0 items-center gap-1.5 text-sm font-medium text-[#a9c4ff] transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5c8af0]/50"
+                        className="inline-flex min-w-0 items-center gap-1.5 text-sm font-medium text-[#a9d8ff] transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5cadf0]/50"
                       >
                         <span aria-hidden="true">→</span>
                         <span className="truncate font-semibold">{hubUrl}</span>
@@ -890,7 +890,7 @@ function AddPropertyWizard({ open, onOpenChange }: AddPropertyWizardProps) {
                     </div>
                   )}
 
-                  <p className="text-xs text-[#8fa0c2]">
+                  <p className="text-xs text-[#8fabc2]">
                     Imprimez la plaque et posez-la dans le logement — vos voyageurs scannent, tout
                     est là.
                   </p>
@@ -1103,13 +1103,13 @@ function EditPropertyDialogInner({
           <DialogTitle className="lux-display text-xl font-semibold text-white">
             {`Modifier « ${property.name} »`}
           </DialogTitle>
-          <DialogDescription className="text-sm text-[#8fa0c2]">
+          <DialogDescription className="text-sm text-[#8fabc2]">
             Les changements sont visibles immédiatement dans le Hub public.
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="edit-name" className="text-[#8fa0c2]">Nom du bien *</Label>
+            <Label htmlFor="edit-name" className="text-[#8fabc2]">Nom du bien *</Label>
             <Input
               id="edit-name"
               value={name}
@@ -1117,7 +1117,7 @@ function EditPropertyDialogInner({
               maxLength={80}
               aria-invalid={Boolean(errors.name)}
               aria-describedby={errors.name ? 'edit-name-error' : undefined}
-              className="rounded-xl border-white/12 bg-white/[0.04] text-white focus-visible:ring-[#5c8af0]/50"
+              className="rounded-xl border-white/12 bg-white/[0.04] text-white focus-visible:ring-[#5cadf0]/50"
             />
             {errors.name && (
               <p id="edit-name-error" className="text-xs font-medium text-[#f07d6a]">
@@ -1126,7 +1126,7 @@ function EditPropertyDialogInner({
             )}
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="edit-address" className="text-[#8fa0c2]">Adresse *</Label>
+            <Label htmlFor="edit-address" className="text-[#8fabc2]">Adresse *</Label>
             {/* v4.43 — autocomplétion : adresse complète + lat/lng exacts. */}
             <AddressAutocomplete
               id="edit-address"
@@ -1142,7 +1142,7 @@ function EditPropertyDialogInner({
               invalid={Boolean(errors.address)}
               describedBy={errors.address ? 'edit-address-error' : undefined}
             />
-            <p className="text-[11px] text-[#8fa0c2]">
+            <p className="text-[11px] text-[#8fabc2]">
               Tapez les premières lettres : l&apos;adresse se complète et la position GPS est
               extraite automatiquement (utilisée par le bouton « Retour à la maison » des invités).
             </p>
@@ -1153,7 +1153,7 @@ function EditPropertyDialogInner({
             )}
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="edit-type" className="text-[#8fa0c2]">Type de bien</Label>
+            <Label htmlFor="edit-type" className="text-[#8fabc2]">Type de bien</Label>
             <Select value={propertyType} onValueChange={setPropertyType}>
               <SelectTrigger
                 id="edit-type"
@@ -1173,7 +1173,7 @@ function EditPropertyDialogInner({
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="edit-lat" className="text-[#8fa0c2]">Latitude</Label>
+              <Label htmlFor="edit-lat" className="text-[#8fabc2]">Latitude</Label>
               <Input
                 id="edit-lat"
                 value={latitude}
@@ -1181,14 +1181,14 @@ function EditPropertyDialogInner({
                 placeholder="48.8566"
                 inputMode="decimal"
                 aria-invalid={Boolean(errors.latitude)}
-                className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+                className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50"
               />
               {errors.latitude && (
                 <p className="text-xs font-medium text-[#f07d6a]">{errors.latitude}</p>
               )}
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="edit-lng" className="text-[#8fa0c2]">Longitude</Label>
+              <Label htmlFor="edit-lng" className="text-[#8fabc2]">Longitude</Label>
               <Input
                 id="edit-lng"
                 value={longitude}
@@ -1196,7 +1196,7 @@ function EditPropertyDialogInner({
                 placeholder="2.3522"
                 inputMode="decimal"
                 aria-invalid={Boolean(errors.longitude)}
-                className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+                className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50"
               />
               {errors.longitude && (
                 <p className="text-xs font-medium text-[#f07d6a]">{errors.longitude}</p>

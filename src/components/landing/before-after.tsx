@@ -9,7 +9,7 @@
 //   Séparateur central : trait gradient vertical (desktop) /
 //   horizontal (mobile). Empilé sur mobile.
 //   v5.1 (COLOR-A) — eyebrow bleu logo, séparateur central
-//   #0066EF→#0052C4→#3B82F6 (accent bleu), sémantique
+//   #055492→#04467a→#1173c7 (accent bleu), sémantique
 //   rose (avant) / émeraude (après) conservée.
 // =============================================================
 
@@ -40,7 +40,7 @@ export function BeforeAfter() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
         {/* En-tête */}
         <Reveal className="mb-14 text-center">
-          <p className="mb-3 text-xs font-bold uppercase tracking-[0.25em] text-[#0052C4]">
+          <p className="mb-3 text-xs font-bold uppercase tracking-[0.25em] text-[#04467a]">
             {t('La différence')}
           </p>
           <h2 className="display-title font-serif! mb-4 text-4xl font-bold text-slate-900 md:text-5xl">
@@ -58,7 +58,7 @@ export function BeforeAfter() {
           {/* Séparateur central — vertical (desktop) */}
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute left-1/2 top-1/2 hidden h-2/3 w-px -translate-x-1/2 -translate-y-1/2 bg-gradient-to-b from-[#0066EF] via-[#0052C4] to-[#3B82F6] opacity-70 md:block"
+            className="pointer-events-none absolute left-1/2 top-1/2 hidden h-2/3 w-px -translate-x-1/2 -translate-y-1/2 bg-gradient-to-b from-[#055492] via-[#04467a] to-[#1173c7] opacity-70 md:block"
           />
 
           {/* ── AVANT ── */}
@@ -107,7 +107,7 @@ export function BeforeAfter() {
           {/* Séparateur central — horizontal (mobile) */}
           <div
             aria-hidden="true"
-            className="mx-auto h-px w-3/4 bg-gradient-to-r from-[#0066EF] via-[#0052C4] to-[#3B82F6] opacity-70 md:hidden"
+            className="mx-auto h-px w-3/4 bg-gradient-to-r from-[#055492] via-[#04467a] to-[#1173c7] opacity-70 md:hidden"
           />
 
           {/* ── APRÈS ── */}

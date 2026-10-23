@@ -53,7 +53,7 @@ const ROLE_LABELS: Record<string, string> = {
 /** Couleur du point indicateur selon le rôle (design sans icônes). */
 const ROLE_DOTS: Record<string, string> = {
   OWNER: '#cdb6ff',
-  MANAGER: '#5c8af0',
+  MANAGER: '#5cadf0',
   CLEANER: '#34d399',
   MAINTENANCE: '#fbbf24',
 };
@@ -61,16 +61,16 @@ const ROLE_DOTS: Record<string, string> = {
 /** PENDING='À faire' (ambre) · IN_PROGRESS='En cours' (saphir) · DONE='Terminé' (émeraude). */
 function cleaningBadge(status: string): { label: string; dot: string } {
   if (status === 'PENDING') return { label: 'À faire', dot: '#fbbf24' };
-  if (status === 'IN_PROGRESS') return { label: 'En cours', dot: '#5c8af0' };
+  if (status === 'IN_PROGRESS') return { label: 'En cours', dot: '#5cadf0' };
   if (status === 'DONE') return { label: 'Terminé', dot: '#34d399' };
-  return { label: status, dot: '#8fa0c2' };
+  return { label: status, dot: '#8fabc2' };
 }
 
 function requestBadge(status: string): { label: string; dot: string } {
-  if (status === 'pending') return { label: 'En attente', dot: '#8fa0c2' };
+  if (status === 'pending') return { label: 'En attente', dot: '#8fabc2' };
   if (status === 'accepted') return { label: 'Acceptée', dot: '#e9c47c' };
-  if (status === 'in_progress') return { label: 'En cours', dot: '#5c8af0' };
-  return { label: status, dot: '#8fa0c2' };
+  if (status === 'in_progress') return { label: 'En cours', dot: '#5cadf0' };
+  return { label: status, dot: '#8fabc2' };
 }
 
 function urgencyBadge(level: string): { label: string; dot: string } | null {
@@ -144,7 +144,7 @@ export function MyAssignmentsContent() {
         className="mb-6"
       >
         <h1 className="lux-display text-2xl font-semibold tracking-tight text-white sm:text-3xl">Mes tâches</h1>
-        <p className="mt-1.5 text-sm text-[#8fa0c2]">
+        <p className="mt-1.5 text-sm text-[#8fabc2]">
           Vos interventions à venir sur les biens de l&apos;équipe.
         </p>
       </motion.div>
@@ -181,7 +181,7 @@ export function MyAssignmentsContent() {
       {!loading && !error && hasNoTask && (
         <div className="lux-empty rounded-2xl p-10 text-center">
           <p className="lux-display text-lg text-white">Aucune tâche pour le moment</p>
-          <p className="mx-auto mt-2 max-w-sm text-xs text-[#8fa0c2] sm:text-sm">
+          <p className="mx-auto mt-2 max-w-sm text-xs text-[#8fabc2] sm:text-sm">
             Les nouveaux séjours et réclamations apparaîtront ici automatiquement.
           </p>
         </div>
@@ -214,7 +214,7 @@ export function MyAssignmentsContent() {
                   <span className="lux-chip whitespace-nowrap">
                     <span
                       className="lux-dot"
-                      style={{ backgroundColor: ROLE_DOTS[block.role] ?? '#8fa0c2' }}
+                      style={{ backgroundColor: ROLE_DOTS[block.role] ?? '#8fabc2' }}
                       aria-hidden="true"
                     />
                     {roleLabel}
@@ -237,7 +237,7 @@ export function MyAssignmentsContent() {
                               <p className="truncate text-sm font-semibold text-white">
                                 {stay.guestName || 'Invité'}
                               </p>
-                              <p className="mt-0.5 text-xs text-[#8fa0c2]">
+                              <p className="mt-0.5 text-xs text-[#8fabc2]">
                                 {formatDay(stay.checkIn)} → {formatDay(stay.checkOut)} ·{' '}
                                 {stay.guests} voyageur{stay.guests > 1 ? 's' : ''}
                               </p>
@@ -274,7 +274,7 @@ export function MyAssignmentsContent() {
                               <p className="line-clamp-2 text-sm font-semibold text-white">
                                 {req.description || 'Réclamation sans description'}
                               </p>
-                              <p className="mt-0.5 text-xs text-[#8fa0c2]">
+                              <p className="mt-0.5 text-xs text-[#8fabc2]">
                                 {formatDayTime(req.preferredDate ?? req.createdAt)}
                                 {req.provider?.businessName
                                   ? ` · ${req.provider.businessName}`
@@ -311,8 +311,8 @@ export function MyAssignmentsContent() {
             );
           })}
 
-          <p className="text-center text-xs text-[#8fa0c2]">
-            Une question ? <Link href="/airbnb/messages" className="font-semibold text-[#a9c4ff] underline underline-offset-2 transition-colors hover:text-white">Écrivez à l&apos;équipe</Link>
+          <p className="text-center text-xs text-[#8fabc2]">
+            Une question ? <Link href="/airbnb/messages" className="font-semibold text-[#a9d8ff] underline underline-offset-2 transition-colors hover:text-white">Écrivez à l&apos;équipe</Link>
           </p>
         </div>
       )}

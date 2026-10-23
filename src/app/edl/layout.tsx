@@ -28,7 +28,7 @@ export default function EdlLayout({ children }: { children: ReactNode }) {
           <Link href="/" className="flex items-center gap-2 font-serif text-lg font-bold">
             <span
               aria-hidden="true"
-              className="flex h-8 w-8 items-center justify-center rounded-xl bg-[linear-gradient(135deg,#0066EF,#0047B3)] text-sm text-white"
+              className="flex h-8 w-8 items-center justify-center rounded-xl bg-[linear-gradient(135deg,#055492,#033a66)] text-sm text-white"
             >
               R
             </span>
@@ -49,7 +49,7 @@ export default function EdlLayout({ children }: { children: ReactNode }) {
             Besoin d&apos;aide ?{' '}
             <a
               href="mailto:contact@roomscan.pro"
-              className="font-medium text-[#0052C4] hover:underline"
+              className="font-medium text-[#04467a] hover:underline"
             >
               contact@roomscan.pro
             </a>

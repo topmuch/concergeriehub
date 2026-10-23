@@ -134,7 +134,7 @@ const APP_URL = typeof window !== 'undefined'
 
 const PALETTE_COLORS = [
   '#10B981', '#059669', '#14B8A6', '#06B6D4',
-  '#3B82F6', '#6366F1', '#8B5CF6', '#A855F7',
+  '#1173c7', '#6366F1', '#8B5CF6', '#A855F7',
   '#EC4899', '#F43F5E', '#EF4444', '#F97316',
   '#EAB308', '#84CC16', '#1E293B', '#111827',
   '#FFFFFF', '#F8FAFC', '#F1F5F9', '#E2E8F0',
@@ -193,7 +193,7 @@ function StyleSelector({
             className={`rounded-full px-3 py-1.5 text-xs font-medium transition-all ${
               value === o.value
                 ? 'bg-[#e9c47c] text-[#1a1206] shadow-sm'
-                : 'bg-white/[0.05] text-[#8fa0c2] hover:bg-white/10 hover:text-white'
+                : 'bg-white/[0.05] text-[#8fabc2] hover:bg-white/10 hover:text-white'
             }`}
           >
             {o.label}
@@ -255,7 +255,7 @@ function GeneratedQrGrid({
           <span className="lux-dot shrink-0" style={{ backgroundColor: '#34d399' }} aria-hidden="true" />
           <div>
             <p className="text-sm font-semibold text-white">Plaque QR Hub générée</p>
-            <p className="text-xs text-[#8fa0c2]">Téléchargez en PDF ou individuellement</p>
+            <p className="text-xs text-[#8fabc2]">Téléchargez en PDF ou individuellement</p>
           </div>
         </div>
         <Button onClick={handleDownloadAllPdf} className="lux-btn h-9 rounded-full px-4 text-xs">
@@ -326,7 +326,7 @@ function LivePreview({ design, qrLevel }: { design: DesignConfig; qrLevel: 'L' |
             level={qrLevel}
           />
         </div>
-        <div className="w-full space-y-1.5 text-xs text-[#8fa0c2]">
+        <div className="w-full space-y-1.5 text-xs text-[#8fabc2]">
           <div className="flex justify-between"><span>Matériau</span><span className="font-medium text-white">{PLAQUE_MATERIAL_META[design.material].label}</span></div>
           <div className="flex justify-between"><span>Points</span><span className="font-mono font-medium text-white">{design.dotsType}</span></div>
           <div className="flex justify-between"><span>Coins</span><span className="font-mono font-medium text-white">{design.cornersSquareType}</span></div>
@@ -391,7 +391,7 @@ export function GenerateBatch() {
       {/* Page title */}
       <div className="flex flex-col gap-1">
         <h2 className="lux-display text-2xl font-semibold text-white">Générer une plaque QR Hub</h2>
-        <p className="text-sm text-[#8fa0c2]">Personnalisez le design de votre plaque</p>
+        <p className="text-sm text-[#8fabc2]">Personnalisez le design de votre plaque</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -410,7 +410,7 @@ export function GenerateBatch() {
                   value={batchName}
                   onChange={(e) => setBatchName(e.target.value)}
                   placeholder="Ex: Commande #1234"
-                  className="h-11 rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+                  className="h-11 rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50"
                 />
               </div>
 
@@ -431,19 +431,19 @@ export function GenerateBatch() {
                         aria-pressed={active}
                         className={`text-left rounded-xl border-2 p-3 transition-all ${
                           active
-                            ? 'border-[#5c8af0]/60 bg-[#5c8af0]/10 shadow-sm'
+                            ? 'border-[#5cadf0]/60 bg-[#5cadf0]/10 shadow-sm'
                             : 'border-white/10 bg-white/[0.03] hover:border-white/20 hover:bg-white/[0.06]'
                         }`}
                       >
                         <p className={`text-sm font-semibold ${active ? 'text-white' : 'text-[#c7d3ec]'}`}>
                           {m.label}
                         </p>
-                        <p className="text-[11px] text-[#8fa0c2] mt-0.5 leading-snug">{m.hint}</p>
+                        <p className="text-[11px] text-[#8fabc2] mt-0.5 leading-snug">{m.hint}</p>
                       </button>
                     );
                   })}
                 </div>
-                <p className="text-[11px] text-[#8fa0c2]">
+                <p className="text-[11px] text-[#8fabc2]">
                   Le matériau est enregistré avec le design du lot (aluminium par défaut).
                 </p>
               </div>
@@ -458,10 +458,10 @@ export function GenerateBatch() {
             <CardContent className="pt-4">
               <Tabs defaultValue="style">
                 <TabsList className="mb-4 w-full rounded-full border border-white/10 bg-white/[0.04] p-1">
-                  <TabsTrigger value="style" className="flex-1 rounded-full text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fa0c2] transition-colors data-[state=active]:bg-white/10 data-[state=active]:text-white">
+                  <TabsTrigger value="style" className="flex-1 rounded-full text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fabc2] transition-colors data-[state=active]:bg-white/10 data-[state=active]:text-white">
                     Couleurs &amp; Style
                   </TabsTrigger>
-                  <TabsTrigger value="logo" className="flex-1 rounded-full text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fa0c2] transition-colors data-[state=active]:bg-white/10 data-[state=active]:text-white">
+                  <TabsTrigger value="logo" className="flex-1 rounded-full text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fabc2] transition-colors data-[state=active]:bg-white/10 data-[state=active]:text-white">
                     Logo central
                   </TabsTrigger>
                 </TabsList>
@@ -488,7 +488,7 @@ export function GenerateBatch() {
                             : 'border-white/10 bg-white/[0.03] hover:border-white/20 hover:bg-white/[0.06]'
                         }`}
                       >
-                        <span className={`text-[10px] font-medium ${design.logoPreset === preset.value ? 'text-[#e9c47c]' : 'text-[#8fa0c2]'}`}>
+                        <span className={`text-[10px] font-medium ${design.logoPreset === preset.value ? 'text-[#e9c47c]' : 'text-[#8fabc2]'}`}>
                           {preset.label}
                         </span>
                       </button>

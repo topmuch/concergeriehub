@@ -116,14 +116,14 @@ interface PayoutRow {
 const PAY_STATUS: Record<string, { label: string; dot: string }> = {
   PAID: { label: 'Payée', dot: '#34d399' },
   UNPAID: { label: 'Impayée', dot: '#fbbf24' },
-  REFUNDED: { label: 'Remboursée', dot: '#5c8af0' },
+  REFUNDED: { label: 'Remboursée', dot: '#5cadf0' },
   FAILED: { label: 'Échec', dot: '#64748b' },
 };
 
 // FIX-13 — Badges de statut des payouts (palette chaude, pas de bleu :
 // DISPUTED = ambre, distinct de FAILED corail et PENDING neutre).
 const PAYOUT_STATUS: Record<string, { label: string; dot: string }> = {
-  PENDING: { label: 'En attente', dot: '#8fa0c2' },
+  PENDING: { label: 'En attente', dot: '#8fabc2' },
   PAID: { label: 'Payé', dot: '#34d399' },
   FAILED: { label: 'Échoué', dot: '#f07d6a' },
   DISPUTED: { label: 'Litige', dot: '#fbbf24' },
@@ -342,13 +342,13 @@ export function AdminTransactionsContent() {
           <Tabs defaultValue="commandes" className="gap-0">
             <div className="border-b border-white/8 px-4 pt-4 sm:px-6">
               <TabsList className="h-auto flex-wrap justify-start gap-1 rounded-full border border-white/10 bg-white/[0.04] p-1">
-                <TabsTrigger value="commandes" className="rounded-full text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fa0c2] data-[state=active]:bg-white/10 data-[state=active]:text-white">
+                <TabsTrigger value="commandes" className="rounded-full text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fabc2] data-[state=active]:bg-white/10 data-[state=active]:text-white">
                   Commandes de service
                 </TabsTrigger>
-                <TabsTrigger value="marketplace" className="rounded-full text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fa0c2] data-[state=active]:bg-white/10 data-[state=active]:text-white">
+                <TabsTrigger value="marketplace" className="rounded-full text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fabc2] data-[state=active]:bg-white/10 data-[state=active]:text-white">
                   Marketplace
                 </TabsTrigger>
-                <TabsTrigger value="payouts" className="rounded-full text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fa0c2] data-[state=active]:bg-white/10 data-[state=active]:text-white">
+                <TabsTrigger value="payouts" className="rounded-full text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fabc2] data-[state=active]:bg-white/10 data-[state=active]:text-white">
                   Reversements
                 </TabsTrigger>
               </TabsList>
@@ -357,7 +357,7 @@ export function AdminTransactionsContent() {
             {/* ----- Commandes de service ----- */}
             <TabsContent value="commandes" className="p-4 sm:p-6">
               <div className="mb-3 flex items-center justify-between">
-                <CardDescription className="text-[#8fa0c2]">
+                <CardDescription className="text-[#8fabc2]">
                   {stats ? `${stats.ordersTotal} commande(s) — remboursements : ${stats.refundedEur.toFixed(2)} €` : '…'}
                 </CardDescription>
                 <Button variant="outline" size="sm" className="lux-btn-ghost h-9 rounded-full px-4 text-xs" onClick={fetchOrders}>
@@ -384,23 +384,23 @@ export function AdminTransactionsContent() {
                     </TableHeader>
                     <TableBody>
                       {orders.map((o) => {
-                        const pay = PAY_STATUS[o.paymentStatus] ?? { label: o.paymentStatus, dot: '#8fa0c2' };
+                        const pay = PAY_STATUS[o.paymentStatus] ?? { label: o.paymentStatus, dot: '#8fabc2' };
                         return (
                           <TableRow key={o.id} className="border-white/8 hover:bg-white/[0.04]">
                             <TableCell>
                               <p className="font-semibold text-white">{o.guestName}</p>
-                              <p className="max-w-56 truncate text-xs text-[#8fa0c2]">{o.itemSummary}</p>
+                              <p className="max-w-56 truncate text-xs text-[#8fabc2]">{o.itemSummary}</p>
                             </TableCell>
                             <TableCell className="text-sm text-white/85">{o.provider.businessName}</TableCell>
                             <TableCell className="text-sm font-bold">
-                              <span className={`lux-num font-bold ${o.paymentStatus === 'REFUNDED' ? 'text-[#8fa0c2]/60 line-through' : 'text-white'}`}>
+                              <span className={`lux-num font-bold ${o.paymentStatus === 'REFUNDED' ? 'text-[#8fabc2]/60 line-through' : 'text-white'}`}>
                                 {o.totalAmount.toFixed(2)} €
                               </span>
                               {o.paymentStatus === 'REFUNDED' && (
-                                <p className="text-xs font-normal text-[#8fa0c2]/70">Remboursée au client</p>
+                                <p className="text-xs font-normal text-[#8fabc2]/70">Remboursée au client</p>
                               )}
                             </TableCell>
-                            <TableCell className="hidden text-sm text-[#8fa0c2] md:table-cell">
+                            <TableCell className="hidden text-sm text-[#8fabc2] md:table-cell">
                               {o.commission.toFixed(2)} €
                             </TableCell>
                             <TableCell>
@@ -409,7 +409,7 @@ export function AdminTransactionsContent() {
                                 {pay.label}
                               </span>
                             </TableCell>
-                            <TableCell className="hidden text-sm text-[#8fa0c2] lg:table-cell">
+                            <TableCell className="hidden text-sm text-[#8fabc2] lg:table-cell">
                               {format(new Date(o.createdAt), 'dd MMM yyyy', { locale: fr })}
                             </TableCell>
                             <TableCell>
@@ -425,7 +425,7 @@ export function AdminTransactionsContent() {
                                   Rembourser
                                 </Button>
                               ) : (
-                                <span className="text-[#8fa0c2]/40">—</span>
+                                <span className="text-[#8fabc2]/40">—</span>
                               )}
                             </TableCell>
                           </TableRow>
@@ -446,7 +446,7 @@ export function AdminTransactionsContent() {
             <TabsContent value="payouts" className="space-y-4 p-4 sm:p-6">
               <div>
                 <CardTitle className="lux-display text-lg font-semibold text-white">Gains réversibles par prestataire</CardTitle>
-                <CardDescription className="mt-1 text-xs text-[#8fa0c2]">
+                <CardDescription className="mt-1 text-xs text-[#8fabc2]">
                   Part prestataire des commandes payées, non encore reversée.
                   {payoutProviders.some((p) => p.stripeChargesEnabled && p.stripeConnectEnabled)
                     ? ' Stripe Connect actif : transferts automatiques.'
@@ -475,7 +475,7 @@ export function AdminTransactionsContent() {
                         <TableRow key={p.id} className="border-white/8 hover:bg-white/[0.04]">
                           <TableCell className="font-semibold text-white">{p.businessName}</TableCell>
                           <TableCell className="lux-num text-sm text-white">{p.earnedEur.toFixed(2)} €</TableCell>
-                          <TableCell className="text-sm text-[#8fa0c2]">{p.paidEur.toFixed(2)} €</TableCell>
+                          <TableCell className="text-sm text-[#8fabc2]">{p.paidEur.toFixed(2)} €</TableCell>
                           <TableCell className="lux-num text-sm font-bold text-[#86e9cb]">
                             {p.reversibleEur.toFixed(2)} €
                           </TableCell>
@@ -523,7 +523,7 @@ export function AdminTransactionsContent() {
                           className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors ${
                             payoutFilter === f.key
                               ? 'border-white/25 bg-white/12 text-white'
-                              : 'border-white/10 bg-white/[0.03] text-[#8fa0c2] hover:bg-white/[0.06] hover:text-white'
+                              : 'border-white/10 bg-white/[0.03] text-[#8fabc2] hover:bg-white/[0.06] hover:text-white'
                           }`}
                         >
                           {f.label} ({payoutCounts[f.key]})
@@ -533,9 +533,9 @@ export function AdminTransactionsContent() {
                   )}
                 </div>
                 {payouts.length === 0 ? (
-                  <p className="text-sm text-[#8fa0c2]">Aucun reversement encore enregistré.</p>
+                  <p className="text-sm text-[#8fabc2]">Aucun reversement encore enregistré.</p>
                 ) : filteredPayouts.length === 0 ? (
-                  <p className="text-sm text-[#8fa0c2]">Aucun reversement pour ce filtre.</p>
+                  <p className="text-sm text-[#8fabc2]">Aucun reversement pour ce filtre.</p>
                 ) : (
                   <div className="lux-scroll max-h-72 overflow-auto rounded-xl border border-white/10">
                     <Table>
@@ -552,7 +552,7 @@ export function AdminTransactionsContent() {
                       </TableHeader>
                       <TableBody>
                         {filteredPayouts.map((p) => {
-                          const st = PAYOUT_STATUS[p.status] ?? { label: p.status, dot: '#8fa0c2' };
+                          const st = PAYOUT_STATUS[p.status] ?? { label: p.status, dot: '#8fabc2' };
                           return (
                             <TableRow key={p.id} className="border-white/8 hover:bg-white/[0.04]">
                               <TableCell>
@@ -579,10 +579,10 @@ export function AdminTransactionsContent() {
                                   {st.label}
                                 </span>
                               </TableCell>
-                              <TableCell className="hidden font-mono text-xs text-[#8fa0c2] sm:table-cell">
+                              <TableCell className="hidden font-mono text-xs text-[#8fabc2] sm:table-cell">
                                 {p.stripeTransferId ?? '—'}
                               </TableCell>
-                              <TableCell className="text-sm text-[#8fa0c2]">
+                              <TableCell className="text-sm text-[#8fabc2]">
                                 {format(new Date(p.paidAt ?? p.createdAt), 'dd MMM yyyy HH:mm', { locale: fr })}
                               </TableCell>
                               <TableCell>
@@ -605,7 +605,7 @@ export function AdminTransactionsContent() {
                                   <Button
                                     size="sm"
                                     variant="outline"
-                                    className="h-8 rounded-full border-white/12 bg-transparent px-2 text-xs text-[#8fa0c2] hover:bg-white/[0.06] hover:text-white"
+                                    className="h-8 rounded-full border-white/12 bg-transparent px-2 text-xs text-[#8fabc2] hover:bg-white/[0.06] hover:text-white"
                                     onClick={() => {
                                       setResolveOutcome('RELEASE');
                                       setResolveNote('');
@@ -615,7 +615,7 @@ export function AdminTransactionsContent() {
                                     Résoudre
                                   </Button>
                                 ) : (
-                                  <span className="text-[#8fa0c2]/40">—</span>
+                                  <span className="text-[#8fabc2]/40">—</span>
                                 )}
                               </TableCell>
                             </TableRow>
@@ -636,7 +636,7 @@ export function AdminTransactionsContent() {
         <DialogContent className="border-white/10 bg-[#0b1226] text-white">
           <DialogHeader>
             <DialogTitle className="lux-display text-lg text-white">Reversement — {payoutTarget?.businessName}</DialogTitle>
-            <DialogDescription className="text-[#8fa0c2]">
+            <DialogDescription className="text-[#8fabc2]">
               Réversible : {payoutTarget?.reversibleEur.toFixed(2)} €.
               {payoutTarget?.stripeChargesEnabled
                 ? ' Transfert Stripe Connect réel si la clé est configurée.'
@@ -644,7 +644,7 @@ export function AdminTransactionsContent() {
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-2 py-2">
-            <Label htmlFor="payout-amount" className="text-[#8fa0c2]">Montant (€)</Label>
+            <Label htmlFor="payout-amount" className="text-[#8fabc2]">Montant (€)</Label>
             <Input
               id="payout-amount"
               type="number"
@@ -652,7 +652,7 @@ export function AdminTransactionsContent() {
               step="0.01"
               value={payoutAmount}
               onChange={(e) => setPayoutAmount(e.target.value)}
-              className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+              className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50"
             />
           </div>
           <DialogFooter>
@@ -668,19 +668,19 @@ export function AdminTransactionsContent() {
         <AlertDialogContent className="border-white/10 bg-[#0b1226] text-white">
           <AlertDialogHeader>
             <AlertDialogTitle className="lux-display text-lg text-white">Rembourser cette commande ?</AlertDialogTitle>
-            <AlertDialogDescription className="text-[#8fa0c2]">
+            <AlertDialogDescription className="text-[#8fabc2]">
               Remboursement total via Stripe sur le paiement d&apos;origine.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-sm">
             <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5">
-              <dt className="font-medium text-[#8fa0c2]">Invité</dt>
+              <dt className="font-medium text-[#8fabc2]">Invité</dt>
               <dd className="font-semibold text-white">{refundTarget?.guestName}</dd>
-              <dt className="font-medium text-[#8fa0c2]">Service</dt>
+              <dt className="font-medium text-[#8fabc2]">Service</dt>
               <dd className="max-w-64 truncate font-semibold text-white">{refundTarget?.itemSummary}</dd>
-              <dt className="font-medium text-[#8fa0c2]">Prestataire</dt>
+              <dt className="font-medium text-[#8fabc2]">Prestataire</dt>
               <dd className="font-semibold text-white">{refundTarget?.provider.businessName}</dd>
-              <dt className="font-medium text-[#8fa0c2]">Montant total</dt>
+              <dt className="font-medium text-[#8fabc2]">Montant total</dt>
               <dd className="lux-num text-base font-extrabold text-white">
                 {refundTarget?.totalAmount.toFixed(2)} €
               </dd>
@@ -714,7 +714,7 @@ export function AdminTransactionsContent() {
         <DialogContent className="border-white/10 bg-[#0b1226] text-white">
           <DialogHeader>
             <DialogTitle className="lux-display text-lg text-white">Ouvrir un litige — {disputeTarget?.providerName}</DialogTitle>
-            <DialogDescription className="text-[#8fa0c2]">
+            <DialogDescription className="text-[#8fabc2]">
               Reversement de {disputeTarget?.amount.toFixed(2)} € (
               {disputeTarget?.method === 'STRIPE_CONNECT' ? 'Stripe Connect' : 'virement manuel'}). Le litige est un
               suivi administratif : aucun mouvement Stripe n&apos;est déclenché. Un reversement déjà payé ne peut pas
@@ -722,7 +722,7 @@ export function AdminTransactionsContent() {
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-2 py-2">
-            <Label htmlFor="dispute-reason" className="text-[#8fa0c2]">Raison du litige (min. 10 caractères)</Label>
+            <Label htmlFor="dispute-reason" className="text-[#8fabc2]">Raison du litige (min. 10 caractères)</Label>
             <Textarea
               id="dispute-reason"
               rows={4}
@@ -730,11 +730,11 @@ export function AdminTransactionsContent() {
               onChange={(e) => setDisputeReason(e.target.value)}
               placeholder="Ex : commande remboursée au client, le prestataire conteste le montant…"
               disabled={disputeBusy}
-              className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+              className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50"
             />
             <p
               className={`text-xs ${
-                disputeReason.trim().length >= 10 ? 'text-[#34d399]' : 'text-[#8fa0c2]'
+                disputeReason.trim().length >= 10 ? 'text-[#34d399]' : 'text-[#8fabc2]'
               }`}
             >
               {disputeReason.trim().length}/10 caractères minimum
@@ -760,7 +760,7 @@ export function AdminTransactionsContent() {
         <DialogContent className="max-h-[90vh] overflow-y-auto border-white/10 bg-[#0b1226] text-white sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="lux-display text-lg text-white">Résoudre le litige — {resolveTarget?.providerName}</DialogTitle>
-            <DialogDescription className="text-[#8fa0c2]">
+            <DialogDescription className="text-[#8fabc2]">
               Reversement de {resolveTarget?.amount.toFixed(2)} € en litige.
             </DialogDescription>
           </DialogHeader>
@@ -784,7 +784,7 @@ export function AdminTransactionsContent() {
               <RadioGroupItem id="outcome-release" value="RELEASE" className="mt-0.5" />
               <span>
                 <span className="block font-semibold text-white">Libérer le paiement</span>
-                <span className="block text-xs font-normal text-[#8fa0c2]">
+                <span className="block text-xs font-normal text-[#8fabc2]">
                   Le reversement est marqué Payé. Virement à exécuter manuellement si méthode manuelle — aucune
                   écriture Stripe n&apos;est déclenchée (décision administrative).
                 </span>
@@ -799,14 +799,14 @@ export function AdminTransactionsContent() {
               <RadioGroupItem id="outcome-refund" value="REFUND" className="mt-0.5" />
               <span>
                 <span className="block font-semibold text-white">Marquer remboursé / annulé</span>
-                <span className="block text-xs font-normal text-[#8fa0c2]">
+                <span className="block text-xs font-normal text-[#8fabc2]">
                   Le reversement passe en Échoué : le montant redevient réversible pour le prestataire.
                 </span>
               </span>
             </Label>
           </RadioGroup>
           <div className="grid gap-2">
-            <Label htmlFor="resolve-note" className="text-[#8fa0c2]">Note de résolution (min. 3 caractères)</Label>
+            <Label htmlFor="resolve-note" className="text-[#8fabc2]">Note de résolution (min. 3 caractères)</Label>
             <Textarea
               id="resolve-note"
               rows={3}
@@ -814,7 +814,7 @@ export function AdminTransactionsContent() {
               onChange={(e) => setResolveNote(e.target.value)}
               placeholder="Ex : virement exécuté le … / commande remboursée au client, payout annulé"
               disabled={resolveBusy}
-              className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+              className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50"
             />
           </div>
           <DialogFooter>
@@ -842,7 +842,7 @@ export function AdminTransactionsContent() {
 function EmptyState({ text }: { text: string }) {
   return (
     <div className="lux-empty rounded-xl px-4 py-12 text-center">
-      <p className="mx-auto max-w-md text-sm text-[#8fa0c2]">{text}</p>
+      <p className="mx-auto max-w-md text-sm text-[#8fabc2]">{text}</p>
     </div>
   );
 }

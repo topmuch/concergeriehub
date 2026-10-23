@@ -19,7 +19,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Check, Globe } from 'lucide-react';
 import { SUPPORTED_LOCALES, useLandingLang } from '@/lib/landing-i18n';
 
-const ACCENT = '#0052C4';
+const ACCENT = '#04467a';
 
 export function LanguageSwitcher({ mobile = false }: { mobile?: boolean }) {
   const { lang, setLang, t } = useLandingLang();
@@ -77,14 +77,14 @@ export function LanguageSwitcher({ mobile = false }: { mobile?: boolean }) {
                 onClick={() => select(locale.code)}
                 className={`flex h-11 items-center justify-between rounded-xl border px-3 text-sm font-semibold transition-colors ${
                   active
-                    ? 'border-[#0066EF]/30 bg-[#EAF2FF] text-[#0642A8]'
+                    ? 'border-[#055492]/30 bg-[#dceaf5] text-[#0642A8]'
                     : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
                 }`}
               >
                 <span className="truncate">{locale.label}</span>
                 {active && (
                   <Check
-                    className="h-4 w-4 shrink-0 text-[#0052C4]"
+                    className="h-4 w-4 shrink-0 text-[#04467a]"
                     aria-hidden="true"
                   />
                 )}
@@ -134,7 +134,7 @@ export function LanguageSwitcher({ mobile = false }: { mobile?: boolean }) {
                       onClick={() => select(locale.code)}
                       className={`flex h-11 w-full items-center justify-between rounded-xl px-3 text-sm transition-colors ${
                         active
-                          ? 'bg-[#EAF2FF] font-semibold text-[#0642A8]'
+                          ? 'bg-[#dceaf5] font-semibold text-[#0642A8]'
                           : 'font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900'
                       }`}
                     >

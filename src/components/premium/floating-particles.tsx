@@ -13,7 +13,7 @@ import { motion } from 'framer-motion';
 // : teintes bleu logo plus discrètes, glow bleu au lieu d'ambre.
 // =============================================================
 
-const COLORS = ['bg-[#0066EF]', 'bg-blue-300', 'bg-[#3B82F6]'];
+const COLORS = ['bg-[#055492]', 'bg-[#8fb1cc]', 'bg-[#1173c7]'];
 
 /** PRNG déterministe — même graine → même séquence SSR/client. */
 function mulberry32(seed: number) {
@@ -57,7 +57,7 @@ export function FloatingParticles({ count = 38, seed = 7, className = '' }: { co
       {particles.map((p, i) => (
         <motion.span
           key={i}
-          className={`absolute rounded-full ${p.color} ${p.glow ? 'opacity-40 shadow-[0_0_10px_2px_rgba(0,102,239,0.35)]' : 'opacity-25'}`}
+          className={`absolute rounded-full ${p.color} ${p.glow ? 'opacity-40 shadow-[0_0_10px_2px_rgba(5, 84, 146,0.35)]' : 'opacity-25'}`}
           style={{ left: `${p.left}%`, top: `${p.top}%`, width: p.size, height: p.size }}
           animate={{ y: [0, -26, 0], x: [0, p.drift, 0] }}
           transition={{ duration: p.duration, delay: p.delay, repeat: Infinity, ease: 'easeInOut' }}

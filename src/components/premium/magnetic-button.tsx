@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils';
 // (MotionValues), confettis en state local (event-driven).
 // v4.61 — gradient signature « AIRBNB PRO » (fini le trio
 // ambre/rose/émeraude) ; v5.1 (COLOR-A) — CTA bleu logo
-// #0052C4→#0066EF→#0047B3 + glow bleu + confettis aux couleurs
+// #04467a→#055492→#033a66 + glow bleu + confettis aux couleurs
 // de la marque.
 // =============================================================
 
@@ -25,7 +25,7 @@ interface Confetto {
   delay: number;
 }
 
-const CONFETTI_COLORS = ['#0066EF', '#0052C4', '#0047B3', '#3B82F6', '#ffffff'];
+const CONFETTI_COLORS = ['#055492', '#04467a', '#033a66', '#1173c7', '#ffffff'];
 
 let confettoSeq = 0;
 
@@ -98,9 +98,9 @@ export function MagneticButton({
       style={{ x, y }}
       className={cn(
         'relative cursor-pointer select-none overflow-visible rounded-2xl font-semibold',
-        'bg-[linear-gradient(93deg,#0052C4,#0066EF,#0047B3)] bg-[length:200%_auto]',
-        'animate-gradient text-white shadow-[0_10px_40px_rgba(0,82,196,0.30)]',
-        'hover:shadow-[0_14px_56px_rgba(0,82,196,0.45)]',
+        'bg-[linear-gradient(93deg,#04467a,#055492,#033a66)] bg-[length:200%_auto]',
+        'animate-gradient text-white shadow-[0_10px_40px_rgba(4, 70, 122,0.30)]',
+        'hover:shadow-[0_14px_56px_rgba(4, 70, 122,0.45)]',
         'transition-shadow duration-500',
         disabled && 'pointer-events-none opacity-60',
         className,

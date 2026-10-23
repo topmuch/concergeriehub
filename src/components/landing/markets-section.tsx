@@ -15,7 +15,7 @@
 //      balisé doit être visible par l'utilisateur.
 //
 // Design : cohérent avec la landing V6.1 « AIRBNB PRO clair »
-// (kicker uppercase #0052C4, display-title serif, cartes blanches
+// (kicker uppercase #04467a, display-title serif, cartes blanches
 // border-slate-200 air-shadow, Reveal au scroll, textes via
 // landing-i18n t() → traductions progressives des 8 langues).
 // =============================================================
@@ -58,7 +58,7 @@ export function MarketsSection() {
       <div className="mx-auto max-w-6xl">
         {/* ── En-tête de section ── */}
         <Reveal className="mb-14 text-center">
-          <p className="mb-3 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.25em] text-[#0052C4]">
+          <p className="mb-3 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.25em] text-[#04467a]">
             <Globe2 className="h-4 w-4" aria-hidden="true" />
             {t('Disponible sur 3 continents')}
           </p>
@@ -94,7 +94,7 @@ export function MarketsSection() {
                     {t(zone.title)}
                   </h3>
                 </div>
-                <p className="mb-3 text-sm font-semibold text-[#0052C4]">
+                <p className="mb-3 text-sm font-semibold text-[#04467a]">
                   {t(zone.cities)}
                 </p>
                 <p className="text-sm leading-relaxed text-slate-600">{t(zone.text)}</p>
@@ -115,7 +115,7 @@ export function MarketsSection() {
                   key={item.q}
                   className="group rounded-2xl border border-slate-200 bg-white px-5 py-4 air-shadow [&_summary::-webkit-details-marker]:hidden"
                 >
-                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-left font-semibold text-slate-900 transition-colors hover:text-[#0052C4]">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-left font-semibold text-slate-900 transition-colors hover:text-[#04467a]">
                     <span>{t(item.q)}</span>
                     <ChevronDown
                       className="h-5 w-5 shrink-0 text-slate-400 transition-transform duration-300 group-open:rotate-180"

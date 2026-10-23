@@ -79,14 +79,14 @@ export default async function EdlActivatePage({
               {purchase?.status === 'activated' ? (
                 <Link
                   href="/"
-                  className="rounded-2xl bg-[linear-gradient(135deg,#0066EF,#0047B3)] py-3.5 text-center font-semibold text-white transition-transform hover:scale-[1.01]"
+                  className="rounded-2xl bg-[linear-gradient(135deg,#055492,#033a66)] py-3.5 text-center font-semibold text-white transition-transform hover:scale-[1.01]"
                 >
                   Se connecter
                 </Link>
               ) : (
                 <Link
                   href="/edl/abonnement"
-                  className="rounded-2xl bg-[linear-gradient(135deg,#0066EF,#0047B3)] py-3.5 text-center font-semibold text-white transition-transform hover:scale-[1.01]"
+                  className="rounded-2xl bg-[linear-gradient(135deg,#055492,#033a66)] py-3.5 text-center font-semibold text-white transition-transform hover:scale-[1.01]"
                 >
                   Revenir à l&apos;offre
                 </Link>

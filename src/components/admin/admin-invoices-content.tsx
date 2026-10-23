@@ -237,7 +237,7 @@ export function AdminInvoicesContent() {
         <div>
           <p className="lux-eyebrow">Finance · Superadmin</p>
           <h1 className="lux-display mt-1 text-2xl font-semibold text-white sm:text-3xl">Commissions &amp; Facturation</h1>
-          <p className="mt-1 text-sm text-[#8fa0c2]">
+          <p className="mt-1 text-sm text-[#8fabc2]">
             Facturation mensuelle de la commission RoomScan sur les commandes encaissées par les hôtes via leur Hub.
           </p>
         </div>
@@ -278,7 +278,7 @@ export function AdminInvoicesContent() {
       <div className="lux-card p-4 sm:p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
           <div className="space-y-1.5">
-            <Label htmlFor="gen-month" className="text-[#8fa0c2]">Mois à facturer</Label>
+            <Label htmlFor="gen-month" className="text-[#8fabc2]">Mois à facturer</Label>
             <Select value={String(genMonth)} onValueChange={(v) => setGenMonth(Number(v))}>
               <SelectTrigger id="gen-month" className="w-[170px] rounded-xl border-white/12 bg-white/[0.04] text-white">
                 <SelectValue placeholder="Mois" />
@@ -293,7 +293,7 @@ export function AdminInvoicesContent() {
             </Select>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="gen-year" className="text-[#8fa0c2]">Année</Label>
+            <Label htmlFor="gen-year" className="text-[#8fabc2]">Année</Label>
             <Input
               id="gen-year"
               type="number"
@@ -301,7 +301,7 @@ export function AdminInvoicesContent() {
               max={2100}
               value={genYear}
               onChange={(e) => setGenYear(Number(e.target.value) || prevYear)}
-              className="w-[110px] rounded-xl border-white/12 bg-white/[0.04] text-white focus-visible:ring-[#5c8af0]/50"
+              className="w-[110px] rounded-xl border-white/12 bg-white/[0.04] text-white focus-visible:ring-[#5cadf0]/50"
             />
           </div>
           <Button onClick={generate} disabled={busy} className="lux-btn sm:ml-auto h-9 rounded-full px-4 text-xs">
@@ -317,7 +317,7 @@ export function AdminInvoicesContent() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Rechercher un hôte ou un mois…"
-            className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+            className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50"
             aria-label="Rechercher une facture"
           />
         </div>
@@ -337,13 +337,13 @@ export function AdminInvoicesContent() {
       {/* Tableau */}
       <div className="lux-card p-0">
         {loading ? (
-          <div className="flex items-center justify-center gap-2 p-10 text-sm text-[#8fa0c2]">
+          <div className="flex items-center justify-center gap-2 p-10 text-sm text-[#8fabc2]">
             Chargement des factures…
           </div>
         ) : filtered.length === 0 ? (
           <div className="lux-empty m-4 rounded-2xl px-4 py-10 text-center">
             <p className="lux-display text-lg text-white">Aucune facture de commission</p>
-            <p className="mt-2 text-xs text-[#8fa0c2]">
+            <p className="mt-2 text-xs text-[#8fabc2]">
               Sélectionnez un mois puis cliquez sur « Générer les factures » pour calculer les commissions des hôtes actifs.
             </p>
           </div>
@@ -371,13 +371,13 @@ export function AdminInvoicesContent() {
                       <td className="px-4 py-3 font-medium text-white">{monthLabel(i.month, i.year)}</td>
                       <td className="px-4 py-3">
                         <p className="font-medium text-white">{i.host.fullName || 'Hôte'}</p>
-                        <p className="text-xs text-[#8fa0c2]">{i.host.email}</p>
+                        <p className="text-xs text-[#8fabc2]">{i.host.email}</p>
                       </td>
                       <td className="px-4 py-3 text-right tabular-nums text-white/85">{i.ordersCount}</td>
                       <td className="lux-num px-4 py-3 text-right tabular-nums text-white">{eur(i.totalOrdersAmount)}</td>
-                      <td className="px-4 py-3 text-right tabular-nums text-[#8fa0c2]">{Math.round(i.commissionRate * 100)} %</td>
+                      <td className="px-4 py-3 text-right tabular-nums text-[#8fabc2]">{Math.round(i.commissionRate * 100)} %</td>
                       <td className="lux-num px-4 py-3 text-right font-bold tabular-nums text-[#e9c47c]">{eur(i.commissionOwed)}</td>
-                      <td className="px-4 py-3 text-xs text-[#8fa0c2]">{frDate(i.dueDate)}</td>
+                      <td className="px-4 py-3 text-xs text-[#8fabc2]">{frDate(i.dueDate)}</td>
                       <td className="px-4 py-3">
                         <span className="lux-chip">
                           <span className="lux-dot" style={{ backgroundColor: badge.dot }} aria-hidden="true" />
@@ -427,7 +427,7 @@ export function AdminInvoicesContent() {
                               href={i.invoicePdfUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex h-8 items-center gap-1.5 rounded-full border border-white/12 bg-white/[0.04] px-3 text-xs font-medium text-[#8fa0c2] transition-colors hover:bg-white/[0.07] hover:text-white"
+                              className="inline-flex h-8 items-center gap-1.5 rounded-full border border-white/12 bg-white/[0.04] px-3 text-xs font-medium text-[#8fabc2] transition-colors hover:bg-white/[0.07] hover:text-white"
                               aria-label={`Ouvrir le PDF public (serveur) de la facture de ${i.host.email}`}
                             >
                               PDF public
@@ -436,7 +436,7 @@ export function AdminInvoicesContent() {
                           <Button
                             size="sm"
                             variant="outline"
-                            className="h-8 w-8 rounded-full border-white/12 bg-transparent p-0 text-[#8fa0c2] hover:bg-white/[0.06] hover:text-white"
+                            className="h-8 w-8 rounded-full border-white/12 bg-transparent p-0 text-[#8fabc2] hover:bg-white/[0.06] hover:text-white"
                             onClick={() => {
                               setRateHost({ id: i.host.id, email: i.host.email, rate: i.commissionRate });
                               setRateInput(String(Math.round(i.commissionRate * 100)));
@@ -473,21 +473,21 @@ export function AdminInvoicesContent() {
         <DialogContent className="border-white/10 bg-[#0b1226] text-white sm:max-w-sm">
           <DialogHeader>
             <DialogTitle className="lux-display text-lg text-white">Taux de commission</DialogTitle>
-            <DialogDescription className="text-[#8fa0c2]">
+            <DialogDescription className="text-[#8fabc2]">
               Taux appliqué aux commandes encaissées par <span className="font-medium">{rateHost?.email}</span> (ex : 10 ou 20 %).
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
-            <Label htmlFor="rate-input" className="text-[#8fa0c2]">Taux en %</Label>
+            <Label htmlFor="rate-input" className="text-[#8fabc2]">Taux en %</Label>
             <Input
               id="rate-input"
               inputMode="decimal"
               value={rateInput}
               onChange={(e) => setRateInput(e.target.value)}
               placeholder="20"
-              className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+              className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50"
             />
-            <p className="text-xs text-[#8fa0c2]">
+            <p className="text-xs text-[#8fabc2]">
               Prend effet à la prochaine génération de factures. Les factures déjà payées ne sont pas recalculées.
             </p>
           </div>

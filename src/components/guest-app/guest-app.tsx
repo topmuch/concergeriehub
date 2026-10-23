@@ -214,8 +214,8 @@ export function GuestApp({ slug, initialBookingId, payFlash }: { slug: string; i
               <img
                 src="/brand/roomscan-icon.png"
                 alt="RoomScan"
-                width={124}
-                height={121}
+                width={171}
+                height={169}
                 className="h-9 w-9 rounded-lg object-contain bg-card border border-border shrink-0"
               />
             )}

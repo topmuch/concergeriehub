@@ -16,7 +16,7 @@
 //   • Fond : voiles bleu logo locaux (fond clair) + halo derrière
 //     la photo + <FloatingParticles> recalibrés pour le clair
 //   • v4.61 : page verrouillée claire « AIRBNB PRO », accent bleu vif
-//     unique (#0066EF ; émeraude de l'écran app réservé au succès)
+//     unique (#055492 ; émeraude de l'écran app réservé au succès)
 // =============================================================
 
 import { useRef } from 'react';
@@ -32,6 +32,7 @@ import { FloatingParticles } from '@/components/premium/floating-particles';
 import { MagneticButton } from '@/components/premium/magnetic-button';
 import { CountUp } from '@/components/premium/count-up';
 import { Reveal, StaggerWords } from '@/components/premium/reveal';
+import { BrandLogo } from '@/components/ui/brand-logo';
 import { useLandingLang } from '@/lib/landing-i18n';
 
 type GoToAuth = (mode: 'login' | 'register') => void;
@@ -85,7 +86,7 @@ function HeroVisual({ targetRef }: { targetRef: React.RefObject<HTMLElement | nu
         {/* Halo de couleur derrière la photo (voiles bleu logo) */}
         <div
           aria-hidden="true"
-          className="absolute -inset-8 rounded-[3.5rem] bg-gradient-to-br from-[#0066EF]/25 via-[#0052C4]/10 to-[#F59E0B]/15 blur-3xl"
+          className="absolute -inset-8 rounded-[3.5rem] bg-gradient-to-br from-[#055492]/25 via-[#04467a]/10 to-[#F59E0B]/15 blur-3xl"
         />
 
         {/* Carte photo premium */}
@@ -175,17 +176,28 @@ export function HeroSection({ onGoToAuth }: { onGoToAuth?: GoToAuth }) {
       {/* Voiles d'ambiance bleu logo (fond clair) + particules */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -top-36 right-[-12%] h-[440px] w-[640px] rounded-full bg-[#0066EF]/[0.07] blur-[130px]"
+        className="pointer-events-none absolute -top-36 right-[-12%] h-[440px] w-[640px] rounded-full bg-[#055492]/[0.07] blur-[130px]"
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute bottom-[-14%] left-[-10%] h-[380px] w-[540px] rounded-full bg-[#3B82F6]/[0.06] blur-[130px]"
+        className="pointer-events-none absolute bottom-[-14%] left-[-10%] h-[380px] w-[540px] rounded-full bg-[#1173c7]/[0.06] blur-[130px]"
       />
       <FloatingParticles className="z-0" />
 
       <div className="relative z-10 mx-auto grid max-w-7xl grid-cols-1 items-center gap-16 px-4 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:gap-10">
         {/* ── Colonne texte ── */}
         <div className="text-center lg:text-left">
+          {/* v5.9 — LOGO OFFICIEL EN GRAND FORMAT au-dessus du titre,
+              avec ombre portée douce bleu logo (demande client) */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7 }}
+            className="mb-8 flex justify-center lg:justify-start"
+          >
+            <BrandLogo size="hero" className="drop-shadow-[0_14px_28px_rgba(5,84,146,0.28)]" />
+          </motion.div>
+
           {/* Badge « Nouveau » — pill gradient animé + shimmer + ✨ */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
@@ -193,7 +205,7 @@ export function HeroSection({ onGoToAuth }: { onGoToAuth?: GoToAuth }) {
             transition={{ duration: 0.6 }}
             className="mb-7 flex justify-center lg:justify-start"
           >
-            <span className="shimmer-line animate-gradient inline-flex items-center gap-2 rounded-full border border-white/25 bg-[linear-gradient(93deg,#0052C4,#0066EF,#0047B3)] bg-[length:200%_auto] px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-white shadow-[0_8px_24px_rgba(0,82,196,0.30)]">
+            <span className="shimmer-line animate-gradient inline-flex items-center gap-2 rounded-full border border-white/25 bg-[linear-gradient(93deg,#04467a,#055492,#033a66)] bg-[length:200%_auto] px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-white shadow-[0_8px_24px_rgba(4, 70, 122,0.30)]">
               <span aria-hidden="true" className="animate-spin-slow">
                 ✨
               </span>

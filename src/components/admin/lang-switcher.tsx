@@ -53,7 +53,7 @@ export function AdminLangSwitcher({
             aria-label={l.label}
             title={l.label}
             className={cn(
-              'flex h-7 w-7 items-center justify-center rounded-full text-sm transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3B82F6]',
+              'flex h-7 w-7 items-center justify-center rounded-full text-sm transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1173c7]',
               lang === l.code
                 ? 'scale-105 bg-white/15 shadow-sm ring-1 ring-white/40'
                 : 'opacity-60 hover:bg-white/10 hover:opacity-100',
@@ -102,7 +102,7 @@ export function AdminLangSwitcher({
               {l.flag}
             </span>
             <span className="flex-1 font-medium">{l.label}</span>
-            {lang === l.code && <Check className="h-4 w-4 text-[#0066EF]" aria-hidden="true" />}
+            {lang === l.code && <Check className="h-4 w-4 text-[#055492]" aria-hidden="true" />}
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>

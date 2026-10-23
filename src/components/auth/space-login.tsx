@@ -133,7 +133,7 @@ const THEMES: Record<SpaceKey, SpaceTheme> = {
     cardClass:
       'w-full max-w-md rounded-3xl border border-[#e9c47c]/20 bg-[#0d1526]/90 p-6 sm:p-8 shadow-[0_30px_80px_-30px_rgba(233,196,124,0.25)] backdrop-blur-xl',
     titleClass: 'text-2xl font-bold tracking-tight text-white',
-    subtitleClass: 'mt-1 text-sm text-[#8fa0c2]',
+    subtitleClass: 'mt-1 text-sm text-[#8fabc2]',
     badgeClass:
       'flex h-14 w-14 items-center justify-center rounded-2xl bg-[#e9c47c] text-[#1a1206] shadow-[0_14px_34px_-12px_rgba(233,196,124,0.6)]',
     labelClass: 'text-[#c7d2e8]',
@@ -141,7 +141,7 @@ const THEMES: Record<SpaceKey, SpaceTheme> = {
       'min-h-[44px] border-[#e9c47c]/25 bg-white/[0.05] text-white placeholder:text-white/35 focus-visible:border-[#e9c47c] focus-visible:ring-[#e9c47c]/25 dark:border-[#e9c47c]/25 dark:bg-white/[0.05] dark:text-white dark:placeholder:text-white/35 dark:focus-visible:border-[#e9c47c] dark:focus-visible:ring-[#e9c47c]/25',
     buttonClass:
       'min-h-[48px] bg-[#e9c47c] text-[#1a1206] hover:bg-[#dcb565] shadow-[0_16px_40px_-16px_rgba(233,196,124,0.6)]',
-    backClass: 'text-[#8fa0c2] hover:text-[#e9c47c]',
+    backClass: 'text-[#8fabc2] hover:text-[#e9c47c]',
     backLabel: "Retour à l'accueil",
   },
 };

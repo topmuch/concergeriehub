@@ -212,7 +212,7 @@ export function ClientLayout({ activePage, onPageChange, onSwitchToAdmin, onLogo
             <div className="flex items-center gap-2 rounded-full border border-border px-2 py-1 hover:bg-muted/50 transition-colors cursor-pointer">
               <span className="hidden sm:inline text-xs font-medium text-foreground">Utilisateur Démo</span>
               <Avatar className="h-7 w-7">
-                <AvatarFallback className="bg-[#0066EF] text-white text-[10px] font-bold">UD</AvatarFallback>
+                <AvatarFallback className="bg-[#055492] text-white text-[10px] font-bold">UD</AvatarFallback>
               </Avatar>
               <ChevronDown className="h-3 w-3 text-muted-foreground hidden sm:block" />
             </div>
@@ -259,13 +259,13 @@ function SidebarItem({
       className={cn(
         'flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-150',
         isActive
-          ? 'bg-[#0066EF]/15 text-[#8FB8FF]'
+          ? 'bg-[#055492]/15 text-[#8FB8FF]'
           : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200',
       )}
     >
       {item.icon}
       <span className="flex-1 text-left">{item.label}</span>
-      {isActive && <div className="h-1.5 w-1.5 rounded-full bg-[#3B82F6]" />}
+      {isActive && <div className="h-1.5 w-1.5 rounded-full bg-[#1173c7]" />}
     </button>
   );
 }

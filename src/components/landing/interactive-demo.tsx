@@ -20,7 +20,7 @@
 //
 // v4.61 — écrans réels inchangés (app guest + dashboard) ; seuls les
 // accents DÉCORATIFS de la landing changent d'accent.
-// v5.1 (COLOR-A) — accents décoratifs passés au bleu logo #0066EF :
+// v5.1 (COLOR-A) — accents décoratifs passés au bleu logo #055492 :
 // voiles pastels bleus, dot actif, marque des mockups (chip 🏠,
 // scan-line, onglet actif). Les états sémantiques (émeraude succès,
 // ambre ménage, rouge notification) sont conservés à l'identique.
@@ -160,7 +160,7 @@ export function InteractiveDemo({ className }: InteractiveDemoProps) {
                 onClick={() => setStep(i)}
                 className={cn(
                   'h-2.5 rounded-full transition-all duration-300',
-                  step === i ? 'w-7 bg-[#0066EF]' : 'w-2.5 bg-slate-300 hover:bg-slate-400',
+                  step === i ? 'w-7 bg-[#055492]' : 'w-2.5 bg-slate-300 hover:bg-slate-400',
                 )}
               />
             ))}
@@ -220,7 +220,7 @@ function QrPlaque({ step }: { step: number }) {
         <div className="mb-3 flex items-center gap-2">
           <span
             aria-hidden="true"
-            className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#0066EF] text-sm"
+            className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#055492] text-sm"
           >
             🏠
           </span>
@@ -262,9 +262,9 @@ function QrPlaque({ step }: { step: number }) {
                 <motion.div
                   animate={{ top: ['4%', '88%', '4%'] }}
                   transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
-                  className="absolute inset-x-0 h-8 bg-gradient-to-b from-[#0066EF]/0 via-[#0066EF]/40 to-[#0066EF]/0"
+                  className="absolute inset-x-0 h-8 bg-gradient-to-b from-[#055492]/0 via-[#055492]/40 to-[#055492]/0"
                 />
-                <div className="absolute inset-0 rounded-xl ring-2 ring-inset ring-[#0066EF]/50" />
+                <div className="absolute inset-0 rounded-xl ring-2 ring-inset ring-[#055492]/50" />
               </motion.div>
             )}
           </AnimatePresence>
@@ -391,7 +391,7 @@ function GuestWelcomeScreen() {
       <div className="flex items-center gap-2.5">
         <span
           aria-hidden="true"
-          className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#0066EF] text-base shadow-sm"
+          className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#055492] text-base shadow-sm"
         >
           🏠
         </span>
@@ -409,7 +409,7 @@ function GuestWelcomeScreen() {
       <div className="mt-4 space-y-3">
         <motion.div
           whileHover={{ scale: 1.02 }}
-          className="flex items-center gap-3 rounded-2xl border border-[#DBE8FF] bg-[#EAF2FF] p-3.5 shadow-sm transition-shadow hover:shadow-md"
+          className="flex items-center gap-3 rounded-2xl border border-[#DBE8FF] bg-[#dceaf5] p-3.5 shadow-sm transition-shadow hover:shadow-md"
         >
           <span aria-hidden="true" className="text-3xl leading-none">
             👤
@@ -418,7 +418,7 @@ function GuestWelcomeScreen() {
             <p className="text-[13px] font-bold text-slate-900">Mode Invité</p>
             <p className="truncate text-[10px] text-slate-600">Guidebook, Wi-Fi & services</p>
           </div>
-          <ChevronRight className="h-4 w-4 shrink-0 text-[#0066EF]" aria-hidden="true" />
+          <ChevronRight className="h-4 w-4 shrink-0 text-[#055492]" aria-hidden="true" />
         </motion.div>
 
         <motion.div
@@ -442,7 +442,7 @@ function GuestWelcomeScreen() {
         transition={{ delay: 0.5, duration: 0.4 }}
         className="mt-auto flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5"
       >
-        <Wifi className="h-3.5 w-3.5 text-[#0066EF]" aria-hidden="true" />
+        <Wifi className="h-3.5 w-3.5 text-[#055492]" aria-hidden="true" />
         <p className="text-[10px] font-medium text-slate-600">
           Wi-Fi <span className="font-bold text-slate-900">Loft_5GHz</span> — connexion en 1 tap
         </p>
@@ -576,7 +576,7 @@ function GuestServicesScreen() {
           <Home className="h-4 w-4" aria-hidden="true" />
           <span className="text-[9px] font-medium">Accueil</span>
         </div>
-        <div className="flex flex-col items-center gap-0.5 text-[#0066EF]">
+        <div className="flex flex-col items-center gap-0.5 text-[#055492]">
           <ConciergeBell className="h-4 w-4" aria-hidden="true" />
           <span className="text-[9px] font-bold">Services</span>
         </div>

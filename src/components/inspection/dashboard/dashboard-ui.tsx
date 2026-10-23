@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 
 /** Classes communes des champs de saisie sur la nuit saphir. */
 export const LUX_FIELD =
-  'rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50';
+  'rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50';
 
 /** Bouton secondaire fantôme (shadcn Button + teintes lux). */
 export const LUX_GHOST_BTN =
@@ -17,7 +17,7 @@ export const LUX_GHOST_BTN =
 
 /** Bouton texte discret des actions par ligne (≥ 44 px au toucher). */
 export const ROW_ACTION_BTN =
-  'min-h-[44px] rounded-full px-3 py-1 text-xs font-semibold text-[#8fa0c2] transition-colors hover:bg-white/8 hover:text-white sm:min-h-0 sm:py-0';
+  'min-h-[44px] rounded-full px-3 py-1 text-xs font-semibold text-[#8fabc2] transition-colors hover:bg-white/8 hover:text-white sm:min-h-0 sm:py-0';
 
 /** Point pulsé — indicateur de chargement (remplace toute icône busy). */
 export function LuxBusyDot({

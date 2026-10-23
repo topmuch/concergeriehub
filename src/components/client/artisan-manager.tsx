@@ -134,7 +134,7 @@ const CATEGORY_OPTIONS = CATEGORIES.slice(0, 20);
 
 const STATUS_CONFIG: Record<ServiceRequestStatus, { label: string; className: string }> = {
   pending: { label: 'En attente', className: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300 border-0' },
-  accepted: { label: 'Accepté', className: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border-0' },
+  accepted: { label: 'Accepté', className: 'bg-[#dceaf5] text-[#04467a] dark:bg-[#043455]/30 dark:text-[#8fb1cc] border-0' },
   in_progress: { label: 'En cours', className: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 border-0' },
   completed: { label: 'Terminé', className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 border-0' },
   cancelled: { label: 'Annulé', className: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border-0' },
@@ -534,7 +534,7 @@ export function ArtisanManager() {
       {/* Section 1 - Header + Stats */}
       <div>
         <div className="flex items-center gap-3 mb-1">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-700">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#1173c7] to-[#04467a]">
             <Briefcase className="h-5 w-5 text-white" />
           </div>
           <div>
@@ -548,7 +548,7 @@ export function ArtisanManager() {
 
       {/* Stat cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 p-5 text-white shadow-lg">
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#1173c7] via-[#055492] to-[#04467a] p-5 text-white shadow-lg">
           <div className="flex items-center justify-between">
             <div className="space-y-1">
               <p className="text-sm font-medium text-white/80">Artisans</p>
@@ -607,7 +607,7 @@ export function ArtisanManager() {
               onClick={() => setActiveTab(key)}
               className={
                 activeTab === key
-                  ? 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-sm'
+                  ? 'bg-gradient-to-r from-[#055492] to-[#04467a] hover:from-[#04467a] hover:to-[#033a66] text-white shadow-sm'
                   : ''
               }
             >
@@ -622,7 +622,7 @@ export function ArtisanManager() {
           {activeTab === 'demandes' && (
             <Dialog open={newRequestOpen} onOpenChange={(open) => { setNewRequestOpen(open); }}>
               <DialogTrigger asChild>
-                <Button className="gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-md">
+                <Button className="gap-2 bg-gradient-to-r from-[#055492] to-[#04467a] hover:from-[#04467a] hover:to-[#033a66] text-white shadow-md">
                   <Plus className="h-4 w-4" />
                   Nouvelle demande
                 </Button>
@@ -630,7 +630,7 @@ export function ArtisanManager() {
               <DialogContent className="sm:max-w-[520px]">
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2">
-                    <FileText className="h-5 w-5 text-blue-500" />
+                    <FileText className="h-5 w-5 text-[#1173c7]" />
                     Nouvelle demande de service
                   </DialogTitle>
                 </DialogHeader>
@@ -690,7 +690,7 @@ export function ArtisanManager() {
                   <Button
                     onClick={handleCreateRequest}
                     disabled={!reqFormProId || !reqFormServiceId || reqSubmitting}
-                    className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white"
+                    className="bg-gradient-to-r from-[#055492] to-[#04467a] hover:from-[#04467a] hover:to-[#033a66] text-white"
                   >
                     {reqSubmitting ? 'Envoi...' : 'Envoyer la demande'}
                   </Button>
@@ -754,7 +754,7 @@ export function ArtisanManager() {
                       <CardContent className="p-4">
                         <div className="flex items-start gap-3">
                           <Avatar className="h-10 w-10">
-                            <AvatarFallback className="bg-blue-100 text-blue-700 text-sm font-semibold">
+                            <AvatarFallback className="bg-[#dceaf5] text-[#04467a] text-sm font-semibold">
                               {pro.businessName.charAt(0).toUpperCase()}
                             </AvatarFallback>
                           </Avatar>
@@ -762,7 +762,7 @@ export function ArtisanManager() {
                             <div className="flex items-center gap-2 flex-wrap">
                               <h4 className="font-medium text-sm truncate">{pro.businessName}</h4>
                               {pro.isVerified && (
-                                <ShieldCheck className="h-3.5 w-3.5 text-blue-500 shrink-0" />
+                                <ShieldCheck className="h-3.5 w-3.5 text-[#1173c7] shrink-0" />
                               )}
                             </div>
                             <Badge variant="outline" className="text-[10px] px-1.5 py-0 mt-1 border-0 bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">
@@ -808,7 +808,7 @@ export function ArtisanManager() {
                       <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
                           {selectedPro.businessName}
-                          {selectedPro.isVerified && <ShieldCheck className="h-5 w-5 text-blue-500" />}
+                          {selectedPro.isVerified && <ShieldCheck className="h-5 w-5 text-[#1173c7]" />}
                         </DialogTitle>
                       </DialogHeader>
                       <div className="space-y-4">
@@ -948,7 +948,7 @@ export function ArtisanManager() {
                     <>
                       <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
-                          <FileText className="h-5 w-5 text-blue-500" />
+                          <FileText className="h-5 w-5 text-[#1173c7]" />
                           Détail de la demande
                         </DialogTitle>
                       </DialogHeader>
@@ -1069,7 +1069,7 @@ export function ArtisanManager() {
               {/* Reviews I wrote */}
               <div>
                 <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-                  <HeartHandshake className="h-4 w-4 text-blue-500" />
+                  <HeartHandshake className="h-4 w-4 text-[#1173c7]" />
                   Avis laissés ({reviewsWritten.length})
                 </h3>
                 {reviewsWritten.length === 0 ? (
@@ -1138,7 +1138,7 @@ export function ArtisanManager() {
               {reviewsReceived.length > 0 && (
                 <div>
                   <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-                    <UserCheck className="h-4 w-4 text-blue-500" />
+                    <UserCheck className="h-4 w-4 text-[#1173c7]" />
                     Avis reçus ({reviewsReceived.length})
                   </h3>
                   <div className="max-h-[500px] overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent space-y-3">
@@ -1237,7 +1237,7 @@ export function ArtisanManager() {
                       >
                         <CardContent className="p-4 flex items-center gap-3">
                           <Avatar className="h-10 w-10 shrink-0">
-                            <AvatarFallback className="bg-blue-100 text-blue-700 text-sm font-semibold">
+                            <AvatarFallback className="bg-[#dceaf5] text-[#04467a] text-sm font-semibold">
                               {conv.provider?.businessName.charAt(0).toUpperCase() || '?'}
                             </AvatarFallback>
                           </Avatar>
@@ -1276,7 +1276,7 @@ export function ArtisanManager() {
                 <DialogContent className="sm:max-w-[520px] p-0 gap-0">
                   <DialogHeader className="px-6 pt-6 pb-2">
                     <DialogTitle className="flex items-center gap-2">
-                      <MessageCircle className="h-5 w-5 text-blue-500" />
+                      <MessageCircle className="h-5 w-5 text-[#1173c7]" />
                       {chatConversations.find((c) => c.id === chatRequestId)?.provider?.businessName || 'Conversation'}
                     </DialogTitle>
                   </DialogHeader>
@@ -1335,7 +1335,7 @@ export function ArtisanManager() {
                       size="icon"
                       onClick={handleSendMessage}
                       disabled={!chatInput.trim() || chatSending}
-                      className="shrink-0 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white"
+                      className="shrink-0 bg-gradient-to-r from-[#055492] to-[#04467a] hover:from-[#04467a] hover:to-[#033a66] text-white"
                     >
                       {chatSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                     </Button>

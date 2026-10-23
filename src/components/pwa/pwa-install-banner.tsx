@@ -20,7 +20,7 @@ import { toast } from 'sonner';
 // Ce composant enregistre AUSSI le Service Worker (/sw.js) en
 // production → l'app cleaner reste ouverte hors connexion (mauvaise
 // 4G) : navigations /s/ et /upload/ network-first avec repli cache.
-// Design system PWA : bleu #1e3a8a, fond #f8fafc, cibles ≥ 44 px.
+// Design system PWA : bleu #055492, fond #f8fafc, cibles ≥ 44 px.
 // =============================================================
 
 const DEFAULT_QR_URL = 'https://roomscan.pro';
@@ -113,21 +113,21 @@ export function PwaInstallBanner({ variant = 'qr-card' }: { variant?: 'qr-card' 
         className="luxe-card p-5 sm:p-6"
       >
         <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-center sm:gap-6">
-          <div className="w-fit shrink-0 rounded-xl border border-blue-100 bg-white p-3 dark:border-[#283a66] dark:bg-[#f8fafc]">
+          <div className="w-fit shrink-0 rounded-xl border border-[#dceaf5] bg-white p-3 dark:border-[#283a66] dark:bg-[#f8fafc]">
             <QRCodeSVG
               value={qrUrl}
               size={124}
               bgColor="#ffffff"
-              fgColor="#1e3a8a"
+              fgColor="#055492"
               level="M"
               marginSize={2}
             />
           </div>
           <div className="text-center sm:text-left">
-            <p className="text-[10.5px] font-bold uppercase tracking-[0.22em] text-[#1e3a8a]/70 dark:text-[#3b82f6]">
+            <p className="text-[10.5px] font-bold uppercase tracking-[0.22em] text-[#055492]/70 dark:text-[#1173c7]">
               Application mobile
             </p>
-            <h3 className="mt-1 text-base font-bold text-[#1e3a8a] sm:text-lg dark:text-[#60a5fa]">
+            <h3 className="mt-1 text-base font-bold text-[#055492] sm:text-lg dark:text-[#8fb8dc]">
               📱 Installez l&apos;application Roomscan
             </h3>
             <p className="mt-2 text-sm leading-relaxed text-gray-600 dark:text-slate-400">
@@ -158,7 +158,7 @@ export function PwaInstallBanner({ variant = 'qr-card' }: { variant?: 'qr-card' 
           <button
             type="button"
             onClick={handleInstallClick}
-            className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-[#1e3a8a] px-5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-[#1a3278] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1e3a8a]/40"
+            className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-[#055492] px-5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-[#1a3278] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#055492]/40"
           >
             ⬇️ Installer l&apos;app
           </button>

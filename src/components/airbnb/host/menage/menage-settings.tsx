@@ -121,7 +121,7 @@ function ChecklistSection({
         <div className="min-w-0">
           <p className="lux-eyebrow">Servie à votre équipe dans le hub</p>
           <h2 className="lux-display mt-1 text-lg text-white">Checklist de nettoyage</h2>
-          <p className="mt-1 text-sm text-[#8fa0c2]">
+          <p className="mt-1 text-sm text-[#8fabc2]">
             Cochée point par point par votre équipe à chaque passage. Elle est affichée telle
             quelle dans le Mode Ménage du Hub.
           </p>
@@ -144,7 +144,7 @@ function ChecklistSection({
           onClick={() => setMode('default')}
           aria-pressed={mode === 'default'}
           className={cn(
-            'rounded-xl border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5c8af0]/60 disabled:opacity-50',
+            'rounded-xl border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5cadf0]/60 disabled:opacity-50',
             mode === 'default'
               ? 'border-[#e9c47c]/45 bg-[#e9c47c]/8 ring-1 ring-[#e9c47c]/25'
               : 'border-white/10 bg-white/[0.03] hover:bg-white/[0.05]',
@@ -158,7 +158,7 @@ function ChecklistSection({
             />
             Checklist générale
           </p>
-          <p className="mt-0.5 text-xs text-[#8fa0c2]">
+          <p className="mt-0.5 text-xs text-[#8fabc2]">
             Les 10 essentiels du nettoyage (recommandé).
           </p>
         </button>
@@ -171,7 +171,7 @@ function ChecklistSection({
           }}
           aria-pressed={mode === 'custom'}
           className={cn(
-            'rounded-xl border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5c8af0]/60 disabled:opacity-50',
+            'rounded-xl border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5cadf0]/60 disabled:opacity-50',
             mode === 'custom'
               ? 'border-[#e9c47c]/45 bg-[#e9c47c]/8 ring-1 ring-[#e9c47c]/25'
               : 'border-white/10 bg-white/[0.03] hover:bg-white/[0.05]',
@@ -185,7 +185,7 @@ function ChecklistSection({
             />
             Ma checklist personnalisée
           </p>
-          <p className="mt-0.5 text-xs text-[#8fa0c2]">
+          <p className="mt-0.5 text-xs text-[#8fabc2]">
             Écrivez vos propres points (20 maximum).
           </p>
         </button>
@@ -195,7 +195,7 @@ function ChecklistSection({
       {mode === 'default' ? (
         <ul className="mt-4 grid gap-1.5 sm:grid-cols-2">
           {DEFAULT_CLEANING_CHECKLIST.map((label) => (
-            <li key={label} className="flex items-center gap-2 text-sm text-[#8fa0c2]">
+            <li key={label} className="flex items-center gap-2 text-sm text-[#8fabc2]">
               <span aria-hidden="true" className="shrink-0 font-semibold text-[#2dd4bf]">
                 ✓
               </span>
@@ -219,7 +219,7 @@ function ChecklistSection({
                 type="button"
                 variant="outline"
                 size="icon"
-                className="h-10 w-10 shrink-0 rounded-full border-white/12 bg-white/[0.04] text-[#8fa0c2] hover:bg-[#f07d6a]/10 hover:text-[#f07d6a]"
+                className="h-10 w-10 shrink-0 rounded-full border-white/12 bg-white/[0.04] text-[#8fabc2] hover:bg-[#f07d6a]/10 hover:text-[#f07d6a]"
                 onClick={() => setItems((arr) => arr.filter((_, j) => j !== i))}
                 aria-label={`Supprimer le point ${i + 1}`}
               >
@@ -233,7 +233,7 @@ function ChecklistSection({
             type="button"
             variant="outline"
             size="sm"
-            className="h-9 rounded-full border-dashed border-white/15 bg-transparent text-xs font-semibold text-[#8fa0c2] hover:bg-white/5 hover:text-white"
+            className="h-9 rounded-full border-dashed border-white/15 bg-transparent text-xs font-semibold text-[#8fabc2] hover:bg-white/5 hover:text-white"
             disabled={items.length >= MAX_CHECKLIST_ITEMS}
             onClick={() => setItems((arr) => [...arr, ''])}
           >
@@ -247,7 +247,7 @@ function ChecklistSection({
           {mode === 'custom' ? (
             <button
               type="button"
-              className="lux-btn focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5c8af0]/60 disabled:pointer-events-none disabled:opacity-60"
+              className="lux-btn focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5cadf0]/60 disabled:pointer-events-none disabled:opacity-60"
               onClick={() => void saveCustom()}
               disabled={saving}
             >
@@ -257,7 +257,7 @@ function ChecklistSection({
           ) : (
             <button
               type="button"
-              className="lux-btn focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5c8af0]/60 disabled:pointer-events-none disabled:opacity-60"
+              className="lux-btn focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5cadf0]/60 disabled:pointer-events-none disabled:opacity-60"
               onClick={() => void saveDefault()}
               disabled={saving || checklist.source === 'default'}
             >
@@ -266,12 +266,12 @@ function ChecklistSection({
             </button>
           )}
           {dirty && mode === 'custom' && checklist.source === 'custom' && (
-            <span className="text-xs text-[#8fa0c2]">Modifications non enregistrées</span>
+            <span className="text-xs text-[#8fabc2]">Modifications non enregistrées</span>
           )}
         </div>
       )}
       {!enabled && (
-        <p className="mt-3 text-xs text-[#8fa0c2]">
+        <p className="mt-3 text-xs text-[#8fabc2]">
           Sélectionnez un bien précis (barre du haut) pour modifier sa checklist.
         </p>
       )}
@@ -472,7 +472,7 @@ function HostNoteSection({
       <div className="min-w-0">
         <p className="lux-eyebrow">Écouté dans le mode ménage du hub</p>
         <h2 className="lux-display mt-1 text-lg text-white">Message vocal pour l&apos;équipe de ménage</h2>
-        <p className="mt-1 text-sm text-[#8fa0c2]">
+        <p className="mt-1 text-sm text-[#8fabc2]">
           Laissez une consigne parlée (rangement particulier, produits à utiliser…) : votre équipe
           l&apos;écoute directement dans le Mode Ménage du Hub, avant de commencer.
         </p>
@@ -483,7 +483,7 @@ function HostNoteSection({
           <p className="flex items-center gap-2 text-sm font-semibold text-[#86e9cb]">
             <span className="lux-dot" style={{ backgroundColor: '#2dd4bf' }} aria-hidden="true" />
             Message actif{' '}
-            <span className="font-normal text-[#8fa0c2]">
+            <span className="font-normal text-[#8fabc2]">
               ({note.source === 'tts' ? 'voix IA' : 'micro'}
               {note.durationSec > 0 ? ` · ${note.durationSec} s` : ''})
             </span>
@@ -511,7 +511,7 @@ function HostNoteSection({
               <span className="lux-dot" style={{ backgroundColor: '#cdb6ff' }} aria-hidden="true" />
               Générer avec la voix IA
             </p>
-            <p className="mt-1 text-xs text-[#8fa0c2]">
+            <p className="mt-1 text-xs text-[#8fabc2]">
               Écrivez votre consigne, elle est transformée en message vocal.
             </p>
             <Textarea
@@ -525,7 +525,7 @@ function HostNoteSection({
             />
             <button
               type="button"
-              className="lux-btn mt-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5c8af0]/60 disabled:pointer-events-none disabled:opacity-60"
+              className="lux-btn mt-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5cadf0]/60 disabled:pointer-events-none disabled:opacity-60"
               onClick={() => void generateTts()}
               disabled={ttsBusy || recording}
             >
@@ -540,7 +540,7 @@ function HostNoteSection({
               <span className="lux-dot" style={{ backgroundColor: '#f07d6a' }} aria-hidden="true" />
               Enregistrer avec votre micro
             </p>
-            <p className="mt-1 text-xs text-[#8fa0c2]">Jusqu&apos;à {MAX_NOTE_SEC} secondes.</p>
+            <p className="mt-1 text-xs text-[#8fabc2]">Jusqu&apos;à {MAX_NOTE_SEC} secondes.</p>
             {recording ? (
               <div className="mt-2 flex flex-wrap items-center gap-3">
                 <span className="inline-flex items-center gap-2 rounded-full border border-[#f07d6a]/30 bg-[#f07d6a]/10 px-3 py-1 text-sm font-semibold text-[#f07d6a]">
@@ -563,7 +563,7 @@ function HostNoteSection({
                 <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
-                    className="lux-btn focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5c8af0]/60 disabled:pointer-events-none disabled:opacity-60"
+                    className="lux-btn focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5cadf0]/60 disabled:pointer-events-none disabled:opacity-60"
                     onClick={() => void sendPending()}
                     disabled={uploadBusy}
                   >
@@ -596,7 +596,7 @@ function HostNoteSection({
           </div>
         </div>
       ) : (
-        <p className="mt-3 text-xs text-[#8fa0c2]">
+        <p className="mt-3 text-xs text-[#8fabc2]">
           Sélectionnez un bien précis (barre du haut) pour enregistrer un message vocal.
         </p>
       )}

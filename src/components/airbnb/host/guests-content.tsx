@@ -141,7 +141,7 @@ const BOOKING_STATUS_META: Record<string, { label: string; className: string; do
   CONFIRMED: {
     label: 'Confirmé',
     className: 'lux-chip',
-    dot: '#5c8af0',
+    dot: '#5cadf0',
   },
   CHECKED_IN: {
     label: 'En cours',
@@ -151,7 +151,7 @@ const BOOKING_STATUS_META: Record<string, { label: string; className: string; do
   CHECKED_OUT: {
     label: 'Parti',
     className: 'lux-chip',
-    dot: '#8fa0c2',
+    dot: '#8fabc2',
   },
   CANCELLED: {
     label: 'Annulé',
@@ -313,7 +313,7 @@ function InspectionCard({ row }: { row: InspectionRow }) {
         <div className="flex items-start gap-3">
           <span
             aria-hidden="true"
-            className="lux-num flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#3d6fe0]/15 text-sm font-semibold text-[#a9c4ff] ring-1 ring-[#5c8af0]/25"
+            className="lux-num flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#3d97e0]/15 text-sm font-semibold text-[#a9d8ff] ring-1 ring-[#5cadf0]/25"
           >
             {initialsOf(row.inspection.guestName || row.booking.guestName)}
           </span>
@@ -321,7 +321,7 @@ function InspectionCard({ row }: { row: InspectionRow }) {
             <h3 className="lux-display truncate text-lg font-semibold text-white">
               {row.inspection.guestName?.trim() || row.booking.guestName?.trim() || 'Invité'}
             </h3>
-            <p className="mt-0.5 truncate text-xs text-[#8fa0c2]">
+            <p className="mt-0.5 truncate text-xs text-[#8fabc2]">
               {row.booking.propertyName ?? 'Bien'}
             </p>
           </div>
@@ -352,7 +352,7 @@ function InspectionCard({ row }: { row: InspectionRow }) {
                 ? `${nights} jour${nights > 1 ? 's' : ''}`
                 : '—'}
               {checkIn && checkOut ? (
-                <span className="ml-1 font-medium text-[#8fa0c2]">
+                <span className="ml-1 font-medium text-[#8fabc2]">
                   ({fmtDayMonth.format(checkIn)} → {fmtDayMonth.format(checkOut)})
                 </span>
               ) : null}
@@ -362,7 +362,7 @@ function InspectionCard({ row }: { row: InspectionRow }) {
             <span className="lux-chip !text-[10px]">
               <span
                 className="lux-dot"
-                style={{ backgroundColor: row.booking.status === 'CHECKED_IN' ? '#34d399' : '#8fa0c2' }}
+                style={{ backgroundColor: row.booking.status === 'CHECKED_IN' ? '#34d399' : '#8fabc2' }}
                 aria-hidden="true"
               />
               {BOOKING_STATUS_META[row.booking.status]?.label ?? row.booking.status}
@@ -374,12 +374,12 @@ function InspectionCard({ row }: { row: InspectionRow }) {
               </span>
             )}
             {row.inspection.type === 'checkout' && (
-              <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.05] px-2 py-0.5 text-[10px] font-semibold text-[#8fa0c2]">
+              <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.05] px-2 py-0.5 text-[10px] font-semibold text-[#8fabc2]">
                 <span aria-hidden="true" className="text-[#e9c47c]">★</span>
                 <span className="lux-num font-semibold text-white">{row.inspection.selfAssessment}/5</span>
               </span>
             )}
-            <span className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.05] px-2 py-0.5 text-[10px] font-medium text-[#8fa0c2]">
+            <span className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.05] px-2 py-0.5 text-[10px] font-medium text-[#8fabc2]">
               {INSPECTION_STATUS_LABELS[row.inspection.status] ?? row.inspection.status}
             </span>
           </div>
@@ -408,7 +408,7 @@ function InspectionCard({ row }: { row: InspectionRow }) {
           <button
             type="button"
             onClick={() => void copyText(publicUrl, 'Lien public copié')}
-            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/12 bg-white/[0.04] text-[#8fa0c2] transition-colors hover:bg-white/[0.08] hover:text-white"
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/12 bg-white/[0.04] text-[#8fabc2] transition-colors hover:bg-white/[0.08] hover:text-white"
             aria-label="Copier le lien public"
           >
             <span aria-hidden="true" className="text-sm leading-none">⧉</span>
@@ -457,7 +457,7 @@ function StayCard({
   const statusMeta = BOOKING_STATUS_META[booking.status] ?? {
     label: booking.status,
     className: 'lux-chip',
-    dot: '#8fa0c2',
+    dot: '#8fabc2',
   };
   const nights = nightsBetween(booking.checkIn, booking.checkOut);
   const checkInDate = safeDate(booking.checkIn);
@@ -502,7 +502,7 @@ function StayCard({
     <article
       className={cn(
         'lux-card flex min-w-0 flex-col gap-3 p-4 sm:p-5',
-        expanded && 'ring-1 ring-[#5c8af0]/30',
+        expanded && 'ring-1 ring-[#5cadf0]/30',
       )}
       aria-label={`Séjour de ${booking.guestName ?? 'invité'} du ${checkInDate ? fmtFullDate.format(checkInDate) : '—'}`}
     >
@@ -510,7 +510,7 @@ function StayCard({
       <div className="flex items-start gap-3">
         <span
           aria-hidden="true"
-          className="lux-num flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#3d6fe0]/15 text-sm font-semibold text-[#a9c4ff] ring-1 ring-[#5c8af0]/25"
+          className="lux-num flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#3d97e0]/15 text-sm font-semibold text-[#a9d8ff] ring-1 ring-[#5cadf0]/25"
         >
           {initialsOf(booking.guestName)}
         </span>
@@ -518,7 +518,7 @@ function StayCard({
           <h3 className="lux-display truncate text-lg font-semibold text-white">
             {booking.guestName?.trim() || 'Invité'}
           </h3>
-          <p className="mt-0.5 truncate text-xs text-[#8fa0c2]">
+          <p className="mt-0.5 truncate text-xs text-[#8fabc2]">
             {checkInDate && checkOutDate
               ? `${fmtDayMonth.format(checkInDate)} → ${fmtFullDate.format(checkOutDate)} · ${nights} nuit${nights > 1 ? 's' : ''}`
               : 'Dates indisponibles'}
@@ -528,19 +528,19 @@ function StayCard({
           {booking.guestEmail ? (
             <a
               href={`mailto:${booking.guestEmail}`}
-              className="mt-0.5 block truncate text-xs text-[#a9c4ff] hover:underline"
+              className="mt-0.5 block truncate text-xs text-[#a9d8ff] hover:underline"
               aria-label={`Envoyer un email à ${booking.guestName || 'l’invité'}`}
             >
               {booking.guestEmail}
             </a>
           ) : null}
-          <p className="mt-0.5 truncate text-xs text-[#8fa0c2]">
+          <p className="mt-0.5 truncate text-xs text-[#8fabc2]">
             {booking.propertyName ?? 'Bien'}
           </p>
         </div>
         <button
           type="button"
-          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#8fa0c2] transition-colors hover:bg-white/[0.06] hover:text-white"
+          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#8fabc2] transition-colors hover:bg-white/[0.06] hover:text-white"
           onClick={onToggle}
           aria-expanded={expanded}
           aria-label={expanded ? 'Replier le détail du séjour' : 'Déplier le détail du séjour'}
@@ -588,7 +588,7 @@ function StayCard({
           <button
             type="button"
             onClick={() => void copyAccessCode()}
-            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[#8fa0c2] transition-colors hover:bg-white/[0.08] hover:text-white"
+            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[#8fabc2] transition-colors hover:bg-white/[0.08] hover:text-white"
             aria-label="Copier le code d'accès"
           >
             <span aria-hidden="true" className={cn('text-sm leading-none', copied && 'text-[#86e9cb]')}>
@@ -618,7 +618,7 @@ function StayCard({
       {/* ---------- v5.6 — Annuler le séjour (demande client) ---------- */}
       {expanded && booking.status !== 'CANCELLED' && (
         <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/10 pt-3">
-          <p className="min-w-0 text-[11px] leading-relaxed text-[#8fa0c2]">
+          <p className="min-w-0 text-[11px] leading-relaxed text-[#8fabc2]">
             Le hub de l&apos;invité se verrouille dès l&apos;annulation et le séjour sort du planning.
           </p>
           {cancelArmed ? (
@@ -635,7 +635,7 @@ function StayCard({
                 type="button"
                 disabled={cancelling}
                 onClick={() => setCancelArmed(false)}
-                className="inline-flex h-9 items-center rounded-full px-3 text-xs text-[#8fa0c2] transition-colors hover:text-white disabled:opacity-50"
+                className="inline-flex h-9 items-center rounded-full px-3 text-xs text-[#8fabc2] transition-colors hover:text-white disabled:opacity-50"
               >
                 Retour
               </button>
@@ -666,7 +666,7 @@ function StayOrdersBlock({ booking }: { booking: GuestBooking }) {
     <section className="rounded-xl border border-white/10 bg-white/[0.03] p-3" aria-label="Commandes du séjour">
       <h4 className="lux-eyebrow">Commandes</h4>
       {!hasMinibar && !hasLaundry ? (
-        <p className="mt-2 text-xs text-[#8fa0c2]">Aucune commande sur ce séjour.</p>
+        <p className="mt-2 text-xs text-[#8fabc2]">Aucune commande sur ce séjour.</p>
       ) : (
         <ul className="mt-2 flex flex-col gap-2">
           {booking.minibarOrders.map((o) => (
@@ -675,7 +675,7 @@ function StayOrdersBlock({ booking }: { booking: GuestBooking }) {
                 <p className="truncate font-semibold text-white" title={minibarItemsLabel(o.items)}>
                   {minibarItemsLabel(o.items)}
                 </p>
-                <p className="text-[#8fa0c2]">
+                <p className="text-[#8fabc2]">
                   {o.payment === 'stripe' ? 'Paiement en ligne' : 'Sur place'}
                   {' · '}
                   {safeDate(o.createdAt) ? fmtFullDate.format(safeDate(o.createdAt)!) : ''}
@@ -707,7 +707,7 @@ function StayOrdersBlock({ booking }: { booking: GuestBooking }) {
                 <p className="truncate font-semibold text-white">
                   {LAUNDRY_TYPE_LABELS[o.serviceType] ?? o.serviceType} · {o.pieces} pièce{o.pieces > 1 ? 's' : ''}
                 </p>
-                <p className="text-[#8fa0c2]">
+                <p className="text-[#8fabc2]">
                   Retrait {o.pickupSlot === 'morning' ? 'matin' : 'après-midi'}
                   {' · '}
                   {LAUNDRY_STATUS_LABELS[o.status] ?? o.status}
@@ -736,7 +736,7 @@ function StayInspectionsBlock({ booking }: { booking: GuestBooking }) {
         </span>
       </h4>
       {booking.checkOutInspections.length === 0 ? (
-        <p className="mt-2 text-xs text-[#8fa0c2]">
+        <p className="mt-2 text-xs text-[#8fabc2]">
           Pas encore d&apos;état des lieu signé — l&apos;invité le signe depuis le Hub (arrivée et/ou départ).
         </p>
       ) : (
@@ -759,11 +759,11 @@ function StayInspectionsBlock({ booking }: { booking: GuestBooking }) {
                     </span>
                     {i.guestName || 'Invité'}
                   </span>
-                  <span className="shrink-0 text-[#8fa0c2]">
+                  <span className="shrink-0 text-[#8fabc2]">
                     {signed ? fmtFullDate.format(signed) : ''}
                   </span>
                 </div>
-                <p className="text-[#8fa0c2]">
+                <p className="text-[#8fabc2]">
                   {INSPECTION_STATUS_LABELS[i.status] ?? i.status}
                   {i.type === 'checkout' ? (
                     <> · <span aria-hidden="true" className="text-[#e9c47c]">★</span> <span className="lux-num font-semibold text-white">{i.selfAssessment}/5</span></>
@@ -777,7 +777,7 @@ function StayInspectionsBlock({ booking }: { booking: GuestBooking }) {
                     href={`/api/public/inspection/${encodeURIComponent(i.publicToken)}/pdf`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex h-8 items-center rounded-full border border-white/12 bg-white/[0.04] px-3 text-[11px] font-semibold text-[#a9c4ff] transition-colors hover:bg-white/[0.08] hover:text-white"
+                    className="inline-flex h-8 items-center rounded-full border border-white/12 bg-white/[0.04] px-3 text-[11px] font-semibold text-[#a9d8ff] transition-colors hover:bg-white/[0.08] hover:text-white"
                     aria-label="Ouvrir le PDF de l'état des lieux"
                   >
                     Ouvrir le PDF
@@ -786,7 +786,7 @@ function StayInspectionsBlock({ booking }: { booking: GuestBooking }) {
                     href={`/public/inspection/${encodeURIComponent(i.publicToken)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex h-8 items-center rounded-full border border-white/12 bg-white/[0.04] px-3 text-[11px] font-semibold text-[#8fa0c2] transition-colors hover:bg-white/[0.08] hover:text-white"
+                    className="inline-flex h-8 items-center rounded-full border border-white/12 bg-white/[0.04] px-3 text-[11px] font-semibold text-[#8fabc2] transition-colors hover:bg-white/[0.08] hover:text-white"
                     aria-label="Voir la preuve publique de l'état des lieux"
                   >
                     Voir la preuve
@@ -809,7 +809,7 @@ function StayCleaningsBlock({ cleanings }: { cleanings: CleaningLite[] }) {
     <section className="rounded-xl border border-white/10 bg-white/[0.03] p-3" aria-label="Ménages autour du séjour">
       <h4 className="lux-eyebrow">Ménages</h4>
       {cleanings.length === 0 ? (
-        <p className="mt-2 text-xs text-[#8fa0c2]">Aucun ménage enregistré sur cette période.</p>
+        <p className="mt-2 text-xs text-[#8fabc2]">Aucun ménage enregistré sur cette période.</p>
       ) : (
         <ul className="mt-2 flex flex-col gap-2 text-xs">
           {cleanings.slice(0, 4).map((c) => {
@@ -821,12 +821,12 @@ function StayCleaningsBlock({ cleanings }: { cleanings: CleaningLite[] }) {
                   <p className="truncate font-semibold text-white">
                     {c.staffName?.trim() || 'Équipe ménage'}
                   </p>
-                  <p className="text-[#8fa0c2]">
+                  <p className="text-[#8fabc2]">
                     {start ? `${fmtFullDate.format(start)} · ${fmtTime.format(start)}` : '—'}
                     {end ? ` → ${fmtTime.format(end)}` : ''}
                   </p>
                 </div>
-                <div className="flex shrink-0 flex-col items-end gap-0.5 text-[10px] text-[#8fa0c2]">
+                <div className="flex shrink-0 flex-col items-end gap-0.5 text-[10px] text-[#8fabc2]">
                   {c.checklistTotal > 0 && (
                     <span className="inline-flex items-center gap-1">
                       <span aria-hidden="true" className="text-[#86e9cb]">✓</span>
@@ -854,7 +854,7 @@ function StayMemoriesBlock({ booking }: { booking: GuestBooking }) {
     <section className="rounded-xl border border-white/10 bg-white/[0.03] p-3" aria-label="Livre d'or du séjour">
       <h4 className="lux-eyebrow">Livre d&apos;or</h4>
       {booking.guestMemories.length === 0 ? (
-        <p className="mt-2 text-xs text-[#8fa0c2]">Aucun souvenir laissé pour ce séjour.</p>
+        <p className="mt-2 text-xs text-[#8fabc2]">Aucun souvenir laissé pour ce séjour.</p>
       ) : (
         <ul className="mt-2 flex flex-col gap-2.5 text-xs">
           {booking.guestMemories.map((m) => (
@@ -863,16 +863,16 @@ function StayMemoriesBlock({ booking }: { booking: GuestBooking }) {
                 <span className="truncate font-semibold text-white">{m.guestName || 'Invité'}</span>
                 <span className="shrink-0 text-[#e9c47c]" aria-label={`Note ${m.rating} sur 5`}>
                   {'★'.repeat(Math.min(5, Math.max(0, m.rating)))}
-                  <span className="ml-1 text-[#8fa0c2]">{m.rating}/5</span>
+                  <span className="ml-1 text-[#8fabc2]">{m.rating}/5</span>
                 </span>
               </div>
               {m.message && (
-                <p className="line-clamp-2 text-[#8fa0c2]" title={m.message}>
+                <p className="line-clamp-2 text-[#8fabc2]" title={m.message}>
                   « {m.message} »
                 </p>
               )}
               {m.hostReply && (
-                <p className="rounded-lg bg-white/[0.04] px-2 py-1 text-[#8fa0c2]">
+                <p className="rounded-lg bg-white/[0.04] px-2 py-1 text-[#8fabc2]">
                   <span className="font-semibold text-white">Réponse de l&apos;hôte :</span> {m.hostReply}
                 </p>
               )}
@@ -1007,7 +1007,7 @@ export function GuestsContent() {
         <div className="min-w-0">
           <p className="lux-eyebrow">Relation invités</p>
           <h1 className="lux-display mt-1.5 text-2xl font-semibold text-white sm:text-3xl">Invités</h1>
-          <p className="mt-1 text-sm text-[#8fa0c2]">
+          <p className="mt-1 text-sm text-[#8fabc2]">
             Séjours, commandes, états des lieux signés et livre d&apos;or — tout au même endroit.
           </p>
         </div>
@@ -1077,14 +1077,14 @@ export function GuestsContent() {
                 'inline-flex min-h-[40px] flex-1 items-center justify-center gap-2 rounded-full px-3 text-[11px] font-semibold uppercase tracking-[0.12em] transition-colors',
                 active
                   ? 'bg-white/10 text-white'
-                  : 'text-[#8fa0c2] hover:text-white',
+                  : 'text-[#8fabc2] hover:text-white',
               )}
             >
               {tab.label}
               <span
                 className={cn(
                   'lux-num inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-semibold',
-                  active ? 'bg-[#5c8af0]/25 text-white' : 'bg-white/[0.06] text-[#8fa0c2]',
+                  active ? 'bg-[#5cadf0]/25 text-white' : 'bg-white/[0.06] text-[#8fabc2]',
                 )}
               >
                 {tab.count}
@@ -1118,7 +1118,7 @@ export function GuestsContent() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Rechercher un invité…"
-            className="h-10 max-w-md rounded-full border-white/12 bg-white/[0.04] pl-4 text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+            className="h-10 max-w-md rounded-full border-white/12 bg-white/[0.04] pl-4 text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50"
             aria-label="Rechercher un invité par nom"
           />
           <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Filtrer par statut de séjour">
@@ -1131,10 +1131,10 @@ export function GuestsContent() {
                   onClick={() => setStatusFilter(f.value)}
                   aria-pressed={active}
                   className={cn(
-                    'inline-flex h-9 items-center rounded-full border px-3.5 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5c8af0]/50',
+                    'inline-flex h-9 items-center rounded-full border px-3.5 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5cadf0]/50',
                     active
-                      ? 'border-[#5c8af0]/40 bg-[#5c8af0]/15 text-white'
-                      : 'border-white/12 bg-white/[0.03] text-[#8fa0c2] hover:bg-white/[0.06] hover:text-white',
+                      ? 'border-[#5cadf0]/40 bg-[#5cadf0]/15 text-white'
+                      : 'border-white/12 bg-white/[0.03] text-[#8fabc2] hover:bg-white/[0.06] hover:text-white',
                   )}
                 >
                   {f.label}
@@ -1150,13 +1150,13 @@ export function GuestsContent() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Rechercher un client, un bien…"
-            className="h-10 max-w-md rounded-full border-white/12 bg-white/[0.04] pl-4 text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+            className="h-10 max-w-md rounded-full border-white/12 bg-white/[0.04] pl-4 text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50"
             aria-label="Rechercher un état des lieux par client ou bien"
           />
           <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Filtrer par type d'état des lieux">
             {(
               [
-                { value: 'all' as const, label: 'Tous', dot: '#8fa0c2' },
+                { value: 'all' as const, label: 'Tous', dot: '#8fabc2' },
                 { value: 'checkin' as const, label: 'Arrivée', dot: '#34d399' },
                 { value: 'checkout' as const, label: 'Départ', dot: '#fbbf24' },
               ]
@@ -1169,10 +1169,10 @@ export function GuestsContent() {
                   onClick={() => setTypeFilter(f.value)}
                   aria-pressed={active}
                   className={cn(
-                    'inline-flex h-9 items-center gap-1.5 rounded-full border px-3.5 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5c8af0]/50',
+                    'inline-flex h-9 items-center gap-1.5 rounded-full border px-3.5 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5cadf0]/50',
                     active
-                      ? 'border-[#5c8af0]/40 bg-[#5c8af0]/15 text-white'
-                      : 'border-white/12 bg-white/[0.03] text-[#8fa0c2] hover:bg-white/[0.06] hover:text-white',
+                      ? 'border-[#5cadf0]/40 bg-[#5cadf0]/15 text-white'
+                      : 'border-white/12 bg-white/[0.03] text-[#8fabc2] hover:bg-white/[0.06] hover:text-white',
                   )}
                 >
                   <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: f.dot }} />
@@ -1187,9 +1187,9 @@ export function GuestsContent() {
       {/* ---------- Aucun bien ---------- */}
       {!propertiesLoading && !hasProperties && !loading && (
         <div className="lux-empty flex flex-col items-center gap-3 rounded-2xl px-6 py-10 text-center">
-          <span aria-hidden="true" className="lux-dot" style={{ backgroundColor: '#5c8af0' }} />
+          <span aria-hidden="true" className="lux-dot" style={{ backgroundColor: '#5cadf0' }} />
           <p className="lux-display text-lg font-semibold text-white">Aucun bien dans votre portfolio</p>
-          <p className="max-w-md text-sm text-[#8fa0c2]">
+          <p className="max-w-md text-sm text-[#8fabc2]">
             Ajoutez votre première propriété pour retrouver ici l&apos;historique de vos invités.
           </p>
         </div>
@@ -1219,9 +1219,9 @@ export function GuestsContent() {
         <>
           {filtered.length === 0 ? (
             <div className="lux-empty flex flex-col items-center gap-3 rounded-2xl px-6 py-10 text-center">
-              <span aria-hidden="true" className="lux-dot" style={{ backgroundColor: '#5c8af0' }} />
+              <span aria-hidden="true" className="lux-dot" style={{ backgroundColor: '#5cadf0' }} />
               <p className="lux-display text-lg font-semibold text-white">Aucun séjour ne correspond</p>
-              <p className="max-w-md text-sm text-[#8fa0c2]">
+              <p className="max-w-md text-sm text-[#8fabc2]">
                 Modifiez la recherche, le statut ou le bien filtré pour voir plus de résultats.
               </p>
             </div>
@@ -1249,7 +1249,7 @@ export function GuestsContent() {
             <div className="lux-empty flex flex-col items-center gap-3 rounded-2xl px-6 py-10 text-center">
               <span aria-hidden="true" className="lux-dot" style={{ backgroundColor: '#cdb6ff' }} />
               <p className="lux-display text-lg font-semibold text-white">Aucun état des lieux signé</p>
-              <p className="max-w-md text-sm text-[#8fa0c2]">
+              <p className="max-w-md text-sm text-[#8fabc2]">
                 Vos invités signent leurs états des lieux depuis le Hub QR : à l&apos;arrivée
                 (pièces + photos) et au départ (minibar + pièces). Chaque document signé
                 apparaît ici avec son PDF et son lien public.

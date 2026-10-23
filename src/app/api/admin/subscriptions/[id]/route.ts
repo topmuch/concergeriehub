@@ -59,7 +59,7 @@ function subscriptionEditEmailHtml(opts: {
     `<tr><td style="padding:8px 12px;color:#64748B;font-size:13px;border-bottom:1px solid #E2E8F0;">${label}</td><td style="padding:8px 12px;color:#0F172A;font-size:13px;font-weight:bold;border-bottom:1px solid #E2E8F0;text-align:right;">${value}</td></tr>`;
   return `
 <div style="font-family:Tahoma,Segoe UI,sans-serif;max-width:560px;margin:0 auto;background:#F8FAFC;border-radius:16px;overflow:hidden;border:1px solid #E2E8F0;">
-  <div style="background:linear-gradient(93deg,#0052C4,#0066EF);padding:24px 28px;color:#fff;">
+  <div style="background:linear-gradient(93deg,#04467a,#055492);padding:24px 28px;color:#fff;">
     <p style="margin:0;font-size:13px;letter-spacing:2px;text-transform:uppercase;opacity:.85;">RoomScan</p>
     <h1 style="margin:6px 0 0;font-size:20px;">🔄 Votre abonnement a été mis à jour</h1>
   </div>

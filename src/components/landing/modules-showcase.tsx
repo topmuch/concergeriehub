@@ -31,13 +31,13 @@ const PROPERTIES = [
 const SMALL_CARDS = [
   {
     emoji: '🎨',
-    glow: 'drop-shadow-[0_0_24px_rgba(0,102,239,0.55)]',
+    glow: 'drop-shadow-[0_0_24px_rgba(5, 84, 146,0.55)]',
     title: 'White-Label',
     description: 'Votre logo, vos couleurs, votre domaine. Vos invités ne voient que votre marque.',
   },
   {
     emoji: '👥',
-    glow: 'drop-shadow-[0_0_24px_rgba(0,82,196,0.55)]',
+    glow: 'drop-shadow-[0_0_24px_rgba(4, 70, 122,0.55)]',
     title: 'Équipe',
     description: 'Ménage, maintenance, co-hôtes : rôles et permissions granulaires.',
   },
@@ -78,7 +78,7 @@ function DashboardMockup() {
     >
       {/* Mini-sidebar (nav du dashboard) */}
       <div className="flex w-9 shrink-0 flex-col items-center gap-2.5 border-r border-white/5 py-3">
-        <span className="flex h-5 w-5 items-center justify-center rounded-md bg-[linear-gradient(135deg,#0066EF,#0047B3)] text-[9px] font-bold text-white">
+        <span className="flex h-5 w-5 items-center justify-center rounded-md bg-[linear-gradient(135deg,#055492,#033a66)] text-[9px] font-bold text-white">
           C
         </span>
         {['🏠', '🛏️', '💰', '🛡️', '📊'].map((icon, i) => (
@@ -186,7 +186,7 @@ export function BentoGrid() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
         {/* En-tête */}
         <Reveal className="mb-14 text-center">
-          <p className="mb-3 text-xs font-bold uppercase tracking-[0.25em] text-[#0052C4]">
+          <p className="mb-3 text-xs font-bold uppercase tracking-[0.25em] text-[#04467a]">
             {t('Fonctionnalités')}
           </p>
           <h2 className="display-title font-serif! mb-4 text-4xl font-bold text-slate-900 md:text-5xl">
@@ -207,8 +207,8 @@ export function BentoGrid() {
           {/* Grande carte (2×2) — Dashboard multi-propriétés */}
           <Reveal className="md:col-span-2 md:row-span-2">
             <GlassCard hoverScale={1.02} className="h-full bg-white/95! border-slate-200/70! air-shadow p-6 backdrop-blur-xl backdrop-saturate-[1.4] sm:p-8">
-              <span className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#0066EF]/25 bg-[#EAF2FF] px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-[#0642A8]">
-                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#0066EF]" />
+              <span className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#055492]/25 bg-[#dceaf5] px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-[#0642A8]">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#055492]" />
                 {t('Cœur du produit')}
               </span>
               <h3 className="mb-2 font-serif text-2xl font-bold text-slate-900 sm:text-3xl">
@@ -230,7 +230,7 @@ export function BentoGrid() {
                 <div className="flex-1">
                   <GlowingEmoji
                     emoji="💰"
-                    glow="drop-shadow-[0_0_24px_rgba(0,102,239,0.55)]"
+                    glow="drop-shadow-[0_0_24px_rgba(5, 84, 146,0.55)]"
                   />
                   <h3 className="mb-2 font-serif text-xl font-bold text-slate-900 sm:text-2xl">
                     {t('Upselling automatisé')}
@@ -249,7 +249,7 @@ export function BentoGrid() {
                   ].map((chip) => (
                     <span
                       key={chip}
-                      className="rounded-full border border-[#0066EF]/25 bg-[#EAF2FF] px-3 py-1.5 text-center text-[11px] font-semibold text-[#0642A8]"
+                      className="rounded-full border border-[#055492]/25 bg-[#dceaf5] px-3 py-1.5 text-center text-[11px] font-semibold text-[#0642A8]"
                     >
                       {t(chip)}
                     </span>

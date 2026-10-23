@@ -5,8 +5,8 @@
 // client : Apple × Airbnb × Linear, conversion en 30 s).
 //
 // v4.61 — VERSION CLAIRE alignée sur le dashboard « AIRBNB PRO » :
-//   • Accent unique bleu logo (#0066EF / gradient CTA
-//     #0052C4→#0066EF→#0047B3) — le vert émeraude reste réservé à
+//   • Accent unique bleu logo (#055492 / gradient CTA
+//     #04467a→#055492→#033a66) — le vert émeraude reste réservé à
 //     la sémantique succès (temps réel, « Connecté », coches).
 //   • Sections jadis sombres (tarifs, témoignages, footer) passées
 //     en clair : surfaces #F7F7F8 / blanc, cartes .air-shadow.
@@ -119,15 +119,15 @@ function Navbar({ onGoToAuth }: LandingPageProps) {
             className="flex items-center gap-2.5"
             aria-label={t('RoomScan — retour en haut')}
           >
-            {/* Logo officiel RoomScan (proportions d'origine, jamais déformé)
-                v4.73 — agrandi à la demande du client */}
+            {/* Logo officiel RoomScan — NOUVEAU logo client v5.9 (754×283,
+                proportions d'origine, jamais déformé) */}
             <Image
               src="/brand/roomscan-logo.png"
               alt={t('RoomScan — retour en haut')}
-              width={212}
-              height={163}
+              width={754}
+              height={283}
               className="w-auto"
-              style={{ height: 52 }}
+              style={{ height: 54 }}
               priority
             />
           </a>
@@ -139,7 +139,7 @@ function Navbar({ onGoToAuth }: LandingPageProps) {
                 key={link.name}
                 href={link.href}
                 onClick={handleAnchor(link.href)}
-                className="font-medium text-slate-600 transition-colors hover:text-[#0052C4]"
+                className="font-medium text-slate-600 transition-colors hover:text-[#04467a]"
               >
                 {link.name}
               </a>
@@ -152,14 +152,14 @@ function Navbar({ onGoToAuth }: LandingPageProps) {
             <button
               type="button"
               onClick={() => onGoToAuth?.('login')}
-              className="font-medium text-slate-700 transition-colors hover:text-[#0052C4]"
+              className="font-medium text-slate-700 transition-colors hover:text-[#04467a]"
             >
               {t('Connexion')}
             </button>
             <button
               type="button"
               onClick={() => onGoToAuth?.('register')}
-              className="air-gradient rounded-full px-5 py-2.5 font-semibold text-white shadow-[0_8px_24px_rgba(0,82,196,0.25)] transition-all hover:scale-[1.03] hover:shadow-[0_10px_28px_rgba(0,82,196,0.35)]"
+              className="air-gradient rounded-full px-5 py-2.5 font-semibold text-white shadow-[0_8px_24px_rgba(4, 70, 122,0.25)] transition-all hover:scale-[1.03] hover:shadow-[0_10px_28px_rgba(4, 70, 122,0.35)]"
             >
               {t('Essai gratuit')}
             </button>
@@ -193,7 +193,7 @@ function Navbar({ onGoToAuth }: LandingPageProps) {
                   <a
                     key={link.name}
                     href={link.href}
-                    className="py-2 font-medium text-slate-700 hover:text-[#0052C4]"
+                    className="py-2 font-medium text-slate-700 hover:text-[#04467a]"
                     onClick={handleAnchor(link.href)}
                   >
                     {link.name}
@@ -220,7 +220,7 @@ function Navbar({ onGoToAuth }: LandingPageProps) {
                       setIsMobileMenuOpen(false);
                       onGoToAuth?.('register');
                     }}
-                    className="air-gradient w-full rounded-xl py-3 font-semibold text-white shadow-[0_8px_24px_rgba(0,82,196,0.25)]"
+                    className="air-gradient w-full rounded-xl py-3 font-semibold text-white shadow-[0_8px_24px_rgba(4, 70, 122,0.25)]"
                   >
                     {t('Essai gratuit')}
                   </button>
@@ -244,7 +244,7 @@ function DemoSection() {
       <Reveal>
         <div className="air-shadow-lg mx-auto max-w-5xl overflow-hidden rounded-3xl border border-slate-200/70 bg-white p-6 md:p-10">
           <div className="mx-auto mb-8 max-w-2xl text-center">
-            <p className="mb-3 text-xs font-bold uppercase tracking-[0.25em] text-[#0052C4]">
+            <p className="mb-3 text-xs font-bold uppercase tracking-[0.25em] text-[#04467a]">
               {t('La magie en 1 scan')}
             </p>
             <h2 className="display-title font-serif! mb-3 text-3xl font-bold text-slate-900 md:text-4xl">
@@ -288,14 +288,14 @@ function Footer() {
           {/* Logo & Description */}
           <div className="md:col-span-1">
             <div className="mb-4 flex items-center gap-2.5">
-              {/* v4.73 — logo footer agrandi */}
+              {/* v5.9 — NOUVEAU logo officiel, footer en grand format */}
               <Image
                 src="/brand/roomscan-logo.png"
                 alt="RoomScan"
-                width={212}
-                height={163}
+                width={754}
+                height={283}
                 className="w-auto"
-                style={{ height: 56 }}
+                style={{ height: 68 }}
               />
             </div>
             <p className="text-sm leading-relaxed text-slate-500">
@@ -316,7 +316,7 @@ function Footer() {
                     e.preventDefault();
                     smoothScrollTo('#features');
                   }}
-                  className="transition-colors hover:text-[#0052C4]"
+                  className="transition-colors hover:text-[#04467a]"
                 >
                   {t('Fonctionnalités')}
                 </a>
@@ -328,13 +328,13 @@ function Footer() {
                     e.preventDefault();
                     smoothScrollTo('#pricing');
                   }}
-                  className="transition-colors hover:text-[#0052C4]"
+                  className="transition-colors hover:text-[#04467a]"
                 >
                   {t('Tarifs')}
                 </a>
               </li>
               <li>
-                <a href="#demo" className="transition-colors hover:text-[#0052C4]">
+                <a href="#demo" className="transition-colors hover:text-[#04467a]">
                   {t('Démo interactive')}
                 </a>
               </li>
@@ -345,7 +345,7 @@ function Footer() {
                     e.preventDefault();
                     smoothScrollTo('#temoignages');
                   }}
-                  className="transition-colors hover:text-[#0052C4]"
+                  className="transition-colors hover:text-[#04467a]"
                 >
                   {t('Avantages fondateurs')}
                 </a>
@@ -358,17 +358,17 @@ function Footer() {
             <h4 className="mb-4 font-bold text-slate-900">{t('Légal')}</h4>
             <ul className="space-y-2 text-sm">
               <li>
-                <a href="/legal#mentions" className="transition-colors hover:text-[#0052C4]">
+                <a href="/legal#mentions" className="transition-colors hover:text-[#04467a]">
                   {t('Mentions légales')}
                 </a>
               </li>
               <li>
-                <a href="/legal#cgu" className="transition-colors hover:text-[#0052C4]">
+                <a href="/legal#cgu" className="transition-colors hover:text-[#04467a]">
                   {t('CGU')}
                 </a>
               </li>
               <li>
-                <a href="/legal#confidentialite" className="transition-colors hover:text-[#0052C4]">
+                <a href="/legal#confidentialite" className="transition-colors hover:text-[#04467a]">
                   {t('Confidentialité')}
                 </a>
               </li>
@@ -385,7 +385,7 @@ function Footer() {
               <li>
                 <a
                   href="mailto:contact@roomscan.pro"
-                  className="transition-colors hover:text-[#0052C4]"
+                  className="transition-colors hover:text-[#04467a]"
                 >
                   contact@roomscan.pro
                 </a>
@@ -456,13 +456,13 @@ function Footer() {
             })}
           </p>
           <div className="flex gap-6 text-sm">
-            <a href="/legal#mentions" className="transition-colors hover:text-[#0052C4]">
+            <a href="/legal#mentions" className="transition-colors hover:text-[#04467a]">
               {t('Mentions légales')}
             </a>
-            <a href="/legal#cgu" className="transition-colors hover:text-[#0052C4]">
+            <a href="/legal#cgu" className="transition-colors hover:text-[#04467a]">
               {t('CGU')}
             </a>
-            <a href="/legal#confidentialite" className="transition-colors hover:text-[#0052C4]">
+            <a href="/legal#confidentialite" className="transition-colors hover:text-[#04467a]">
               {t('Confidentialité')}
             </a>
           </div>
@@ -477,7 +477,7 @@ function Footer() {
 // ==========================================
 export function LandingPage({ onGoToAuth }: LandingPageProps) {
   return (
-    <div className="flex min-h-screen flex-col overflow-x-clip bg-[#F7F7F8] font-sans text-slate-900 antialiased [color-scheme:light] selection:bg-blue-100">
+    <div className="flex min-h-screen flex-col overflow-x-clip bg-[#F7F7F8] font-sans text-slate-900 antialiased [color-scheme:light] selection:bg-[#dceaf5]">
       {/* Scroll ultra-doux (Lenis) — une seule instance par page */}
       <SmoothScroll />
       {/* Mesh gradient signature — FIXED, une seule instance pour

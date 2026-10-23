@@ -24,7 +24,7 @@ export function ThemeToggle({ variant = 'light' }: { variant?: 'light' | 'dark' 
       title="Mode clair / mode sombre"
       className={`inline-flex h-11 w-11 items-center justify-center rounded-xl transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#d9b45b] ${
         variant === 'dark'
-          ? 'text-blue-100 hover:bg-white/10 hover:text-white'
+          ? 'text-[#dceaf5] hover:bg-white/10 hover:text-white'
           : 'text-slate-500 hover:bg-slate-900/5 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/10 dark:hover:text-white'
       }`}
     >

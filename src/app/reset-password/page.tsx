@@ -65,7 +65,7 @@ function ResetPasswordForm() {
           </p>
           <Link
             href="/"
-            className="mt-5 inline-flex h-11 items-center justify-center rounded-xl bg-[#0066EF] hover:bg-[#0052C4] px-6 text-white font-semibold text-sm transition-all"
+            className="mt-5 inline-flex h-11 items-center justify-center rounded-xl bg-[#055492] hover:bg-[#04467a] px-6 text-white font-semibold text-sm transition-all"
           >
             Se connecter
           </Link>
@@ -78,7 +78,7 @@ function ResetPasswordForm() {
           </p>
           <Link
             href="/forgot-password"
-            className="mt-5 inline-flex h-11 items-center justify-center rounded-xl bg-[#0066EF] hover:bg-[#0052C4] px-6 text-white font-semibold text-sm transition-all"
+            className="mt-5 inline-flex h-11 items-center justify-center rounded-xl bg-[#055492] hover:bg-[#04467a] px-6 text-white font-semibold text-sm transition-all"
           >
             Refaire une demande
           </Link>
@@ -99,7 +99,7 @@ function ResetPasswordForm() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   autoComplete="new-password"
-                  className="w-full pl-10 pr-10 py-2.5 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-[#0066EF]/50 focus:ring-1 focus:ring-[#0066EF]/20 transition-all"
+                  className="w-full pl-10 pr-10 py-2.5 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-[#055492]/50 focus:ring-1 focus:ring-[#055492]/20 transition-all"
                   placeholder="8 caractères min. — lettres + chiffres"
                   required
                   minLength={8}
@@ -122,7 +122,7 @@ function ResetPasswordForm() {
                   value={confirm}
                   onChange={(e) => setConfirm(e.target.value)}
                   autoComplete="new-password"
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-[#0066EF]/50 focus:ring-1 focus:ring-[#0066EF]/20 transition-all"
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-[#055492]/50 focus:ring-1 focus:ring-[#055492]/20 transition-all"
                   placeholder="Ressaisissez le mot de passe"
                   required
                   minLength={8}
@@ -139,7 +139,7 @@ function ResetPasswordForm() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 rounded-xl bg-[#0066EF] hover:bg-[#0052C4] text-white font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-3 rounded-xl bg-[#055492] hover:bg-[#04467a] text-white font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Enregistrement…' : 'Enregistrer le nouveau mot de passe'}
             </button>

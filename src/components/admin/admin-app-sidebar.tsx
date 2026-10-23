@@ -165,8 +165,8 @@ export function AdminAppSidebar({ adminName, adminEmail }: AdminAppSidebarProps)
                 <Image
                   src="/brand/roomscan-icon-white.png"
                   alt=""
-                  width={124}
-                  height={121}
+                  width={171}
+                  height={169}
                   className="shrink-0"
                   style={{ height: 40, width: 'auto' }}
                 />

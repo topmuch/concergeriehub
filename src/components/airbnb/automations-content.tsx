@@ -154,7 +154,7 @@ export function AutomationsContent() {
           <button
             type="button"
             onClick={() => void load()}
-            className="air-gradient inline-flex h-9 items-center gap-2 rounded-full px-4 text-xs font-bold text-white shadow transition-transform hover:scale-[1.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0066EF]/50"
+            className="air-gradient inline-flex h-9 items-center gap-2 rounded-full px-4 text-xs font-bold text-white shadow transition-transform hover:scale-[1.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#055492]/50"
           >
             <RefreshCcw className="h-3.5 w-3.5" aria-hidden="true" />
             Réessayer

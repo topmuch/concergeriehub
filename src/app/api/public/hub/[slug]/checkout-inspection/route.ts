@@ -452,7 +452,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
         (r) =>
           `<tr><td style="padding:4px 12px 4px 0;color:#64748b">${r.label}</td>` +
           `<td style="padding:4px 0;font-weight:${r.status === 'good' ? '400' : '700'};color:${
-            r.status === 'good' ? '#0066EF' : r.status === 'dirty' ? '#b45309' : '#b91c1c'
+            r.status === 'good' ? '#055492' : r.status === 'dirty' ? '#b45309' : '#b91c1c'
           }">${STATUS_LABEL[r.status]}${r.comment ? ` — ${r.comment.replace(/</g, '&lt;')}` : ''}</td></tr>`,
       )
       .join('');
@@ -466,8 +466,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
             .join(', ')}</td></tr>`;
     const linksHtml =
       `<p style="margin:18px 0">` +
-      `<a href="${publicUrl}" style="display:inline-block;background:#0066EF;color:#ffffff;padding:10px 18px;border-radius:10px;text-decoration:none;font-weight:bold;margin-right:10px">Voir la preuve publique</a>` +
-      `<a href="${pdfUrl}" style="display:inline-block;background:#ffffff;color:#0066EF;border:2px solid #0066EF;padding:8px 16px;border-radius:10px;text-decoration:none;font-weight:bold">Télécharger le PDF</a>` +
+      `<a href="${publicUrl}" style="display:inline-block;background:#055492;color:#ffffff;padding:10px 18px;border-radius:10px;text-decoration:none;font-weight:bold;margin-right:10px">Voir la preuve publique</a>` +
+      `<a href="${pdfUrl}" style="display:inline-block;background:#ffffff;color:#055492;border:2px solid #055492;padding:8px 16px;border-radius:10px;text-decoration:none;font-weight:bold">Télécharger le PDF</a>` +
       `</p>`;
     const inventoryLine = `${data.inventory.keys} clé(s), ${data.inventory.remotes} télécommande(s), ${data.inventory.towels} serviette(s)`;
     // v4.80 — libellés du document selon le type (entrée vs sortie).
@@ -513,7 +513,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
           : `✅ ${docTitle} reçu — ${property.name}`,
         html:
           `<div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;padding:24px">` +
-          `<h2 style="color:${hasDamages ? '#b45309' : '#0066EF'}">${hasDamages ? '⚠️ Dégâts signalés par l’invité' : `${docTitle} reçu`}</h2>` +
+          `<h2 style="color:${hasDamages ? '#b45309' : '#055492'}">${hasDamages ? '⚠️ Dégâts signalés par l’invité' : `${docTitle} reçu`}</h2>` +
           `<p style="color:#334155"><strong>${data.guestName.replace(/</g, '&lt;')}</strong> a signé ${isCheckin ? "l'état des lieux d'arrivée" : "l'état des lieux de sortie"} de « ${property.name} » le ${frDate(inspection.signedAt)}.</p>` +
           (stayLabel ? `<p style="color:#64748b;font-size:13px">${stayLabel}</p>` : '') +
           `<table style="border-collapse:collapse;margin:16px 0">${roomsSummaryHtml}${minibarHtml}` +

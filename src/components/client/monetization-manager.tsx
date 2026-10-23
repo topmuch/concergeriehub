@@ -130,7 +130,7 @@ const STATUS_BADGE_VARIANT: Record<SubscriptionStatus, 'default' | 'secondary' |
 
 const TX_TYPE_BADGE: Record<TransactionType, string> = {
   subscription: 'bg-slate-100 text-slate-800 dark:bg-slate-900/40 dark:text-slate-300',
-  commission: 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300',
+  commission: 'bg-[#dceaf5] text-[#033a66] dark:bg-[#043455]/40 dark:text-[#8fb1cc]',
   flash_sale: 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300',
   redemption: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300',
 };
@@ -443,8 +443,8 @@ export function MonetizationManager() {
       <Card>
         <CardContent className="p-4">
           <div className="flex items-center gap-3">
-            <div className="rounded-lg bg-blue-100 dark:bg-blue-900/40 p-2.5">
-              <Receipt className="size-5 text-blue-600 dark:text-blue-400" />
+            <div className="rounded-lg bg-[#dceaf5] dark:bg-[#043455]/40 p-2.5">
+              <Receipt className="size-5 text-[#055492] dark:text-[#6d9cc4]" />
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Transactions ce mois</p>
@@ -499,13 +499,13 @@ export function MonetizationManager() {
               key={plan.id}
               className={`relative p-6 flex flex-col ${
                 isFeatured
-                  ? 'border-2 border-transparent bg-gradient-to-br from-primary/10 via-background to-blue-500/10 ring-2 ring-primary/30'
+                  ? 'border-2 border-transparent bg-gradient-to-br from-primary/10 via-background to-[#1173c7]/10 ring-2 ring-primary/30'
                   : ''
               }`}
             >
               {isFeatured && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <Badge className="bg-blue-600 text-white border-0 px-3 py-0.5">
+                  <Badge className="bg-[#055492] text-white border-0 px-3 py-0.5">
                     <Sparkles className="size-3 mr-1" />
                     Populaire
                   </Badge>

@@ -59,13 +59,13 @@ export function Testimonials({ onGoToAuth }: { onGoToAuth?: GoToAuth }) {
       {/* Halo d'ambiance bleu logo (inchangé) */}
       <div
         aria-hidden="true"
-        className="absolute left-1/2 top-0 h-64 w-[700px] max-w-none -translate-x-1/2 rounded-full bg-[#0066EF]/[0.06] blur-[120px]"
+        className="absolute left-1/2 top-0 h-64 w-[700px] max-w-none -translate-x-1/2 rounded-full bg-[#055492]/[0.06] blur-[120px]"
       />
 
       <div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6">
         {/* En-tête — message honnête de lancement */}
         <Reveal className="mb-14 text-center">
-          <p className="mb-3 text-xs font-bold uppercase tracking-[0.25em] text-[#0052C4]">
+          <p className="mb-3 text-xs font-bold uppercase tracking-[0.25em] text-[#04467a]">
             {t('Lancement')}
           </p>
           <h2 className="display-title font-serif! mb-4 text-4xl font-bold md:text-5xl">
@@ -91,7 +91,7 @@ export function Testimonials({ onGoToAuth }: { onGoToAuth?: GoToAuth }) {
                 className="air-shadow h-full rounded-3xl border border-slate-200/70 bg-white p-6 transition-transform duration-500 hover:-translate-y-1.5 sm:p-8"
               >
                 {/* Icône dans un anneau gradient bleu logo (cohérence landing) */}
-                <span className="mb-5 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#0066EF,#0047B3)] text-white shadow-[0_8px_20px_rgba(0,82,196,0.30)]">
+                <span className="mb-5 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#055492,#033a66)] text-white shadow-[0_8px_20px_rgba(4, 70, 122,0.30)]">
                   <perk.icon className="h-6 w-6" aria-hidden="true" />
                 </span>
                 <h3 className="mb-2 font-serif text-xl font-bold text-slate-900">

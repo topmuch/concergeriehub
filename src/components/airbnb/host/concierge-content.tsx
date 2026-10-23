@@ -172,7 +172,7 @@ const CONCIERGE_TABS: { value: string; label: string; hint: string; dot: string 
   { value: 'spots', label: 'Adresses', hint: 'Carte secrète', dot: '#86e9cb' },
   { value: 'sos', label: 'SOS', hint: 'Urgences & pannes', dot: '#f07d6a' },
   { value: 'shop', label: 'Boutique', hint: 'Shop the Stay', dot: '#cdb6ff' },
-  { value: 'voice', label: 'Vocaux', hint: 'Horaires des messages', dot: '#5c8af0' },
+  { value: 'voice', label: 'Vocaux', hint: 'Horaires des messages', dot: '#5cadf0' },
 ];
 
 const EMPTY_CODES: DraftCodes = { building: '', letterbox: '', parking: '', alarm: '', safe: '', note: '' };
@@ -222,12 +222,12 @@ function parsePriceInput(raw: string): number | null {
 
 // ── Classes communes « Saphir Luxe » ──
 const LUX_FIELD =
-  'rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50';
+  'rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50';
 const LUX_GHOST_BTN =
   'rounded-full border-white/12 bg-white/[0.04] font-semibold text-[#d5def0] hover:bg-white/8 hover:text-white';
 /** Bloc code d'accès / PIN — or ambré luxueux (demande client). */
 const LUX_CODE_FIELD =
-  'lux-num rounded-xl border-[#e9c47c]/25 bg-[#e9c47c]/8 text-[#e9c47c] placeholder:text-[#8fa0c2]/50 focus-visible:ring-[#e9c47c]/40';
+  'lux-num rounded-xl border-[#e9c47c]/25 bg-[#e9c47c]/8 text-[#e9c47c] placeholder:text-[#8fabc2]/50 focus-visible:ring-[#e9c47c]/40';
 const LUX_SELECT_ITEM = 'focus:bg-white/8 focus:text-white';
 
 export function ConciergeContent() {
@@ -703,7 +703,7 @@ export function ConciergeContent() {
         <div className="min-w-0">
           <p className="lux-eyebrow">Hub invité — contenu de l’app</p>
           <h1 className="lux-display mt-1.5 text-2xl font-semibold text-white sm:text-3xl">Conciergerie digitale</h1>
-          <p className="mt-1 text-sm text-[#8fa0c2]">
+          <p className="mt-1 text-sm text-[#8fabc2]">
             Remplissez le coffre-fort, les appareils, vos bonnes adresses, le SOS, la boutique et les horaires vocaux — tout apparaît dans l’app de vos invités.
           </p>
         </div>
@@ -780,9 +780,9 @@ export function ConciergeContent() {
                   aria-selected={active}
                   onClick={() => setActiveTab(t.value)}
                   className={cn(
-                    'flex flex-col items-start gap-1 rounded-2xl border p-3.5 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5c8af0]/60',
+                    'flex flex-col items-start gap-1 rounded-2xl border p-3.5 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5cadf0]/60',
                     active
-                      ? 'border-[#5c8af0]/50 bg-[#5c8af0]/12 ring-1 ring-[#5c8af0]/30'
+                      ? 'border-[#5cadf0]/50 bg-[#5cadf0]/12 ring-1 ring-[#5cadf0]/30'
                       : 'border-white/10 bg-white/[0.03] hover:bg-white/[0.05]',
                   )}
                 >
@@ -793,7 +793,7 @@ export function ConciergeContent() {
                   <span className={cn('text-sm font-semibold', active ? 'text-white' : 'text-[#d5def0]')}>
                     {t.label}
                   </span>
-                  <span className="text-[10px] leading-tight text-[#8fa0c2]">{t.hint}</span>
+                  <span className="text-[10px] leading-tight text-[#8fabc2]">{t.hint}</span>
                 </button>
               );
             })}
@@ -805,7 +805,7 @@ export function ConciergeContent() {
               <div className="min-w-0">
                 <p className="lux-eyebrow">Coffre-fort du bien</p>
                 <h2 className="lux-display mt-1 text-lg text-white">Codes d’accès</h2>
-                <p className="mt-0.5 text-sm text-[#8fa0c2]">
+                <p className="mt-0.5 text-sm text-[#8fabc2]">
                   L’invité les voit masqués (••••••) et les révèle d’un appui. Remplissez uniquement ce qui existe.
                 </p>
               </div>
@@ -843,7 +843,7 @@ export function ConciergeContent() {
                 placeholder="ex : Le code bâtiment change chaque mois — l’actualité est dans votre email de veille d’arrivée."
                 aria-label="Note pour l’invité"
               />
-              <p className="mt-1.5 text-xs text-[#8fa0c2]/70">{draft.codes.note.length}/280</p>
+              <p className="mt-1.5 text-xs text-[#8fabc2]/70">{draft.codes.note.length}/280</p>
             </section>
 
             <div className="flex items-start gap-3 rounded-2xl border border-[#e9c47c]/25 bg-[#e9c47c]/8 p-4 text-xs leading-relaxed text-[#f3d795]">
@@ -862,7 +862,7 @@ export function ConciergeContent() {
                 <div className="min-w-0">
                   <p className="lux-eyebrow">Modes d’emploi du guide</p>
                   <h2 className="lux-display mt-1 text-lg text-white">Appareils &amp; équipements</h2>
-                  <p className="mt-0.5 text-sm text-[#8fa0c2]">
+                  <p className="mt-0.5 text-sm text-[#8fabc2]">
                     Chaque appareil devient un accordéon dans le Guide : instructions + vidéo YouTube ou photo.
                   </p>
                 </div>
@@ -911,7 +911,7 @@ export function ConciergeContent() {
                         <DeleteRowButton onClick={() => removeAppliance(a.key)} label={`Supprimer l’appareil ${a.name || i + 1}`} />
                       </div>
                       <div className="flex flex-col gap-1.5">
-                        <Label className="text-xs font-semibold text-[#8fa0c2]">Instructions pour l’invité</Label>
+                        <Label className="text-xs font-semibold text-[#8fabc2]">Instructions pour l’invité</Label>
                         <Textarea
                           value={a.instructions}
                           onChange={(e) => setAppliance(a.key, { instructions: e.target.value })}
@@ -924,7 +924,7 @@ export function ConciergeContent() {
                       </div>
                       <div className="grid gap-3 sm:grid-cols-2">
                         <div className="flex flex-col gap-1.5">
-                          <Label className="text-xs font-semibold text-[#8fa0c2]">Vidéo YouTube (optionnel)</Label>
+                          <Label className="text-xs font-semibold text-[#8fabc2]">Vidéo YouTube (optionnel)</Label>
                           <Input
                             value={a.videoUrl}
                             onChange={(e) => setAppliance(a.key, { videoUrl: e.target.value })}
@@ -934,7 +934,7 @@ export function ConciergeContent() {
                           />
                         </div>
                         <div className="flex flex-col gap-1.5">
-                          <Label className="text-xs font-semibold text-[#8fa0c2]">Photo / GIF (optionnel)</Label>
+                          <Label className="text-xs font-semibold text-[#8fabc2]">Photo / GIF (optionnel)</Label>
                           {a.imageUrl ? (
                             <div className="flex items-center gap-2">
                               <img
@@ -983,7 +983,7 @@ export function ConciergeContent() {
                 <div className="min-w-0">
                   <p className="lux-eyebrow">Carte secrète</p>
                   <h2 className="lux-display mt-1 text-lg text-white">Visiter la ville — vos coups de cœur</h2>
-                  <p className="mt-0.5 text-sm text-[#8fa0c2]">
+                  <p className="mt-0.5 text-sm text-[#8fabc2]">
                     Vos meilleures adresses avec une note perso, la distance depuis le logement et un bouton « Y aller » (GPS natif) — affichées dans l’onglet « Visiter la ville » du hub.
                   </p>
                 </div>
@@ -1028,7 +1028,7 @@ export function ConciergeContent() {
                         <DeleteRowButton onClick={() => removeSpot(s.key)} label={`Supprimer l’adresse ${s.name || i + 1}`} />
                       </div>
                       <div className="flex flex-col gap-1.5">
-                        <Label className="text-xs font-semibold text-[#8fa0c2]">Adresse (optionnel)</Label>
+                        <Label className="text-xs font-semibold text-[#8fabc2]">Adresse (optionnel)</Label>
                         <Input
                           value={s.address}
                           onChange={(e) => setSpot(s.key, { address: e.target.value })}
@@ -1041,7 +1041,7 @@ export function ConciergeContent() {
                       <div>
                         <div className="grid gap-3 sm:grid-cols-2">
                           <div className="flex flex-col gap-1.5">
-                            <Label htmlFor={`spot-lat-${s.key}`} className="text-xs font-semibold text-[#8fa0c2]">
+                            <Label htmlFor={`spot-lat-${s.key}`} className="text-xs font-semibold text-[#8fabc2]">
                               Latitude
                             </Label>
                             <Input
@@ -1055,7 +1055,7 @@ export function ConciergeContent() {
                             />
                           </div>
                           <div className="flex flex-col gap-1.5">
-                            <Label htmlFor={`spot-lng-${s.key}`} className="text-xs font-semibold text-[#8fa0c2]">
+                            <Label htmlFor={`spot-lng-${s.key}`} className="text-xs font-semibold text-[#8fabc2]">
                               Longitude
                             </Label>
                             <Input
@@ -1069,13 +1069,13 @@ export function ConciergeContent() {
                             />
                           </div>
                         </div>
-                        <p className="mt-1.5 text-xs text-[#8fa0c2]/70">
+                        <p className="mt-1.5 text-xs text-[#8fabc2]/70">
                           Astuce : sur Google Maps, clic droit sur le lieu → « Copier les coordonnées », puis collez-les
                           ici (la virgule est acceptée).
                         </p>
                       </div>
                       <div className="flex flex-col gap-1.5">
-                        <Label className="text-xs font-semibold text-[#8fa0c2]">Votre note secrète (optionnel)</Label>
+                        <Label className="text-xs font-semibold text-[#8fabc2]">Votre note secrète (optionnel)</Label>
                         <Textarea
                           value={s.hostNote}
                           onChange={(e) => setSpot(s.key, { hostNote: e.target.value })}
@@ -1102,13 +1102,13 @@ export function ConciergeContent() {
               <div className="min-w-0">
                 <p className="lux-eyebrow">Urgences</p>
                 <h2 className="lux-display mt-1 text-lg text-white">Numéros utiles</h2>
-                <p className="mt-0.5 text-sm text-[#8fa0c2]">
+                <p className="mt-0.5 text-sm text-[#8fabc2]">
                   Le 15 (SAMU), le 18 (Pompiers) et le 112 (Europe) sont déjà affichés automatiquement — inutile de les saisir.
                 </p>
               </div>
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 <div className="flex flex-col gap-1.5">
-                  <Label htmlFor="sos-host" className="text-xs font-semibold text-[#8fa0c2]">
+                  <Label htmlFor="sos-host" className="text-xs font-semibold text-[#8fabc2]">
                     Urgence logement (vous)
                   </Label>
                   <Input
@@ -1124,7 +1124,7 @@ export function ConciergeContent() {
                 {/* AUDIT 4-c — email dédié affiché aux invités (jamais
                     l'email de connexion du compte). */}
                 <div className="flex flex-col gap-1.5">
-                  <Label htmlFor="sos-host-email" className="text-xs font-semibold text-[#8fa0c2]">
+                  <Label htmlFor="sos-host-email" className="text-xs font-semibold text-[#8fabc2]">
                     Email de contact invité
                   </Label>
                   <Input
@@ -1137,13 +1137,13 @@ export function ConciergeContent() {
                     autoComplete="off"
                     className={LUX_FIELD}
                   />
-                  <p className="text-xs text-[#8fa0c2]/70">
+                  <p className="text-xs text-[#8fabc2]/70">
                     Affiché aux invités pour vous écrire — utilisez une adresse dédiée,
                     pas votre email de connexion.
                   </p>
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <Label htmlFor="sos-police" className="text-xs font-semibold text-[#8fa0c2]">
+                  <Label htmlFor="sos-police" className="text-xs font-semibold text-[#8fabc2]">
                     Police locale
                   </Label>
                   <Input
@@ -1156,7 +1156,7 @@ export function ConciergeContent() {
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <Label htmlFor="sos-pharmacy" className="text-xs font-semibold text-[#8fa0c2]">
+                  <Label htmlFor="sos-pharmacy" className="text-xs font-semibold text-[#8fabc2]">
                     Pharmacie de garde (nom)
                   </Label>
                   <Input
@@ -1169,7 +1169,7 @@ export function ConciergeContent() {
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <Label htmlFor="sos-pharmacy-phone" className="text-xs font-semibold text-[#8fa0c2]">
+                  <Label htmlFor="sos-pharmacy-phone" className="text-xs font-semibold text-[#8fabc2]">
                     Téléphone pharmacie
                   </Label>
                   <Input
@@ -1190,12 +1190,12 @@ export function ConciergeContent() {
                 pour racheter exactement le même modèle en 1 clic. */}
             <section className="lux-card p-5 sm:p-6" aria-label="Produit de remplacement">
               <h2 className="lux-display text-lg text-white">Casse — produit de remplacement</h2>
-              <p className="mt-0.5 text-sm text-[#8fa0c2]">
+              <p className="mt-0.5 text-sm text-[#8fabc2]">
                 Un invité casse un objet ? Il signale avec une photo, vous êtes prévenu, et ce lien
                 (Amazon, Castorama, fournisseur local…) lui propose le même modèle en 1 clic.
               </p>
               <div className="mt-4 flex flex-col gap-1.5">
-                <Label htmlFor="sos-breakage-url" className="text-xs font-semibold text-[#8fa0c2]">
+                <Label htmlFor="sos-breakage-url" className="text-xs font-semibold text-[#8fabc2]">
                   Lien du produit de remplacement (optionnel)
                 </Label>
                 <Input
@@ -1214,7 +1214,7 @@ export function ConciergeContent() {
               <h2 className="lux-display text-lg text-white">Hôpital le plus proche</h2>
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 <div className="flex flex-col gap-1.5 sm:col-span-2">
-                  <Label htmlFor="sos-hospital" className="text-xs font-semibold text-[#8fa0c2]">
+                  <Label htmlFor="sos-hospital" className="text-xs font-semibold text-[#8fabc2]">
                     Nom de l’hôpital
                   </Label>
                   <Input
@@ -1227,7 +1227,7 @@ export function ConciergeContent() {
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <Label htmlFor="sos-hospital-lat" className="text-xs font-semibold text-[#8fa0c2]">
+                  <Label htmlFor="sos-hospital-lat" className="text-xs font-semibold text-[#8fabc2]">
                     Latitude (pour l’itinéraire)
                   </Label>
                   <Input
@@ -1240,7 +1240,7 @@ export function ConciergeContent() {
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <Label htmlFor="sos-hospital-lng" className="text-xs font-semibold text-[#8fa0c2]">
+                  <Label htmlFor="sos-hospital-lng" className="text-xs font-semibold text-[#8fabc2]">
                     Longitude
                   </Label>
                   <Input
@@ -1259,7 +1259,7 @@ export function ConciergeContent() {
               <div className="flex items-start justify-between gap-3 flex-wrap">
                 <div className="min-w-0">
                   <h2 className="lux-display text-lg text-white">Pannes courantes</h2>
-                  <p className="mt-0.5 text-sm text-[#8fa0c2]">
+                  <p className="mt-0.5 text-sm text-[#8fabc2]">
                     Les invités débloquent seuls les petits soucis : disjoncteur, eau chaude, chasse d’eau…
                   </p>
                 </div>
@@ -1289,7 +1289,7 @@ export function ConciergeContent() {
                         <DeleteRowButton onClick={() => removeIssue(it.key)} label={`Supprimer la panne ${it.title || i + 1}`} />
                       </div>
                       <div className="flex flex-col gap-1.5">
-                        <Label className="text-xs font-semibold text-[#8fa0c2]">Que faire ?</Label>
+                        <Label className="text-xs font-semibold text-[#8fabc2]">Que faire ?</Label>
                         <Textarea
                           value={it.instructions}
                           onChange={(e) => setIssue(it.key, { instructions: e.target.value })}
@@ -1301,7 +1301,7 @@ export function ConciergeContent() {
                         />
                       </div>
                       <div className="flex flex-col gap-1.5">
-                        <Label className="text-xs font-semibold text-[#8fa0c2]">Photo (optionnel)</Label>
+                        <Label className="text-xs font-semibold text-[#8fabc2]">Photo (optionnel)</Label>
                         {it.imageUrl ? (
                           <div className="flex items-center gap-2">
                             <img
@@ -1349,7 +1349,7 @@ export function ConciergeContent() {
                 <div className="min-w-0">
                   <p className="lux-eyebrow">Shop the Stay</p>
                   <h2 className="lux-display mt-1 text-lg text-white">Shop the Stay — votre boutique</h2>
-                  <p className="mt-0.5 text-sm text-[#8fa0c2]">
+                  <p className="mt-0.5 text-sm text-[#8fabc2]">
                     Vos invités commandent ces produits depuis l’onglet Shop the Stay du Hub. Vous recevez la commande
                     (commission plateforme {Math.round(SHOP_COMMISSION_RATE * 100)} %). Sans configuration, le catalogue
                     d’exemple s’affiche.
@@ -1378,7 +1378,7 @@ export function ConciergeContent() {
               {draft.shop.length === 0 ? (
                 <div className="lux-empty mt-4 flex flex-col items-center gap-2 rounded-2xl p-8 text-center">
                   <span className="lux-dot" style={{ backgroundColor: '#cdb6ff' }} aria-hidden="true" />
-                  <p className="mx-auto mt-2 max-w-sm text-sm text-[#8fa0c2]">
+                  <p className="mx-auto mt-2 max-w-sm text-sm text-[#8fabc2]">
                     Aucun produit pour l’instant. Restaurez le catalogue d’exemple ou ajoutez le vôtre ({MAX_SHOP_ITEMS} maximum).
                   </p>
                   <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
@@ -1419,7 +1419,7 @@ export function ConciergeContent() {
                         <DeleteRowButton onClick={() => removeShopItem(it.key)} label={`Supprimer le produit ${it.name || i + 1}`} />
                       </div>
                       <div className="flex flex-col gap-1.5">
-                        <Label className="text-xs font-semibold text-[#8fa0c2]">Pitch pour l’invité (optionnel)</Label>
+                        <Label className="text-xs font-semibold text-[#8fabc2]">Pitch pour l’invité (optionnel)</Label>
                         <Textarea
                           value={it.description}
                           onChange={(e) => setShopItem(it.key, { description: e.target.value })}
@@ -1429,11 +1429,11 @@ export function ConciergeContent() {
                           aria-label={`Description du produit ${it.name || i + 1}`}
                           className={LUX_FIELD}
                         />
-                        <p className="text-xs text-[#8fa0c2]/70">{it.description.length}/300</p>
+                        <p className="text-xs text-[#8fabc2]/70">{it.description.length}/300</p>
                       </div>
                       <div className="grid gap-3 sm:grid-cols-2">
                         <div className="flex flex-col gap-1.5">
-                          <Label htmlFor={`shop-price-${it.key}`} className="text-xs font-semibold text-[#8fa0c2]">
+                          <Label htmlFor={`shop-price-${it.key}`} className="text-xs font-semibold text-[#8fabc2]">
                             Prix TTC (€)
                           </Label>
                           <Input
@@ -1448,7 +1448,7 @@ export function ConciergeContent() {
                           />
                         </div>
                         <div className="flex flex-col gap-1.5">
-                          <Label htmlFor={`shop-url-${it.key}`} className="text-xs font-semibold text-[#8fa0c2]">
+                          <Label htmlFor={`shop-url-${it.key}`} className="text-xs font-semibold text-[#8fabc2]">
                             Lien marchand (optionnel)
                           </Label>
                           <Input
@@ -1479,7 +1479,7 @@ export function ConciergeContent() {
                       Restaurer le catalogue d’exemple
                     </Button>
                     {draft.shop.length >= MAX_SHOP_ITEMS && (
-                      <span className="text-xs text-[#8fa0c2]/70">Maximum {MAX_SHOP_ITEMS} produits atteint.</span>
+                      <span className="text-xs text-[#8fabc2]/70">Maximum {MAX_SHOP_ITEMS} produits atteint.</span>
                     )}
                   </div>
                 </div>
@@ -1502,14 +1502,14 @@ export function ConciergeContent() {
               <div className="min-w-0">
                 <p className="lux-eyebrow">Messages vocaux automatiques</p>
                 <h2 className="lux-display mt-1 text-lg text-white">Horaires des messages vocaux du Hub</h2>
-                <p className="mt-0.5 text-sm text-[#8fa0c2]">
+                <p className="mt-0.5 text-sm text-[#8fabc2]">
                   Bienvenue : joué uniquement à la PREMIÈRE ouverture « Mode Invité » de chaque invité (pas d’horaire).
                   Veille du départ et Jour du départ : choisissez à partir de quelle heure ils se déclenchent.
                 </p>
               </div>
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 <div className="flex flex-col gap-1.5">
-                  <Label className="text-xs font-semibold text-[#8fa0c2]">
+                  <Label className="text-xs font-semibold text-[#8fabc2]">
                     Veille du départ — se déclenche à partir de
                   </Label>
                   <Select value={draft.voice.eveHour} onValueChange={(v) => setVoice({ eveHour: v })}>
@@ -1527,10 +1527,10 @@ export function ConciergeContent() {
                       ))}
                     </SelectContent>
                   </Select>
-                  <p className="text-xs text-[#8fa0c2]/70">Défaut : 20 h — joué une seule fois, la veille du départ.</p>
+                  <p className="text-xs text-[#8fabc2]/70">Défaut : 20 h — joué une seule fois, la veille du départ.</p>
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <Label className="text-xs font-semibold text-[#8fa0c2]">
+                  <Label className="text-xs font-semibold text-[#8fabc2]">
                     Jour du départ — se déclenche à partir de
                   </Label>
                   <Select value={draft.voice.dayHour} onValueChange={(v) => setVoice({ dayHour: v })}>
@@ -1548,7 +1548,7 @@ export function ConciergeContent() {
                       ))}
                     </SelectContent>
                   </Select>
-                  <p className="text-xs text-[#8fa0c2]/70">Défaut : 9 h — joué une seule fois, le jour du départ.</p>
+                  <p className="text-xs text-[#8fabc2]/70">Défaut : 9 h — joué une seule fois, le jour du départ.</p>
                 </div>
               </div>
             </section>
@@ -1581,7 +1581,7 @@ export function ConciergeContent() {
             type="button"
             onClick={() => void save()}
             disabled={saving || loading || !propertyId}
-            className="lux-btn rounded-full px-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5c8af0]/60 disabled:pointer-events-none disabled:opacity-60"
+            className="lux-btn rounded-full px-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5cadf0]/60 disabled:pointer-events-none disabled:opacity-60"
             aria-label="Enregistrer la conciergerie"
           >
             {saving && <span aria-hidden="true" className="lux-dot animate-pulse" style={{ backgroundColor: 'rgba(255,255,255,0.9)' }} />}
@@ -1594,7 +1594,7 @@ export function ConciergeContent() {
         <div className="lux-empty flex flex-col items-center gap-2 rounded-2xl p-10 text-center">
           <span className="lux-dot" style={{ backgroundColor: '#e9c47c' }} aria-hidden="true" />
           <h2 className="lux-display mt-2 text-xl text-white">Aucun bien</h2>
-          <p className="mt-1 text-sm text-[#8fa0c2]">Ajoutez d’abord un bien pour remplir sa conciergerie digitale.</p>
+          <p className="mt-1 text-sm text-[#8fabc2]">Ajoutez d’abord un bien pour remplir sa conciergerie digitale.</p>
         </div>
       )}
     </div>
@@ -1720,7 +1720,7 @@ function TabCounter({ label }: { label: string }) {
       className={cn(
         'inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full border px-1.5 text-[10px] font-semibold tabular-nums',
         empty
-          ? 'border-white/12 bg-white/[0.04] text-[#8fa0c2]'
+          ? 'border-white/12 bg-white/[0.04] text-[#8fabc2]'
           : 'border-[#34d399]/30 bg-[#34d399]/12 text-[#86e9cb]',
       )}
     >
@@ -1734,7 +1734,7 @@ function DeleteRowButton({ onClick, label }: { onClick: () => void; label: strin
     <Button
       variant="ghost"
       size="icon"
-      className="shrink-0 rounded-full text-[#8fa0c2] hover:bg-[#f07d6a]/10 hover:text-[#f07d6a]"
+      className="shrink-0 rounded-full text-[#8fabc2] hover:bg-[#f07d6a]/10 hover:text-[#f07d6a]"
       onClick={onClick}
       aria-label={label}
       title={label}
@@ -1749,8 +1749,8 @@ function DeleteRowButton({ onClick, label }: { onClick: () => void; label: strin
 function EmptyList({ text, onAdd }: { text: string; onAdd: () => void }) {
   return (
     <div className="lux-empty mt-4 flex flex-col items-center gap-2 rounded-2xl p-8 text-center">
-      <span className="lux-dot" style={{ backgroundColor: '#5c8af0' }} aria-hidden="true" />
-      <p className="mx-auto mt-2 max-w-sm text-sm text-[#8fa0c2]">{text}</p>
+      <span className="lux-dot" style={{ backgroundColor: '#5cadf0' }} aria-hidden="true" />
+      <p className="mx-auto mt-2 max-w-sm text-sm text-[#8fabc2]">{text}</p>
       <button type="button" onClick={onAdd} className="lux-btn mt-2">
         + Ajouter
       </button>

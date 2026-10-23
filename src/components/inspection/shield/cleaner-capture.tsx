@@ -391,7 +391,7 @@ export default function CleanerCapture({ data }: { data: CleanerSessionView }) {
       {/* ----- Bandeau supérieur ----- */}
       <header className="border-b border-gray-200 bg-white px-4 py-3 sm:px-6">
         <div className="mx-auto flex max-w-2xl flex-wrap items-center gap-2.5">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#1e3a8a] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-white">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#055492] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-white">
             <ShieldCheck className="size-3.5" aria-hidden="true" /> Inventaire
           </span>
           <span
@@ -439,7 +439,7 @@ export default function CleanerCapture({ data }: { data: CleanerSessionView }) {
               <h2 className="text-xs font-bold uppercase tracking-[0.08em] text-gray-900">Le séjour</h2>
               <dl className="mt-3 space-y-2.5 text-sm">
                 <div className="flex items-start gap-2.5">
-                  <Home className="mt-0.5 size-4 shrink-0 text-[#1e3a8a]" aria-hidden="true" />
+                  <Home className="mt-0.5 size-4 shrink-0 text-[#055492]" aria-hidden="true" />
                   <div>
                     <dt className="sr-only">Logement</dt>
                     <dd className="font-semibold text-gray-900">{data.propertyName}</dd>
@@ -448,7 +448,7 @@ export default function CleanerCapture({ data }: { data: CleanerSessionView }) {
                 </div>
                 {scheduledLabel ? (
                   <div className="flex items-center gap-2.5">
-                    <CalendarDays className="size-4 shrink-0 text-[#1e3a8a]" aria-hidden="true" />
+                    <CalendarDays className="size-4 shrink-0 text-[#055492]" aria-hidden="true" />
                     <div>
                       <dt className="sr-only">Date prévue</dt>
                       <dd className="text-gray-700">
@@ -460,7 +460,7 @@ export default function CleanerCapture({ data }: { data: CleanerSessionView }) {
                 ) : null}
                 {data.guestName ? (
                   <div className="flex items-center gap-2.5">
-                    <User className="size-4 shrink-0 text-[#1e3a8a]" aria-hidden="true" />
+                    <User className="size-4 shrink-0 text-[#055492]" aria-hidden="true" />
                     <div>
                       <dt className="sr-only">Invité</dt>
                       <dd className="text-gray-700">

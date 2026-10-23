@@ -147,7 +147,7 @@ export function ShieldOnboarding({ sessionName, onDone }: ShieldOnboardingProps)
         <h2 className="lux-display text-xl font-semibold text-white sm:text-2xl">
           Bibliothèque verrouillée
         </h2>
-        <p className="max-w-md text-sm text-[#8fa0c2]">
+        <p className="max-w-md text-sm text-[#8fabc2]">
           Les photos de référence de <span className="font-semibold text-white">{propertyName}</span>{' '}
           sont scellées. Chaque check-in / check-out ne prend plus que 90 secondes.
         </p>
@@ -157,7 +157,7 @@ export function ShieldOnboarding({ sessionName, onDone }: ShieldOnboardingProps)
         >
           {created.onboardingRef}
         </p>
-        <p className="font-mono text-[11px] text-[#8fa0c2]">
+        <p className="font-mono text-[11px] text-[#8fabc2]">
           Conservez cette référence : elle identifie le certificat d&apos;onboarding.
         </p>
         <Button
@@ -201,7 +201,7 @@ export function ShieldOnboarding({ sessionName, onDone }: ShieldOnboardingProps)
                   ? 'bg-[#C21F26] text-white'
                   : i < stepIndex
                     ? 'text-[#4ade80] hover:bg-white/8'
-                    : 'cursor-default text-[#8fa0c2]/60',
+                    : 'cursor-default text-[#8fabc2]/60',
               )}
               aria-current={s.id === step ? 'step' : undefined}
             >
@@ -225,7 +225,7 @@ export function ShieldOnboarding({ sessionName, onDone }: ShieldOnboardingProps)
           >
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5 sm:col-span-2">
-                <Label htmlFor="shield-prop-name" className="text-xs text-[#8fa0c2]">
+                <Label htmlFor="shield-prop-name" className="text-xs text-[#8fabc2]">
                   Nom du logement *
                 </Label>
                 <Input
@@ -234,7 +234,7 @@ export function ShieldOnboarding({ sessionName, onDone }: ShieldOnboardingProps)
                   onChange={(e) => setPropertyName(e.target.value)}
                   placeholder="Appartement Almadies — Vue mer"
                   maxLength={120}
-                  className={cn('h-11', 'border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#C21F26]/50')}
+                  className={cn('h-11', 'border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#C21F26]/50')}
                   aria-invalid={Boolean(fieldErrors.propertyName)}
                 />
                 {fieldErrors.propertyName ? (
@@ -244,7 +244,7 @@ export function ShieldOnboarding({ sessionName, onDone }: ShieldOnboardingProps)
                 ) : null}
               </div>
               <div className="space-y-1.5 sm:col-span-2">
-                <Label htmlFor="shield-prop-address" className="text-xs text-[#8fa0c2]">
+                <Label htmlFor="shield-prop-address" className="text-xs text-[#8fabc2]">
                   Adresse *
                 </Label>
                 <Input
@@ -253,7 +253,7 @@ export function ShieldOnboarding({ sessionName, onDone }: ShieldOnboardingProps)
                   onChange={(e) => setPropertyAddress(e.target.value)}
                   placeholder="Rue des Manguiers, Almadies"
                   maxLength={240}
-                  className="h-11 border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#C21F26]/50"
+                  className="h-11 border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#C21F26]/50"
                   aria-invalid={Boolean(fieldErrors.propertyAddress)}
                 />
                 {fieldErrors.propertyAddress ? (
@@ -263,7 +263,7 @@ export function ShieldOnboarding({ sessionName, onDone }: ShieldOnboardingProps)
                 ) : null}
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="shield-prop-city" className="text-xs text-[#8fa0c2]">
+                <Label htmlFor="shield-prop-city" className="text-xs text-[#8fabc2]">
                   Ville
                 </Label>
                 <Input
@@ -272,7 +272,7 @@ export function ShieldOnboarding({ sessionName, onDone }: ShieldOnboardingProps)
                   onChange={(e) => setCity(e.target.value)}
                   placeholder="Dakar"
                   maxLength={60}
-                  className="h-11 border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#C21F26]/50"
+                  className="h-11 border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#C21F26]/50"
                   aria-invalid={Boolean(fieldErrors.city)}
                 />
                 {fieldErrors.city ? (
@@ -282,7 +282,7 @@ export function ShieldOnboarding({ sessionName, onDone }: ShieldOnboardingProps)
                 ) : null}
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="shield-prop-owner" className="text-xs text-[#8fa0c2]">
+                <Label htmlFor="shield-prop-owner" className="text-xs text-[#8fabc2]">
                   Propriétaire
                 </Label>
                 <Input
@@ -291,7 +291,7 @@ export function ShieldOnboarding({ sessionName, onDone }: ShieldOnboardingProps)
                   onChange={(e) => setOwnerName(e.target.value)}
                   placeholder="Nom du propriétaire"
                   maxLength={120}
-                  className="h-11 border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#C21F26]/50"
+                  className="h-11 border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#C21F26]/50"
                   aria-invalid={Boolean(fieldErrors.ownerName)}
                 />
                 {fieldErrors.ownerName ? (
@@ -333,7 +333,7 @@ export function ShieldOnboarding({ sessionName, onDone }: ShieldOnboardingProps)
                 {zonesDone}/{SHIELD_ZONES.length}
               </span>
             </div>
-            <p className="mt-1 text-sm text-[#8fa0c2]">
+            <p className="mt-1 text-sm text-[#8fabc2]">
               Photographiez les 6 zones fixes sous leur meilleur angle : ces clichés deviennent les
               fantômes d&apos;angle de toutes vos prochaines sessions.
             </p>
@@ -350,7 +350,7 @@ export function ShieldOnboarding({ sessionName, onDone }: ShieldOnboardingProps)
                         ✓ OK
                       </span>
                     ) : (
-                      <span className="text-[11px] font-semibold text-[#8fa0c2]">À photographier</span>
+                      <span className="text-[11px] font-semibold text-[#8fabc2]">À photographier</span>
                     )}
                   </div>
                   <div className="mt-3">
@@ -370,7 +370,7 @@ export function ShieldOnboarding({ sessionName, onDone }: ShieldOnboardingProps)
                               return next;
                             })
                           }
-                          className="inline-flex min-h-[44px] w-full items-center justify-center rounded-full border border-white/12 bg-white/[0.04] px-4 text-xs font-semibold text-[#8fa0c2] transition-colors hover:text-white"
+                          className="inline-flex min-h-[44px] w-full items-center justify-center rounded-full border border-white/12 bg-white/[0.04] px-4 text-xs font-semibold text-[#8fabc2] transition-colors hover:text-white"
                           aria-label={`Reprendre la photo de ${name}`}
                         >
                           Reprendre
@@ -431,7 +431,7 @@ export function ShieldOnboarding({ sessionName, onDone }: ShieldOnboardingProps)
                 {devicesDone}/{SHIELD_DEVICE_KINDS.length}
               </span>
             </div>
-            <p className="mt-1 text-sm text-[#8fa0c2]">
+            <p className="mt-1 text-sm text-[#8fabc2]">
               Chaque appareil reçoit un code QR de référence (REF-xxx) et une empreinte SHA-256 :
               la bibliothèque prouvera leur bon état à vie.
             </p>
@@ -470,7 +470,7 @@ export function ShieldOnboarding({ sessionName, onDone }: ShieldOnboardingProps)
                               return next;
                             })
                           }
-                          className="inline-flex min-h-[44px] w-full items-center justify-center rounded-full border border-white/12 bg-white/[0.04] px-4 text-xs font-semibold text-[#8fa0c2] transition-colors hover:text-white"
+                          className="inline-flex min-h-[44px] w-full items-center justify-center rounded-full border border-white/12 bg-white/[0.04] px-4 text-xs font-semibold text-[#8fabc2] transition-colors hover:text-white"
                           aria-label={`Reprendre la photo de ${d.name}`}
                         >
                           Reprendre
@@ -531,19 +531,19 @@ export function ShieldOnboarding({ sessionName, onDone }: ShieldOnboardingProps)
               </h2>
               <dl className="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
                 <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
-                  <dt className="text-[11px] uppercase tracking-[0.08em] text-[#8fa0c2]">Logement</dt>
+                  <dt className="text-[11px] uppercase tracking-[0.08em] text-[#8fabc2]">Logement</dt>
                   <dd className="mt-1 truncate font-semibold text-white">{propertyName}</dd>
                 </div>
                 <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
-                  <dt className="text-[11px] uppercase tracking-[0.08em] text-[#8fa0c2]">Ville</dt>
+                  <dt className="text-[11px] uppercase tracking-[0.08em] text-[#8fabc2]">Ville</dt>
                   <dd className="mt-1 font-semibold text-white">{city}</dd>
                 </div>
                 <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
-                  <dt className="text-[11px] uppercase tracking-[0.08em] text-[#8fa0c2]">Zones</dt>
+                  <dt className="text-[11px] uppercase tracking-[0.08em] text-[#8fabc2]">Zones</dt>
                   <dd className="mt-1 font-mono font-bold text-[#f87171]">{zonesDone} photos</dd>
                 </div>
                 <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
-                  <dt className="text-[11px] uppercase tracking-[0.08em] text-[#8fa0c2]">Appareils</dt>
+                  <dt className="text-[11px] uppercase tracking-[0.08em] text-[#8fabc2]">Appareils</dt>
                   <dd className="mt-1 font-mono font-bold text-[#f87171]">{devicesDone} photos</dd>
                 </div>
               </dl>

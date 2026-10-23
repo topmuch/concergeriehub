@@ -119,9 +119,9 @@ export function LoginGate({
           </form>
         </B2BCard>
 
-        <div className="mt-4 rounded-xl border border-[#DBE8FF] bg-[#EAF2FF] p-3 text-center">
-          <p className="text-[11px] font-semibold text-[#0052C4] uppercase tracking-wide">{demoLabel}</p>
-          <p className="text-xs text-[#0047B3] font-mono mt-0.5">
+        <div className="mt-4 rounded-xl border border-[#DBE8FF] bg-[#dceaf5] p-3 text-center">
+          <p className="text-[11px] font-semibold text-[#04467a] uppercase tracking-wide">{demoLabel}</p>
+          <p className="text-xs text-[#033a66] font-mono mt-0.5">
             {demoEmail} · {demoPassword}
           </p>
         </div>

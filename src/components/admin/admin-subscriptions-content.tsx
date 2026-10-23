@@ -97,8 +97,8 @@ interface SubsStats {
 const STATUS_LABEL: Record<string, { label: string; dot: string }> = {
   active: { label: 'Actif', dot: '#34d399' },
   past_due: { label: 'Impayé', dot: '#fbbf24' },
-  cancelled: { label: 'Annulé', dot: '#8fa0c2' },
-  trialing: { label: 'Essai', dot: '#5c8af0' },
+  cancelled: { label: 'Annulé', dot: '#8fabc2' },
+  trialing: { label: 'Essai', dot: '#5cadf0' },
 };
 
 export function AdminSubscriptionsContent() {
@@ -292,16 +292,16 @@ export function AdminSubscriptionsContent() {
           <Tabs defaultValue="abonnements" className="gap-0">
             <div className="border-b border-white/8 px-4 pt-4 sm:px-6">
               <TabsList className="h-auto flex-wrap justify-start gap-1 rounded-full border border-white/10 bg-white/[0.04] p-1">
-                <TabsTrigger value="abonnements" className="rounded-full text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fa0c2] data-[state=active]:bg-white/10 data-[state=active]:text-white">
+                <TabsTrigger value="abonnements" className="rounded-full text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fabc2] data-[state=active]:bg-white/10 data-[state=active]:text-white">
                   Abonnements
                 </TabsTrigger>
-                <TabsTrigger value="factures" className="rounded-full text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fa0c2] data-[state=active]:bg-white/10 data-[state=active]:text-white">
+                <TabsTrigger value="factures" className="rounded-full text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fabc2] data-[state=active]:bg-white/10 data-[state=active]:text-white">
                   Factures
                 </TabsTrigger>
-                <TabsTrigger value="coupons" className="rounded-full text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fa0c2] data-[state=active]:bg-white/10 data-[state=active]:text-white">
+                <TabsTrigger value="coupons" className="rounded-full text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fabc2] data-[state=active]:bg-white/10 data-[state=active]:text-white">
                   Coupons
                 </TabsTrigger>
-                <TabsTrigger value="packs" className="rounded-full text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fa0c2] data-[state=active]:bg-white/10 data-[state=active]:text-white">
+                <TabsTrigger value="packs" className="rounded-full text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fabc2] data-[state=active]:bg-white/10 data-[state=active]:text-white">
                   Packs &amp; Config
                 </TabsTrigger>
               </TabsList>
@@ -329,12 +329,12 @@ export function AdminSubscriptionsContent() {
                     </TableHeader>
                     <TableBody>
                       {subs.map((s) => {
-                        const st = STATUS_LABEL[s.status] ?? { label: s.status, dot: '#8fa0c2' };
+                        const st = STATUS_LABEL[s.status] ?? { label: s.status, dot: '#8fabc2' };
                         return (
                           <TableRow key={s.id} className="border-white/8 hover:bg-white/[0.04]">
                             <TableCell>
                               <p className="font-semibold text-white">{s.subscriber.name}</p>
-                              <p className="text-xs text-[#8fa0c2]">
+                              <p className="text-xs text-[#8fabc2]">
                                 {s.subscriber.type === 'user' ? s.subscriber.email : s.subscriber.type}
                               </p>
                             </TableCell>
@@ -343,7 +343,7 @@ export function AdminSubscriptionsContent() {
                             </TableCell>
                             <TableCell className="text-sm">
                               <span className="lux-num font-semibold text-white">{s.amount.toFixed(2)} €</span>
-                              <span className="text-[#8fa0c2]"> / {s.billingCycle === 'monthly' ? 'mois' : 'an'}</span>
+                              <span className="text-[#8fabc2]"> / {s.billingCycle === 'monthly' ? 'mois' : 'an'}</span>
                             </TableCell>
                             <TableCell className="hidden md:table-cell">
                               <span className="lux-chip">
@@ -351,16 +351,16 @@ export function AdminSubscriptionsContent() {
                                 {st.label}
                               </span>
                             </TableCell>
-                            <TableCell className="hidden text-sm text-[#8fa0c2] lg:table-cell">
+                            <TableCell className="hidden text-sm text-[#8fabc2] lg:table-cell">
                               {s.currentPeriodEnd ? format(new Date(s.currentPeriodEnd), 'dd MMM yyyy', { locale: fr }) : '—'}
                             </TableCell>
-                            <TableCell className="hidden text-sm text-[#8fa0c2] xl:table-cell">
+                            <TableCell className="hidden text-sm text-[#8fabc2] xl:table-cell">
                               {format(new Date(s.createdAt), 'dd MMM yyyy', { locale: fr })}
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center justify-end gap-1">
                                 {/* v4.71 — Modifier (plan / cycle / montant / statut) */}
-                                <Button variant="ghost" size="sm" className="h-8 rounded-full px-2.5 text-[11px] font-semibold text-[#8fa0c2] hover:bg-white/8 hover:text-white"
+                                <Button variant="ghost" size="sm" className="h-8 rounded-full px-2.5 text-[11px] font-semibold text-[#8fabc2] hover:bg-white/8 hover:text-white"
                                   onClick={() => openEdit(s)} disabled={busyId === s.id}
                                   aria-label="Modifier cet abonnement">
                                   Modifier
@@ -373,7 +373,7 @@ export function AdminSubscriptionsContent() {
                                   </Button>
                                 )}
                                 {s.status !== 'active' && (
-                                  <Button variant="ghost" size="sm" className="h-8 rounded-full px-2.5 text-[11px] font-semibold text-[#5c8af0] hover:bg-[#5c8af0]/10 hover:text-[#a9c4ff]"
+                                  <Button variant="ghost" size="sm" className="h-8 rounded-full px-2.5 text-[11px] font-semibold text-[#5cadf0] hover:bg-[#5cadf0]/10 hover:text-[#a9d8ff]"
                                     onClick={() => subAction(s, 'reactivate')} disabled={busyId === s.id}
                                     aria-label="Réactiver cet abonnement">
                                     Réactiver
@@ -415,16 +415,16 @@ export function AdminSubscriptionsContent() {
                             <span className="lux-chip">
                               <span
                                 className="lux-dot"
-                                style={{ backgroundColor: i.status === 'completed' || i.status === 'PAID' ? '#34d399' : '#8fa0c2' }}
+                                style={{ backgroundColor: i.status === 'completed' || i.status === 'PAID' ? '#34d399' : '#8fabc2' }}
                                 aria-hidden="true"
                               />
                               {i.status}
                             </span>
                           </TableCell>
-                          <TableCell className="hidden font-mono text-xs text-[#8fa0c2] sm:table-cell">
+                          <TableCell className="hidden font-mono text-xs text-[#8fabc2] sm:table-cell">
                             {i.stripePaymentId ?? '—'}
                           </TableCell>
-                          <TableCell className="text-sm text-[#8fa0c2]">
+                          <TableCell className="text-sm text-[#8fabc2]">
                             {format(new Date(i.createdAt), 'dd MMM yyyy HH:mm', { locale: fr })}
                           </TableCell>
                         </TableRow>
@@ -438,7 +438,7 @@ export function AdminSubscriptionsContent() {
             {/* ----- Onglet Coupons ----- */}
             <TabsContent value="coupons" className="p-4 sm:p-6">
               <div className="mb-4 flex items-center justify-between">
-                <p className="text-sm text-[#8fa0c2]">Coupons marketplace — réductions et scans réels.</p>
+                <p className="text-sm text-[#8fabc2]">Coupons marketplace — réductions et scans réels.</p>
                 <Button size="sm" className="lux-btn h-9 rounded-full px-4 text-xs" onClick={() => setCouponDialog(true)}>
                   Nouveau coupon
                 </Button>
@@ -471,7 +471,7 @@ export function AdminSubscriptionsContent() {
                                 ? `-${c.discountValue.toFixed(2)} €`
                                 : 'BOGO'}
                           </TableCell>
-                          <TableCell className="text-xs text-[#8fa0c2]">
+                          <TableCell className="text-xs text-[#8fabc2]">
                             {c.currentUses}/{c.maxUses} · {c.scans} scan{c.scans > 1 ? 's' : ''}
                           </TableCell>
                           <TableCell className="hidden text-sm text-white/85 sm:table-cell">{c.merchantName}</TableCell>
@@ -479,7 +479,7 @@ export function AdminSubscriptionsContent() {
                             <span className="lux-chip">
                               <span
                                 className="lux-dot"
-                                style={{ backgroundColor: c.status === 'active' ? '#34d399' : '#8fa0c2' }}
+                                style={{ backgroundColor: c.status === 'active' ? '#34d399' : '#8fabc2' }}
                                 aria-hidden="true"
                               />
                               {c.status}
@@ -514,20 +514,20 @@ export function AdminSubscriptionsContent() {
         <DialogContent className="border-white/10 bg-[#0b1226] text-white">
           <DialogHeader>
             <DialogTitle className="lux-display text-lg text-white">Nouveau coupon marketplace</DialogTitle>
-            <DialogDescription className="text-[#8fa0c2]">
+            <DialogDescription className="text-[#8fabc2]">
               Code généré automatiquement si vide (format HUB-XXXXXXXX).
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-2">
             <div className="grid gap-2">
-              <Label htmlFor="coupon-code" className="text-[#8fa0c2]">Code (optionnel)</Label>
+              <Label htmlFor="coupon-code" className="text-[#8fabc2]">Code (optionnel)</Label>
               <Input id="coupon-code" placeholder="HUB-XXXXXX" value={couponForm.code}
-                className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+                className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50"
                 onChange={(e) => setCouponForm((f) => ({ ...f, code: e.target.value.toUpperCase() }))} />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-2">
-                <Label htmlFor="coupon-type" className="text-[#8fa0c2]">Type</Label>
+                <Label htmlFor="coupon-type" className="text-[#8fabc2]">Type</Label>
                 <select
                   id="coupon-type"
                   className="h-9 rounded-xl border border-white/12 bg-[#0b1226] px-3 text-sm text-white [&>option]:bg-[#0b1226] [&>option]:text-white"
@@ -539,23 +539,23 @@ export function AdminSubscriptionsContent() {
                 </select>
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="coupon-value" className="text-[#8fa0c2]">Valeur</Label>
+                <Label htmlFor="coupon-value" className="text-[#8fabc2]">Valeur</Label>
                 <Input id="coupon-value" type="number" min="1" value={couponForm.discountValue}
-                  className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+                  className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50"
                   onChange={(e) => setCouponForm((f) => ({ ...f, discountValue: e.target.value }))} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-2">
-                <Label htmlFor="coupon-uses" className="text-[#8fa0c2]">Utilisations max</Label>
+                <Label htmlFor="coupon-uses" className="text-[#8fabc2]">Utilisations max</Label>
                 <Input id="coupon-uses" type="number" min="1" value={couponForm.maxUses}
-                  className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+                  className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50"
                   onChange={(e) => setCouponForm((f) => ({ ...f, maxUses: e.target.value }))} />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="coupon-commission" className="text-[#8fa0c2]">Commission (%)</Label>
+                <Label htmlFor="coupon-commission" className="text-[#8fabc2]">Commission (%)</Label>
                 <Input id="coupon-commission" type="number" min="0" max="100" value={couponForm.commissionRate}
-                  className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+                  className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50"
                   onChange={(e) => setCouponForm((f) => ({ ...f, commissionRate: e.target.value }))} />
               </div>
             </div>
@@ -573,7 +573,7 @@ export function AdminSubscriptionsContent() {
         <DialogContent className="max-w-md rounded-2xl border-white/10 bg-[#0b1226] text-white">
           <DialogHeader>
             <DialogTitle className="lux-display text-lg text-white">Modifier l'abonnement</DialogTitle>
-            <DialogDescription className="text-[#8fa0c2]">
+            <DialogDescription className="text-[#8fabc2]">
               {editSub
                 ? `${editSub.subscriber.name}${editSub.subscriber.email ? ` — ${editSub.subscriber.email}` : ''} · plan actuel : ${editSub.plan}`
                 : ''}
@@ -582,7 +582,7 @@ export function AdminSubscriptionsContent() {
           <div className="space-y-4">
             {/* Plan */}
             <div className="space-y-1.5">
-              <Label htmlFor="edit-plan" className="text-[#8fa0c2]">Plan</Label>
+              <Label htmlFor="edit-plan" className="text-[#8fabc2]">Plan</Label>
               <Select
                 value={editForm.plan}
                 onValueChange={(v) => {
@@ -608,7 +608,7 @@ export function AdminSubscriptionsContent() {
             </div>
             {/* Cycle */}
             <div className="space-y-1.5">
-              <Label htmlFor="edit-cycle" className="text-[#8fa0c2]">Cycle de facturation</Label>
+              <Label htmlFor="edit-cycle" className="text-[#8fabc2]">Cycle de facturation</Label>
               <Select
                 value={editForm.billingCycle}
                 onValueChange={(v) => {
@@ -630,7 +630,7 @@ export function AdminSubscriptionsContent() {
             {/* Montant (custom uniquement) */}
             {editForm.plan === 'custom' && (
               <div className="space-y-1.5">
-                <Label htmlFor="edit-amount" className="text-[#8fa0c2]">Montant (€ / cycle)</Label>
+                <Label htmlFor="edit-amount" className="text-[#8fabc2]">Montant (€ / cycle)</Label>
                 <Input
                   id="edit-amount"
                   type="number"
@@ -638,13 +638,13 @@ export function AdminSubscriptionsContent() {
                   step="0.01"
                   value={editForm.amount}
                   onChange={(e) => setEditForm((f) => ({ ...f, amount: e.target.value }))}
-                  className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50"
+                  className="rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50"
                 />
               </div>
             )}
             {/* Statut */}
             <div className="space-y-1.5">
-              <Label htmlFor="edit-status" className="text-[#8fa0c2]">Statut</Label>
+              <Label htmlFor="edit-status" className="text-[#8fabc2]">Statut</Label>
               <Select
                 value={editForm.status}
                 onValueChange={(v) => setEditForm((f) => ({ ...f, status: v }))}
@@ -660,7 +660,7 @@ export function AdminSubscriptionsContent() {
             </div>
             {/* Aperçu prix recalculé */}
             {editForm.plan !== 'custom' && editPricePreview() && (
-              <p className="rounded-xl border border-[#5c8af0]/25 bg-[#5c8af0]/8 px-3 py-2 text-xs font-semibold text-[#a9c4ff]">
+              <p className="rounded-xl border border-[#5cadf0]/25 bg-[#5cadf0]/8 px-3 py-2 text-xs font-semibold text-[#a9d8ff]">
                 Prix recalculé immédiatement :{' '}
                 <span className="lux-num font-bold text-white">
                   {(editPricePreview()!.price ?? 0).toFixed(2)} € / {editPricePreview()!.cycle === 'monthly' ? 'mois' : 'an'}
@@ -686,7 +686,7 @@ export function AdminSubscriptionsContent() {
 function EmptyState({ text }: { text: string }) {
   return (
     <div className="lux-empty rounded-xl px-4 py-12 text-center">
-      <p className="mx-auto max-w-md text-sm text-[#8fa0c2]">{text}</p>
+      <p className="mx-auto max-w-md text-sm text-[#8fabc2]">{text}</p>
     </div>
   );
 }

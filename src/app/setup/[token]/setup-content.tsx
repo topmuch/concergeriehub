@@ -89,7 +89,7 @@ const fadeUp = {
 
 // ── B2B input / label classes ──
 const b2bInput =
-  'w-full bg-white border border-slate-300 rounded-xl p-3.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0066EF] focus:ring-2 focus:ring-[#0066EF]/10 transition-all';
+  'w-full bg-white border border-slate-300 rounded-xl p-3.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#055492] focus:ring-2 focus:ring-[#055492]/10 transition-all';
 const b2bLabel =
   'text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5 block';
 
@@ -561,7 +561,7 @@ export function SetupPageContent({ params }: { params: Promise<{ token: string }
                         onClick={() => handleTypeSelect(option)}
                         className={`w-full text-left bg-white border rounded-xl p-4 flex items-center gap-4 transition-all cursor-pointer ${
                           isSelected
-                            ? 'border-[#0066EF] ring-2 ring-[#0066EF]/15 shadow-md'
+                            ? 'border-[#055492] ring-2 ring-[#055492]/15 shadow-md'
                             : 'border-slate-200 shadow-sm hover:border-slate-300 hover:shadow'
                         }`}
                         aria-pressed={isSelected}
@@ -571,16 +571,16 @@ export function SetupPageContent({ params }: { params: Promise<{ token: string }
                           <span className="block text-sm font-semibold text-slate-900">{option.name}</span>
                           <span className="block text-xs text-slate-500 mt-0.5 leading-relaxed">{option.description}</span>
                           <span className={`inline-block mt-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-full ${
-                            isSelected ? 'bg-[#EAF2FF] text-[#0052C4] border border-[#DBE8FF]' : 'bg-slate-50 text-slate-500 border border-slate-200'
+                            isSelected ? 'bg-[#dceaf5] text-[#04467a] border border-[#DBE8FF]' : 'bg-slate-50 text-slate-500 border border-slate-200'
                           }`}>
                             {option.planLabel}
                           </span>
                         </span>
                         {/* Radio dot */}
                         <span className={`h-5 w-5 rounded-full border-2 shrink-0 flex items-center justify-center transition-colors ${
-                          isSelected ? 'border-[#0066EF]' : 'border-slate-300'
+                          isSelected ? 'border-[#055492]' : 'border-slate-300'
                         }`}>
-                          {isSelected && <span className="h-2.5 w-2.5 rounded-full bg-[#0066EF]" />}
+                          {isSelected && <span className="h-2.5 w-2.5 rounded-full bg-[#055492]" />}
                         </span>
                       </motion.button>
                     );
@@ -1013,7 +1013,7 @@ export function SetupPageContent({ params }: { params: Promise<{ token: string }
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-slate-500 font-medium">Essai gratuit</span>
-                        <span className="text-[#0066EF] font-semibold">14 jours</span>
+                        <span className="text-[#055492] font-semibold">14 jours</span>
                       </div>
                     </div>
                   </QRTCard>

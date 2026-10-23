@@ -100,7 +100,7 @@ export function InspectionOnboarding({ sessionName, sessionEmail, onFinish }: On
       <h1 className="lux-display mt-2 text-center text-3xl font-semibold text-white sm:text-4xl">
         États des Lieux
       </h1>
-      <p className="mt-2 max-w-md text-center text-sm text-[#8fa0c2]">
+      <p className="mt-2 max-w-md text-center text-sm text-[#8fabc2]">
         Générez vos états des lieux d&apos;entrée et de sortie en quelques minutes —
         pièce par pièce, avec photos et signature électronique de l&apos;invité.
       </p>
@@ -126,7 +126,7 @@ export function InspectionOnboarding({ sessionName, sessionEmail, onFinish }: On
             <span
               className={cn(
                 'hidden text-[11px] font-semibold uppercase tracking-[0.14em] sm:inline',
-                i === step ? 'text-white' : 'text-[#8fa0c2]/70',
+                i === step ? 'text-white' : 'text-[#8fabc2]/70',
               )}
             >
               {label}
@@ -150,12 +150,12 @@ export function InspectionOnboarding({ sessionName, sessionEmail, onFinish }: On
             <h2 className="lux-display mt-1 text-xl font-semibold text-white sm:text-2xl">
               Vos informations
             </h2>
-            <p className="mt-1 text-sm text-[#8fa0c2]">
+            <p className="mt-1 text-sm text-[#8fabc2]">
               Elles apparaissent sur vos documents en tant que propriétaire.
             </p>
             <div className="mt-6 space-y-4">
               <div className="space-y-1.5">
-                <Label htmlFor="edl-fullname" className="text-xs text-[#8fa0c2]">
+                <Label htmlFor="edl-fullname" className="text-xs text-[#8fabc2]">
                   Prénom et nom
                 </Label>
                 <Input
@@ -168,7 +168,7 @@ export function InspectionOnboarding({ sessionName, sessionEmail, onFinish }: On
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="edl-email" className="text-xs text-[#8fa0c2]">
+                <Label htmlFor="edl-email" className="text-xs text-[#8fabc2]">
                   Email
                 </Label>
                 <Input
@@ -191,12 +191,12 @@ export function InspectionOnboarding({ sessionName, sessionEmail, onFinish }: On
             <h2 className="lux-display mt-1 text-xl font-semibold text-white sm:text-2xl">
               Votre premier logement
             </h2>
-            <p className="mt-1 text-sm text-[#8fa0c2]">
+            <p className="mt-1 text-sm text-[#8fabc2]">
               Le logement visé par votre premier état des lieux.
             </p>
             <div className="mt-6 space-y-4">
               <div className="space-y-1.5">
-                <Label htmlFor="edl-property" className="text-xs text-[#8fa0c2]">
+                <Label htmlFor="edl-property" className="text-xs text-[#8fabc2]">
                   Nom du logement
                 </Label>
                 <Input
@@ -208,7 +208,7 @@ export function InspectionOnboarding({ sessionName, sessionEmail, onFinish }: On
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="edl-address" className="text-xs text-[#8fa0c2]">
+                <Label htmlFor="edl-address" className="text-xs text-[#8fabc2]">
                   Adresse complète
                 </Label>
                 <Input
@@ -230,29 +230,29 @@ export function InspectionOnboarding({ sessionName, sessionEmail, onFinish }: On
             <h2 className="lux-display mt-1 text-xl font-semibold text-white sm:text-2xl">
               C&apos;est prêt !
             </h2>
-            <p className="mt-1 text-sm text-[#8fa0c2]">
+            <p className="mt-1 text-sm text-[#8fabc2]">
               Votre module est initialisé. Voici le récapitulatif de votre premier document.
             </p>
             <dl className="mt-6 space-y-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <dt className="text-xs uppercase tracking-[0.14em] text-[#8fa0c2]">Propriétaire</dt>
+                <dt className="text-xs uppercase tracking-[0.14em] text-[#8fabc2]">Propriétaire</dt>
                 <dd className="font-semibold text-white">{fullName.trim()}</dd>
               </div>
               <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <dt className="text-xs uppercase tracking-[0.14em] text-[#8fa0c2]">Email</dt>
+                <dt className="text-xs uppercase tracking-[0.14em] text-[#8fabc2]">Email</dt>
                 <dd className="font-semibold text-white">{email.trim()}</dd>
               </div>
               <div className="lux-rule" aria-hidden="true" />
               <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <dt className="text-xs uppercase tracking-[0.14em] text-[#8fa0c2]">Logement</dt>
+                <dt className="text-xs uppercase tracking-[0.14em] text-[#8fabc2]">Logement</dt>
                 <dd className="font-semibold text-white">{propertyName.trim()}</dd>
               </div>
               <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <dt className="text-xs uppercase tracking-[0.14em] text-[#8fa0c2]">Adresse</dt>
+                <dt className="text-xs uppercase tracking-[0.14em] text-[#8fabc2]">Adresse</dt>
                 <dd className="font-semibold text-white">{propertyAddress.trim()}</dd>
               </div>
             </dl>
-            <p className="mt-4 text-xs leading-relaxed text-[#8fa0c2]">
+            <p className="mt-4 text-xs leading-relaxed text-[#8fabc2]">
               À la création, les 5 pièces réglementaires (séjour, cuisine, chambre, salle de bain,
               WC) et leurs équipements sont pré-remplis — l&apos;invité n&apos;a plus qu&apos;à
               vérifier, photographier et signer.
@@ -308,7 +308,7 @@ export function InspectionOnboarding({ sessionName, sessionEmail, onFinish }: On
         </div>
       </motion.div>
 
-      <p className="mt-5 max-w-md text-center text-xs leading-relaxed text-[#8fa0c2]/80">
+      <p className="mt-5 max-w-md text-center text-xs leading-relaxed text-[#8fabc2]/80">
         Les documents générés restent consultables et téléchargeables (PDF) depuis ce tableau de
         bord, pendant toute la durée de votre abonnement.
       </p>

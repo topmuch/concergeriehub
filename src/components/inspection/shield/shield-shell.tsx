@@ -101,13 +101,13 @@ export function ShieldShell({
         className={`relative flex min-h-[44px] items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors ${
           active
             ? 'bg-white/15 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]'
-            : 'text-blue-100 hover:bg-white/10 hover:text-white'
+            : 'text-[#dceaf5] hover:bg-white/10 hover:text-white'
         }`}
       >
         {active && (
           <span
             aria-hidden="true"
-            className="absolute inset-y-1.5 left-0 w-1 rounded-full bg-gradient-to-b from-[#ff5a76] to-[#C41E3A]"
+            className="absolute inset-y-1.5 left-0 w-1 rounded-full bg-gradient-to-b from-[#e9c47c] to-[#d9b45b]"
           />
         )}
         <Icon className="h-[18px] w-[18px] shrink-0" aria-hidden="true" />
@@ -121,7 +121,7 @@ export function ShieldShell({
       {MENU.map(renderItem)}
       {/* v4.158 — section Aide : séparateur + libellé + 4 onglets */}
       <div aria-hidden="true" className="mx-1 my-2 border-t border-white/10" />
-      <p className="px-3 pb-1 text-[10px] font-bold uppercase tracking-[0.24em] text-blue-200">
+      <p className="px-3 pb-1 text-[10px] font-bold uppercase tracking-[0.24em] text-[#c8dfef]">
         Aide
       </p>
       {HELP_MENU.map(renderItem)}
@@ -132,19 +132,20 @@ export function ShieldShell({
   // renommé « RoomScan Inventaire ».
   const brand = (
     <div className="flex items-center gap-3 border-b border-white/10 px-5 py-4">
-      <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white shadow-md ring-1 ring-black/5">
+      {/* v5.9 — tuile logo agrandie (grand format demandé) */}
+      <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white shadow-md ring-1 ring-black/5">
         <Image
           src={LOGO}
           alt="Logo RoomScan"
-          width={40}
-          height={40}
-          className="h-10 w-10 object-contain p-0.5"
+          width={44}
+          height={44}
+          className="h-11 w-11 object-contain p-0.5"
           priority
         />
       </span>
       <div className="min-w-0">
         <p className="truncate text-sm font-bold tracking-tight text-white">RoomScan Inventaire</p>
-        <p className="text-[11px] uppercase tracking-wider text-blue-200">États des lieux V2</p>
+        <p className="text-[11px] uppercase tracking-wider text-[#c8dfef]">États des lieux V2</p>
       </div>
     </div>
   );
@@ -152,10 +153,10 @@ export function ShieldShell({
   const userBlock = (
     <div className="border-t border-white/10 px-5 py-4">
       <p className="truncate text-sm font-semibold text-white">{user.name ?? 'Hôte'}</p>
-      <p className="truncate text-xs text-blue-200">{user.email}</p>
+      <p className="truncate text-xs text-[#c8dfef]">{user.email}</p>
       <Link
         href="/airbnb/dashboard"
-        className="mt-3 inline-flex min-h-[36px] items-center rounded-lg border border-white/15 px-3 text-xs font-medium text-blue-100 transition-colors hover:bg-white/10 hover:text-white"
+        className="mt-3 inline-flex min-h-[36px] items-center rounded-lg border border-white/15 px-3 text-xs font-medium text-[#dceaf5] transition-colors hover:bg-white/10 hover:text-white"
       >
         ← Espace Hôte
       </Link>
@@ -222,7 +223,7 @@ export function ShieldShell({
                   type="button"
                   onClick={() => setOpen(false)}
                   aria-label="Fermer"
-                  className="flex h-10 w-10 items-center justify-center rounded-lg text-blue-100 hover:bg-white/10 hover:text-white"
+                  className="flex h-10 w-10 items-center justify-center rounded-lg text-[#dceaf5] hover:bg-white/10 hover:text-white"
                 >
                   <X className="h-5 w-5" aria-hidden="true" />
                 </button>
@@ -245,7 +246,7 @@ export function ShieldShell({
               <Image src={LOGO} alt="Logo RoomScan" width={32} height={32} className="h-8 w-8 object-contain p-0.5" />
             </span>
             <span className="text-sm font-bold tracking-tight text-slate-900 dark:text-slate-100">
-              RoomScan <span className="text-[#C41E3A] dark:text-[#ff5a76]">Inventaire</span>
+              RoomScan <span className="text-[#055492] dark:text-[#8fb8dc]">Inventaire</span>
             </span>
           </div>
           <div className="flex items-center gap-0.5">

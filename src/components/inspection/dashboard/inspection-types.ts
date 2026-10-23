@@ -69,8 +69,8 @@ export const INSPECTION_STATUS_META: Record<
   },
   CANCELLED: {
     label: 'Annulé',
-    badgeClass: 'border-white/20 bg-white/5 text-[#8fa0c2]',
-    dotColor: '#8fa0c2',
+    badgeClass: 'border-white/20 bg-white/5 text-[#8fabc2]',
+    dotColor: '#8fabc2',
   },
 };
 

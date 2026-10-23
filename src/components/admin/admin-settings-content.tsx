@@ -81,7 +81,7 @@ interface BlacklistRow {
 
 // Champs de formulaire « lux » (sombre bleuté).
 const LUX_INPUT =
-  'h-10 rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50';
+  'h-10 rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50';
 
 export function AdminSettingsContent() {
   const [settings, setSettings] = useState<Settings | null>(null);
@@ -273,25 +273,25 @@ export function AdminSettingsContent() {
         <TabsList className="h-auto flex-wrap justify-start gap-1 rounded-full border border-white/10 bg-white/[0.04] p-1">
           <TabsTrigger
             value="general"
-            className="rounded-full text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fa0c2] transition-colors data-[state=active]:bg-white/10 data-[state=active]:text-white"
+            className="rounded-full text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fabc2] transition-colors data-[state=active]:bg-white/10 data-[state=active]:text-white"
           >
             Général
           </TabsTrigger>
           <TabsTrigger
             value="domains"
-            className="rounded-full text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fa0c2] transition-colors data-[state=active]:bg-white/10 data-[state=active]:text-white"
+            className="rounded-full text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fabc2] transition-colors data-[state=active]:bg-white/10 data-[state=active]:text-white"
           >
             Domaines &amp; White-label
           </TabsTrigger>
           <TabsTrigger
             value="flags"
-            className="rounded-full text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fa0c2] transition-colors data-[state=active]:bg-white/10 data-[state=active]:text-white"
+            className="rounded-full text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fabc2] transition-colors data-[state=active]:bg-white/10 data-[state=active]:text-white"
           >
             Feature flags
           </TabsTrigger>
           <TabsTrigger
             value="security"
-            className="rounded-full text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fa0c2] transition-colors data-[state=active]:bg-white/10 data-[state=active]:text-white"
+            className="rounded-full text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fabc2] transition-colors data-[state=active]:bg-white/10 data-[state=active]:text-white"
           >
             Sécurité
           </TabsTrigger>
@@ -302,7 +302,7 @@ export function AdminSettingsContent() {
           <Card className="lux-card">
             <CardHeader>
               <CardTitle className="lux-display text-lg text-white">Paramètres généraux</CardTitle>
-              <CardDescription className="text-sm text-[#8fa0c2]">
+              <CardDescription className="text-sm text-[#8fabc2]">
                 Configuration persistée en base et consommée par les routes métier (inscriptions, commandes, reversements).
               </CardDescription>
             </CardHeader>
@@ -337,7 +337,7 @@ export function AdminSettingsContent() {
               <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.03] p-4">
                 <div>
                   <p className="text-sm font-semibold text-white">Mode maintenance</p>
-                  <p className="text-xs text-[#8fa0c2]">
+                  <p className="text-xs text-[#8fabc2]">
                     Bloque les nouvelles commandes de service (contrôle réel dans l'API marketplace).
                   </p>
                 </div>
@@ -359,14 +359,14 @@ export function AdminSettingsContent() {
           <Card className="lux-card">
             <CardHeader>
               <CardTitle className="lux-display text-lg text-white">Domaines personnalisés (white-label)</CardTitle>
-              <CardDescription className="text-sm text-[#8fa0c2]">
+              <CardDescription className="text-sm text-[#8fabc2]">
                 L'app invitée est servie sous le domaine de la conciergerie (CNAME) une fois la possession
                 du domaine prouvée par l'enregistrement TXT ci-dessous.
               </CardDescription>
             </CardHeader>
             <CardContent>
               {domains.length === 0 ? (
-                <p className="lux-empty rounded-2xl px-4 py-10 text-center text-sm text-[#8fa0c2]">
+                <p className="lux-empty rounded-2xl px-4 py-10 text-center text-sm text-[#8fabc2]">
                   Aucun bien n'a de domaine personnalisé configuré. Les conciergeries définissent leur domaine
                   dans les réglages de leur bien (white-label).
                 </p>
@@ -387,7 +387,7 @@ export function AdminSettingsContent() {
                         <TableRow key={d.propertyId} className="border-white/8 hover:bg-white/[0.04]">
                           <TableCell className="font-semibold text-white">{d.propertyName}</TableCell>
                           <TableCell className="font-mono text-xs text-[#c7d3ec]">{d.domain}</TableCell>
-                          <TableCell className="hidden font-mono text-[11px] text-[#8fa0c2] lg:table-cell">
+                          <TableCell className="hidden font-mono text-[11px] text-[#8fabc2] lg:table-cell">
                             {d.txtRecord.host} → {d.txtRecord.value}
                           </TableCell>
                           <TableCell>
@@ -419,7 +419,7 @@ export function AdminSettingsContent() {
           <Card className="lux-card">
             <CardHeader>
               <CardTitle className="lux-display text-lg text-white">Feature flags</CardTitle>
-              <CardDescription className="text-sm text-[#8fa0c2]">
+              <CardDescription className="text-sm text-[#8fabc2]">
                 Interrupteurs réels : chaque bascule est appliquée immédiatement par les routes métier.
               </CardDescription>
             </CardHeader>
@@ -428,7 +428,7 @@ export function AdminSettingsContent() {
                 <div key={flag.key} className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.03] p-4">
                   <div className="min-w-0 pr-4">
                     <p className="font-mono text-sm font-bold text-white">{flag.key}</p>
-                    <p className="text-xs text-[#8fa0c2]">{flag.description}</p>
+                    <p className="text-xs text-[#8fabc2]">{flag.description}</p>
                   </div>
                   <Switch checked={flag.enabled} onCheckedChange={() => toggleFlag(flag)}
                     aria-label={`Basculer ${flag.key}`} />
@@ -444,17 +444,17 @@ export function AdminSettingsContent() {
           <Card className="lux-card">
             <CardHeader>
               <CardTitle className="lux-display text-lg text-white">Rate limiting</CardTitle>
-              <CardDescription className="text-sm text-[#8fa0c2]">
+              <CardDescription className="text-sm text-[#8fabc2]">
                 Actif sur : connexion, inscription, création/paiement de commandes, hub.
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-wrap items-center gap-3">
               <Badge className={rateInfo?.redisConfigured
                 ? 'border border-[#34d399]/25 bg-[#34d399]/10 text-[#86e9cb]'
-                : 'border border-white/10 bg-white/[0.05] text-[#8fa0c2]'}>
+                : 'border border-white/10 bg-white/[0.05] text-[#8fabc2]'}>
                 Backend : {rateInfo?.backend ?? '…'}
               </Badge>
-              <p className="text-xs text-[#8fa0c2]">
+              <p className="text-xs text-[#8fabc2]">
                 Connexion : 10/min/IP · Inscriptions : quota configurable (onglet Général) · Paiement : 6/min/commande
                 {rateInfo?.redisConfigured ? ' — partagé entre instances via Redis.' : ' — store mémoire (mono-instance).'}
               </p>
@@ -465,9 +465,9 @@ export function AdminSettingsContent() {
           <Card className="lux-card">
             <CardHeader>
               <CardTitle className="lux-display text-lg text-white">Clés d'API externes</CardTitle>
-              <CardDescription className="text-sm text-[#8fa0c2]">
-                Consommation réelle : <code className="rounded bg-white/10 px-1 text-[#a9c4ff]">GET /api/external/v1/stats</code> avec
-                l'en-tête <code className="rounded bg-white/10 px-1 text-[#a9c4ff]">x-api-key</code> (30 req/min/clé).
+              <CardDescription className="text-sm text-[#8fabc2]">
+                Consommation réelle : <code className="rounded bg-white/10 px-1 text-[#a9d8ff]">GET /api/external/v1/stats</code> avec
+                l'en-tête <code className="rounded bg-white/10 px-1 text-[#a9d8ff]">x-api-key</code> (30 req/min/clé).
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -505,7 +505,7 @@ export function AdminSettingsContent() {
               )}
 
               {apiKeys.length === 0 ? (
-                <p className="text-sm text-[#8fa0c2]">Aucune clé créée.</p>
+                <p className="text-sm text-[#8fabc2]">Aucune clé créée.</p>
               ) : (
                 <div className="overflow-x-auto rounded-xl border border-white/10">
                   <Table>
@@ -523,12 +523,12 @@ export function AdminSettingsContent() {
                         <TableRow key={k.id} className="border-white/8 hover:bg-white/[0.04]">
                           <TableCell className="font-semibold text-white">{k.name}</TableCell>
                           <TableCell className="font-mono text-xs text-[#c7d3ec]">{k.prefix}</TableCell>
-                          <TableCell className="hidden text-xs text-[#8fa0c2] md:table-cell">
+                          <TableCell className="hidden text-xs text-[#8fabc2] md:table-cell">
                             {k.lastUsedAt ? new Date(k.lastUsedAt).toLocaleString('fr-FR') : 'jamais'}
                           </TableCell>
                           <TableCell>
                             {k.revoked ? (
-                              <Badge variant="outline" className="border-white/12 text-[#8fa0c2]">Révoquée</Badge>
+                              <Badge variant="outline" className="border-white/12 text-[#8fabc2]">Révoquée</Badge>
                             ) : (
                               <Badge className="border border-[#34d399]/25 bg-[#34d399]/10 text-[#86e9cb]">Active</Badge>
                             )}
@@ -555,7 +555,7 @@ export function AdminSettingsContent() {
           <Card className="lux-card">
             <CardHeader>
               <CardTitle className="lux-display text-lg text-white">Blacklist IP</CardTitle>
-              <CardDescription className="text-sm text-[#8fa0c2]">
+              <CardDescription className="text-sm text-[#8fabc2]">
                 Une IP bannie est refusée sur la connexion, l'inscription et le paiement (contrôle réel).
               </CardDescription>
             </CardHeader>
@@ -571,7 +571,7 @@ export function AdminSettingsContent() {
                 </Button>
               </div>
               {blacklist.length === 0 ? (
-                <p className="text-sm text-[#8fa0c2]">Aucune IP bannie.</p>
+                <p className="text-sm text-[#8fabc2]">Aucune IP bannie.</p>
               ) : (
                 <div className="overflow-x-auto rounded-xl border border-white/10">
                   <Table>
@@ -587,8 +587,8 @@ export function AdminSettingsContent() {
                       {blacklist.map((b) => (
                         <TableRow key={b.ip} className="border-white/8 hover:bg-white/[0.04]">
                           <TableCell className="font-mono text-sm font-bold text-white">{b.ip}</TableCell>
-                          <TableCell className="text-sm text-[#8fa0c2]">{b.reason ?? '—'}</TableCell>
-                          <TableCell className="text-sm text-[#8fa0c2]">
+                          <TableCell className="text-sm text-[#8fabc2]">{b.reason ?? '—'}</TableCell>
+                          <TableCell className="text-sm text-[#8fabc2]">
                             {new Date(b.createdAt).toLocaleDateString('fr-FR')}
                           </TableCell>
                           <TableCell>
@@ -614,7 +614,7 @@ export function AdminSettingsContent() {
         <AlertDialogContent className="border-white/10 bg-[#0b1226] text-white">
           <AlertDialogHeader>
             <AlertDialogTitle className="lux-display text-lg text-white">Révoquer cette clé d'API ?</AlertDialogTitle>
-            <AlertDialogDescription className="text-sm text-[#8fa0c2]">
+            <AlertDialogDescription className="text-sm text-[#8fabc2]">
               La clé « <strong>{revokeTarget?.name}</strong> » ({revokeTarget?.prefix}) cessera de fonctionner
               immédiatement. Action irréversible.
             </AlertDialogDescription>

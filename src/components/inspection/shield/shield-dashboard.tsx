@@ -164,7 +164,7 @@ function GradientStat({
 }
 
 const GRADIENTS = {
-  bleu: 'bg-gradient-to-br from-[#3b82f6] via-[#2f6fed] to-[#1d4ed8]',
+  bleu: 'bg-gradient-to-br from-[#1173c7] via-[#2f6fed] to-[#04467a]',
   rouge: 'bg-gradient-to-br from-[#ef2f5b] via-[#d92049] to-[#8f1230]',
   orange: 'bg-gradient-to-br from-[#fb923c] via-[#f97316] to-[#c2410c]',
   violet: 'bg-gradient-to-br from-[#a78bfa] via-[#8b5cf6] to-[#6d28d9]',
@@ -226,7 +226,7 @@ export function ShieldDashboard() {
   if (!stats) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-[#1e3a8a] dark:text-[#3b82f6]" aria-label="Chargement" />
+        <Loader2 className="h-8 w-8 animate-spin text-[#055492] dark:text-[#1173c7]" aria-label="Chargement" />
       </div>
     );
   }
@@ -299,7 +299,7 @@ export function ShieldDashboard() {
           value={kpis.properties}
           label="logements onboardés"
           percent={Math.min(100, kpis.properties * 25)}
-          color="#2563eb"
+          color="#0a61b0"
         />
         <KpiCard
           title="À venir"
@@ -365,8 +365,8 @@ export function ShieldDashboard() {
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#22305a' : '#eef2f7'} vertical={false} />
-                  <XAxis dataKey="label" tick={{ fontSize: 11, fill: isDark ? '#8fa0c0' : '#94a3b8' }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
-                  <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: isDark ? '#8fa0c0' : '#94a3b8' }} tickLine={false} axisLine={false} />
+                  <XAxis dataKey="label" tick={{ fontSize: 11, fill: isDark ? '#8faac0' : '#94a3b8' }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+                  <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: isDark ? '#8faac0' : '#94a3b8' }} tickLine={false} axisLine={false} />
                   <Tooltip
                     contentStyle={{
                       borderRadius: 12,
@@ -483,8 +483,8 @@ export function ShieldDashboard() {
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={weeks} margin={{ top: 8, right: 4, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#22305a' : '#eef2f7'} vertical={false} />
-                  <XAxis dataKey="label" tick={{ fontSize: 10, fill: isDark ? '#8fa0c0' : '#94a3b8' }} tickLine={false} axisLine={false} />
-                  <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: isDark ? '#8fa0c0' : '#94a3b8' }} tickLine={false} axisLine={false} />
+                  <XAxis dataKey="label" tick={{ fontSize: 10, fill: isDark ? '#8faac0' : '#94a3b8' }} tickLine={false} axisLine={false} />
+                  <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: isDark ? '#8faac0' : '#94a3b8' }} tickLine={false} axisLine={false} />
                   <Tooltip
                     contentStyle={{
                       borderRadius: 12,
@@ -600,7 +600,7 @@ export function ShieldDashboard() {
                       <span
                         className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${
                           s.type === 'CHECK_IN'
-                            ? 'bg-blue-50 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300'
+                            ? 'bg-[#f0f7fc] text-[#04467a] dark:bg-[#1173c7]/15 dark:text-[#8fb1cc]'
                             : 'bg-rose-50 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300'
                         }`}
                       >
@@ -661,11 +661,11 @@ export function ShieldDashboard() {
         <Link
           href="/inspection/mode-demploi"
           aria-label="Ouvrir le mode d'emploi"
-          className="group flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-colors hover:border-[#1e3a8a]/30 hover:bg-slate-50/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1e3a8a] dark:border-[#22305a] dark:bg-[#0d1530]/90 dark:hover:border-[#3b82f6]/40 dark:hover:bg-[#13204a]"
+          className="group flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-colors hover:border-[#055492]/30 hover:bg-slate-50/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#055492] dark:border-[#22305a] dark:bg-[#0d1530]/90 dark:hover:border-[#1173c7]/40 dark:hover:bg-[#13204a]"
         >
           <span
             aria-hidden="true"
-            className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#2f6fed] text-white shadow-md"
+            className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#055492] to-[#2f6fed] text-white shadow-md"
           >
             <BookOpen className="size-5" />
           </span>
@@ -684,7 +684,7 @@ export function ShieldDashboard() {
         <Link
           href="/inspection/faq"
           aria-label="Ouvrir la FAQ"
-          className="group flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-colors hover:border-[#1e3a8a]/30 hover:bg-slate-50/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1e3a8a] dark:border-[#22305a] dark:bg-[#0d1530]/90 dark:hover:border-[#3b82f6]/40 dark:hover:bg-[#13204a]"
+          className="group flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-colors hover:border-[#055492]/30 hover:bg-slate-50/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#055492] dark:border-[#22305a] dark:bg-[#0d1530]/90 dark:hover:border-[#1173c7]/40 dark:hover:bg-[#13204a]"
         >
           <span
             aria-hidden="true"
@@ -770,7 +770,7 @@ export function ShieldDashboard() {
                       setChooserOpen(false);
                       setBadgesTarget(p);
                     }}
-                    className="w-full rounded-lg border border-slate-200 px-4 py-3 text-left transition-colors hover:border-[#1e3a8a]/40 hover:bg-slate-50 dark:border-[#22305a] dark:hover:border-[#3b82f6]/50 dark:hover:bg-[#13204a]"
+                    className="w-full rounded-lg border border-slate-200 px-4 py-3 text-left transition-colors hover:border-[#055492]/40 hover:bg-slate-50 dark:border-[#22305a] dark:hover:border-[#1173c7]/50 dark:hover:bg-[#13204a]"
                   >
                     <span className="block text-sm font-semibold text-slate-900 dark:text-slate-100">
                       {p.propertyName}

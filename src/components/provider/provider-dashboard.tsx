@@ -786,7 +786,7 @@ function OrderRow({ order, busy, onTransition }: {
               size="sm"
               disabled={busy}
               onClick={() => onTransition(order, s)}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
+              className="bg-[#055492] hover:bg-[#04467a] text-white"
             >
               {busy ? '…' : NEXT_ACTION_LABEL[s] ?? s}
             </Button>

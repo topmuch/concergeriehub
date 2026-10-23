@@ -154,7 +154,7 @@ export function InspectionCreateForm({
       >
         {label}
       </span>
-      <span className="text-[11px] text-[#8fa0c2]">{hint}</span>
+      <span className="text-[11px] text-[#8fabc2]">{hint}</span>
     </button>
   );
 
@@ -164,7 +164,7 @@ export function InspectionCreateForm({
         <div className="min-w-0">
           <p className="lux-eyebrow">Nouveau document</p>
           <h3 className="lux-display mt-1 text-lg text-white">Créer un état des lieux</h3>
-          <p className="text-xs text-[#8fa0c2]">
+          <p className="text-xs text-[#8fabc2]">
             Les pièces réglementaires et leurs équipements sont pré-remplis automatiquement.
           </p>
         </div>
@@ -188,7 +188,7 @@ export function InspectionCreateForm({
         }}
       >
         <div className="space-y-1.5 sm:col-span-2">
-          <Label htmlFor="edl-create-property" className="text-xs text-[#8fa0c2]">
+          <Label htmlFor="edl-create-property" className="text-xs text-[#8fabc2]">
             Logement (nom)
           </Label>
           <Input
@@ -202,7 +202,7 @@ export function InspectionCreateForm({
         </div>
 
         <div className="space-y-1.5 sm:col-span-2">
-          <Label htmlFor="edl-create-address" className="text-xs text-[#8fa0c2]">
+          <Label htmlFor="edl-create-address" className="text-xs text-[#8fabc2]">
             Adresse
           </Label>
           <Input
@@ -217,7 +217,7 @@ export function InspectionCreateForm({
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="edl-create-city" className="text-xs text-[#8fa0c2]">
+          <Label htmlFor="edl-create-city" className="text-xs text-[#8fabc2]">
             Ville <span className="normal-case">(mention « Fait à … » du PDF — optionnel)</span>
           </Label>
           <Input
@@ -232,7 +232,7 @@ export function InspectionCreateForm({
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="edl-create-owner" className="text-xs text-[#8fa0c2]">
+          <Label htmlFor="edl-create-owner" className="text-xs text-[#8fabc2]">
             Propriétaire
           </Label>
           <Input
@@ -246,7 +246,7 @@ export function InspectionCreateForm({
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="edl-create-guest" className="text-xs text-[#8fa0c2]">
+          <Label htmlFor="edl-create-guest" className="text-xs text-[#8fabc2]">
             Invité (nom)
           </Label>
           <Input
@@ -260,7 +260,7 @@ export function InspectionCreateForm({
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="edl-create-email" className="text-xs text-[#8fa0c2]">
+          <Label htmlFor="edl-create-email" className="text-xs text-[#8fabc2]">
             Email invité <span className="normal-case">(optionnel)</span>
           </Label>
           <Input
@@ -275,7 +275,7 @@ export function InspectionCreateForm({
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="edl-create-phone" className="text-xs text-[#8fa0c2]">
+          <Label htmlFor="edl-create-phone" className="text-xs text-[#8fabc2]">
             Téléphone invité <span className="normal-case">(optionnel)</span>
           </Label>
           <Input
@@ -290,7 +290,7 @@ export function InspectionCreateForm({
         </div>
 
         <fieldset className="space-y-1.5 sm:col-span-2">
-          <legend className="text-xs text-[#8fa0c2]">Type d&apos;état des lieux</legend>
+          <legend className="text-xs text-[#8fabc2]">Type d&apos;état des lieux</legend>
           <div className="flex flex-col gap-2 sm:flex-row">
             {typeOption('ENTREE', "Entrée — arrivée de l'invité", 'Constat à l’installation')}
             {typeOption('SORTIE', "Sortie — départ de l'invité", 'Comparatif + propreté')}
@@ -298,7 +298,7 @@ export function InspectionCreateForm({
         </fieldset>
 
         <div className="space-y-1.5">
-          <Label htmlFor="edl-create-date" className="text-xs text-[#8fa0c2]">
+          <Label htmlFor="edl-create-date" className="text-xs text-[#8fabc2]">
             Date visée
           </Label>
           <Input
@@ -312,7 +312,7 @@ export function InspectionCreateForm({
 
         {type === 'SORTIE' && (
           <div className="space-y-1.5" aria-live="polite">
-            <Label htmlFor="edl-create-linked" className="text-xs text-[#8fa0c2]">
+            <Label htmlFor="edl-create-linked" className="text-xs text-[#8fabc2]">
               Lier à une entrée existante
             </Label>
             <Select value={linkedInspectionId || 'none'} onValueChange={(v) => setLinkedInspectionId(v === 'none' ? '' : v)}>
@@ -333,7 +333,7 @@ export function InspectionCreateForm({
               </SelectContent>
             </Select>
             {entrees.length === 0 && (
-              <p className="text-[11px] text-[#8fa0c2]/80">
+              <p className="text-[11px] text-[#8fabc2]/80">
                 Aucun état des lieux d&apos;entrée disponible — créez-en un pour activer la
                 comparaison entrée / sortie.
               </p>

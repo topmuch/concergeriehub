@@ -15,7 +15,7 @@ import sharp from 'sharp';
 const DEMO_SLUG = 'demo-hub';
 
 const PALETTES: { from: string; to: string }[] = [
-  { from: '#07235B', to: '#0066EF' }, // Duo du logo : marine -> bleu vif
+  { from: '#043455', to: '#055492' }, // Duo du logo : marine -> bleu vif
   { from: '#0D9488', to: '#0F766E' }, // Teal
   { from: '#D97706', to: '#B45309' }, // Ambre profond
   { from: '#E11D48', to: '#BE123C' }, // Rose profond

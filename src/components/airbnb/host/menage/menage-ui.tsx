@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 
 /** Classes communes des champs de saisie sur la nuit saphir. */
 export const LUX_FIELD =
-  'rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fa0c2]/60 focus-visible:ring-[#5c8af0]/50';
+  'rounded-xl border-white/12 bg-white/[0.04] text-white placeholder:text-[#8fabc2]/60 focus-visible:ring-[#5cadf0]/50';
 
 /** Bouton secondaire fantôme (shadcn Button + teintes lux). */
 export const LUX_GHOST_BTN =
