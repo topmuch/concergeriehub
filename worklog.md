@@ -5603,3 +5603,21 @@ Work Log:
 Stage Summary:
 - v5.15 prête : PDF enrichis (bloc identification + date planifiée), emails réparés (lien public + récap enrichi), vidéo au format téléphone (AdaptiveVideo), shims restaurés.
 - Leçon pour agents futurs : TOUJOURS exécuter la garde `git cat-file -e "HEAD:src/app/upload/[token]/page.tsx"` avant tout commit/tar — le resync supprime les shims ; restauration : `git checkout 3422222 -- "src/app/upload/[token]/page.tsx" "src/components/upload/upload-token-page.tsx"`.
+---
+Task ID: V5.16
+Agent: Z.ai Code (session titre page vidéo)
+Task: « change ROOMSCAN BOUCLIER par roomscan inventaire — c'est le titre qui s'affiche lorsqu'on scanne la vidéo »
+
+Work Log:
+- Repérage : seule occurrence VISIBLE de « ROOMSCAN BOUCLIER » dans le flux vidéo = bandeau rouge de la page publique de preuve vidéo /shield/video/[token] ligne 89 (ouverte via QR du PDF ou lien partagé). Toutes les autres occurrences sont des commentaires de code ou des textes PDF onboarding (hors périmètre demandé).
+- FIX : titre → « ROOMSCAN INVENTAIRE » (harmonisé avec le pied de page « Document automatisé Roomscan Inventaire » et la meta « Preuve vidéo — Roomscan Inventaire » déjà à jour). Lint 0 erreur.
+- Pipeline v5.16 : VERSION.txt (entrée v5.16 documentée) ; Dockerfile cb=v5.16 ; commit 2ef4f9b (page + VERSION + Dockerfile) — PIEGE ÉVITÉ DE JUSTESSE : le tar reconstruit APRÈS le commit n'était PAS dans 2ef4f9b (détecté via API GitHub files[]) → commit tar dédié dfb4c4b ; shims /upload/[token] vérifiés avant/après chaque commit (git cat-file -e).
+- Tar reconstruit à la racine (6 014 848 o) ; vérifs : VERSION interne v5.16, shims présents, adaptive-video.tsx présent, titre ligne 89 = ROOMSCAN INVENTAIRE.
+- INCIDENT CACHE CDN (nouveau piège documenté) : fetch de contrôle de ?cb=v5.16 AVANT le push du tar → Fastly a mis en cache l'ancien tar v5.15 sous la clé cb=v5.16 ; la clé fraîche cb=v5.16b renvoyait AUSSI l'ancien → conclusion : Fastly de raw.githubusercontent.com ignore partiellement les query strings (clé ≈ chemin), TTL observé ~5-7 min. L'URL épinglée au commit /dfb4c4b/ servait déjà le bon tar (preuve blob SHA 2f5f9fc9 identique local/API).
+- Résolution : bascule Dockerfile sur cb=v5.16b (commit 6aa3d4f) + attente expiration TTL (poll 30 s → raw main?cb=v5.16b = v5.16 après ~2 min) PUIS déclenchement deploy. Règle future : ne JAMAIS fetcher l'URL cb avant que le tar correspondant soit sur main ; si empoisonné, attendre l'expiration (URL épinglée au commit = diagnostic fiable).
+- Deploy : POST /api/v1/deploy?uuid=p7xscubexkcymrehc50xhiuv&force=true → tfkudmc15p9rgclf6m72z0fo, in_progress ~9 min, finished (id 3531). Health prod : status OK, version v5.16, db up, smtp up.
+
+Stage Summary:
+- v5.16 EN PRODUCTION : le titre du lecteur de preuve vidéo affiche « ROOMSCAN INVENTAIRE ».
+- Aucun changement métier/DB ; v5.15 (bloc identification PDF + lien email public + vidéo portrait) reste intacte et vérifiée.
+- Leçons : ① committer le tar AVANT le push (ou dans le même commit que le code) et le vérifier via API GitHub files[] ; ② cache Fastly raw ≈ clé par chemin, TTL ~5-7 min — jamais de fetch de contrôle avant push du tar ; URL commit-épinglée pour diagnostic.
