@@ -5519,3 +5519,33 @@ Work Log:
 Stage Summary:
 - v5.9 EN PRODUCTION sur https://roomscan.pro : nouveau logo officiel en grand format + site harmonisé aux couleurs du logo (cobalt #055492)
 - Rollback disponible : release GitHub v.10 (asset tar v5.8 figé) ou tag git v5.8
+
+---
+Task ID: V5.10-LOGO-HARMONIZE
+Agent: Z.ai Code (session logo harmonization)
+Task: « enleve le 2eme logo qui eu dessus de Nouveau — Mode White-Label 1/ harmonise le logos sur tous les pages et tous dashboard et tous les pdf »
+
+Work Log:
+- Ciblé le 2ᵉ logo : BrandLogo size="hero" (176px) ajouté en v5.9 au-dessus du badge « Nouveau — Mode White-Label » dans hero-section.tsx → SUPPRIMÉ (le logo navbar 54px reste, une seule occurrence à l'écran).
+- BrandLogo : nouveau prop `height` (px exact, prioritaire sur `size`) → composant UNIQUE pour tous les contextes.
+- Landing : navbar Image directe → <BrandLogo height={54}> ; footer → <BrandLogo height={68}> (import next/image retiré).
+- Sidebars harmonisées (emblème 40px + nom plateforme + label) : Console Superadmin (admin-app-sidebar), Espace Hôte (host-shell), Espace Client (client-layout — mot-symbole md remplacé par le motif emblème+label des autres dashboards).
+- BUG CORRIGÉ au passage : shield-shell (RoomScan Inventaire) affichait l'emblème BLANC sur tuile bg-white (invisible) dans 3 endroits (sidebar 44px, topbar mobile 28px, topbar desktop 32px) → emblème BLEU partout.
+- guest-app : fallback <img> brut → <BrandLogo showWordmark={false} height={30}>.
+- PDFs (logo officiel partout) :
+  * NOUVEAU src/lib/pdf-brand-assets.ts — logo blanc 560px en dataURL base64 (34 Ko) pour jsPDF client (générateurs synchrones) ;
+  * NOUVEAU src/lib/pdf-brand-file.ts — loader disque server (public/ + .next/standalone/public/, cache process) pour pdfkit ;
+  * pdf-image.ts pdfHeader : bandeau émeraude legacy rgb(5,150,105) → cobalt #055492 rgb(5,84,146) + logo blanc à droite → bénéficie à assurance, ménage, check-out, journal de séjour, facture commission (client) ;
+  * mode-demploi-pdf.ts : logo blanc dans le bandeau bleu (textes décalés : 56/72/106) ;
+  * inspection-standalone-pdf.ts drawRedHeader : logo blanc à droite, maxW titre PAGE_W-170 (aucun chevauchement) ;
+  * shield-pdf.ts drawRedBanner : logo blanc à droite, passé aux 3 appelants (onboarding, session p.1, session p.2) ;
+  * commission-invoice-pdf-server.ts : logo bleu en haut à droite de l'en-tête ;
+  * inspection-pdf.ts : avait déjà le logo (inchangé) ;
+  * pdf-export.ts (planches QR) : pastille cobalt + logo blanc en tête + PAGINATION CORRIGÉE (l'ancien cols*7 codait 7 lignes > hauteur A4 → lignes 5-6 clippées dès ~20 codes ; désormais lignes calculées : 16/page A4 + offset 1ʳᵉ page).
+- Vérifs : eslint 0 erreur, tsc --noEmit 0 erreur, renders PDF testés en local (mode d'emploi 68 897 o, pdfHeader, planche QR 2 pages) via pdftoppm — logo visible, layouts propres ; landing/footer/forgot-password vérifiés agent-browser (0 erreur console).
+- Tar reconstruit (1334 entrées, 5 413 924 o), Dockerfile cb=v5.10, garde upload/[token]/page.tsx OK avant+après commit (5d175df).
+
+Stage Summary:
+- v5.10 « logo harmonisé PARTOUT » prête : 2ᵉ logo hero supprimé, <BrandLogo> unique sur le site (17 fichiers touchés), logo officiel + cobalt #055492 sur TOUS les PDFs, bug emblème invisible Inventaire corrigé, pagination QR réparée.
+- Déploiement Coolify à suivre (uuid p7xscubexkcymrehc50xhiuv) → vérifier /api/health v5.10.
+- Note : régénérer pdf-brand-assets.ts si le logo blanc change (sharp resize 560 + base64).
