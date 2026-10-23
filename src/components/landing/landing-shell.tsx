@@ -12,7 +12,7 @@
 // =============================================================
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import { AuthForm } from '@/components/auth/login-form';
 import { LandingLangProvider, dirFor, useLandingLang } from '@/lib/landing-i18n';
@@ -36,17 +36,46 @@ function LandingView({ onGoToAuth }: { onGoToAuth: (mode: AuthViewMode) => void 
 
 export function LandingShell() {
   const router = useRouter();
-  const [view, setView] = useState<View>('landing');
-  const [authMode, setAuthMode] = useState<AuthViewMode>('login');
+  // v5.18 SITE MULTIPAGES : les boutons « Connexion / Commencer » des
+  // AUTRES pages pointent /?auth=login|register — la vue auth s'ouvre
+  // d'après le paramètre d'URL (useSearchParams, sûr : la page est
+  // rendue en force-dynamic pour la CSP à nonce).
+  const searchParams = useSearchParams();
+  const authParam = searchParams.get('auth');
+  const [view, setView] = useState<View>(() =>
+    authParam === 'login' || authParam === 'register' ? 'auth' : 'landing',
+  );
+  const [authMode, setAuthMode] = useState<AuthViewMode>(() =>
+    authParam === 'register' ? 'register' : 'login',
+  );
 
   // Repartir du haut de page à chaque bascule de vue.
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
   }, [view]);
 
+  // Navigation « /?auth=… » depuis une autre page → ouvrir l'auth.
+  // Pattern « ajustement de state pendant le rendu » (recommandé par
+  // React pour dériver d'un changement de props/URL) — le lint
+  // set-state-in-effect interdit le setState direct dans un effet.
+  const [syncedAuthParam, setSyncedAuthParam] = useState(authParam);
+  if (syncedAuthParam !== authParam) {
+    setSyncedAuthParam(authParam);
+    if (authParam === 'login' || authParam === 'register') {
+      setAuthMode(authParam);
+      setView('auth');
+    }
+  }
+
   const handleGoToAuth = (mode: AuthViewMode) => {
     setAuthMode(mode);
     setView('auth');
+  };
+
+  const handleBackToLanding = () => {
+    setView('landing');
+    // Nettoyer l'URL (?auth=…) sans recharger la page.
+    router.replace('/');
   };
 
   const handleAuthSuccess = (role: string, opts?: { registered?: boolean }) => {
@@ -84,7 +113,7 @@ export function LandingShell() {
           <AuthForm
             onSuccess={handleAuthSuccess}
             initialRegister={authMode === 'register'}
-            onBack={() => setView('landing')}
+            onBack={handleBackToLanding}
           />
         </motion.div>
       )}

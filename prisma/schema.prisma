@@ -2996,3 +2996,26 @@ model ShieldVideo {
 
   @@map("shield_videos")
 }
+
+// ==============================================================
+// TABLE: contact_messages (v5.18 — formulaire de la page /contact)
+// Message envoyé depuis le formulaire public de contact. Une copie
+// email part aussi dans EmailOutbox ; cette table garde la trace
+// durable côté admin (statut NEW → HANDLED quand traité).
+// ==============================================================
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String   @map("name")
+  email     String   @map("email")
+  phone     String?  @map("phone")
+  subject   String   @map("subject") // demo | tarifs | etats-des-lieux | partenariat | support | autre
+  message   String   @map("message")
+  lang      String   @default("fr") @map("lang")
+  ipHash    String?  @map("ip_hash") // empreinte SHA-256 (pas d'IP brute)
+  status    String   @default("NEW") @map("status") // NEW | HANDLED
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([createdAt])
+  @@index([status])
+  @@map("contact_messages")
+}

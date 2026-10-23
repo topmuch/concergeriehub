@@ -8,14 +8,16 @@
 // =============================================================
 
 import { ArrowRight } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { MagneticButton } from '@/components/premium/magnetic-button';
 import { Reveal } from '@/components/premium/reveal';
 import { useLandingLang } from '@/lib/landing-i18n';
 
-type GoToAuth = (mode: 'login' | 'register') => void;
-
-export function CtaFinal({ onGoToAuth }: { onGoToAuth?: GoToAuth }) {
+// v5.18 site multipages : « Choisir mon offre » mène à la page /tarifs
+// (les 4 offres y sont, payables PayPal) — plus de renvoi vers l'auth.
+export function CtaFinal() {
   const { t } = useLandingLang();
+  const router = useRouter();
   return (
     <section className="relative overflow-hidden py-28 sm:py-36">
       {/* Halo signature local (voiles bleu logo → pastel) */}
@@ -36,7 +38,7 @@ export function CtaFinal({ onGoToAuth }: { onGoToAuth?: GoToAuth }) {
           {t('Rejoignez les 500+ hôtes qui automatisent déjà leur conciergerie.')}
         </p>
         <MagneticButton
-          onClick={() => onGoToAuth?.('register')}
+          onClick={() => router.push('/tarifs')}
           className="px-10 py-5 text-lg"
         >
           ✨ {t('Choisir mon offre')}

@@ -20,12 +20,44 @@ import { siteUrl } from '@/lib/site';
 // =============================================================
 
 export default function sitemap(): MetadataRoute.Sitemap {
+  // v5.18 SITE MULTIPAGES — les 5 pages marketing dédiées rejoignent
+  // le sitemap (accueil = /, pages en priorité haute pour le SEO).
   return [
     {
       url: `${siteUrl}/`,
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 1,
+    },
+    {
+      url: `${siteUrl}/fonctionnalites`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.9,
+    },
+    {
+      url: `${siteUrl}/comment-ca-marche`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.9,
+    },
+    {
+      url: `${siteUrl}/etats-des-lieux`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.9,
+    },
+    {
+      url: `${siteUrl}/tarifs`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.9,
+    },
+    {
+      url: `${siteUrl}/contact`,
+      lastModified: new Date(),
+      changeFrequency: 'yearly',
+      priority: 0.6,
     },
     {
       url: `${siteUrl}/legal`,

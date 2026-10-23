@@ -23,6 +23,7 @@
 // =============================================================
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Check, CreditCard, FileText, Loader2 } from 'lucide-react';
 import { MagneticButton } from '@/components/premium/magnetic-button';
 import { Reveal } from '@/components/premium/reveal';
@@ -400,18 +401,12 @@ export function PricingSection(_props: { onGoToAuth?: GoToAuth }) {
         <Reveal delay={0.3} className="mt-14 text-center">
           <p className="text-sm text-slate-500">
             {t('Au-delà de 15 biens,')}{' '}
-            <a
-              href="#contact"
-              onClick={(e) => {
-                e.preventDefault();
-                document
-                  .querySelector('#contact')
-                  ?.scrollIntoView({ behavior: 'smooth' });
-              }}
+            <Link
+              href="/contact"
               className="font-medium text-[#04467a] underline decoration-[#04467a]/40 underline-offset-4 transition-colors hover:text-[#033a66]"
             >
               {t('contactez-nous')}
-            </a>{' '}
+            </Link>{' '}
             {t('pour un devis sur mesure.')}
           </p>
         </Reveal>

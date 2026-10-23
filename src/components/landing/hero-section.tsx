@@ -14,8 +14,8 @@
 //     de luxe (plaque QR + smartphone + cloche conciergerie) posée
 //     dans une carte arrondie premium, parallaxe douce au scroll,
 //     chips flottantes conservées (note + commande + Wi-Fi).
-//   • CTA principal <MagneticButton> (confettis) + CTA secondaire
-//     blanc bordure slate — ancres #pricing / #demo
+//   • CTA principal <MagneticButton> (confettis) → /tarifs (v5.18
+//     site multipages) + CTA secondaire blanc bordure slate — ancre #demo
 //   • Fond : voiles bleu logo locaux (fond clair) + halo derrière
 //     la photo + <FloatingParticles> recalibrés pour le clair
 //   • v4.61 : page verrouillée claire « AIRBNB PRO », accent bleu vif
@@ -24,6 +24,7 @@
 
 import { useRef } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { motion, useScroll, useSpring, useTransform } from 'framer-motion';
 import {
   ArrowRight,
@@ -160,6 +161,8 @@ function HeroVisual({ targetRef }: { targetRef: React.RefObject<HTMLElement | nu
 // HERO SECTION
 // ==========================================
 export function HeroSection({ onGoToAuth }: { onGoToAuth?: GoToAuth }) {
+  // v5.18 site multipages : « Voir les tarifs » mène à la page /tarifs.
+  const router = useRouter();
   const { t } = useLandingLang();
   const heroRef = useRef<HTMLElement>(null);
 
@@ -237,7 +240,7 @@ export function HeroSection({ onGoToAuth }: { onGoToAuth?: GoToAuth }) {
             className="mb-12 flex flex-col items-center justify-center gap-4 sm:flex-row lg:justify-start"
           >
             <MagneticButton
-              onClick={() => smoothScrollTo('#pricing')}
+              onClick={() => router.push('/tarifs')}
               className="px-8 py-4 text-base"
             >
               {t('Voir les tarifs')}

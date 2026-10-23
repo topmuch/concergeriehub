@@ -69,7 +69,7 @@ function buildCsp(nonce: string): string {
     // privilégie la copie dataURL EN BASE (audioData) ; sans data: la
     // CSP bloquait silencieusement le play des lecteurs <audio>.
     `media-src 'self' blob: data:`,
-    `frame-src 'self' https://www.youtube-nocookie.com https://player.vimeo.com https://www.loom.com`,
+    `frame-src 'self' https://www.youtube-nocookie.com https://player.vimeo.com https://www.loom.com https://www.openstreetmap.org`,
     `connect-src 'self'${isDev ? ' ws: wss:' : ''}`,
     `worker-src 'self' blob:`,
     `object-src 'none'`,

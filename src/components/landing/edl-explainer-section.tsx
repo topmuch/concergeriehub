@@ -9,7 +9,8 @@
 //   1. À quoi ça sert — l'état des lieux = votre preuve.
 //   2. La procédure en 5 étapes (le parcours réel du module).
 //   3. Les avantages (6 cartes bénéfices concrets).
-//   4. CTA → tarifs (#pricing) + achat direct (/edl/abonnement).
+//   4. CTA → tarifs (/tarifs, v5.18 site multipages) + achat direct
+//      (/edl/abonnement).
 //
 // Thème clair cohérent (blanc / #F7F7F8, accent bleu logo).
 // =============================================================
@@ -190,16 +191,12 @@ export function EdlExplainer() {
               {t('Découvrir l\u2019offre États des Lieux')}
               <ArrowRight className="h-5 w-5" aria-hidden="true" />
             </Link>
-            <a
-              href="#pricing"
-              onClick={(e) => {
-                e.preventDefault();
-                document.querySelector('#pricing')?.scrollIntoView({ behavior: 'smooth' });
-              }}
+            <Link
+              href="/tarifs"
               className="inline-flex w-full items-center justify-center rounded-2xl border border-slate-200 bg-white px-8 py-4 font-semibold text-slate-900 transition-all hover:scale-[1.02] hover:border-slate-300 hover:shadow-md sm:w-auto"
             >
               {t('Voir les tarifs')}
-            </a>
+            </Link>
           </div>
           <p className="mt-4 text-sm text-slate-500">
             {t('Dès 299 €/an pour 3 biens — états des lieux illimités, paiement sécurisé PayPal.')}

@@ -137,6 +137,89 @@ const DICTIONARIES: Record<Lang, Record<string, string>> = {
   // ENGLISH
   // =========================================================
   en: {
+    // ── v5.18 SITE MULTIPAGES (pages dédiées + contact + explore) ──
+    'Formulaire de contact': 'Contact form',
+    // ExploreSection (accueil)
+    'Explorez la plateforme': 'Explore the platform',
+    'Tout RoomScan,': 'All of RoomScan,',
+    'page par page': 'page by page',
+    'Un site clair : chaque sujet a sa page dédiée — fonctionnalités, mise en route, états des lieux, tarifs et contact.':
+      'A clear site: every topic has its own dedicated page — features, setup, move-in reports, pricing and contact.',
+    'Tout ce que la plaque QR et le dashboard font pour vous : Wi-Fi, guidebook, upselling, avis, white-label…':
+      'Everything the QR plaque and dashboard do for you: Wi-Fi, guidebook, upselling, reviews, white-label…',
+    'De la réception de la plaque au premier scan de vos invités : installé en 3 minutes, sans application.':
+      'From receiving your plaque to your guests’ first scan: set up in 3 minutes, no app needed.',
+    'Preuves photo et vidéo, signature de l’invité et PDF certifié — l’état des lieux sans litige.':
+      'Photo & video proof, guest signature and a certified PDF — move-in reports without disputes.',
+    'Solo 29 €/mois · Pro 99 €/mois · États des Lieux dès 299 €/an — paiement PayPal, sans engagement.':
+      'Solo €29/mo · Pro €99/mo · Move-in Reports from €299/yr — PayPal, no commitment.',
+    'Découvrir': 'Discover',
+    // PageHero des pages dédiées
+    'Tout votre séjour,': 'Your entire stay,',
+    'piloté d’une main.': 'managed with one hand.',
+    'Une plaque QR pour vos invités, un dashboard professionnel pour vous : découvrez chaque module qui automatise votre conciergerie.':
+      'One QR plaque for your guests, a professional dashboard for you: explore every module that automates your rental business.',
+    // NB : « Opérationnel en » / « 3 minutes » déjà traduits plus bas
+    // (section Comment ça marche) — pas de doublon (TS1117).
+    'Pas d’application à installer, pas de matériel complexe : la plaque arrive prête, vos invités scannent, vous pilotez tout.':
+      'No app to install, no complex hardware: the plaque arrives ready, your guests scan, you control everything.',
+    'Votre preuve,': 'Your proof,',
+    'de l’entrée à la sortie.': 'from check-in to check-out.',
+    'L’état des lieux protège votre activité : RoomScan le transforme en parcours guidé sur téléphone — photo, vidéo, signature, PDF certifié.':
+      'Move-in reports protect your business: RoomScan turns them into a guided phone walkthrough — photos, video, signature, certified PDF.',
+    'Une offre pour': 'One plan for',
+    'chaque activité.': 'every business.',
+    'Hôte d’un seul bien ou conciergerie multi-propriétés : payez PayPal, sans engagement, et démarrez aujourd’hui.':
+      'Single-property host or multi-property manager: pay with PayPal, no commitment, start today.',
+    'Parlons de': 'Let’s talk about',
+    'votre conciergerie.': 'your rental business.',
+    'Démonstration, tarifs, module États des Lieux ou support : notre équipe vous répond sous 24 h, 7 j/7.':
+      'Demo, pricing, the Move-in Reports module or support: our team replies within 24 h, 7 days a week.',
+    // Page contact — formulaire
+    'Écrivez-nous': 'Write to us',
+    'Démonstration, tarifs, états des lieux ou support : nous répondons sous 24 h, 7 j/7.':
+      'Demo, pricing, move-in reports or support: we reply within 24 h, 7 days a week.',
+    'Message envoyé !': 'Message sent!',
+    'Merci — notre équipe vous répond sous 24 h à l’adresse indiquée.':
+      'Thank you — our team will reply within 24 h at the address you provided.',
+    'Envoyer un autre message': 'Send another message',
+    'Ne pas remplir': 'Do not fill in',
+    'Nom complet': 'Full name',
+    'Email': 'Email',
+    'Téléphone (optionnel)': 'Phone (optional)',
+    'Sujet': 'Subject',
+    'Votre message': 'Your message',
+    'Décrivez votre besoin : nombre de biens, villes, questions…':
+      'Describe your needs: number of properties, cities, questions…',
+    '10 à 2000 caractères.': '10 to 2000 characters.',
+    'J’accepte que mes informations soient utilisées pour traiter ma demande, conformément à la':
+      'I agree that my details may be used to handle my request, in accordance with the',
+    'politique de confidentialité': 'privacy policy',
+    'Une erreur est survenue. Vérifiez vos champs puis réessayez.':
+      'Something went wrong. Check your fields and try again.',
+    'Connexion impossible. Vérifiez votre réseau puis réessayez.':
+      'Connection failed. Check your network and try again.',
+    'Envoi en cours…': 'Sending…',
+    'Envoyer le message': 'Send message',
+    // Page contact — colonne infos + carte
+    'Contact direct': 'Direct contact',
+    'Délai de réponse': 'Response time',
+    'Sous 24 h, 7 j/7': 'Within 24 h, 7 days a week',
+    'Vous êtes déjà client ?': 'Already a customer?',
+    'Ouvrir votre espace hôte': 'Open your host space',
+    'Siège': 'Head office',
+    'Carte — siège RoomScan à Paris': 'Map — RoomScan head office in Paris',
+    'Paris, France — interventions en Europe & Afrique de l’Ouest':
+      'Paris, France — operating across Europe & West Africa',
+    'Agrandir': 'Open larger map',
+    // Sujets du formulaire
+    'Demander une démonstration': 'Request a demo',
+    'Tarifs & abonnements': 'Pricing & subscriptions',
+    'Module États des Lieux': 'Move-in Reports module',
+    'Partenariat / conciergerie': 'Partnership / property management',
+    'Support technique': 'Technical support',
+    'Autre demande': 'Other request',
+
     // Offre « États des Lieux » (module standalone, carte tarifs v4.107)
     'Module indépendant': 'Standalone module',
     'Le module des conciergeries qui veulent des EDL impeccables.':
