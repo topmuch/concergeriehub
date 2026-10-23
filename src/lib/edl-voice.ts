@@ -25,7 +25,10 @@
 // =============================================================
 
 import { createHash } from 'crypto';
-import { ensurePremiumAudio } from './tts-service';
+import fs from 'fs';
+import path from 'path';
+import { ttsAudioDir } from './tts-service';
+import { generateVoiceMessage } from './voice-tts';
 
 export type EdlVoiceType = 'CHECK_IN' | 'CHECK_OUT';
 
@@ -146,17 +149,37 @@ export function edlVoiceUrl(text: string): string {
 }
 
 /**
- * Pré-génère (idempotent, fire-and-forget friendly) les MP3 du guidage.
- * Ne JAMAIS throw — chaque échec est journalisé et le repli Web Speech
- * API du client prend le relais.
+ * Pré-génère (idempotent, fire-and-forget friendly) les MP3 du guidage
+ * via la CASCADE vocale du Hub (src/lib/voice-tts.ts) : voie 0 Denise
+ * (edge-tts, revient dès que Microsoft débloque) → Z.ai (sandbox) →
+ * Google Translate TTS (repli universel en prod, sans clé — testé
+ * v4.40 depuis IP datacenter). Ne JAMAIS throw — chaque échec est
+ * journalisé et le repli Web Speech API du client prend le relais.
  */
 export async function ensureEdlVoiceAudio(texts: Record<string, string>): Promise<number> {
   let generated = 0;
   for (const [key, text] of Object.entries(texts)) {
     if (!text) continue;
-    const url = await ensurePremiumAudio(text, `edl-${edlVoiceCacheKey(text)}`);
-    if (url) generated += 1;
-    else console.warn(`[edl-voice] MP3 non généré (${key}) — repli Web Speech API client actif.`);
+    const fileName = `edl-${edlVoiceCacheKey(text)}.mp3`;
+    const filePath = path.join(ttsAudioDir(), fileName);
+    try {
+      if (fs.existsSync(filePath) && fs.statSync(filePath).size > 500) {
+        generated += 1; // déjà généré → idempotent
+        continue;
+      }
+      const voice = await generateVoiceMessage(text, 'fr');
+      const mp3 = Buffer.from(voice.base64, 'base64');
+      if (mp3.length < 500) throw new Error('audio trop court (réponse invalide)');
+      fs.mkdirSync(ttsAudioDir(), { recursive: true });
+      fs.writeFileSync(filePath, mp3);
+      console.log(`[edl-voice] MP3 généré : ${fileName} (${Math.round(mp3.length / 1024)} Ko, ${voice.durationSec}s)`);
+      generated += 1;
+    } catch (error) {
+      console.warn(
+        `[edl-voice] MP3 non généré (${key}) — repli Web Speech API client actif :`,
+        error instanceof Error ? error.message : error,
+      );
+    }
   }
   return generated;
 }
