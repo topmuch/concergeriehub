@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { BrandLogo } from '@/components/ui/brand-logo';
 import { TabHome } from './tab-home';
 import { TabGuide } from './tab-guide';
 import { TabServices } from './tab-services';
@@ -210,14 +211,11 @@ export function GuestApp({ slug, initialBookingId, payFlash }: { slug: string; i
                 className="h-9 w-9 rounded-lg object-contain bg-card border border-border shrink-0"
               />
             ) : (
-              /* v4.68 — fallback : logo officiel RoomScan (icône) au lieu de 🗝️ */
-              <img
-                src="/brand/roomscan-icon.png"
-                alt="RoomScan"
-                width={171}
-                height={169}
-                className="h-9 w-9 rounded-lg object-contain bg-card border border-border shrink-0"
-              />
+              /* v4.68/v5.10 — fallback : logo officiel RoomScan via
+                 <BrandLogo> (emblème bleu, harmonisé avec le reste du site) */
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-card">
+                <BrandLogo showWordmark={false} height={30} />
+              </span>
             )}
             <div className="min-w-0 flex-1">
               <p

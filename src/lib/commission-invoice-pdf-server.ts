@@ -13,6 +13,7 @@
 // =============================================================
 
 type PdfDoc = typeof import('pdfkit');
+import { loadRoomscanLogoBlue } from '@/lib/pdf-brand-file';
 
 const PAGE_H = 841.89;
 const MARGIN = 50;
@@ -59,6 +60,8 @@ export async function renderCommissionInvoicePdf(data: CommissionInvoicePdfData)
     bufferPages: true,
     info: { Title: `Facture de commission — ${data.monthLabel}` },
   });
+  // v5.10 — LOGO OFFICIEL (bleu, fond blanc) en en-tête de facture
+  const logoBlue = await loadRoomscanLogoBlue();
   const chunks: Buffer[] = [];
   doc.on('data', (c: Buffer) => chunks.push(c));
   const finished = new Promise<Buffer>((resolve, reject) => {
@@ -68,6 +71,14 @@ export async function renderCommissionInvoicePdf(data: CommissionInvoicePdfData)
 
   // ── En-tête de marque ──
   doc.rect(MARGIN, MARGIN, CONTENT_W, 4).fill(BRAND);
+  // v5.10 — logo officiel calé à droite, au-dessus du titre
+  if (logoBlue) {
+    try {
+      doc.image(logoBlue, MARGIN + CONTENT_W - 69, MARGIN - 2, { height: 26 });
+    } catch {
+      // logo illisible — facture sans logo
+    }
+  }
   doc.moveDown(0.6);
   doc
     .font('Helvetica-Bold')

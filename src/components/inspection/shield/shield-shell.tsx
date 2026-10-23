@@ -19,7 +19,7 @@
 // Mobile-first : topbar + tiroir latéral animé (framer-motion).
 // =============================================================
 import { useState, type ReactNode } from 'react';
-import Image from 'next/image';
+import { BrandLogo } from '@/components/ui/brand-logo';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -73,8 +73,8 @@ const HELP_MENU: ShieldMenuItem[] = [
   { href: '/inspection/application', label: 'Application mobile', icon: Smartphone },
 ];
 
-// Logo RoomScan (marque réelle, demande client v5.0 — header).
-const LOGO = '/brand/roomscan-icon-white.png';
+// v5.10 — logo harmonisé via <BrandLogo> (emblème officiel, même source
+// que tous les dashboards — plus de constante locale ni d'<Image> direct).
 
 export function ShieldShell({
   user,
@@ -132,16 +132,10 @@ export function ShieldShell({
   // renommé « RoomScan Inventaire ».
   const brand = (
     <div className="flex items-center gap-3 border-b border-white/10 px-5 py-4">
-      {/* v5.9 — tuile logo agrandie (grand format demandé) */}
+      {/* v5.10 — tuile blanche + emblème BLEU (harmonisé ; l'emblème blanc
+          sur tuile blanche était invisible — bug corrigé) */}
       <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white shadow-md ring-1 ring-black/5">
-        <Image
-          src={LOGO}
-          alt="Logo RoomScan"
-          width={44}
-          height={44}
-          className="h-11 w-11 object-contain p-0.5"
-          priority
-        />
+        <BrandLogo showWordmark={false} height={44} />
       </span>
       <div className="min-w-0">
         <p className="truncate text-sm font-bold tracking-tight text-white">RoomScan Inventaire</p>
@@ -185,7 +179,7 @@ export function ShieldShell({
         </button>
         <div className="flex min-w-0 items-center gap-2">
           <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white shadow-sm">
-            <Image src={LOGO} alt="Logo RoomScan" width={28} height={28} className="h-7 w-7 object-contain p-0.5" />
+            <BrandLogo showWordmark={false} height={28} />
           </span>
           <p className="truncate text-sm font-bold text-white">RoomScan Inventaire</p>
         </div>
@@ -243,7 +237,7 @@ export function ShieldShell({
         <div className="sticky top-0 z-30 hidden h-14 items-center justify-between border-b border-slate-200/70 bg-white/70 px-6 backdrop-blur-md dark:border-[#22305a] dark:bg-[#0a1226]/70 lg:flex">
           <div className="flex items-center gap-2.5">
             <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-black/5 dark:ring-white/10">
-              <Image src={LOGO} alt="Logo RoomScan" width={32} height={32} className="h-8 w-8 object-contain p-0.5" />
+              <BrandLogo showWordmark={false} height={32} />
             </span>
             <span className="text-sm font-bold tracking-tight text-slate-900 dark:text-slate-100">
               RoomScan <span className="text-[#055492] dark:text-[#8fb8dc]">Inventaire</span>

@@ -1,7 +1,7 @@
 'use client';
 
 import { type ReactNode, useState, useSyncExternalStore } from 'react';
-import Image from 'next/image';
+import { BrandLogo } from '@/components/ui/brand-logo';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { signOut } from 'next-auth/react';
@@ -274,15 +274,9 @@ function ShellRoot({
 
   const logo = (
     <Link href="/" aria-label={t('Retour au site RoomScan')} className="flex items-center gap-2.5 px-5 py-1">
-      {/* Logo officiel RoomScan — variante blanche (fonds sombres), proportions d'origine */}
-      <Image
-        src="/brand/roomscan-icon-white.png"
-        alt=""
-        width={171}
-        height={169}
-        className="shrink-0"
-        style={{ height: 40, width: 'auto' }}
-      />
+      {/* v5.10 — logo harmonisé via <BrandLogo> (emblème blanc, 40 px comme
+          la console admin et l'espace client) */}
+      <BrandLogo variant="light" showWordmark={false} height={40} />
       <span className="flex min-w-0 flex-col leading-tight">
         <span className="lux-display truncate text-[15px] font-semibold text-[#2a0d05]">RoomScan</span>
         <span className="text-[9px] font-semibold uppercase tracking-[0.28em] text-[#5c1d0a]">

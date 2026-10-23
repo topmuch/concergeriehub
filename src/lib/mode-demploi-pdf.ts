@@ -16,6 +16,7 @@
 
 import { readFile } from 'fs/promises';
 import path from 'path';
+import { loadRoomscanLogoWhite } from '@/lib/pdf-brand-file';
 
 type PdfDoc = typeof import('pdfkit');
 
@@ -155,6 +156,8 @@ export async function renderModeDEmploiPdf(): Promise<Buffer> {
   const { default: PDFDocument } = await import('pdfkit');
   const doc = new PDFDocument({ size: 'A4', margin: 0, info: { Title: 'Mode d\u2019emploi — RoomScan Inventaire' } });
   const fontsOk = await registerFonts(doc);
+  // v5.10 — LOGO OFFICIEL (blanc) dans le bandeau d'en-tête
+  const logoWhite = await loadRoomscanLogoWhite();
 
   const chunks: Buffer[] = [];
   doc.on('data', (c: Buffer) => chunks.push(c));
@@ -173,12 +176,20 @@ export async function renderModeDEmploiPdf(): Promise<Buffer> {
     .path(`M ${W - 210} 0 L ${W - 140} 0 L ${W - 226} 132 L ${W - 296} 132 Z`)
     .fill(ROUGE);
   doc.path(`M ${W - 120} 0 L ${W - 80} 0 L ${W - 166} 132 L ${W - 206} 132 Z`).fill('#3e559a');
-  doc.fillColor('#C7D2FE').font(body).fontSize(9).text('ROOMSCAN INVENTAIRE — ÉTATS DES LIEUX CERTIFIÉS', M, 34, { characterSpacing: 1.6 });
-  doc.fillColor('#ffffff').font(bold).fontSize(26).text('Mode d\u2019emploi', M, 52);
+  // v5.10 — logo officiel blanc au-dessus du texte (harmonisation marque)
+  if (logoWhite) {
+    try {
+      doc.image(logoWhite, M, 20, { height: 26 }); // largeur ≈ 69 (ratio verrouillé)
+    } catch {
+      // logo illisible — bandeau sans logo
+    }
+  }
+  doc.fillColor('#C7D2FE').font(body).fontSize(9).text('ROOMSCAN INVENTAIRE — ÉTATS DES LIEUX CERTIFIÉS', M, 56, { characterSpacing: 1.6 });
+  doc.fillColor('#ffffff').font(bold).fontSize(26).text('Mode d\u2019emploi', M, 72);
   doc.fillColor('#C7D2FE').font(body).fontSize(10.5).text(
     'Les 6 étapes d\u2019un séjour certifié et les notifications automatiques.',
     M,
-    86,
+    106,
   );
 
   let y = 168;

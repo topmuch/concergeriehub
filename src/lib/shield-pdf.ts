@@ -26,6 +26,7 @@
 
 import { readFile } from 'fs/promises';
 import path from 'path';
+import { loadRoomscanLogoWhite } from '@/lib/pdf-brand-file';
 
 // Type de l'instance PDFKit (module typé `export = doc` → typeof).
 type PdfDoc = typeof import('pdfkit');
@@ -498,10 +499,22 @@ function drawPhoto(
  *  LIEUX D'ENTRÉE ou RAPPORT DE SORTIE — COMPARATIF ENTRÉE/SORTIE)
  *  + sous-titre espacé. Auto-fit : 21 pt max, réduits jusqu'à 12.5 pt
  *  pour tenir sur une seule ligne. */
-function drawRedBanner(doc: PdfDoc, title: string, subtitle: string, fontsOk: boolean): void {
+function drawRedBanner(doc: PdfDoc, title: string, subtitle: string, fontsOk: boolean, logoWhite?: Buffer | null): void {
   doc.save();
   doc.rect(0, 0, PAGE_W, BAND_H).fill(RED);
   doc.restore();
+
+  // v5.10 — LOGO OFFICIEL blanc à droite du bandeau (le titre auto-fit
+  // reste borné à PAGE_W - tx - MARGIN ≈ 477 → aucun chevauchement).
+  if (logoWhite) {
+    try {
+      const h = 20;
+      const w = h * (754 / 283);
+      doc.image(logoWhite, PAGE_W - 24 - w, (BAND_H - h) / 2, { height: h });
+    } catch {
+      // logo illisible — bandeau sans logo
+    }
+  }
 
   const sq = 52;
   const sqY = (BAND_H - sq) / 2;
@@ -841,6 +854,8 @@ export async function renderShieldOnboardingPdf(data: ShieldOnboardingPdfData): 
   });
 
   const fontsOk = await registerFonts(doc);
+  // v5.10 — logo officiel blanc (bandeau rouge)
+  const logoWhite = await loadRoomscanLogoWhite();
 
   const city = String(data?.property?.city || '').trim().toUpperCase() || '—';
   const refDate = toDate(data?.property?.onboardedAt);
@@ -853,6 +868,7 @@ export async function renderShieldOnboardingPdf(data: ShieldOnboardingPdfData): 
     'ATTESTATION D\u2019ÉTAT DES LIEUX D\u2019ENTRÉE',
     `TEMPLATE DE CHECK-IN AUTOMATISÉ • ${city} • CERTIFICAT DE CONFORMITÉ`,
     fontsOk,
+    logoWhite,
   );
 
   // 2. Ruban « PAGE 1 — ONBOARDING UNE FOIS » (icône caméra)
@@ -1422,6 +1438,8 @@ export async function renderShieldSessionPdf(data: ShieldSessionPdfData): Promis
   });
 
   const fontsOk = await registerFonts(doc);
+  // v5.10 — logo officiel blanc (bandeaux rouges des 2 pages)
+  const logoWhite = await loadRoomscanLogoWhite();
 
   const city = String(data?.property?.city || '').trim().toUpperCase() || '—';
   const completedAt = toDate(data?.session?.completedAt);
@@ -1451,6 +1469,7 @@ export async function renderShieldSessionPdf(data: ShieldSessionPdfData): Promis
     docTitle,
     `ÉTAT DES LIEUX • ${city} • BIBLIOTHÈQUE DE RÉFÉRENCE VERROUILLÉE`,
     fontsOk,
+    logoWhite,
   );
   drawRibbon(doc, 'PAGE 1 — ONBOARDING UNE FOIS (PHOTOS DE RÉFÉRENCE)', 'camera', fontsOk, BAND_H + 8);
   doc.y = BAND_H + 8 + 19 + 10;
@@ -1496,7 +1515,7 @@ export async function renderShieldSessionPdf(data: ShieldSessionPdfData): Promis
   const controlLabel = isOut
     ? `RAPPORT DE SORTIE DU ${frDate(completedAt)}`
     : `ATTESTATION D'ENTRÉE DU ${frDate(completedAt)}`;
-  drawRedBanner(doc, docTitle, `ÉTAT DES LIEUX • ${city} • ${controlLabel}`, fontsOk);
+  drawRedBanner(doc, docTitle, `ÉTAT DES LIEUX • ${city} • ${controlLabel}`, fontsOk, logoWhite);
 
   // 2. Ruban de page (clipboard pour CHECK-IN, caméra pour CHECK-OUT)
   const ribbonText = isOut

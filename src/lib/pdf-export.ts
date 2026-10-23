@@ -1,4 +1,5 @@
 import jsPDF from 'jspdf';
+import { ROOMSCAN_LOGO_RATIO, ROOMSCAN_LOGO_WHITE_DATAURL } from '@/lib/pdf-brand-assets';
 
 export interface QrCodeForPdf {
   code: string;
@@ -30,21 +31,56 @@ export function generatePdf({
   const qrXOffset = (cellWidth - qrSize) / 2;
 
   const pdf = new jsPDF('p', 'mm', format);
-  const totalCellsPerPage = cols * 7;
   let currentPage = 0;
 
+  // v5.10 — LOGO OFFICIEL RoomScan en tête de planche : pastille cobalt
+  // (bleu logo #055492) + logo blanc — la planche est sur fond blanc.
+  const logoH = format === 'a4' ? 7 : 5;
+  const logoW = logoH * ROOMSCAN_LOGO_RATIO;
+  const chipPad = 2.5;
+  const chipH = logoH + chipPad * 2;
+  const chipW = logoW + chipPad * 2;
+  const chipTop = margin - 3;
+  if (ROOMSCAN_LOGO_WHITE_DATAURL) {
+    try {
+      pdf.setFillColor(5, 84, 146); // #055492 — bleu logo officiel
+      pdf.roundedRect(margin, chipTop, chipW, chipH, 2, 2, 'F');
+      pdf.addImage(ROOMSCAN_LOGO_WHITE_DATAURL, 'PNG', margin + chipPad, chipTop + chipPad, logoW, logoH);
+    } catch {
+      // logo absent — planche sans logo, ne plante jamais
+    }
+  }
+
+  // v5.10 — pagination CORRIGÉE : l'ancien « cols * 7 » codait 7 lignes
+  // par page qui débordaient de l'A4 (5ᵉ/6ᵉ lignes coupées) dès ~20
+  // codes. Le nombre de lignes est désormais calculé pour tenir dans
+  // la page, en réservant la pastille logo sur la 1ʳᵉ page.
+  const rowH = qrSize + vSpacing;
+  const FOOTER_SAFE = 10; // zone du pied de page (batch / date)
+  const firstPageTop = margin + (ROOMSCAN_LOGO_WHITE_DATAURL ? chipH + 2 : 0);
+  const firstPageRows = Math.max(1, Math.floor((pageHeight - firstPageTop - FOOTER_SAFE) / rowH));
+  const otherRows = Math.max(1, Math.floor((pageHeight - margin * 2 - FOOTER_SAFE) / rowH));
+
+  let cellsBeforePage = 0;
+  let pageRows = firstPageRows;
+  let capacity = pageRows * cols;
+
   qrCodes.forEach((qr, index) => {
-    const cellIndex = index % totalCellsPerPage;
-    if (cellIndex === 0 && index > 0) {
+    if (index >= capacity) {
       pdf.addPage();
-      currentPage++;
+      cellsBeforePage += pageRows * cols;
+      currentPage += 1;
+      pageRows = otherRows;
+      capacity += pageRows * cols;
     }
 
+    const cellIndex = index - cellsBeforePage;
     const col = cellIndex % cols;
     const row = Math.floor(cellIndex / cols);
 
     const x = margin + col * (cellWidth + hSpacing) + qrXOffset;
-    const y = margin + row * (qrSize + vSpacing);
+    const topOffset = currentPage === 0 ? firstPageTop - margin : 0;
+    const y = margin + topOffset + row * rowH;
 
     // Add the QR code image
     pdf.addImage(qr.imageUrl, 'PNG', x, y, qrSize, qrSize);

@@ -105,11 +105,15 @@ export function ClientLayout({ activePage, onPageChange, onSwitchToAdmin, onLogo
         'fixed inset-y-0 left-0 z-50 flex w-64 flex-col bg-slate-950 border-r border-slate-800/80 transition-transform duration-300 lg:static lg:translate-x-0',
         sidebarOpen ? 'translate-x-0' : '-translate-x-full',
       )}>
-        {/* Brand */}
+        {/* Brand — v5.10 harmonisé : emblème blanc 40 px + nom plateforme,
+            même motif que la console admin / l'espace hôte / l'inventaire */}
         <div className="flex h-16 items-center gap-3 px-5">
-          <div className="flex flex-col">
-            <BrandLogo variant="light" size="md" />
-            <span className="mt-1 text-[10px] text-slate-500 font-medium">Espace Client</span>
+          <BrandLogo variant="light" showWordmark={false} height={40} />
+          <div className="flex min-w-0 flex-col leading-tight">
+            <span className="truncate text-[15px] font-semibold text-white">RoomScan</span>
+            <span className="text-[9px] font-semibold uppercase tracking-[0.28em] text-slate-400">
+              Espace Client
+            </span>
           </div>
           <Button variant="ghost" size="icon" className="ml-auto lg:hidden h-8 w-8 text-slate-400 hover:text-white hover:bg-slate-800" onClick={() => setSidebarOpen(false)}>
             <X className="h-4 w-4" />

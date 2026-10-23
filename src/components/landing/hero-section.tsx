@@ -5,6 +5,9 @@
 //
 //   • Badge « Nouveau » : pill gradient bleu logo animé
 //     (.animate-gradient) + reflet shimmer + ✨ en rotation lente
+//   • v5.10 — logo hero retiré (2ᵉ logo au-dessus du badge) : le logo
+//     officiel reste uniquement dans la navbar (une seule occurrence
+//     visible à l'écran, demande client)
 //   • H1 serif via <StaggerWords> — « 5 étoiles » en air-gradient-text
 //   • v4.73 — VISUEL PHOTO RÉELLE à droite (demande client : « changer
 //     l'image à droite par une image plus engageante ») : photo hôtel
@@ -32,7 +35,6 @@ import { FloatingParticles } from '@/components/premium/floating-particles';
 import { MagneticButton } from '@/components/premium/magnetic-button';
 import { CountUp } from '@/components/premium/count-up';
 import { Reveal, StaggerWords } from '@/components/premium/reveal';
-import { BrandLogo } from '@/components/ui/brand-logo';
 import { useLandingLang } from '@/lib/landing-i18n';
 
 type GoToAuth = (mode: 'login' | 'register') => void;
@@ -187,16 +189,9 @@ export function HeroSection({ onGoToAuth }: { onGoToAuth?: GoToAuth }) {
       <div className="relative z-10 mx-auto grid max-w-7xl grid-cols-1 items-center gap-16 px-4 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:gap-10">
         {/* ── Colonne texte ── */}
         <div className="text-center lg:text-left">
-          {/* v5.9 — LOGO OFFICIEL EN GRAND FORMAT au-dessus du titre,
-              avec ombre portée douce bleu logo (demande client) */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7 }}
-            className="mb-8 flex justify-center lg:justify-start"
-          >
-            <BrandLogo size="hero" className="drop-shadow-[0_14px_28px_rgba(5,84,146,0.28)]" />
-          </motion.div>
+          {/* v5.10 — DEMANDE CLIENT : le 2ᵉ logo (grand format au-dessus du
+              badge) est SUPPRIMÉ — le logo officiel reste dans la barre de
+              navigation (54 px) qui est déjà visible au même écran. */}
 
           {/* Badge « Nouveau » — pill gradient animé + shimmer + ✨ */}
           <motion.div

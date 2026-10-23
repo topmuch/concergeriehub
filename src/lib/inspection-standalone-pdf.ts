@@ -38,6 +38,7 @@
 
 import { readFile } from 'fs/promises';
 import path from 'path';
+import { loadRoomscanLogoWhite } from '@/lib/pdf-brand-file';
 import { createHash } from 'crypto';
 import { inspectionDocumentId } from './inspection-hash';
 import { isElectronicItem } from './inspection-template';
@@ -483,7 +484,7 @@ function fitTitleSize(
  * COMPARATIF ENTRÉE / SORTIE », auto-fit), pilule noire
  * « PREUVE CERTIFIÉE — ID RS-XXXXXX ».
  */
-function drawRedHeader(doc: PdfDoc, data: StandaloneInspectionPdfData, fontsOk: boolean): void {
+function drawRedHeader(doc: PdfDoc, data: StandaloneInspectionPdfData, fontsOk: boolean, logoWhite?: Buffer | null): void {
   doc.save();
   doc.rect(0, 0, PAGE_W, BAND_H).fill(RED);
   doc.restore();
@@ -491,7 +492,9 @@ function drawRedHeader(doc: PdfDoc, data: StandaloneInspectionPdfData, fontsOk: 
   const title = documentTitle(data.inspection.type);
   const iconS = 25;
   const gap = 9;
-  const size = fitTitleSize(doc, title, 19, PAGE_W - 80, iconS, gap, fontsOk);
+  // v5.10 — maxW réduit (PAGE_W-170) pour réserver l'angle droit du
+  // bandeau au logo officiel blanc.
+  const size = fitTitleSize(doc, title, 19, PAGE_W - 170, iconS, gap, fontsOk);
   const scaledIconS = iconS * (size / 19);
   doc.font(fname('bold', fontsOk)).fontSize(size);
   const titleW = doc.widthOfString(title);
@@ -509,6 +512,17 @@ function drawRedHeader(doc: PdfDoc, data: StandaloneInspectionPdfData, fontsOk: 
     titleW,
     'left',
   );
+
+  // v5.10 — LOGO OFFICIEL blanc, calé à droite du bandeau rouge
+  if (logoWhite) {
+    try {
+      const h = 20;
+      const w = h * (754 / 283);
+      doc.image(logoWhite, PAGE_W - 24 - w, (BAND_H - h) / 2, { height: h });
+    } catch {
+      // logo illisible — bandeau sans logo
+    }
+  }
 
   // — Pilule noire : PREUVE CERTIFIÉE — ID RS-XXXXXX —
   const pillText = `PREUVE CERTIFI\u00c9E \u2014 ID ${inspectionDocumentId(data.inspection.publicToken)}`;
@@ -1362,9 +1376,11 @@ export async function renderStandaloneInspectionPdf(
   });
 
   const fontsOk = await registerFonts(doc);
+  // v5.10 — logo officiel blanc (bandeau rouge page 1)
+  const logoWhite = await loadRoomscanLogoWhite();
 
   // ── Page 1 : bandeau rouge + QR + parties ──
-  drawRedHeader(doc, data, fontsOk);
+  drawRedHeader(doc, data, fontsOk, logoWhite);
   await drawVerificationBlock(doc, data, fontsOk);
   drawInfoBox(doc, data, fontsOk);
 

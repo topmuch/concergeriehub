@@ -1,13 +1,18 @@
 // =============================================================
 // v4.53 — HELPERS PDF (côté client, jspdf)
-// Utilitaires partagés par les 3 exports PDF du dashboard hôte :
+// Utilitaires partagés par les exports PDF du dashboard hôte :
 //   • fiche assurance / inventaire (casse invité) ;
 //   • rapport visuel horodaté du ménage (état des lieux) ;
-//   • rapport de consommation au check-out.
+//   • rapport de consommation au check-out ;
+//   • journal de séjour ; facture de commission.
 // Les photos de la plateforme sont des dataURL (PNG/JPEG/WebP) ;
 // jsPDF n'accepte que PNG/JPEG → conversion WebP via canvas.
+// v5.10 — HARMONISATION MARQUE : bandeau cobalt #055492 (l'ancien
+// vert émeraude 5,150,105 datait d'avant la refonte logo) + LOGO
+// OFFICIEL blanc sur tous les bandeaux (via pdf-brand-assets.ts).
 // =============================================================
 import jsPDF from 'jspdf';
+import { ROOMSCAN_LOGO_RATIO, ROOMSCAN_LOGO_WHITE_DATAURL } from '@/lib/pdf-brand-assets';
 
 export type PdfImageFormat = 'PNG' | 'JPEG';
 
@@ -86,16 +91,29 @@ export function pdfFooter(pdf: jsPDF, label: string): void {
   }
 }
 
-/** Bandeau d'en-tête émeraude commun (carte blanche A4). */
+/** Bandeau d'en-tête cobalt commun (carte blanche A4) + logo officiel.
+ *  v5.10 — couleur harmonisée #055492 (fin du vert émeraude legacy)
+ *  et logo RoomScan blanc calé à droite du bandeau (12 mm, ratio
+ *  verrouillé). A4 uniquement (210 mm) — tous les appelants sont A4. */
 export function pdfHeader(
   pdf: jsPDF,
   eyebrow: string,
   title: string,
   subtitle?: string,
 ): number {
-  // Bandeau accent
-  pdf.setFillColor(5, 150, 105); // #055492 — accent plateforme
+  // Bandeau accent — bleu logo officiel #055492 = rgb(5, 84, 146)
+  pdf.setFillColor(5, 84, 146);
   pdf.rect(0, 0, 210, 26, 'F');
+  // Logo officiel (variante blanche) à droite du bandeau — v5.10
+  if (ROOMSCAN_LOGO_WHITE_DATAURL) {
+    try {
+      const h = 12;
+      const w = h * ROOMSCAN_LOGO_RATIO;
+      pdf.addImage(ROOMSCAN_LOGO_WHITE_DATAURL, 'PNG', 210 - 12 - w, (26 - h) / 2, w, h);
+    } catch {
+      // logo absent/illisible — bandeau sans logo, le PDF ne plante jamais
+    }
+  }
   pdf.setTextColor(255, 255, 255);
   pdf.setFontSize(9);
   pdf.setFont('helvetica', 'bold');

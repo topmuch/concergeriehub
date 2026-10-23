@@ -36,7 +36,7 @@
 // =============================================================
 
 import { useEffect, useState, type MouseEvent } from 'react';
-import Image from 'next/image';
+import { BrandLogo } from '@/components/ui/brand-logo';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   ClipboardCheck,
@@ -119,17 +119,9 @@ function Navbar({ onGoToAuth }: LandingPageProps) {
             className="flex items-center gap-2.5"
             aria-label={t('RoomScan — retour en haut')}
           >
-            {/* Logo officiel RoomScan — NOUVEAU logo client v5.9 (754×283,
-                proportions d'origine, jamais déformé) */}
-            <Image
-              src="/brand/roomscan-logo.png"
-              alt={t('RoomScan — retour en haut')}
-              width={754}
-              height={283}
-              className="w-auto"
-              style={{ height: 54 }}
-              priority
-            />
+            {/* v5.10 — LOGO harmonisé via <BrandLogo> (composant unique, une
+                seule occurrence à l'écran : le grand logo hero a été retiré) */}
+            <BrandLogo height={54} />
           </a>
 
           {/* Menu Desktop */}
@@ -288,15 +280,8 @@ function Footer() {
           {/* Logo & Description */}
           <div className="md:col-span-1">
             <div className="mb-4 flex items-center gap-2.5">
-              {/* v5.9 — NOUVEAU logo officiel, footer en grand format */}
-              <Image
-                src="/brand/roomscan-logo.png"
-                alt="RoomScan"
-                width={754}
-                height={283}
-                className="w-auto"
-                style={{ height: 68 }}
-              />
+            {/* v5.10 — logo harmonisé via <BrandLogo>, footer grand format */}
+            <BrandLogo height={68} />
             </div>
             <p className="text-sm leading-relaxed text-slate-500">
               {t(

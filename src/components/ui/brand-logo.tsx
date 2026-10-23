@@ -20,6 +20,9 @@ interface BrandLogoProps {
   variant?: 'dark' | 'light';
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'hero';
   showWordmark?: boolean;
+  /** Hauteur px exacte (prioritaire sur `size`) — harmonisation v5.10 :
+   *  un seul composant, tailles pixel-perfect par contexte. */
+  height?: number;
   className?: string;
 }
 
@@ -32,8 +35,14 @@ const LOGO_HEIGHT = { sm: 44, md: 60, lg: 88, xl: 120, hero: 176 } as const;
 const WORDMARK = { w: 754, h: 283 } as const;
 const EMBLEM = { w: 171, h: 169 } as const;
 
-export function BrandLogo({ variant = 'dark', size = 'md', showWordmark = true, className }: BrandLogoProps) {
-  const h = LOGO_HEIGHT[size];
+export function BrandLogo({
+  variant = 'dark',
+  size = 'md',
+  showWordmark = true,
+  height: heightOverride,
+  className,
+}: BrandLogoProps) {
+  const h = heightOverride ?? LOGO_HEIGHT[size];
   const src = showWordmark
     ? variant === 'light'
       ? '/brand/roomscan-logo-white.png'

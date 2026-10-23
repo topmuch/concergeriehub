@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
+import { BrandLogo } from '@/components/ui/brand-logo';
 import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import {
@@ -161,15 +161,9 @@ export function AdminAppSidebar({ adminName, adminEmail }: AdminAppSidebarProps)
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild tooltip="Retour au site">
               <Link href="/" aria-label="Retour au site RoomScan">
-                {/* Logo officiel RoomScan — variante blanche (fonds sombres), proportions d'origine */}
-                <Image
-                  src="/brand/roomscan-icon-white.png"
-                  alt=""
-                  width={171}
-                  height={169}
-                  className="shrink-0"
-                  style={{ height: 40, width: 'auto' }}
-                />
+                {/* v5.10 — logo harmonisé via <BrandLogo> (emblème blanc,
+                    mêmes proportions que les autres dashboards) */}
+                <BrandLogo variant="light" showWordmark={false} height={40} />
                 <span className="flex min-w-0 flex-col items-start gap-0.5 leading-tight">
                   <span className="lux-display truncate text-base font-semibold text-white">
                     RoomScan
