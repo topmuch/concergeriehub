@@ -5565,3 +5565,22 @@ Work Log:
 Stage Summary:
 - v5.11 EN PRODUCTION (sidebars par rôle demandées par le client) — rien à redéployer.
 - Guidage vocal EDL : faisable en réutilisant 100 % de l'existant (Denise + MP3 statiques + repli Web Speech) ; proposition de script + points de décision envoyés au client (voix audible dans la vidéo à arbitrer, check-out, config hôte).
+---
+Task ID: V5.12-V5.14-VOICE-GUIDE
+Agent: Z.ai Code (session guidage vocal EDL)
+Task: « AVANT DE COMMENCER SAUVEGARDE LA VERSION 11 SUR RELEASES GITHUB » + implémentation du guidage vocal des états des lieux (Option 3 validée : voix Denise, check-out inclus, textes esquissés approuvés).
+
+Work Log:
+- RELEASE v.11 « Version 11 » créée sur GitHub AVANT tout développement : tag v.11 → 30571b1 (commit v5.11 exact en prod), asset figé app-update-v5.11.tar.xz (5 414 008 o, identité byte-for-byte vérifiée, magie xz fd377a585a00). Rollback complet désormais disponible : v.10 (v5.8) ET v.11 (v5.11).
+- Backend : src/lib/edl-voice.ts (scripts FR par type de pièce : salon/couloir/chambre/cuisine/SDB/extérieur + variantes check-in « entrée » / check-out « sortie » ; cache MP3 par empreinte sha256-16) ; route POST /api/shield/voice-guide (validation stricte : 24 zones max, 60 car/zone, pas de texte arbitraire, rate-limit).
+- Frontend : src/components/inspection/shield/use-voice-guide.tsx — hook useVoiceGuide (MP3 + repli Web Speech API auto, mute mémorisé localStorage shield-voice-muted, sous-titres aria-live, replay) + VoiceGuideBar + VIDEO_VOICE_CUES ; branché sur CleanerCapture (/s/[token], vidéo 120 s — flux femme de ménage) ET ShieldCapture (sessions check-in/out, 60 s) : consigne parlée à chaque zone, instructions vidéo AVANT enregistrement, 3 repères courts pendant (⅓, 5/8, « il reste 30 secondes »), message de fin à l'aperçu.
+- Découverte clé : la vidéo est filmée SANS audio (getUserMedia audio:false) → la voix du guide ne pollue jamais le film (le point arbitré « Option 3 » est même plus simple que prévu).
+- v5.12 déployée (s9uwuviuc9hqpvqs3zdnrdrb) → MP3 404 en prod : fichiers runtime public/ NON servis par le serveur standalone (cwd=/app vs .next/standalone/public — le Hub était lui aussi touché, masqué par le repli Web Speech).
+- v5.13 déployée (gkhykim8rttfai1jfblaaec7) : nouvelle route GET /api/audio/[file] (nom plat strict ^[A-Za-z0-9._-]+\.mp3$, lecture ttsAudioDir(), cache immutable) → route OK mais fichiers absents : edge-tts renvoie 403 (blocage Microsoft actuel — sandbox ET prod, incident connu de la lib).
+- v5.14 déployée (xxsvq0ymaymux7afsln6rlc2) : génération basculée sur la CASCADE voice-tts (Denise/edge-tts → Z.ai → Google TTS sans clé, disjoncteurs 10 min). Local : 7 MP3 générés via Z.ai, route audio 200 audio/mpeg. PROD : 11/11 MP3 servis HTTP 200 audio/mpeg (Google TTS ; Denise reviendra automatiquement dès déblocage Microsoft).
+- Vérifs : lint 0 erreur, tsc 0 erreur (tsc lancé après kill du serveur de dev — reconfirmé), API prod OK (11 messages, textes conformes, 400 sur entrées invalides), agent-browser prod : accueil 0 erreur page/console, /s/token-invalide rendu propre. Note infra : les processus détachés sont TUÉS entre les appels Bash du sandbox → tests serveur à regrouper en un seul appel ; dev server relancé au besoin par (bun run dev &).
+
+Stage Summary:
+- v5.14 EN PRODUCTION : guidage vocal complet des états des lieux (photos zone par zone + vidéo 120 s/60 s, sous-titres, rejouer, muet mémorisé), check-in ET check-out, 11/11 MP3 servis.
+- Rollbacks : GitHub releases v.10 (v5.8) et v.11 (v5.11) avec assets figés ; tags git v5.8..v5.13.
+- Pièges reconfirmés : cb= à chaque push de tar ; garde upload/[token] avant/après commit ; tsc après kill dev ; edge-tts instable (cascade = assurance).
