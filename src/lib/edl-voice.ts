@@ -138,9 +138,11 @@ export function edlVoiceCacheKey(text: string): string {
   return createHash('sha256').update(text).digest('hex').slice(0, 16);
 }
 
-/** URL publique d'un MP3 du guidage (servi en statique depuis public/audio/). */
+/** URL publique d'un MP3 du guidage — diffusé par la route /api/audio/[file]
+ *  (les fichiers écrits au runtime ne sont pas servis en statique en prod
+ *  standalone : v5.13). */
 export function edlVoiceUrl(text: string): string {
-  return `/audio/edl-${edlVoiceCacheKey(text)}.mp3`;
+  return `/api/audio/edl-${edlVoiceCacheKey(text)}.mp3`;
 }
 
 /**
