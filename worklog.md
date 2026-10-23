@@ -5621,3 +5621,22 @@ Stage Summary:
 - v5.16 EN PRODUCTION : le titre du lecteur de preuve vidéo affiche « ROOMSCAN INVENTAIRE ».
 - Aucun changement métier/DB ; v5.15 (bloc identification PDF + lien email public + vidéo portrait) reste intacte et vérifiée.
 - Leçons : ① committer le tar AVANT le push (ou dans le même commit que le code) et le vérifier via API GitHub files[] ; ② cache Fastly raw ≈ clé par chemin, TTL ~5-7 min — jamais de fetch de contrôle avant push du tar ; URL commit-épinglée pour diagnostic.
+---
+Task ID: V5.17
+Agent: Z.ai Code (orchestrateur tarifs/PayPal/EDL)
+Task: « 1/ refaire les tarifs page d'accueil : Solo 29 €/mois (features listées), Pro 99 €/mois (conciergeries/multi-hôtes), États des Lieux 299 €/an pour 3 biens EDL illimités, EDL Pro 499 €/an jusqu'à 15 biens — enlève l'essai gratuit, refaire bien les tarifs pour que les prix s'affichent bien ; 1/ connecter toutes les offres tarifaires avec PayPal ; 1/ créer un onglet États des Lieux sur le menu header (procédure, utilité, avantages) »
+
+Work Log:
+- TARIFS : pricing-section.tsx refait en 4 cartes (Solo 29 €/mois + features client, Pro 99 €/mois + badge Populaire, EDL 299 €/an 3 biens, EDL Pro 499 €/an 15 biens). Essai gratuit suppartout : hero (« Voir les tarifs »), navbar (« Commencer »), CTA final (« Choisir mon offre »), sous-titre tarifs.
+- CAUSE RACINE « les prix s'affichent mal » découverte : CountUp (framer-motion useInView amount 0.5) affichait « 0 € » tant que la carte n'était pas à 50 % dans le viewport (reproduit agent-browser : top 578 vs innerHeight 577 → 0 € persistant). FIX : prix en texte statique 29/99/299/499 € — vérifié 0 occurrence de « 0 € ».
+- PAYPAL SOLO/PRO EN PUBLIC (nouveau) : billing.ts Solo {monthly:29, annual:null} / Pro {monthly:99, annual:null} ; paypal.ts — planSettingKey + planName incluent le PRIX (paypal.plan_…_29v2 / « … · Mensuel · 29 € ») → changement de tarif ⇒ plan PayPal neuf (jamais l'ancien tarif via cache SystemSetting ni recherche par nom), subscriberEmail optionnel ; nouveau modèle PayPalPendingSubscription (jeton 72 h) ; POST /api/paypal/public-subscribe (public, rate-limit 6/min, custom_id `public:<id>`) ; page /paypal/activer?token=… (server component, checkHubPending : statut PayPal ACTIVE exigé — APPROVAL_PENDING = écran « confirmation en cours » + reload auto 5 s) ; POST /api/paypal/public-activate → création/rattachement compte (miroir edl-fulfillment) + Subscription + Transaction + selectedPlan + email bienvenue → /airbnb/dashboard.
+- PAYPAL EDL ×2 : edl-paypal.ts — EDL_PLANS {edl_annual 299/3 biens, edl_pro_annual 499/15 biens} + edlPlanMaxProperties() ; route order accepte {plan} ; EdlPurchase.plan (Prisma) ; /edl/abonnement?plan=edl_pro_annual avec sélecteur 299/499 ; fulfillment applique le plan acheté à InspectionSubscription.
+- LIMITE BIENS : /api/shield/onboarding bride les comptes selectedPlan='edl_standalone' à edlPlanMaxProperties(subscription.plan) (3 ou 15) avec message d'upgrade ; comptes Hub inchangés (module inclus v4.97).
+- ONGLET HEADER : navLinks + « États des Lieux » (#etats-des-lieux) desktop+mobile ; nouvelle section edl-explainer-section.tsx — intro « à quoi ça sert » (preuve/litiges/assurances), procédure 5 étapes (onboarding → photos zones → vidéo guidée → signature → PDF+emails), 6 avantages, CTA tarifs + achat.
+- PROD VALIDÉE : health v5.17 ; POST public-subscribe → 201 + approveUrl PayPal RÉEL (BA-2F1700318E7231132) ; POST edl order plan pro → 200 + checkoutnow 499 € réel ; page /paypal/activer 200.
+- PIÈGE RESYNC REFRAPPÉ : src/app/upload/[token]/page.tsx + upload-token-page.tsx SUPPRIMÉS du disque en cours de session → git add -A a commité la suppression (garde post-commit a bloqué) → restauration git checkout 3422222 -- + amend ×2 (tar reconstruit après restauration, shims vérifiés DANS le tar). Commit final edd1598.
+- Pipeline : tar (6 016 788 o) DANS le commit du code (leçon v5.16 appliquée) ; vérif URL épinglée /edd1598/ AVANT tout fetch de main?cb=v5.17 ; deploy gh7xuumktllrerbrga4uymzc finished ; health v5.17 db+smtp up.
+
+Stage Summary:
+- v5.17 EN PRODUCTION : 4 tarifs sans essai, prix statiques toujours visibles, 100 % des offres connectées PayPal (Solo/Pro en achat public avec création de compte post-paiement, EDL 2 offres), onglet « États des Lieux » complet, limite 3/15 biens EDL.
+- Leçon : le resync supprime les shims EN COURS de session — la garde git cat-file -e doit être exécutée IMMÉDIATEMENT avant ET après chaque commit (pas seulement en début de tâche) ; après restauration, TOUJOURS reconstruire le tar.
