@@ -1,21 +1,35 @@
 'use client';
 
 // =============================================================
-// /edl/abonnement — Page d'achat de l'offre EDL (PUBLIC).
+// /edl/abonnement — Page d'achat des offres EDL (PUBLIC).
+//
+// v5.17 — 2 offres (query ?plan=) :
+//   • ?plan=edl_annual (défaut) : 299 €/an pour 3 biens ;
+//   • ?plan=edl_pro_annual      : 499 €/an jusqu'à 15 biens.
 //
 // Résumé de l'offre + bouton « Payer avec PayPal » :
-//   POST /api/edl/paypal/order → { approveUrl } → redirection vers
-//   PayPal. Retour : /edl/paiement/retour (capture serveur) puis
+//   POST /api/edl/paypal/order { plan } → { approveUrl } → redirection
+//   vers PayPal. Retour : /edl/paiement/retour (capture serveur) puis
 //   /edl/activer/[token] (création du compte).
-//   Annulation : retour ici avec ?annule=1.
+//   Annulation : retour ici avec ?annule=1 (+ plan conservé).
 //   Échec capture : retour ici avec ?erreur=1.
 // =============================================================
 
 import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Check, CreditCard, Loader2, ShieldCheck, FileSignature, ScanSearch } from 'lucide-react';
+import {
+  Check,
+  CreditCard,
+  Loader2,
+  ShieldCheck,
+  FileSignature,
+  ScanSearch,
+} from 'lucide-react';
+import { EDL_PLANS, EDL_PLAN, getEdlPlan, type EdlPlanId } from '@/lib/edl-paypal';
 
-const FEATURES = [
+type Phase = 'idle' | 'loading' | 'redirecting';
+
+const SHARED_FEATURES = [
   'États des lieux d’entrée et de sortie en 5 étapes guidées',
   'Génération de PDF illimitée, prête pour les assurances',
   'Signature électronique de l’invité sur place',
@@ -24,10 +38,12 @@ const FEATURES = [
   'Historique archivé et consultable à tout moment',
 ];
 
-type Phase = 'idle' | 'loading' | 'redirecting';
-
 export function EdlCheckout() {
   const params = useSearchParams();
+  const requestedPlan: EdlPlanId = getEdlPlan(params.get('plan') ?? '')?.id ?? EDL_PLAN;
+  const planConfig = EDL_PLANS[requestedPlan];
+  const isPro = requestedPlan === 'edl_pro_annual';
+
   const [phase, setPhase] = useState<Phase>('idle');
   const [error, setError] = useState<string | null>(
     params.get('erreur')
@@ -43,9 +59,12 @@ export function EdlCheckout() {
       const res = await fetch('/api/edl/paypal/order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: '{}',
+        body: JSON.stringify({ plan: requestedPlan }),
       });
-      const data = (await res.json().catch(() => null)) as { approveUrl?: string; error?: string } | null;
+      const data = (await res.json().catch(() => null)) as {
+        approveUrl?: string;
+        error?: string;
+      } | null;
       if (res.ok && data?.approveUrl) {
         setPhase('redirecting');
         window.location.href = data.approveUrl;
@@ -83,6 +102,43 @@ export function EdlCheckout() {
         </div>
       )}
 
+      {/* ── Sélecteur d'offre (299 / 499) ── */}
+      <div className="mb-6 grid grid-cols-2 gap-3" role="tablist" aria-label="Choisissez votre offre">
+        {(['edl_annual', 'edl_pro_annual'] as const).map((p) => {
+          const cfg = EDL_PLANS[p];
+          const active = p === requestedPlan;
+          return (
+            <a
+              key={p}
+              href={`/edl/abonnement?plan=${p}`}
+              role="tab"
+              aria-selected={active}
+              className={`rounded-2xl border-2 p-4 text-center transition-all ${
+                active
+                  ? 'border-[#055492] bg-[#055492]/[0.06] shadow-[0_8px_24px_rgba(4,70,122,0.14)]'
+                  : 'border-slate-200 bg-white hover:border-[#055492]/40'
+              }`}
+            >
+              <p className="text-sm font-bold text-slate-900">
+                {p === 'edl_pro_annual' ? (
+                  <>
+                    États des Lieux <span className="italic">Pro</span>
+                  </>
+                ) : (
+                  'États des Lieux'
+                )}
+              </p>
+              <p className="mt-1 font-serif text-2xl font-bold text-slate-900">
+                {cfg.price} € <span className="text-xs font-normal text-slate-500">/ an</span>
+              </p>
+              <p className="mt-0.5 text-xs text-slate-500">
+                {p === 'edl_pro_annual' ? "Jusqu'à 15 biens" : 'Pour 3 biens'}
+              </p>
+            </a>
+          );
+        })}
+      </div>
+
       {/* ── Carte offre ── */}
       <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_6px_16px_rgba(0,0,0,0.08),0_1px_2px_rgba(0,0,0,0.04)]">
         <div className="border-b border-slate-100 bg-[linear-gradient(135deg,#055492_0%,#033a66_100%)] px-6 py-8 text-white sm:px-8">
@@ -90,17 +146,20 @@ export function EdlCheckout() {
             Module indépendant
           </p>
           <h1 className="font-serif text-3xl font-bold sm:text-4xl">
-            États des Lieux <span className="font-serif italic">Pro</span>
+            États des Lieux{' '}
+            {isPro && <span className="font-serif italic">Pro</span>}
           </h1>
-          <div className="mt-4 flex items-baseline gap-2">
-            <span className="font-serif text-5xl font-bold">299 €</span>
-            <span className="text-white/80">/ an — PDF illimités</span>
+          <div className="mt-4 flex flex-wrap items-baseline gap-2">
+            <span className="font-serif text-5xl font-bold">{planConfig.price} €</span>
+            <span className="text-white/80">
+              / an — {isPro ? "jusqu'à 15 biens" : 'pour 3 biens'}, EDL illimités
+            </span>
           </div>
         </div>
 
         <div className="px-6 py-7 sm:px-8">
           <ul className="mb-8 space-y-3.5">
-            {FEATURES.map((feature) => (
+            {SHARED_FEATURES.map((feature) => (
               <li key={feature} className="flex items-start gap-3">
                 <span
                   aria-hidden="true"
@@ -123,7 +182,7 @@ export function EdlCheckout() {
             {phase === 'idle' ? (
               <>
                 <CreditCard className="h-5 w-5" aria-hidden="true" />
-                Payer 299 € avec PayPal
+                Payer {planConfig.price} € avec PayPal
               </>
             ) : (
               <>
@@ -142,7 +201,7 @@ export function EdlCheckout() {
               {
                 icon: ShieldCheck,
                 title: '1. Paiement confirmé',
-                text: 'PayPal nous confirme votre paiement de 299 €.',
+                text: `PayPal nous confirme votre paiement de ${planConfig.price} €.`,
               },
               {
                 icon: ScanSearch,

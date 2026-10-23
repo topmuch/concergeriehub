@@ -2678,10 +2678,33 @@ model InspectionSubscription {
 // jeton). L'activationToken (72 h) est le SEUL sésame pour créer
 // le compte post-paiement (lien unique envoyé au payeur).
 // ==============================================================
+// v5.17 — Achat PUBLIC d'un abonnement Hub (Solo 29 €/mois / Pro
+// 99 €/mois) depuis la page d'accueil, SANS compte : la souscription
+// PayPal est créée d'abord (custom_id = `public:<id>`), l'acheteur
+// approuve sur PayPal, puis crée son compte via /paypal/activer
+// (même logique que EdlPurchase pour le module EDL).
+model PayPalPendingSubscription {
+  id                   String    @id @default(cuid())
+  activationToken      String    @unique @map("activation_token")
+  paypalSubscriptionId String?   @unique @map("paypal_subscription_id")
+  plan                 String // airbnb_solo | airbnb_pro
+  billingCycle         String    @default("monthly") @map("billing_cycle") // monthly
+  status               String    @default("created") // created | approved | activated | cancelled
+  payerEmail           String?   @map("payer_email")
+  userId               String?   @map("user_id") // compte créé/rattaché à l'activation
+  activationExpiresAt  DateTime  @map("activation_expires_at")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+
+  @@index([status])
+  @@map("paypal_pending_subscriptions")
+}
+
 model EdlPurchase {
   id                  String    @id @default(cuid())
   orderRef            String    @unique // référence interne (custom_id PayPal)
   paypalOrderId       String?   @unique // id commande PayPal après création
+  plan                String    @default("edl_annual") // edl_annual (299 €/3 biens) | edl_pro_annual (499 €/15 biens) — v5.17
   amountEur           Int       @default(299)
   status              String    @default("created") // created | paid | activated | cancelled
   payerEmail          String?   @map("payer_email")

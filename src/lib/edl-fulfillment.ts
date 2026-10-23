@@ -6,7 +6,7 @@
 import { compare, hash } from 'bcryptjs';
 import { db } from '@/lib/db';
 import { rateLimit } from '@/lib/rate-limit';
-import { captureEdlPayPalOrder, EDL_PLAN } from '@/lib/edl-paypal';
+import { captureEdlPayPalOrder, EDL_PLAN, getEdlPlan } from '@/lib/edl-paypal';
 import { queueEmail } from '@/lib/email';
 
 // -------------------------------------------------------------
@@ -155,13 +155,15 @@ export async function activateEdlPurchase(input: ActivateInput): Promise<Activat
     }
 
     // Compte existant vérifié : rattacher l'achat + (re)mettre
-    // l'abonnement EDL actif un an (sans toucher aux autres champs).
+    // l'abonnement EDL actif un an au plan acheté (sans toucher aux
+    // autres champs).
+    const purchasePlan = getEdlPlan(purchase.plan)?.id ?? EDL_PLAN;
     const endDate = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
     await db.$transaction([
       db.inspectionSubscription.upsert({
         where: { userId: existing.id },
-        update: { status: 'active', plan: EDL_PLAN, endDate },
-        create: { userId: existing.id, status: 'active', plan: EDL_PLAN, endDate },
+        update: { status: 'active', plan: purchasePlan, endDate },
+        create: { userId: existing.id, status: 'active', plan: purchasePlan, endDate },
       }),
       db.edlPurchase.update({
         where: { id: purchase.id },
@@ -173,6 +175,7 @@ export async function activateEdlPurchase(input: ActivateInput): Promise<Activat
   }
 
   // ── Création du compte EDL-only ──
+  const purchasePlan = getEdlPlan(purchase.plan)?.id ?? EDL_PLAN;
   const passwordHash = await hash(input.password, 12);
   const endDate = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
   try {
@@ -189,7 +192,7 @@ export async function activateEdlPurchase(input: ActivateInput): Promise<Activat
         select: { id: true, email: true },
       });
       await tx.inspectionSubscription.create({
-        data: { userId: created.id, status: 'active', plan: EDL_PLAN, endDate },
+        data: { userId: created.id, status: 'active', plan: purchasePlan, endDate },
       });
       await tx.edlPurchase.update({
         where: { id: purchase.id },
@@ -225,8 +228,8 @@ function queueWelcomeEmail(to: string, fullName: string, isNew: boolean): Promis
   const html = `
     <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#0f172a">
       <h2 style="margin:0 0 4px">Bienvenue chez RoomScan, ${prenom} 👋</h2>
-      <p style="color:#334155">Votre offre <strong>États des Lieux — 299 €/an</strong> est activée :
-      créations illimitées, signature électronique et <strong>génération de PDF illimitée</strong>.</p>
+      <p style="color:#334155">Votre offre <strong>États des Lieux</strong> est activée :
+      états des lieux illimités, signature électronique et <strong>génération de PDF illimitée</strong>.</p>
       <table style="border-collapse:collapse;margin:16px 0">
         <tr><td style="padding:4px 12px 4px 0;color:#64748b">Votre espace</td><td><a href="${dashboardUrl}" style="color:#04467a">Tableau de bord États des Lieux</a></td></tr>
         <tr><td style="padding:4px 12px 4px 0;color:#64748b">Validité</td><td>12 mois (jusqu'au ${new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toLocaleDateString('fr-FR')})</td></tr>
@@ -240,7 +243,7 @@ function queueWelcomeEmail(to: string, fullName: string, isNew: boolean): Promis
     to,
     subject: '✅ Votre accès « États des Lieux » est activé — RoomScan',
     html,
-    text: `Votre offre États des Lieux (299 €/an) est activée. Espace : ${dashboardUrl}`,
+    text: `Votre offre États des Lieux est activée. Espace : ${dashboardUrl}`,
     template: 'custom',
     referenceType: 'edl_purchase',
   });

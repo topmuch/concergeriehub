@@ -55,6 +55,7 @@ import PartnerLogosSlider from '@/components/PartnerLogosSlider';
 import { BeforeAfter } from './before-after';
 import { BentoGrid } from './modules-showcase';
 import { HowItWorks } from './how-it-works';
+import { EdlExplainer } from './edl-explainer-section';
 import { PricingSection } from './pricing-section';
 import { Testimonials } from './testimonials';
 import { CtaFinal } from './cta-final';
@@ -92,6 +93,7 @@ function Navbar({ onGoToAuth }: LandingPageProps) {
   const navLinks = [
     { name: t('Fonctionnalités'), href: '#features' },
     { name: t('Comment ça marche'), href: '#how-it-works' },
+    { name: t('États des Lieux'), href: '#etats-des-lieux' },
     { name: t('Tarifs'), href: '#pricing' },
     { name: t('Contact'), href: '#contact' },
   ];
@@ -153,7 +155,7 @@ function Navbar({ onGoToAuth }: LandingPageProps) {
               onClick={() => onGoToAuth?.('register')}
               className="air-gradient rounded-full px-5 py-2.5 font-semibold text-white shadow-[0_8px_24px_rgba(4, 70, 122,0.25)] transition-all hover:scale-[1.03] hover:shadow-[0_10px_28px_rgba(4, 70, 122,0.35)]"
             >
-              {t('Essai gratuit')}
+              {t('Commencer')}
             </button>
           </div>
 
@@ -214,7 +216,7 @@ function Navbar({ onGoToAuth }: LandingPageProps) {
                     }}
                     className="air-gradient w-full rounded-xl py-3 font-semibold text-white shadow-[0_8px_24px_rgba(4, 70, 122,0.25)]"
                   >
-                    {t('Essai gratuit')}
+                    {t('Commencer')}
                   </button>
                 </div>
               </div>
@@ -485,6 +487,9 @@ export function LandingPage({ onGoToAuth }: LandingPageProps) {
         <BeforeAfter />
         <BentoGrid />
         <HowItWorks />
+        {/* v5.17 — Onglet « États des Lieux » : procédure, utilité,
+            avantages (demande client). Ancre #etats-des-lieux (header). */}
+        <EdlExplainer />
         <PricingSection onGoToAuth={onGoToAuth} />
         <Testimonials onGoToAuth={onGoToAuth} />
         <CtaFinal onGoToAuth={onGoToAuth} />

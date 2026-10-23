@@ -28,6 +28,7 @@ import { db } from '@/lib/db';
 import { rateLimit } from '@/lib/rate-limit';
 import { resolveShieldAccess, decodePhotoDataUrl } from '@/lib/shield-access';
 import { onboardingRef, deviceRefCode, SHIELD_DEVICE_KINDS } from '@/lib/shield-refs';
+import { edlPlanMaxProperties } from '@/lib/edl-paypal';
 
 const MAX_ZONES = 12;
 const MAX_DEVICES = 20; // 14 équipements du wizard + marges (kinds CUSTOM)
@@ -53,6 +54,32 @@ export async function POST(req: NextRequest) {
     }
     if (!(await rateLimit(`shield-onboarding:${access.userId}`, 6))) {
       return bad('rate_limited', 429, 'Trop de tentatives — réessayez dans une minute.');
+    }
+
+    // v5.17 — LIMITE DE BIENS des offres EDL standalone :
+    // « États des Lieux » 299 €/an = 3 biens, « Pro » 499 €/an = 15 biens.
+    // Les comptes Hub (offre plateforme) gardent leur comportement v4.97
+    // (module inclus — leur quota vit dans l'abonnement Hub).
+    const buyer = await db.user.findUnique({
+      where: { id: access.userId },
+      select: { selectedPlan: true },
+    });
+    if (buyer?.selectedPlan === 'edl_standalone') {
+      const [sub, count] = await Promise.all([
+        db.inspectionSubscription.findUnique({
+          where: { id: access.subscriptionId },
+          select: { plan: true },
+        }),
+        db.shieldProperty.count({ where: { subscriptionId: access.subscriptionId } }),
+      ]);
+      const maxProps = edlPlanMaxProperties(sub?.plan);
+      if (count >= maxProps) {
+        return bad(
+          'limite_biens_atteinte',
+          403,
+          `Votre offre États des Lieux inclut ${maxProps} biens. Passez à l'offre Pro (jusqu'à 15 biens) pour en onboarder davantage — https://roomscan.pro/edl/abonnement?plan=edl_pro_annual`,
+        );
+      }
     }
 
     const body = (await req.json().catch(() => null)) as {

@@ -25,9 +25,50 @@
 // d'objets résultat + console.error).
 // =============================================================
 
-// ── Offre EDL (source unique de vérité — affichée et facturée) ──
+// ── Offres EDL (source unique de vérité — affichée et facturée) ──
+// v5.17 : 2 offres — « États des Lieux » 299 €/an pour 3 biens et
+// « États des Lieux Pro » 499 €/an jusqu'à 15 biens (demande client).
 export const EDL_PRICE_EUR = 299;
 export const EDL_PLAN = 'edl_annual';
+export const EDL_PRO_PRICE_EUR = 499;
+export const EDL_PRO_PLAN = 'edl_pro_annual';
+
+export type EdlPlanId = typeof EDL_PLAN | typeof EDL_PRO_PLAN;
+
+export interface EdlPlanConfig {
+  id: EdlPlanId;
+  price: number;
+  label: string;
+  description: string;
+  maxProperties: number;
+}
+
+export const EDL_PLANS: Record<EdlPlanId, EdlPlanConfig> = {
+  [EDL_PLAN]: {
+    id: EDL_PLAN,
+    price: EDL_PRICE_EUR,
+    label: 'États des Lieux',
+    description: 'États des Lieux RoomScan — 3 biens, EDL illimités (1 an)',
+    maxProperties: 3,
+  },
+  [EDL_PRO_PLAN]: {
+    id: EDL_PRO_PLAN,
+    price: EDL_PRO_PRICE_EUR,
+    label: 'États des Lieux Pro',
+    description: 'États des Lieux RoomScan Pro — jusqu\u2019à 15 biens, EDL illimités (1 an)',
+    maxProperties: 15,
+  },
+};
+
+/** Plan EDL valide ? → sa config, sinon undefined. */
+export function getEdlPlan(id: string): EdlPlanConfig | undefined {
+  return EDL_PLANS[id as EdlPlanId];
+}
+
+/** Limite de biens du plan d'abonnement EDL (repli : plan de base). */
+export function edlPlanMaxProperties(plan: string | null | undefined): number {
+  return getEdlPlan(plan ?? '')?.maxProperties ?? EDL_PLANS[EDL_PLAN].maxProperties;
+}
 
 /** 'live' → api-m.paypal.com, sinon (défaut) sandbox. */
 export function edlPayPalEnv(): 'sandbox' | 'live' {
@@ -158,6 +199,8 @@ export interface EdlPayPalCapture {
 export interface CreateEdlOrderInput {
   /** Référence interne unique (EdlPurchase.orderRef) → custom_id. */
   orderRef: string;
+  /** Offre achetée : 299 € (3 biens) ou 499 € Pro (15 biens). */
+  plan: EdlPlanId;
   /** URL de retour après approbation (capture serveur). */
   returnUrl: string;
   /** URL en cas d'annulation côté PayPal. */
@@ -165,19 +208,21 @@ export interface CreateEdlOrderInput {
 }
 
 /**
- * Crée une commande PayPal de 299,00 € (paiement immédiat, pas de
- * livraison). Renvoie l'URL d'approbation à ouvrir côté client.
+ * Crée une commande PayPal (paiement immédiat, pas de livraison) au
+ * prix de l'offre demandée. Renvoie l'URL d'approbation à ouvrir côté
+ * client.
  */
 export async function createEdlPayPalOrder(
   input: CreateEdlOrderInput,
 ): Promise<EdlPayPalResult<{ approveUrl: string; orderId: string }>> {
+  const planConfig = getEdlPlan(input.plan) ?? EDL_PLANS[EDL_PLAN];
   const result = await edlPayPalRequest<EdlPayPalOrder>('POST', '/v2/checkout/orders', {
     intent: 'CAPTURE',
     purchase_units: [
       {
         custom_id: input.orderRef,
-        description: 'États des Lieux RoomScan — abonnement annuel',
-        amount: { currency_code: 'EUR', value: EDL_PRICE_EUR.toFixed(2) },
+        description: planConfig.description,
+        amount: { currency_code: 'EUR', value: planConfig.price.toFixed(2) },
       },
     ],
     application_context: {

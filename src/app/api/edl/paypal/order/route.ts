@@ -1,11 +1,15 @@
 // =============================================================
-// POST /api/edl/paypal/order — Création de commande PayPal pour
-// l'offre « États des Lieux — 299 €/an » (PUBLIC — parcours d'achat
-// depuis la page d'accueil, SANS session).
+// POST /api/edl/paypal/order — Création de commande PayPal pour les
+// offres « États des Lieux » (PUBLIC — parcours d'achat depuis la
+// page d'accueil, SANS session).
+//
+// v5.17 — 2 offres (body { plan }) :
+//   - 'edl_annual'      : 299 €/an pour 3 biens  (défaut)
+//   - 'edl_pro_annual'  : 499 €/an jusqu'à 15 biens
 //
 // 1. crée la ligne EdlPurchase (status 'created', jeton
-//    d'activation 72 h, orderRef unique) ;
-// 2. crée la commande PayPal (Orders v2, CAPTURE, 299,00 EUR) ;
+//    d'activation 72 h, orderRef unique, plan) ;
+// 2. crée la commande PayPal (Orders v2, CAPTURE, prix du plan) ;
 // 3. renvoie { approveUrl } — le client est redirigé vers PayPal.
 //
 // Le retour se fait sur /edl/paiement/retour (page serveur qui
@@ -20,8 +24,9 @@ import { db } from '@/lib/db';
 import { rateLimit } from '@/lib/rate-limit';
 import { resolveOrigin } from '@/lib/site';
 import {
-  EDL_PRICE_EUR,
+  EDL_PLAN,
   createEdlPayPalOrder,
+  getEdlPlan,
   isEdlPayPalConfigured,
 } from '@/lib/edl-paypal';
 
@@ -42,6 +47,13 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    // Offre demandée : 'edl_annual' (défaut) ou 'edl_pro_annual'.
+    const body = (await req.json().catch(() => ({}))) as { plan?: string };
+    const planConfig = getEdlPlan(body.plan ?? EDL_PLAN);
+    if (!planConfig) {
+      return NextResponse.json({ error: 'Offre inconnue' }, { status: 400 });
+    }
+
     const orderRef = `edl-${Date.now().toString(36)}-${randomBytes(6).toString('hex')}`;
     const activationToken = randomBytes(24).toString('base64url');
 
@@ -50,7 +62,8 @@ export async function POST(req: NextRequest) {
     const purchase = await db.edlPurchase.create({
       data: {
         orderRef,
-        amountEur: EDL_PRICE_EUR,
+        plan: planConfig.id,
+        amountEur: planConfig.price,
         status: 'created',
         activationToken,
         activationExpiresAt: new Date(Date.now() + 72 * 60 * 60 * 1000),
@@ -61,8 +74,9 @@ export async function POST(req: NextRequest) {
     const origin = resolveOrigin(req);
     const order = await createEdlPayPalOrder({
       orderRef,
+      plan: planConfig.id,
       returnUrl: `${origin}/edl/paiement/retour?ref=${encodeURIComponent(orderRef)}`,
-      cancelUrl: `${origin}/edl/abonnement?annule=1`,
+      cancelUrl: `${origin}/edl/abonnement?plan=${planConfig.id}&annule=1`,
     });
 
     if (!order.ok || !order.data) {

@@ -39,11 +39,11 @@ export function CtaFinal({ onGoToAuth }: { onGoToAuth?: GoToAuth }) {
           onClick={() => onGoToAuth?.('register')}
           className="px-10 py-5 text-lg"
         >
-          ✨ {t("Commencer l'essai gratuit")}
+          ✨ {t('Choisir mon offre')}
           <ArrowRight className="h-5 w-5" />
         </MagneticButton>
         <p className="mt-7 text-sm text-slate-500">
-          {t('Sans engagement · Installé en 5 minutes')}
+          {t('Paiement sécurisé PayPal · Sans engagement')}
         </p>
       </Reveal>
     </section>

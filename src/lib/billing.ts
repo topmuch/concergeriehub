@@ -1,14 +1,15 @@
 // =============================================================
 // Catalogue d'abonnements HÔTE — RoomScan (ÉTAPE 10)
 //
-// Offres du spec :
-//  - Airbnb Solo : 9,90 €/mois OU 99 €/an (mise en avant)
-//  - Airbnb Pro  : 199 €/an uniquement (multi-biens)
-//  ("Famille" B2C du clone d'origine absorbée par le palier
-//   gratuit "Découverte" — pivot 100 % B2B)
+// Offres (v5.17 — demande client, plus d'essai gratuit, 100 %
+// PayPal Subscriptions depuis la page d'accueil) :
+//  - Airbnb Solo : 29 €/mois (1 logement)
+//  - Airbnb Pro  : 99 €/mois (conciergeries & multi-hôtes)
+//  (facturation annuelle retirée du catalogue — les couples
+//   (plan, cycle) offerts = prix non null ci-dessous)
 //
 // Les prix sont exprimés en euros. Utilisable côté client
-// (affichage) comme côté serveur (validation + Stripe).
+// (affichage) comme côté serveur (validation + PayPal).
 // =============================================================
 
 export type HostPlanId = 'airbnb_solo' | 'airbnb_pro';
@@ -33,18 +34,16 @@ export const HOST_PLANS: HostPlan[] = [
     name: 'Airbnb Solo',
     emoji: '⭐',
     description: "Sublimez l'expérience de vos invités sur votre logement principal.",
-    prices: { monthly: 9.9, annual: 99 },
+    prices: { monthly: 29, annual: null },
     maxProperties: 1,
     highlight: true,
     badge: 'Le plus choisi',
     features: [
-      { text: '1 logement, pièces illimitées', included: true },
-      { text: 'Wi-Fi, Guidebook, check-out', included: true },
-      { text: 'Mode Hôte protégé par PIN', included: true },
-      { text: 'Plaque QR en aluminium gravée', included: true },
-      { text: 'Annuaire de prestataires géolocalisés', included: true },
-      { text: 'Répondeur vocal invités', included: true },
-      { text: 'Statistiques de scans', included: true },
+      { text: '1 Plaque QR Hub', included: true },
+      { text: 'Wi-Fi & guidebook illimités', included: true },
+      { text: 'Module upselling de base', included: true },
+      { text: 'Support par email', included: true },
+      { text: 'Analytics essentiels', included: true },
       { text: 'Multi-biens & équipe', included: false },
     ],
   },
@@ -53,7 +52,7 @@ export const HOST_PLANS: HostPlan[] = [
     name: 'Airbnb Pro',
     emoji: '🏢',
     description: 'Pour les gestionnaires et co-hôtelleries multi-biens.',
-    prices: { monthly: null, annual: 199 },
+    prices: { monthly: 99, annual: null },
     maxProperties: 10,
     highlight: false,
     badge: 'Multi-biens',
@@ -64,6 +63,7 @@ export const HOST_PLANS: HostPlan[] = [
       { text: 'Plaques QR gravées incluses', included: true },
       { text: 'Statistiques multi-biens', included: true },
       { text: 'Support prioritaire dédié', included: true },
+      { text: 'API & Webhooks', included: true },
     ],
   },
 ];

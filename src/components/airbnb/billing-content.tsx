@@ -546,35 +546,48 @@ export function BillingContent({ host, current, stripeMode }: BillingContentProp
           </motion.div>
         )}
 
-        {/* ---------- Toggle mensuel / annuel ---------- */}
-        <div className="mb-8 flex items-center justify-center gap-3">
-          <span className={cn('text-sm font-semibold', cycle === 'monthly' ? 'text-foreground' : 'text-muted-foreground')}>
-            Mensuel
-          </span>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={cycle === 'annual'}
-            aria-label="Basculer entre facturation mensuelle et annuelle"
-            onClick={() => setCycle((c) => (c === 'monthly' ? 'annual' : 'monthly'))}
-            className={cn(
-              'relative h-6 w-11 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#055492]/50 focus-visible:ring-offset-2',
-              cycle === 'annual' ? 'air-gradient shadow' : 'border border-border bg-muted',
-            )}
-          >
-            <span
-              className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
-                cycle === 'annual' ? 'translate-x-[22px]' : 'translate-x-0.5'
-              }`}
-            />
-          </button>
-          <span className={cn('text-sm font-semibold', cycle === 'annual' ? 'text-foreground' : 'text-muted-foreground')}>
-            Annuel
-          </span>
-          <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-950/40 dark:text-emerald-300">
-            2 mois offerts
-          </span>
-        </div>
+        {/* ---------- Toggle mensuel / annuel ----------
+            v5.17 : catalogue 100 % mensuel (Solo 29 €/mois, Pro
+            99 €/mois — demande client, plus de facturation annuelle
+            Hub). Toggle retiré ; cycle forcé à 'monthly'. */}
+        {(() => {
+          const annualAvailable = HOST_PLANS.some((p) => planPrice(p, 'annual') !== null);
+          if (annualAvailable) {
+            return (
+              <div className="mb-8 flex items-center justify-center gap-3">
+                <span className={cn('text-sm font-semibold', cycle === 'monthly' ? 'text-foreground' : 'text-muted-foreground')}>
+                  Mensuel
+                </span>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={cycle === 'annual'}
+                  aria-label="Basculer entre facturation mensuelle et annuelle"
+                  onClick={() => setCycle((c) => (c === 'monthly' ? 'annual' : 'monthly'))}
+                  className={cn(
+                    'relative h-6 w-11 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#055492]/50 focus-visible:ring-offset-2',
+                    cycle === 'annual' ? 'air-gradient shadow' : 'border border-border bg-muted',
+                  )}
+                >
+                  <span
+                    className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
+                      cycle === 'annual' ? 'translate-x-[22px]' : 'translate-x-0.5'
+                    }`}
+                  />
+                </button>
+                <span className={cn('text-sm font-semibold', cycle === 'annual' ? 'text-foreground' : 'text-muted-foreground')}>
+                  Annuel
+                </span>
+                <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-950/40 dark:text-emerald-300">
+                  2 mois offerts
+                </span>
+              </div>
+            );
+          }
+          // Catalogue mensuel seul : garder le cycle cohérent au rendu.
+          if (cycle !== 'monthly') setCycle('monthly');
+          return null;
+        })()}
 
         {/* ---------- Cartes d'offres ---------- */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">

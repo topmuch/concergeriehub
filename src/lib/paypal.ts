@@ -91,6 +91,7 @@ export interface PayPalSubscriptionView {
   status: string;
   custom_id?: string;
   start_time?: string;
+  subscriber?: { email_address?: string; name?: { given_name?: string; surname?: string } };
   billing_info?: {
     next_billing_time?: string;
     last_payment?: { time?: string };
@@ -288,8 +289,12 @@ async function paypalRequest<T>(
 
 const PAYPAL_PRODUCT_NAME = 'RoomScan Hub';
 const PRODUCT_KEY = 'paypal.product_id';
-const planSettingKey = (plan: HostPlanId, cycle: BillingCycle) =>
-  `paypal.plan_${plan}_${cycle}`;
+// v5.17 : le prix est DANS la clé de cache et dans le nom du plan —
+// un changement de tarif crée forcément un plan PayPal NEUF au bon
+// prix (jamais de réutilisation silencieuse d'un plan à l'ancien
+// tarif, ni via cache SystemSetting ni via recherche par nom).
+const planSettingKey = (plan: HostPlanId, cycle: BillingCycle, price: number) =>
+  `paypal.plan_${plan}_${cycle}_${price}v2`;
 
 /** Couple (plan, cycle) réellement proposé = prix non null dans lib/billing. */
 function offeredCombos(): { plan: HostPlan; cycle: BillingCycle; price: number }[] {
@@ -303,8 +308,10 @@ function offeredCombos(): { plan: HostPlan; cycle: BillingCycle; price: number }
   return combos;
 }
 
-function planName(plan: HostPlan, cycle: BillingCycle): string {
-  return `RoomScan Hub — ${plan.name} · ${cycle === 'annual' ? 'Annuel' : 'Mensuel'}`;
+function planName(plan: HostPlan, cycle: BillingCycle, price: number): string {
+  return `RoomScan Hub — ${plan.name} · ${
+    cycle === 'annual' ? 'Annuel' : 'Mensuel'
+  } · ${price} €`;
 }
 
 async function readSetting(key: string): Promise<string | null> {
@@ -365,7 +372,7 @@ async function ensurePlan(
 ): Promise<string | null> {
   if (planIdCache) return planIdCache;
 
-  const name = planName(plan, cycle);
+  const name = planName(plan, cycle, price);
 
   // 1) Recherche par nom exact sur les plans du product (idempotence).
   const listed = await paypalRequest<PayPalListPlansResponse>(
@@ -375,7 +382,9 @@ async function ensurePlan(
   if (listed.ok && listed.data?.plans) {
     const found = listed.data.plans.find((p) => p.name === name);
     if (found) {
-      await writeSetting(planSettingKey(plan.id, cycle), found.id).catch(() => undefined);
+      await writeSetting(planSettingKey(plan.id, cycle, price), found.id).catch(
+        () => undefined,
+      );
       return found.id;
     }
   }
@@ -413,7 +422,9 @@ async function ensurePlan(
     { idempotencyKey: `roomscan-plan-${plan.id}-${cycle}` },
   );
   if (created.ok && created.data?.id) {
-    await writeSetting(planSettingKey(plan.id, cycle), created.data.id).catch(() => undefined);
+    await writeSetting(planSettingKey(plan.id, cycle, price), created.data.id).catch(
+      () => undefined,
+    );
     return created.data.id;
   }
 
@@ -454,7 +465,7 @@ export async function ensurePayPalPlans(): Promise<EnsurePayPalPlansResult> {
     // Cache SystemSetting : ne (re)créer qu'une seule fois.
     const keys = [
       PRODUCT_KEY,
-      ...offeredCombos().map((c) => planSettingKey(c.plan.id, c.cycle)),
+      ...offeredCombos().map((c) => planSettingKey(c.plan.id, c.cycle, c.price)),
     ];
     const rows = await db.systemSetting.findMany({
       where: { key: { in: keys } },
@@ -474,7 +485,7 @@ export async function ensurePayPalPlans(): Promise<EnsurePayPalPlansResult> {
         combo.plan,
         combo.cycle,
         combo.price,
-        cache.get(planSettingKey(combo.plan.id, combo.cycle)) ?? null,
+        cache.get(planSettingKey(combo.plan.id, combo.cycle, combo.price)) ?? null,
       );
       if (id) {
         planIds[combo.plan.id][combo.cycle] = id;
@@ -514,7 +525,11 @@ export interface CreatePayPalSubscriptionInput {
   paypalPlanId: string;
   /** `${userId}|${plan}|${cycle}` — relu à l'activation (anti-forgery). */
   customId: string;
-  subscriberEmail: string;
+  /**
+   * Email de l'abonné — optionnel depuis v5.17 : le parcours d'achat
+   * public (sans compte) laisse PayPal collecter l'email de l'acheteur.
+   */
+  subscriberEmail?: string;
   returnUrl: string;
   cancelUrl: string;
 }
@@ -541,7 +556,9 @@ export async function createPayPalSubscription(
     {
       plan_id: input.paypalPlanId,
       custom_id: input.customId,
-      subscriber: { email_address: input.subscriberEmail },
+      ...(input.subscriberEmail
+        ? { subscriber: { email_address: input.subscriberEmail } }
+        : {}),
       application_context: {
         brand_name: 'RoomScan',
         locale: 'fr-FR',

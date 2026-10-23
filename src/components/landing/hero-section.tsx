@@ -240,7 +240,7 @@ export function HeroSection({ onGoToAuth }: { onGoToAuth?: GoToAuth }) {
               onClick={() => smoothScrollTo('#pricing')}
               className="px-8 py-4 text-base"
             >
-              {t("Commencer l'essai gratuit")}
+              {t('Voir les tarifs')}
               <ArrowRight className="h-5 w-5" />
             </MagneticButton>
             <button
