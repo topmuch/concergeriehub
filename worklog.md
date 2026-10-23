@@ -5584,3 +5584,22 @@ Stage Summary:
 - v5.14 EN PRODUCTION : guidage vocal complet des états des lieux (photos zone par zone + vidéo 120 s/60 s, sous-titres, rejouer, muet mémorisé), check-in ET check-out, 11/11 MP3 servis.
 - Rollbacks : GitHub releases v.10 (v5.8) et v.11 (v5.11) avec assets figés ; tags git v5.8..v5.13.
 - Pièges reconfirmés : cb= à chaque push de tar ; garde upload/[token] avant/après commit ; tsc après kill dev ; edge-tts instable (cascade = assurance).
+
+---
+Task ID: V5.15
+Agent: Z.ai Code (orchestrateur)
+Task: v5.15 — (1) Bloc d'identification officiel sur les 2 PDF Inventaire (demande client validée : type, date EDL planifiée, dates de séjour, propriétaire, locataire, adresse) ; (2) FIX lien email « {"error":"Non autorisé"} » ; (3) FIX vidéo format téléphone (bandes noires gauche/droite).
+
+Work Log:
+- Diagnostic email : shield-emails.ts mettait `${siteUrl}/api/shield/pdf/session/${sessionId}` (route protégée par session hôte via resolveShieldAccess) dans le bouton « Ouvrir le PDF certifié » des emails hôte + invité → 401 {"error":"Non autorisé"} pour l'invité / l'hôte sur un autre appareil.
+- FIX : le bouton pointe désormais la route PUBLIQUE `/api/public/shield/pdf/[token vidéo]` (même clé publique que le QR imprimé dans le PDF) ; repli route session si aucune vidéo. Récap email enrichi : + Propriétaire, + Adresse, + Séjour (helper frDate ajouté).
+- PDF (shield-pdf.ts) : type ShieldSessionPdfData + scheduledDate (session + linked, optionnels) ; nouveau drawIdentityBlock (~84 pt, cadre liseré rouge pâle + bande titre) inséré en tête de PAGE 2 après le sous-titre : PROPRIÉTAIRE | LOCATAIRE/INVITÉ (« Non renseigné »), LOGEMENT (adresse + ville), DATE DE L'ÉTAT DES LIEUX = date planifiée (repli capture, suffixe « (capture le …) » si diffère) | SÉJOUR « Du … au … » déduit du couple check-in/check-out lié (« Non renseigné » si non planifié). Bandeau « RAPPORT DE SORTIE DU … / ATTESTATION D'ENTRÉE DU … » passe à la date planifiée.
+- Routes PDF (session/[id] + public/[token]) et buildPdfData (emails) : mappage scheduledDate session + session liée.
+- Diagnostic vidéo : page /shield/video/[token] en `aspect-video` (16:9) + aperçus captures en `aspect-video`/carré → vidéo portrait téléphone pillarboxée (bandes noires G/D).
+- FIX : nouveau composant client `adaptive-video.tsx` — le conteneur épouse le ratio RÉEL du fichier via onLoadedMetadata (aucune migration DB, vaut pour les vidéos existantes), repli 9/16 avant metadata, plafond max-w 540 px centré sur desktop (format téléphone) ; intégré à /shield/video/[token] + aperçu shield-capture + aperçu cleaner-capture (viseurs live inchangés).
+- PIÈGE RESYNC RECURRÉ (garde critique) : src/app/upload/[token]/page.tsx + src/components/upload/upload-token-page.tsx absents du disque ET de git HEAD (commit resync 30bf51c les avait supprimés) → restaurés depuis 3422222 (v4.164) AVANT construction du tar ; audit tar↔git : 0 fichier du tar absent de git.
+- Pipeline : VERSION.txt → v5.15 (bloc PDF + fix email + fix vidéo documentés) ; Dockerfile cb=v5.15 ; tar reconstruit À LA RACINE (6 015 032 octets) — vérifications : VERSION interne = v5.15, shims présents, seule diff de liste vs tar v5.14 = ajout adaptive-video.tsx ; lint 0 erreur.
+
+Stage Summary:
+- v5.15 prête : PDF enrichis (bloc identification + date planifiée), emails réparés (lien public + récap enrichi), vidéo au format téléphone (AdaptiveVideo), shims restaurés.
+- Leçon pour agents futurs : TOUJOURS exécuter la garde `git cat-file -e "HEAD:src/app/upload/[token]/page.tsx"` avant tout commit/tar — le resync supprime les shims ; restauration : `git checkout 3422222 -- "src/app/upload/[token]/page.tsx" "src/components/upload/upload-token-page.tsx"`.

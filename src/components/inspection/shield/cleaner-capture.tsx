@@ -21,6 +21,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } fro
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
+import { AdaptiveVideo } from './adaptive-video';
 import {
   AlertTriangle,
   CalendarDays,
@@ -831,12 +832,9 @@ export default function CleanerCapture({ data }: { data: CleanerSessionView }) {
               {recState === 'preview' && videoState ? (
                 <div className="space-y-3">
                   <div className="overflow-hidden rounded-2xl border border-gray-300 bg-black shadow-sm">
-                    <video
+                    <AdaptiveVideo
                       src={videoState.previewUrl}
-                      controls
-                      playsInline
-                      className="aspect-video w-full"
-                      aria-label="Aperçu de la vidéo walkthrough"
+                      ariaLabel="Aperçu de la vidéo walkthrough"
                     />
                   </div>
                   {/* FIX-CAPTURE-V38 : récap de validation photos + vidéo */}

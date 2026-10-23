@@ -51,6 +51,7 @@ export async function GET(
         linked = {
           sessionRef: linkedSession.sessionRef,
           completedAt: linkedSession.completedAt,
+          scheduledDate: linkedSession.scheduledDate, // v5.15 — dates de séjour
           shots: linkedSession.shots.map((s) => ({
             zoneName: s.zoneName,
             photo: s.photo,
@@ -85,6 +86,7 @@ export async function GET(
         guestName: session.guestName,
         sessionRef: session.sessionRef,
         completedAt: session.completedAt,
+        scheduledDate: session.scheduledDate, // v5.15 — date EDL planifiée
       },
       video: session.video
         ? {

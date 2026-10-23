@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { db } from '@/lib/db';
+import { AdaptiveVideo } from '@/components/inspection/shield/adaptive-video';
 
 export const dynamic = 'force-dynamic';
 
@@ -99,13 +100,11 @@ export default async function ShieldVideoPage({
           aria-label="Vidéo walkthrough"
           className="overflow-hidden rounded-2xl border border-white/10 bg-black shadow-2xl"
         >
-          {/* Walkthrough sans piste audio */}
-          <video
-            controls
-            playsInline
-            preload="metadata"
-            className="aspect-video w-full bg-black"
+          {/* Walkthrough sans piste audio — v5.15 : lecteur au vrai format
+              de la vidéo (portrait téléphone), plus de bandes noires. */}
+          <AdaptiveVideo
             src={`/api/shield/video/${video.publicToken}`}
+            ariaLabel="Vidéo walkthrough"
           />
         </section>
 

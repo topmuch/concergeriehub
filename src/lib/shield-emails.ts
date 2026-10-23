@@ -26,6 +26,9 @@ function escapeHtml(s: string): string {
     .replace(/"/g, '&quot;');
 }
 
+const frDate = (d: Date) =>
+  d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
 const frDateTime = (d: Date) =>
   d.toLocaleString('fr-FR', {
     weekday: 'long',
@@ -87,6 +90,7 @@ async function buildPdfData(sessionId: string, subscriptionId: string): Promise<
       linked = {
         sessionRef: linkedSession.sessionRef,
         completedAt: linkedSession.completedAt,
+        scheduledDate: linkedSession.scheduledDate, // v5.15 — dates de séjour
         shots: linkedSession.shots.map((s) => ({
           zoneName: s.zoneName,
           photo: s.photo,
@@ -125,6 +129,7 @@ async function buildPdfData(sessionId: string, subscriptionId: string): Promise<
         guestName: session.guestName,
         sessionRef: session.sessionRef,
         completedAt: session.completedAt,
+        scheduledDate: session.scheduledDate, // v5.15 — date EDL planifiée
       },
       video: session.video
         ? {
@@ -169,21 +174,38 @@ export async function sendShieldSessionCertificateEmails(
 
     const pdf = await renderShieldSessionPdf(ctx.data);
     const filename = `Roomscan_Inventaire_${ctx.sessionRef}.pdf`;
-    const pdfUrl = `${siteUrl}/api/shield/pdf/session/${sessionId}`;
+    // v5.15 — CORRECTIF « Non autorisé » : le lien email passe sur la
+    // route PUBLIQUE par token vidéo (la même clé que le QR imprimé
+    // dans le PDF) → l'invité comme l'hôte (autre appareil) ouvrent le
+    // document SANS session hôte. Repli : route session si aucune vidéo.
+    const pdfUrl = ctx.data.video
+      ? `${siteUrl}/api/public/shield/pdf/${ctx.data.video.publicToken}`
+      : `${siteUrl}/api/shield/pdf/session/${sessionId}`;
     const videoUrl = ctx.data.video ? `${siteUrl}/shield/video/${ctx.data.video.publicToken}` : null;
     const propertyName = ctx.data.property.propertyName;
     const when = frDateTime(ctx.data.session.completedAt);
     const guestName = String(ctx.data.session.guestName || '').trim();
 
+    // v5.15 — dates de séjour (couple check-in / check-out planifié) :
+    // même logique que le bloc d'identification du PDF.
+    const isOutPair = ctx.sessionType === 'CHECK_OUT';
+    const stayStart = isOutPair ? ctx.data.linked?.scheduledDate : ctx.data.session.scheduledDate;
+    const stayEnd = isOutPair ? ctx.data.session.scheduledDate : ctx.data.linked?.scheduledDate;
+    const stayLabel =
+      stayStart && stayEnd ? `du ${frDate(stayStart)} au ${frDate(stayEnd)}` : null;
+
     const recap = `
       <table style="width:100%;border-collapse:collapse;background:#ffffff;border:1px solid #e8edf6;border-radius:14px;overflow:hidden">
         ${[
           ['Logement', propertyName],
+          ['Propriétaire', String(ctx.data.property.ownerName || '—')],
+          ['Adresse', `${String(ctx.data.property.propertyAddress || '—')}, ${String(ctx.data.property.city || '')}`],
           ['Type', `État des lieux ${typeLabel(ctx.sessionType)}`],
           ['Agent', ctx.data.session.agentName],
           ...(guestName ? [['Invité', guestName]] : []),
           ['Référence', ctx.sessionRef],
           ['Date', when],
+          ...(stayLabel ? [['Séjour', stayLabel]] : []),
           ['Hash vidéo', ctx.data.video ? `SHA-256 ${String(ctx.data.video.sha256).slice(0, 16).toUpperCase()}…` : '—'],
         ]
           .map(

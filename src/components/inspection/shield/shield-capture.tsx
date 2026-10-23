@@ -25,6 +25,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { SHIELD_ZONE_STATUSES, type ShieldZoneStatus } from '@/lib/shield-refs';
 import { blobToBase64, canvasToCompressedDataUrl, fileToShieldPhotoDataUrl } from './shield-photo';
+import { AdaptiveVideo } from './adaptive-video';
 import { VIDEO_VOICE_CUES, VoiceGuideBar, useVoiceGuide } from './use-voice-guide';
 
 // ---------- Constantes du flux ----------
@@ -1364,12 +1365,9 @@ export function ShieldCapture({
                 {recState === 'preview' && videoState ? (
                   <div className="space-y-3">
                     <div className="overflow-hidden rounded-2xl border border-gray-300 bg-black shadow-sm">
-                      <video
+                      <AdaptiveVideo
                         src={videoState.previewUrl}
-                        controls
-                        playsInline
-                        className="aspect-video w-full"
-                        aria-label="Aperçu de la vidéo walkthrough"
+                        ariaLabel="Aperçu de la vidéo walkthrough"
                       />
                     </div>
                     {/* FIX-CAPTURE-V38 : récap de validation photos + vidéo */}

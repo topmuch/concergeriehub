@@ -80,6 +80,10 @@ export interface ShieldSessionPdfData {
     guestName?: string | null;
     sessionRef: string;
     completedAt: Date;
+    /** v5.15 — date PLANIFIÉE du check-in/out (création du séjour).
+     * Affichée comme « date de l'état des lieux » (validation client) ;
+     * null = session créée directement à la capture (non planifiée). */
+    scheduledDate?: Date | null;
   };
   video: {
     publicToken: string;
@@ -93,6 +97,8 @@ export interface ShieldSessionPdfData {
   linked: {
     sessionRef: string;
     completedAt: Date;
+    /** v5.15 — date PLANIFIÉE de la session liée → dates de séjour. */
+    scheduledDate?: Date | null;
     shots: ShieldPdfZoneShot[];
   } | null;
 }
@@ -1184,6 +1190,125 @@ function drawComparatifGrid(
   doc.y = rowTop;
 }
 
+// =============================================================
+// v5.15 — BLOC D'IDENTIFICATION OFFICIEL (demande client)
+// « Ces infos doivent figurer sur les PDF générés » :
+//   · type d'EDL (entrée / sortie — déjà dans le titre du bandeau) ;
+//   · date de l'état des lieux = date PLANIFIÉE (validation client,
+//     repli : date réelle de capture si non planifié) ;
+//   · dates de début / fin de séjour du locataire (déduites du couple
+//     check-in / check-out lié, « Non renseigné » si non planifié) ;
+//   · nom et prénom du propriétaire et du locataire ;
+//   · adresse du logement.
+// Compact (≈80 pt) pour préserver la mise en page de la PAGE 2.
+// =============================================================
+function pdfValidDate(v: unknown): Date | null {
+  if (!v) return null;
+  const d = toDate(v);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+function drawIdentityBlock(
+  doc: PdfDoc,
+  data: ShieldSessionPdfData,
+  fontsOk: boolean,
+): void {
+  const s = data.session;
+  const p = data.property;
+  const isOut = s.type === 'CHECK_OUT';
+
+  // Dates de séjour : le séjour planifié crée un COUPLE de sessions
+  // liées (check-in ↔ check-out) portant chacune sa date planifiée.
+  const ownPlanned = pdfValidDate(s.scheduledDate);
+  const linkedPlanned = pdfValidDate(data.linked?.scheduledDate);
+  const stayStart = isOut ? linkedPlanned : ownPlanned;
+  const stayEnd = isOut ? ownPlanned : linkedPlanned;
+  const stayLabel =
+    stayStart && stayEnd
+      ? `Du ${frDate(stayStart)} au ${frDate(stayEnd)}`
+      : 'Non renseigné';
+
+  // Date de l'EDL affichée = date PLANIFIÉE (validation client),
+  // repli date réelle de capture pour les sessions improvisées.
+  const edlDate = ownPlanned ?? pdfValidDate(s.completedAt) ?? s.completedAt;
+  const captureDate = pdfValidDate(s.completedAt);
+  const captureSuffix =
+    ownPlanned && captureDate && frDate(captureDate) !== frDate(ownPlanned)
+      ? ` (capture le ${frDate(captureDate)})`
+      : '';
+
+  const BOX_H = 84;
+  if (doc.y + BOX_H > MAX_Y_P2) doc.addPage();
+  const y0 = doc.y;
+
+  // Cadre + bande de titre
+  doc.save();
+  doc.roundedRect(MARGIN, y0, CONTENT_W, BOX_H, 6).lineWidth(1).stroke('#E3B7BA');
+  doc.rect(MARGIN, y0, CONTENT_W, 14).fill('#F9E9EA');
+  doc.restore();
+  txt(
+    doc,
+    fname('bold', fontsOk),
+    7.2,
+    RED,
+    'IDENTIFICATION DU LOGEMENT, DU PROPRIÉTAIRE ET DU SÉJOUR',
+    MARGIN + 8,
+    y0 + 4,
+    CONTENT_W - 16,
+    'left',
+  );
+
+  const colW = (CONTENT_W - 24) / 2;
+  const labelValue = (label: string, value: string, x: number, y: number, w: number): void => {
+    txt(doc, fname('bold', fontsOk), 5.6, MUTED, label, x, y, w, 'left');
+    txt(doc, fname('bold', fontsOk), 8, DARK, fitOneLine(doc, value, w), x, y + 7.5, w, 'left');
+  };
+
+  const rowY1 = y0 + 19;
+  const rowY2 = y0 + 40;
+  const rowY3 = y0 + 61;
+
+  labelValue('PROPRIÉTAIRE', p.ownerName || '—', MARGIN + 8, rowY1, colW);
+  labelValue(
+    'LOCATAIRE / INVITÉ',
+    String(s.guestName || '').trim() || 'Non renseigné',
+    MARGIN + 16 + colW,
+    rowY1,
+    colW,
+  );
+
+  txt(doc, fname('bold', fontsOk), 5.6, MUTED, 'LOGEMENT (ADRESSE)', MARGIN + 8, rowY2, CONTENT_W - 16, 'left');
+  const address = `${p.propertyAddress || ''}, ${p.city || ''}`.replace(/^[,\s]+|[,\s]+$/g, '');
+  txt(
+    doc,
+    fname('body', fontsOk),
+    7.6,
+    DARK,
+    fitOneLine(doc, address || '—', CONTENT_W - 16),
+    MARGIN + 8,
+    rowY2 + 7.5,
+    CONTENT_W - 16,
+    'left',
+  );
+
+  labelValue(
+    "DATE DE L'ÉTAT DES LIEUX",
+    `${frDateTime(edlDate)}${captureSuffix}`,
+    MARGIN + 8,
+    rowY3,
+    colW,
+  );
+  labelValue(
+    isOut ? 'SÉJOUR DU LOCATAIRE (SORTIE)' : 'SÉJOUR DU LOCATAIRE (ENTRÉE)',
+    stayLabel,
+    MARGIN + 16 + colW,
+    rowY3,
+    colW,
+  );
+
+  doc.y = y0 + BOX_H + 8;
+}
+
 /** Boîte sombre vidéo : QR d'accès + consignes walkthrough. */
 async function drawVideoBox(
   doc: PdfDoc,
@@ -1512,9 +1637,12 @@ export async function renderShieldSessionPdf(data: ShieldSessionPdfData): Promis
   doc.addPage();
 
   // 1. Bandeau rouge + sous-titre de contrôle (v4.120 : titre métier)
+  // v5.15 — date affichée = date PLANIFIÉE de l'EDL (validation client) ;
+  // repli : date réelle de capture pour les sessions non planifiées.
+  const plannedAt = pdfValidDate(data?.session?.scheduledDate);
   const controlLabel = isOut
-    ? `RAPPORT DE SORTIE DU ${frDate(completedAt)}`
-    : `ATTESTATION D'ENTRÉE DU ${frDate(completedAt)}`;
+    ? `RAPPORT DE SORTIE DU ${frDate(plannedAt ?? completedAt)}`
+    : `ATTESTATION D'ENTRÉE DU ${frDate(plannedAt ?? completedAt)}`;
   drawRedBanner(doc, docTitle, `ÉTAT DES LIEUX • ${city} • ${controlLabel}`, fontsOk, logoWhite);
 
   // 2. Ruban de page (clipboard pour CHECK-IN, caméra pour CHECK-OUT)
@@ -1540,6 +1668,10 @@ export async function renderShieldSessionPdf(data: ShieldSessionPdfData): Promis
     : `Document sécurisé avec hash SHA-256 — Contestation sous 48 h. Statut: IMPECCABLE pour ${nOk}/${shots.length} zones.${guestName ? ` Séjour de ${guestName}.` : ''}`;
   txt(doc, fname('body', fontsOk), 7.5, MUTED, subtitle, MARGIN, doc.y, CONTENT_W, 'left');
   doc.y += 15;
+
+  // 4 bis (v5.15) — BLOC D'IDENTIFICATION OFFICIEL (demande client) :
+  // propriétaire, locataire, adresse, date EDL planifiée, séjour.
+  drawIdentityBlock(doc, data, fontsOk);
 
   // 5. Grille des zones (comparatif entrée→sortie si CHECK-OUT lié)
   if (isOut && linked) {
