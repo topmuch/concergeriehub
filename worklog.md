@@ -5640,3 +5640,17 @@ Work Log:
 Stage Summary:
 - v5.17 EN PRODUCTION : 4 tarifs sans essai, prix statiques toujours visibles, 100 % des offres connectées PayPal (Solo/Pro en achat public avec création de compte post-paiement, EDL 2 offres), onglet « États des Lieux » complet, limite 3/15 biens EDL.
 - Leçon : le resync supprime les shims EN COURS de session — la garde git cat-file -e doit être exécutée IMMÉDIATEMENT avant ET après chaque commit (pas seulement en début de tâche) ; après restauration, TOUJOURS reconstruire le tar.
+
+---
+Task ID: V5.17-VERIFY
+Agent: Z.ai Code (session reprise / vérification)
+Task: Reprise post-summary — vérifier l'état v5.17, nettoyer l'espace de travail, re-vérifier la production au navigateur.
+
+Work Log:
+- Constat : v5.17 déjà commité (edd1598), tar poussé, déploiement gh7xuumktllrerbrga4uymzc finished, health prod = v5.17 — le travail était achevé avant la coupure de session.
+- Espace de travail sale au retour : 7 fichiers en « mode change » uniquement (644→755, 0 diff de contenu) + shims src/app/upload/[token]/page.tsx et src/components/upload/upload-token-page.tsx RE-SUPPRIMÉS par le resync (3ᵉ occurrence du piège) → restauration `git checkout --` + `git checkout -- .` ; gardes `git cat-file -e HEAD:...` passées (shims présents dans HEAD et sur disque) ; workspace propre.
+- Re-vérification production au navigateur (agent-browser sur https://roomscan.pro) : header avec onglet « États des Lieux » (label EN « Move-in Reports » via landing-i18n) ; section EDL complète (« L'état des lieux, sans stress. », procédure 5 étapes, avantages, CTA) ; tarifs 4 cartes — Solo 29 €/mois (liste features exacte demandée), Pro 99 €/mois + badge Populaire, EDL 299 €/an, EDL Pro 499 € — boutons « Souscrire — 29 €/mois », « Souscrire — 99 €/mois », « Payer 299 € avec PayPal », « Payer 499 € avec PayPal » ; ZÉRO « 0 € », ZÉRO mention d'essai gratuit ; capture /tmp/tarifs-v517.png.
+
+Stage Summary:
+- v5.17 CONFIRMÉE EN PRODUCTION par vérification navigateur complète (les 3 chantiers client : tarifs refaits sans essai + prix visibles, PayPal sur les 4 offres, onglet « États des Lieux » + page pédagogique).
+- Leçon re-confirmée : le resync supprime les shims À CHAQUE session — vérifier `git status --short` + gardes cat-file dès l'ouverture, restaurer avant tout autre travail.
