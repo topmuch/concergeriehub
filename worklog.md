@@ -5465,3 +5465,21 @@ Stage Summary:
 - v5.8 EN PRODUCTION : renommage Inventaire, design Luxe Bleuté clair/sombre, logo, suppression+partage check-ins/outs, PDF mode d'emploi, PWA réelle
 - LEÇONS CRITIQUES : (1) tsc local peut être OOM-killed silencieusement via pipe — toujours rediriger vers fichier et lire $? SANS pipe ; (2) la télémétrie de build (step.sh + /api/errors + webhook.site) rend les builds Coolify diagnostiquables sans SSH — LA CONSERVER ; (3) heap webpack ≥1536 requise pour le code v5.x ; (4) un push déclenche le webhook Coolify → ne jamais déployer en rafale (builds concurrents, concurrent_builds=2)
 - Prod : https://roomscan.pro en v5.8, tag git v5.8 poussé
+
+---
+Task ID: RELEASE-10
+Agent: Z.ai Code (main)
+Task: Créer la Release « Version 10 » sur GitHub (snapshot de la v5.8 en production)
+
+Work Log:
+- État vérifié : arbre propre, tout pushé, HEAD 8780d19 = v5.8 déployée et saine en prod (https://roomscan.pro)
+- Tar racine vérifié : dernier commit le touchant = 74bfe75 (le commit v5.8 lui-même), 864 entrées, VERSION.txt = « v5.8 (2026-10-22) — ROOMSCAN INVENTAIRE » → le tar EST le snapshot de production
+- Releases existantes inventoriées via API (gh CLI absent) : v.1 → v.9 « Version 1..9 » → schéma respecté
+- Release créée via REST API : tag v.10 (target main → sha 8780d19), nom « Version 10 », notes FR sans accents reprenant TOUT depuis la v.9 : emails Resend + PDF attachés + renvoi par lot ; Dashboard V2 12 améliorations (v4.167) ; refonte Luxe Bleuté + renommage RoomScan Inventaire + suppression/partage + PDF mode d'emploi + PWA (v5.0) ; stabilisation build v5.1-v5.8
+- AMÉLIORATION vs v.9 : le tar est JOINT à la release en asset figé « app-update-v5.8.tar.xz » (5 391 452 octets) — les releases précédentes n'avaient AUCUN asset, le tar racine étant écrasé à chaque version ; ici le point de restauration est immuable
+- Vérifications : release publique non-draft, tag → 8780d19, asset state=uploaded, téléchargement API octet-par-octet 5 391 452 octets + magic xz fd377a585a00 valide (l'URL browser_download_url renvoie 401 en curl : normal, repo PRIVÉ — téléchargement OK connecté sur github.com)
+
+Stage Summary:
+- Release v.10 « Version 10 » en ligne : https://github.com/topmuch/concergeriehub/releases/tag/v.10
+- Restauration garantie : tar v5.8 figé en asset de release (immutible) + tar racine + tag git v5.8 ; releases antérieures v.1-v.9 toujours disponibles
+- Note pipeline : création de release via API = AUCUN push sur main → pas de déclenchement de build Coolify
