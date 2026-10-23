@@ -5654,3 +5654,24 @@ Work Log:
 Stage Summary:
 - v5.17 CONFIRMÉE EN PRODUCTION par vérification navigateur complète (les 3 chantiers client : tarifs refaits sans essai + prix visibles, PayPal sur les 4 offres, onglet « États des Lieux » + page pédagogique).
 - Leçon re-confirmée : le resync supprime les shims À CHAQUE session — vérifier `git status --short` + gardes cat-file dès l'ouverture, restaurer avant tout autre travail.
+
+---
+Task ID: V5.18
+Agent: Z.ai Code (session site multipages)
+Task: « je ne veux pas que le site soit onepage mais un site multipages — créer des pages dédiées Fonctionnalités / Comment ça marche / États des Lieux / Tarifs / Contact ; la page contact doit avoir un formulaire et une carte »
+
+Work Log:
+- ARCHITECTURE : fin du one-page. 5 routes dédiées : /fonctionnalites (BeforeAfter+BentoGrid), /comment-ca-marche (DemoSection+HowItWorks), /etats-des-lieux (EdlExplainer), /tarifs (PricingSection+MarketsSection/FAQ), /contact (formulaire+carte). Accueil condensé : hero + logos plateformes + démo + ExploreSection (4 cartes vers les pages) + témoignages + CTA final.
+- SOCLE COMMUN : nouveau site-chrome.tsx — SiteChrome (LandingLangProvider + SmoothScroll + AnimatedMeshGradient + Navbar + main + Footer), PageHero (h1 SEO + eyebrow + highlight dégradé par page), useLandingGoToAuth (→ /?auth=login|register). Navbar réécrite : liens <Link> vers les routes (fin des ancres), lien actif surligné via usePathname + aria-current, menu mobile fermé via onClick (lint set-state-in-effect interdit le setState dans useEffect). landing-page.tsx réduit au contrat AuthViewMode/LandingPageProps/LandingPage (landing-shell intact).
+- AUTH UNIFIÉE : landing-shell lit ?auth= via useSearchParams (ajustement de state PENDANT LE RENDU — pattern React, zéro setState dans effet) ; « Back to site » → router.replace('/') nettoie l'URL. Testé : /tarifs → clic Log in → /?auth=login → vue Sign in → retour → URL /.
+- CTA REPOINTEs (fin des ancres) : hero « Voir les tarifs » → /tarifs ; EdlExplainer « Voir les tarifs » → Link /tarifs ; PricingSection « contactez-nous » → Link /contact ; CtaFinal « Choisir mon offre » → router.push('/tarifs') (prop onGoToAuth retirée).
+- PAGE CONTACT : ContactSection — formulaire (nom, email, tel optionnel, sujet 6 choix, message, consentement + honeypot `website` invisible) → POST /api/public/contact (zod, rate-limit 5/min/IP, ipHash SHA-256) → ContactMessage + queueEmail → outbox (template custom, referenceType contact_message). Carte : iframe OpenStreetMap embed Paris + lien agrandir — CSP frame-src élargie à https://www.openstreetmap.org (middleware). Test local ET prod : « Message sent! », ligne DB créée, email outbox SENT.
+- SCHÉMA : + table contact_messages (index createdAt/status) — prisma db push OK (prod applique au démarrage container).
+- SEO : metadata+canonicals par page (5 pages, force-dynamic requis CSP), sitemap 6 URLs, JSON-LD SoftwareApplication corrigé au prix réel (29/99/299/499 — ancien 9,90/199 € obsolète depuis v5.17).
+- I18N : ~50 clés EN ajoutées (pages, contact, explore) ; 3 apostrophes ASCII vs typographiques corrigées dans les props PageHero (checker script bun : clés t() + props vs dict EN) ; doublon 'Opérationnel en' détecté par tsc (TS1117) et supprimé.
+- PIPELINE : tar (6 024 544 o) DANS le commit 5e3d74f (code+VERSION+Dockerfile cb=v5.18) ; gardes shims avant/après commit (le resync n'a PAS supprimé les shims cette session) ; tar vérifié via URL épinglée au commit (blob c5541816 = local) AVANT tout fetch de main?cb=v5.18 ; deploy jfsxlxpkrh7py1mfpsinjr3z finished (~17 min) ; health = v5.18.
+- VÉRIFICATION PROD (agent-browser) : 6 routes 200 ; nav EN Features/How it works/Move-in Reports/Pricing/Contact cliquables → pages dédiées ; tarifs h1 EN + 29/99/299 € + boutons PayPal ; contact formulaire rempli et soumis → « Message sent! » + carte OSM Paris interactive rendue (marqueur, zoom) ; lien actif surligné ; footer multipages ; mobile 390 px (menu ouvert → navigation → refermé) ; sticky footer OK.
+
+Stage Summary:
+- v5.18 EN PRODUCTION : site multipages complet (5 pages dédiées + accueil condensé), page contact avec formulaire fonctionnel (DB + email) et carte OpenStreetMap, auth unifiée par URL, SEO par page.
+- Leçons : ① les chaînes passées en PROPS à des composants qui appellent t() (PageHero…) échappent aux greps t() — vérifier apostrophes typographiques aussi dans les props ; ② TS1117 (doublon de clé de dict) est un bon filet — le tsc le voit là où un grep rate ; ③ poll Coolify : la boucle shell 40×30 s dépasse le timeout 600 s — préférer des boucles courtes (10×45 s) réitérables.
