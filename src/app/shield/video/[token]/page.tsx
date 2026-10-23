@@ -86,7 +86,7 @@ export default async function ShieldVideoPage({
             🔒
           </span>
           <div className="min-w-0">
-            <p className="truncate text-lg font-black tracking-wide text-white">ROOMSCAN BOUCLIER</p>
+            <p className="truncate text-lg font-black tracking-wide text-white">ROOMSCAN INVENTAIRE</p>
             <p className="truncate text-[11px] font-medium uppercase tracking-[0.14em] text-white/85">
               Vidéo walkthrough certifiée — {s.property.city}
             </p>
