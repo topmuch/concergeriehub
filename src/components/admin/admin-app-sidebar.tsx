@@ -19,10 +19,10 @@ import {
 import { ThemeToggle } from '@/components/shared/theme-toggle';
 
 // =============================================================
-// AdminAppSidebar — v6.0 « LUXE AURA » — sidebar rouge Airbnb,
-// navigation TYPOGRAPHIQUE SANS ICÔNES : pastille colorée par groupe,
-// onglet actif = pilule blanche (via .lux-sidebar en CSS), profil +
-// bascule thème.
+// AdminAppSidebar — v6.0 « LUXE AURA » — sidebar ROSE (v5.11,
+// demande client) · navigation TYPOGRAPHIQUE SANS ICÔNES :
+// pastille colorée par groupe, onglets BLANCS, onglet actif =
+// pilule blanche (via .lux-sidebar en CSS), profil + bascule thème.
 // =============================================================
 
 // v6.0 — point de couleur par groupe (Pilotage / Opérations / Plateforme)

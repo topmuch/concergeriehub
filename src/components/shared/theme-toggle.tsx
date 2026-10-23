@@ -32,7 +32,7 @@ export function ThemeToggle({ className, variant = 'ghost' }: { className?: stri
     variant === 'light'
       ? 'text-white/85 hover:bg-white/15 hover:text-white' // sur fond coloré foncé (sidebar admin)
       : variant === 'ink'
-        ? 'text-[#3a1408]/80 hover:bg-white/45 hover:text-[#2a0d05]' // sur fond corail clair (sidebar hôte)
+        ? 'text-[#3a1408]/80 hover:bg-white/45 hover:text-[#2a0d05]' // sur fond clair à encre sombre (variante legacy)
         : 'text-muted-foreground hover:bg-muted hover:text-foreground'; // sur header glass
 
   return (

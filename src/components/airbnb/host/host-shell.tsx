@@ -35,8 +35,10 @@ import { AdminLangSwitcher } from '@/components/admin/lang-switcher';
 // HostShell — v5.2 « SAPHIR LUXE » — refonte design du shell
 // Espace Hôte (/airbnb/*) — demande client : design simple, luxueux,
 // professionnel · mode sombre bleuté · SANS ICÔNES :
-//  • Sidebar nuit saphir — navigation TYPOGRAPHIQUE (majuscules
-//    espacées, filet doré sur l'onglet actif) ;
+//  • Sidebar BLEU COBALT du logo (#055492, v5.11 — demande client :
+//    « sidebar hôte en bleu, onglets blancs ») — navigation
+//    TYPOGRAPHIQUE (majuscules espacées, pilule blanche sur l'onglet
+//    actif) ;
 //  • Navigation RÉORGANISÉE (inchangée fonctionnellement) en 4 groupes
 //    (Pilotage / Mes biens / Services / Business) + « Mes tâches » ;
 //  • Header glass luxueux : sélecteur de propriété (point coloré),
@@ -230,7 +232,7 @@ function ShellRoot({
         if (items.length === 0) return null;
         return (
           <div key={group.label}>
-            <p className="mb-2 flex items-center gap-1.5 px-1 text-[9.5px] font-bold uppercase tracking-[0.3em] text-[#43150a]/75">
+            <p className="mb-2 flex items-center gap-1.5 px-1 text-[9.5px] font-bold uppercase tracking-[0.3em] text-white/70">
               <span
                 className="lux-dot shrink-0"
                 style={{ backgroundColor: GROUP_DOTS[group.label] ?? '#ffffff' }}
@@ -254,8 +256,8 @@ function ShellRoot({
                       className={cn(
                         'group flex min-h-[38px] items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] transition-all duration-200',
                         active
-                          ? 'bg-white text-[#b84a26] shadow-[0_10px_24px_-10px_rgba(90,25,5,0.55)]'
-                          : 'text-[#3a1408]/85 hover:bg-white/25 hover:text-[#2a0d05]',
+                          ? 'bg-white text-[#055492] shadow-[0_10px_24px_-10px_rgba(2,20,40,0.55)]'
+                          : 'text-white/90 hover:bg-white/15 hover:text-white',
                       )}
                     >
                       <span className="truncate">{t(item.label)}</span>
@@ -278,8 +280,8 @@ function ShellRoot({
           la console admin et l'espace client) */}
       <BrandLogo variant="light" showWordmark={false} height={40} />
       <span className="flex min-w-0 flex-col leading-tight">
-        <span className="lux-display truncate text-[15px] font-semibold text-[#2a0d05]">RoomScan</span>
-        <span className="text-[9px] font-semibold uppercase tracking-[0.28em] text-[#5c1d0a]">
+        <span className="lux-display truncate text-[15px] font-semibold text-white">RoomScan</span>
+        <span className="text-[9px] font-semibold uppercase tracking-[0.28em] text-white/75">
           {t('Espace Hôte')}
         </span>
       </span>
@@ -289,25 +291,25 @@ function ShellRoot({
   const profileBlock = (
     <div className="mx-3 mb-4">
       <div className="mb-2 flex items-center justify-end px-1">
-        <ThemeToggle variant="ink" />
+        <ThemeToggle variant="light" />
       </div>
-      <div className="flex items-center gap-2.5 rounded-2xl border border-[#2a0d05]/15 bg-white/45 px-3 py-2.5">
+      <div className="flex items-center gap-2.5 rounded-2xl border border-white/15 bg-white/10 px-3 py-2.5">
         <span
           aria-hidden="true"
-          className="lux-num flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-xs font-semibold text-[#b84a26] shadow-sm"
+          className="lux-num flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-xs font-semibold text-[#055492] shadow-sm"
         >
           {initialsOf(userName)}
         </span>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold text-[#2a0d05]">{userName ?? t('Invité')}</p>
-          <p className="truncate text-[10px] font-medium uppercase tracking-[0.14em] text-[#3a1408]/70">{planName}</p>
+          <p className="truncate text-sm font-semibold text-white">{userName ?? t('Invité')}</p>
+          <p className="truncate text-[10px] font-medium uppercase tracking-[0.14em] text-white/65">{planName}</p>
         </div>
         <button
           type="button"
           onClick={() => signOut({ callbackUrl: '/' })}
           title={t('Se déconnecter')}
           aria-label={t('Se déconnecter')}
-          className="shrink-0 rounded-lg px-2 py-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#3a1408]/70 transition-colors hover:bg-white/45 hover:text-[#2a0d05]"
+          className="shrink-0 rounded-lg px-2 py-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-white/70 transition-colors hover:bg-white/10 hover:text-white"
         >
           {t('Quitter')}
         </button>
@@ -317,10 +319,10 @@ function ShellRoot({
 
   return (
     // NB : le scope .lux n'est PAS sur ce wrapper — la sidebar reste
-    // corail de marque #f58364 dans les deux modes (v6.1 DUO BRAND) ;
+    // BLEU cobalt de marque #055492 dans les deux modes (v5.11) ;
     // le contenu porte lui-même .lux.lux-bg.lux-host ci-dessous.
     <div className="flex min-h-screen">
-      {/* ===================== SIDEBAR DESKTOP (260px, corail #f58364) ===================== */}
+      {/* ===================== SIDEBAR DESKTOP (260px, bleu cobalt #055492) ===================== */}
       <aside className="lux-sidebar lux-sidebar-host fixed inset-y-0 left-0 z-40 hidden w-[260px] flex-col overflow-hidden md:flex">
         <div className="relative z-10 flex h-16 items-center border-b border-white/10">{logo}</div>
         <div className="lux-scroll relative z-10 flex-1 overflow-y-auto py-4">{navList}</div>

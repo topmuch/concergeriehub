@@ -6,9 +6,9 @@
 // avec ses propres couleurs, au lieu du formulaire générique de la
 // landing.
 //
-//  • hote        → Espace Hôte       (luxe sombre : rouge #c81e42 + or #ffd76a)
+//  • hote        → Espace Hôte       (luxe sombre : bleu cobalt #055492 + or #ffd76a — v5.11)
 //  • edl         → États des Lieux   (clair pro : rouge signature #C21F26)
-//  • superadmin  → Console Superadmin (bleu nuit + or #e9c47c)
+//  • superadmin  → Console Superadmin (nuit rosée + or #e9c47c — v5.11)
 //
 // Le formulaire poste sur le même endpoint NextAuth credentials
 // (redirect:false) puis redirige vers LE dashboard de l'espace.
@@ -83,18 +83,18 @@ const THEMES: Record<SpaceKey, SpaceTheme> = {
     destination: '/airbnb/dashboard',
     logoVariant: 'light',
     shellClass:
-      'min-h-screen bg-[#12040a] bg-[radial-gradient(1200px_600px_at_15%_-10%,rgba(200,30,66,0.35),transparent_60%),radial-gradient(900px_500px_at_110%_110%,rgba(233,196,124,0.18),transparent_55%)]',
+      'min-h-screen bg-[#040b14] bg-[radial-gradient(1200px_600px_at_15%_-10%,rgba(5,84,146,0.38),transparent_60%),radial-gradient(900px_500px_at_110%_110%,rgba(233,196,124,0.18),transparent_55%)]',
     cardClass:
-      'w-full max-w-md rounded-3xl border border-white/10 bg-white/[0.04] p-6 sm:p-8 shadow-[0_30px_80px_-30px_rgba(200,30,66,0.45)] backdrop-blur-xl',
+      'w-full max-w-md rounded-3xl border border-white/10 bg-white/[0.04] p-6 sm:p-8 shadow-[0_30px_80px_-30px_rgba(5,84,146,0.5)] backdrop-blur-xl',
     titleClass: 'text-2xl font-bold tracking-tight text-white',
     subtitleClass: 'mt-1 text-sm text-white/60',
     badgeClass:
-      'flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#c81e42] to-[#8f1230] text-white shadow-[0_14px_34px_-12px_rgba(200,30,66,0.8)]',
+      'flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#055492] to-[#03355c] text-white shadow-[0_14px_34px_-12px_rgba(5,84,146,0.8)]',
     labelClass: 'text-white/80',
     inputClass:
       'min-h-[44px] border-white/15 bg-white/[0.06] text-white placeholder:text-white/35 focus-visible:border-[#ffd76a] focus-visible:ring-[#ffd76a]/25 dark:border-white/15 dark:bg-white/[0.06] dark:text-white dark:placeholder:text-white/35 dark:focus-visible:border-[#ffd76a] dark:focus-visible:ring-[#ffd76a]/25',
     buttonClass:
-      'min-h-[48px] bg-[#c81e42] text-white hover:bg-[#a81937] shadow-[0_16px_40px_-14px_rgba(200,30,66,0.9)]',
+      'min-h-[48px] bg-[#055492] text-white hover:bg-[#04467a] shadow-[0_16px_40px_-14px_rgba(5,84,146,0.9)]',
     backClass: 'text-white/60 hover:text-[#ffd76a]',
     backLabel: "Retour à l'accueil",
   },
@@ -129,9 +129,9 @@ const THEMES: Record<SpaceKey, SpaceTheme> = {
     destination: '/admin/dashboard',
     logoVariant: 'light',
     shellClass:
-      'min-h-screen bg-[#070d1a] bg-[radial-gradient(1100px_560px_at_20%_-10%,rgba(233,196,124,0.14),transparent_55%),radial-gradient(900px_520px_at_105%_110%,rgba(59,91,152,0.30),transparent_55%)]',
+      'min-h-screen bg-[#0c0712] bg-[radial-gradient(1100px_560px_at_20%_-10%,rgba(236,72,153,0.20),transparent_55%),radial-gradient(900px_520px_at_105%_110%,rgba(236,72,153,0.28),transparent_55%)]',
     cardClass:
-      'w-full max-w-md rounded-3xl border border-[#e9c47c]/20 bg-[#0d1526]/90 p-6 sm:p-8 shadow-[0_30px_80px_-30px_rgba(233,196,124,0.25)] backdrop-blur-xl',
+      'w-full max-w-md rounded-3xl border border-[#e9c47c]/20 bg-[#150d1a]/90 p-6 sm:p-8 shadow-[0_30px_80px_-30px_rgba(236,72,153,0.3)] backdrop-blur-xl',
     titleClass: 'text-2xl font-bold tracking-tight text-white',
     subtitleClass: 'mt-1 text-sm text-[#8fabc2]',
     badgeClass:

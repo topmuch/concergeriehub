@@ -689,47 +689,48 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   v6.1 « DUO BRAND » — identité de marque PAR DASHBOARD (demande
-   client) : Espace Hôte = corail #f58364 · Console Superadmin =
-   rouge #d32141. Ces scopes posent les variables consommées par
-   les boutons, KPI, chips, filets, auras et anneaux de focus :
-   chaque dashboard respire SA couleur sans toucher aux 37 pages.
+   v6.1 « DUO BRAND » → v5.11 — identité de marque PAR DASHBOARD
+   (demande client) : Espace Hôte = BLEU cobalt du logo (#055492,
+   cohérent avec l'harmonisation v5.9) · Console Superadmin = ROSE
+   (#ec4899). Ces scopes posent les variables consommées par les
+   boutons, KPI, chips, filets, auras et anneaux de focus : chaque
+   dashboard respire SA couleur sans toucher aux 37 pages.
    ═══════════════════════════════════════════════════════════════ */
 .lux-host {
-  --brand: #f58364;
-  --brand-deep: #d0552f;
-  --brand-btn-from: #f58364;
-  --brand-btn-to: #d0552f;
-  --brand-kpi-from: #f58364;
-  --brand-kpi-mid: #e86b45;
-  --brand-kpi-to: #cf5433;
-  --brand-soft: rgba(245, 131, 100, 0.1);
-  --brand-line: rgba(208, 85, 47, 0.38);
-  --brand-glow: rgba(208, 85, 47, 0.5);
-  --brand-eyebrow: #b8502b;
-  --brand-aura: rgba(245, 131, 100, 0.17);
-  --brand-aura-day: rgba(245, 131, 100, 0.13);
-  --brand-hero: rgba(245, 131, 100, 0.44);
-  --brand-hero-day: rgba(245, 131, 100, 0.15);
-  --brand-ring: #d0552f;
+  --brand: #055492;
+  --brand-deep: #03355c;
+  --brand-btn-from: #1173c7;
+  --brand-btn-to: #055492;
+  --brand-kpi-from: #055492;
+  --brand-kpi-mid: #04467a;
+  --brand-kpi-to: #03355c;
+  --brand-soft: rgba(5, 84, 146, 0.1);
+  --brand-line: rgba(4, 70, 122, 0.38);
+  --brand-glow: rgba(4, 70, 122, 0.5);
+  --brand-eyebrow: #0a538f;
+  --brand-aura: rgba(5, 84, 146, 0.22);
+  --brand-aura-day: rgba(5, 84, 146, 0.13);
+  --brand-hero: rgba(5, 84, 146, 0.48);
+  --brand-hero-day: rgba(5, 84, 146, 0.15);
+  --brand-ring: #055492;
 }
 .lux-admin {
-  --brand: #d32141;
-  --brand-deep: #a3132f;
-  --brand-btn-from: #d32141;
-  --brand-btn-to: #a3132f;
-  --brand-kpi-from: #d32141;
-  --brand-kpi-mid: #c01c3a;
-  --brand-kpi-to: #9c1430;
-  --brand-soft: rgba(211, 33, 65, 0.09);
-  --brand-line: rgba(211, 33, 65, 0.4);
-  --brand-glow: rgba(211, 33, 65, 0.5);
-  --brand-eyebrow: #b01635;
-  --brand-aura: rgba(255, 56, 92, 0.16);
-  --brand-aura-day: rgba(255, 56, 92, 0.11);
-  --brand-hero: rgba(255, 56, 92, 0.48);
-  --brand-hero-day: rgba(255, 56, 92, 0.14);
-  --brand-ring: #d32141;
+  --brand: #ec4899;
+  --brand-deep: #be185d;
+  --brand-btn-from: #ec4899;
+  --brand-btn-to: #be185d;
+  --brand-kpi-from: #ec4899;
+  --brand-kpi-mid: #db2777;
+  --brand-kpi-to: #a8195f;
+  --brand-soft: rgba(236, 72, 153, 0.09);
+  --brand-line: rgba(236, 72, 153, 0.4);
+  --brand-glow: rgba(236, 72, 153, 0.5);
+  --brand-eyebrow: #c0306e;
+  --brand-aura: rgba(236, 72, 153, 0.16);
+  --brand-aura-day: rgba(236, 72, 153, 0.11);
+  --brand-hero: rgba(236, 72, 153, 0.46);
+  --brand-hero-day: rgba(236, 72, 153, 0.14);
+  --brand-ring: #ec4899;
 }
 
 /* ----- Fond de page : nuit saphir + AURORES COLORÉES (v6.0) -----
@@ -952,42 +953,44 @@
 }
 
 /* ----- Sidebar luxueuse (nav typographique sans icônes) -----
-   v6.1 « DUO BRAND » — fond de sidebar PARAMÉTRABLE par dashboard
-   (demande client) : Espace Hôte = .lux-sidebar-host (corail #f58364) ·
-   Console Superadmin = .lux-sidebar-admin (rouge #d32141). Défaut sans
-   variante = rouge Superadmin. L'onglet ACTIF reste une PILULE BLANCHE
-   à encre de marque : contraste max, lisible dans les deux modes. */
+   v6.1 « DUO BRAND » → v5.11 (demande client) — fond de sidebar
+   PARAMÉTRABLE par dashboard : Espace Hôte = .lux-sidebar-host
+   (BLEU cobalt du logo #055492) · Console Superadmin =
+   .lux-sidebar-admin (ROSE #ec4899). Défaut sans variante = rose
+   Superadmin. Les onglets sont BLANCS (demande client) et l'onglet
+   ACTIF reste une PILULE BLANCHE à encre de marque : contraste max,
+   lisible dans les deux modes. */
 .lux-sidebar {
-  --sb-from: #d32141;
-  --sb-mid: #c01c3a;
-  --sb-to: #a3132f;
-  --sb-active-ink: #c01c3a;
+  --sb-from: #ec4899;
+  --sb-mid: #d63d7f;
+  --sb-to: #a82268;
+  --sb-active-ink: #be185d;
   background:
     radial-gradient(420px 240px at 88% -8%, rgba(255, 255, 255, 0.16), transparent 62%),
-    radial-gradient(360px 300px at -12% 106%, rgba(94, 8, 26, 0.45), transparent 62%),
+    radial-gradient(360px 300px at -12% 106%, rgba(0, 0, 0, 0.28), transparent 62%),
     linear-gradient(180deg, var(--sb-from) 0%, var(--sb-mid) 44%, var(--sb-to) 100%);
   border-right: 1px solid rgba(255, 255, 255, 0.18);
 }
-/* Espace Hôte — corail #f58364 (demande client v6.1) */
+/* Espace Hôte — BLEU cobalt du logo #055492 (demande client v5.11) */
 .lux-sidebar-host {
-  --sb-from: #f58364;
-  --sb-mid: #ec6f4d;
-  --sb-to: #d0552f;
-  --sb-active-ink: #b84a26;
+  --sb-from: #055492;
+  --sb-mid: #04467a;
+  --sb-to: #03355c;
+  --sb-active-ink: #055492;
 }
-/* Console Superadmin — rouge #d32141 (demande client v6.1) */
+/* Console Superadmin — ROSE #ec4899 (demande client v5.11) */
 .lux-sidebar-admin {
-  --sb-from: #d32141;
-  --sb-mid: #c01c3a;
-  --sb-to: #a3132f;
-  --sb-active-ink: #c01c3a;
+  --sb-from: #ec4899;
+  --sb-mid: #d63d7f;
+  --sb-to: #a82268;
+  --sb-active-ink: #be185d;
 }
 .lux-sidebar [data-sidebar='menu-button'] {
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.92);
+  color: #ffffff;
   border-radius: 0.6rem;
   transition: color 0.16s ease, background 0.16s ease;
 }
@@ -998,7 +1001,7 @@
 .lux-sidebar [data-sidebar='menu-button'][data-active='true'],
 .lux-sidebar [data-sidebar='menu-button'][data-active='true']:hover {
   background: #ffffff;
-  color: var(--sb-active-ink, #c01c3a);
+  color: var(--sb-active-ink, #be185d);
   box-shadow: 0 12px 26px -12px rgba(20, 2, 8, 0.55);
 }
 .lux-sidebar [data-sidebar='menu-label'] {
@@ -1019,14 +1022,14 @@
 [data-slot='sidebar'][data-mobile='true'] {
   background:
     radial-gradient(420px 240px at 88% -8%, rgba(255, 255, 255, 0.16), transparent 62%),
-    linear-gradient(180deg, var(--sb-from, #d32141) 0%, var(--sb-mid, #c01c3a) 44%, var(--sb-to, #a3132f) 100%) !important;
+    linear-gradient(180deg, var(--sb-from, #ec4899) 0%, var(--sb-mid, #d63d7f) 44%, var(--sb-to, #a82268) 100%) !important;
 }
 [data-slot='sidebar'][data-mobile='true'] [data-sidebar='menu-button'] {
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.92);
+  color: #ffffff;
 }
 [data-slot='sidebar'][data-mobile='true'] [data-sidebar='menu-button']:hover {
   color: #ffffff;
@@ -1035,7 +1038,7 @@
 [data-slot='sidebar'][data-mobile='true'] [data-sidebar='menu-button'][data-active='true'],
 [data-slot='sidebar'][data-mobile='true'] [data-sidebar='menu-button'][data-active='true']:hover {
   background: #ffffff;
-  color: var(--sb-active-ink, #c01c3a);
+  color: var(--sb-active-ink, #be185d);
   box-shadow: 0 12px 26px -12px rgba(20, 2, 8, 0.55);
 }
 [data-slot='sidebar'][data-mobile='true'] [data-sidebar='menu-label'] {
