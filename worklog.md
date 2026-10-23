@@ -5549,3 +5549,19 @@ Stage Summary:
 - v5.10 « logo harmonisé PARTOUT » prête : 2ᵉ logo hero supprimé, <BrandLogo> unique sur le site (17 fichiers touchés), logo officiel + cobalt #055492 sur TOUS les PDFs, bug emblème invisible Inventaire corrigé, pagination QR réparée.
 - Déploiement Coolify à suivre (uuid p7xscubexkcymrehc50xhiuv) → vérifier /api/health v5.10.
 - Note : régénérer pdf-brand-assets.ts si le logo blanc change (sharp resize 560 + base64).
+---
+Task ID: V5.11-VERIFY
+Agent: Z.ai Code (session guidage vocal EDL — mode discussion)
+Task: Vérifier que v5.11 (sidebars bleu hôte / rose superadmin, onglets blancs) est bien poussée et déployée ; préparer la discussion « guidage vocal EDL ».
+
+Work Log:
+- git log : v5.9 (43f055c), v5.10 (5d175df), v5.11 (a0d34ae) commitées et poussées (aucun commit non poussé, branche à jour avec origin/main).
+- Production vérifiée : GET https://roomscan.pro/api/health → « v5.11 (2026-10-23) — ROOMSCAN INVENTAIRE : IDENTITÉS PAR DASHBOARD… », db up, smtp up, disk 33,6 %.
+- Piège resync traité : src/app/upload/[token]/page.tsx + src/components/upload/upload-token-page.tsx restaurés (git checkout --) après suppression en working tree.
+- Étude pour le guidage vocal EDL (mode discussion, PAS d'implémentation) :
+  * Infrastructure TTS déjà en prod depuis v4.112 : src/lib/tts-service.ts = edge-tts fr-FR-DeniseNeural (rate -5 %), generatePremiumAudio() → MP3 statiques public/audio/ (idempotent), cascade voice-tts (Edge → Z.ai → Google), repli Web Speech API dans hub-premium/audio-player.tsx.
+  * Point d'insertion identifié : src/components/inspection/shield/shield-capture.tsx (1636 lignes) — ShieldCapture stages 'zones'|'video'|'success', zones DYNAMIQUES par bien (ShieldCaptureZone{id,name,referencePhoto}), stepIdx/goNext, vidéo cible VIDEO_TARGET_SEC=120 (cleaner) avec halfPrompt à mi-parcours déjà existant → créneaux vocaux naturels.
+
+Stage Summary:
+- v5.11 EN PRODUCTION (sidebars par rôle demandées par le client) — rien à redéployer.
+- Guidage vocal EDL : faisable en réutilisant 100 % de l'existant (Denise + MP3 statiques + repli Web Speech) ; proposition de script + points de décision envoyés au client (voix audible dans la vidéo à arbitrer, check-out, config hôte).
