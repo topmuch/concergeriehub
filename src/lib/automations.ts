@@ -201,6 +201,9 @@ export function notificationEmoji(type: string): string {
       return '⏱️';
     case 'host_review_shield':
       return '⭐';
+    // v5.21 — message texte du livre d'or (Hub)
+    case 'guestbook_message':
+      return '📖';
     default:
       return '🔔';
   }

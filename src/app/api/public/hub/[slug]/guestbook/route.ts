@@ -7,6 +7,15 @@ import { captureError } from '@/lib/error-monitor';
 // FIX-15 (C) — premier usage réel de zod + clientIp pour le rate-limit IP-scopé.
 import { z } from 'zod';
 import { clientIp } from '@/lib/audit';
+// v5.21 — MESSAGE TEXTE INVITÉ (lacune d'audit) : le mot écrit du livre
+// d'or notifie désormais l'hôte (et managers), même convention que le
+// vocal (WP-BACK v4.61) : template hub_alert structuré + cloche + push,
+// fire-and-forget (jamais bloquant pour la réponse invité).
+import {
+  sendNotificationToMany,
+  propertyOwnerAndManagers,
+} from '@/lib/notifications';
+import { renderHubAlertEmail } from '@/lib/email-template-render';
 
 const DEMO_SLUG = 'demo-hub';
 const isDemo = (slug: string) => slug === DEMO_SLUG;
@@ -176,6 +185,74 @@ export async function POST(
         rating: newEntry.rating ?? null,
         message: newEntry.message.slice(0, 500),
       });
+    }
+
+    // ── v5.21 — EMAIL + cloche + push hôte (fire-and-forget) : le mot
+    // ÉCRIT du livre d'or était muet — l'hôte ne le découvrait qu'en
+    // ouvrant l'onglet Invités. Convention identique au vocal (route
+    // voice, WP-BACK v4.61) : template hub_alert structuré + audience
+    // OWNER + managers. Le template échappe le HTML (texte invité sûr). ──
+    if (propertyId) {
+      try {
+        const propertyRow = await db.property.findUnique({
+          where: { id: propertyId },
+          select: { name: true },
+        });
+        const propertyName = propertyRow?.name ?? 'Votre logement';
+        const receivedAtLabel = new Intl.DateTimeFormat('fr-FR', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        }).format(new Date());
+        const guestLabel = newEntry.author.slice(0, 50);
+        const rating = typeof newEntry.rating === 'number' ? newEntry.rating : null;
+        const excerpt =
+          newEntry.message.length > 300
+            ? `${newEntry.message.slice(0, 300)}…`
+            : newEntry.message;
+        const ratingLabel = rating ? `⭐ ${rating}/5` : '—';
+        const guestbookEmail = await renderHubAlertEmail({
+          heading: '📖 Nouveau message dans le livre d’or',
+          propertyName,
+          guestName: guestLabel,
+          rows: [
+            { label: 'De', value: guestLabel },
+            { label: 'Note', value: ratingLabel },
+            { label: 'Message', value: excerpt },
+            { label: 'Reçu le', value: receivedAtLabel },
+          ],
+          introNote: 'Un invité vous a laissé un mot écrit dans le livre d’or de votre bien — un petit merci qui fait chaud au cœur (et une note à conserver).',
+          ctaLabel: 'Lire dans le livre d’or',
+          ctaUrl: '/airbnb/guests',
+          footerNote: 'Email envoyé automatiquement depuis le Hub invité.',
+        });
+        const audience = await propertyOwnerAndManagers(propertyId);
+        if (audience.length > 0) {
+          await sendNotificationToMany(audience, 'guestbook_message', {
+            title: '📖 Nouveau message dans le livre d’or',
+            body: `${guestLabel} a laissé un mot dans votre livre d’or${rating ? ` — note ⭐ ${rating}/5` : ''} — ${propertyName}.`,
+            propertyId,
+            propertyName,
+            url: '/airbnb/guests',
+            email: {
+              subject: `📖 Nouveau message dans le livre d’or — ${propertyName}`,
+              html: guestbookEmail.html,
+              text: guestbookEmail.text,
+            },
+            meta: {
+              source: 'hub',
+              qrCodeId,
+              rating: rating ?? null,
+              hubSlug: slug,
+            },
+          });
+        }
+      } catch (error) {
+        // Jamais bloquant : un échec de notification n'invalide pas l'entrée.
+        console.error('[guestbook] notification hôte failed:', error);
+      }
     }
 
     return NextResponse.json({ success: true });

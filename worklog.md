@@ -5772,3 +5772,21 @@ Stage Summary:
 - v5.20 LIVE et vérifiée : (1) rappels du matin respectent Paramètres → Notifications par destinataire (email + push filtrés, in-app conservé) ; (2) chaque synchro iCal créatrice de séjours notifie l'hôte (récap groupé anti-spam, mises à jour muettes)
 - Réfs : commit code+tar 8f25a47, déploiement lsggtwwkqbwndxywwefkyiql
 - Reste (non demandé) : messages texte invités silencieux (seul le vocal notifie) ; lien checkout absent de la liste Check-out ; emails de validation EDL absents d'EmailOutbox
+
+---
+Task ID: V5.21
+Agent: Z.ai Code (session principale)
+Task: Dernière lacune d'audit — messages texte invités silencieux (livre d'or du Hub muet)
+
+Work Log:
+- Ouverture : workspace propre, gardes OK
+- Traque du flux texte silencieux : guest-messages (statuts uniquement), voice (audio + notifie), guest-session (aucun texte), guest-app (aucune messagerie texte) → le coupable est POST /api/public/hub/[slug]/guestbook : le mot ÉCRIT du livre d'or (auteur + message + note 1-5) est append au contentJson SANS aucune notification (0 sendNotification dans la route)
+- Fix : (1) nouvelle clé catalogue guestbook_message (📖 « Message du livre d'or », email true / push true — toggle auto-rendu dans Paramètres → Notifications, le vocal garde sa clé guest_message) ; (2) icône cloche guestbook_message → 📖 (automations.ts) ; (3) la route guestbook notifie l'hôte + managers après le webhook — même convention fire-and-forget que le vocal (WP-BACK v4.61) : in-app + email hub_alert structuré (De / Note / Message extrait 300 car. / Reçu le ; CTA « Lire dans le livre d'or » → /airbnb/guests) + push VAPID ; le template hub_alert échappe le HTML (texte invité sûr) ; jamais bloquant pour la réponse invité
+- Vérifications : lint 0 erreur ; tsc 0 erreur ; test one-shot via la VRAIE route locale (purgé) : POST 200 → in-app créée + corps « note ⭐ 5/5 » + email sujet « 📖 Nouveau message dans le livre d'or » contenant l'extrait ; opt-out guestbook_message.email=false → 2e in-app mais TOUJOURS 1 seul email (prefs par clé RESPECTÉES)
+- IMPORTANT : le 1er run échouait sur l'opt-out — cause : dev server démarré AVANT la v5.20 (modules périmés) ; redémarrage bun run dev → tout passe ; la v5.20 en prod (build neuf) n'est pas concernée
+- VERSION.txt v5.21 + Dockerfile cb=v5.21
+
+Stage Summary:
+- Les 3 lacunes d'audit notifications sont maintenant TOUTES corrigées (v5.20 : prefs respectées + iCal notifié ; v5.21 : message texte du livre d'or notifié)
+- Le livre d'or notifie via sa propre clé guestbook_message → l'hôte contrôle ce canal indépendamment du vocal
+- Version prête : v5.21

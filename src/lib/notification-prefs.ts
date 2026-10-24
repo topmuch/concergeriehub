@@ -56,6 +56,21 @@ export const NOTIFICATION_EVENTS: NotificationEventMeta[] = [
     defaultEmail: true,
     defaultPush: true,
   },
+  // =============================================================
+  // v5.21 — MESSAGE TEXTE INVITÉ (lacune d'audit) : le message ÉCRIT
+  // du livre d'or du Hub (auteur + mot + note) était muet — seul le
+  // vocal notifiait. Clé dédiée (le vocal garde la sienne) rendue
+  // automatiquement dans Paramètres → Notifications.
+  // =============================================================
+  {
+    key: 'guestbook_message',
+    emoji: '📖',
+    label: 'Message du livre d’or',
+    description:
+      'Un invité laisse un mot écrit (et sa note) dans le livre d’or de votre bien.',
+    defaultEmail: true,
+    defaultPush: true,
+  },
   {
     key: 'cleaning_done',
     emoji: '🧹',
