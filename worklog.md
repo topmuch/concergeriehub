@@ -5807,3 +5807,21 @@ Stage Summary:
 - LES 3 LACUNES D'AUDIT NOTIFICATIONS SONT TOUTES CORRIGÉES : v5.20 (prefs respectées par les rappels du matin + réservations iCal notifiées) ; v5.21 (message texte du livre d'or)
 - Réfs : commit code+tar dab4030, déploiement xxacxih3ikjaav8ihcp1dinj
 - Reste (non demandé) : pas de re-file des emails QUEUED ; lien checkout absent de la liste Check-out ; emails de validation EDL absents d'EmailOutbox
+
+---
+Task ID: RELEASE-V12
+Agent: Z.ai Code (session principale)
+Task: Mettre à jour la release GitHub — créer « Version 12 » (v.12) regroupant v5.13 → v5.21
+
+Work Log:
+- Ouverture : piège resync détecté (21 fichiers passés en 755 + 2 shims upload supprimés) → git checkout -- . → workspace propre ; gardes git cat-file OK (shims présents dans HEAD)
+- État GitHub : dernière release v.11 (RoomScan v5.11, 23/10) ; tags v.1→v.11 ; main GitHub == HEAD local 851d6f0 (v5.21 en prod)
+- Tar v5.21 extrait du commit HEAD (app-update.tar.xz, 6 039 628 o) → VERSION.txt interne confirme v5.21 ; SHA-256 b0acddca3dbf057800438c35caff89c4d4de3d106cdd8911946421dc6cf71f2b
+- Notes rédigées (3 814 car.) regroupant v5.13→v5.21 : guidage vocal EDL Denise, PDF officiels + lien réparé, tarifs PayPal 4 offres, site multipages + contact, briefing du soir 18 h, prefs notifications respectées + iCal notifié, livre d'or notifié
+- POST /repos/topmuch/concergeriehub/releases → release 422826866, tag v.12, name « Version 12 », target main
+- Upload asset app-update-v5.21.tar.xz (label « Snapshot production v5.21 ») → state uploaded, digest SHA-256 identique au local
+- Vérification API : v.12 en tête des 12 releases ; tag v.12 → commit 851d6f0 (= HEAD local = main GitHub)
+
+Stage Summary:
+- Release « Version 12 » (tag v.12) créée : https://github.com/topmuch/concergeriehub/releases/tag/v.12 — pointe 851d6f0 (v5.21 en prod), asset de restauration app-update-v5.21.tar.xz (6 039 628 o, sha256 b0acddca…f2b), notes détaillées v5.13→v5.21
+- Aucun changement de code : le dépôt reste à 851d6f0 (seul le worklog avance)
