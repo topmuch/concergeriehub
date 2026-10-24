@@ -122,18 +122,34 @@ export function normalizeIcalUrl(raw: string): string {
   return raw.trim().replace(/^webcal:\/\//i, 'https://');
 }
 
+/** Réservation iCal nouvellement CRÉÉE (v5.20 — notification hôte). */
+export interface IcalCreatedBooking {
+  id: string;
+  guestName: string;
+  checkIn: Date;
+  checkOut: Date;
+}
+
+/** Résultat d'un upsert : nb écrits + séjours créés (pas mis à jour). */
+export interface IcalUpsertResult {
+  written: number;
+  created: IcalCreatedBooking[];
+}
+
 /**
  * Upsert idempotent des événements iCal en Bookings du bien.
  * Clé : (propertyId, externalRef=UID, source='ICAL'). Sans UID,
  * une clé de secours hash(startDate|endDate|summary) est utilisée.
- * Retourne le nombre de réservations écrites.
+ * v5.20 — retourne aussi les séjours CRÉÉS à ce passage (les mises
+ * à jour de séjours connus ne déclenchent aucune notification).
  */
 export async function upsertIcalBookings(
   tx: Prisma.TransactionClient,
   propertyId: string,
   events: IcalEvent[],
-): Promise<number> {
+): Promise<IcalUpsertResult> {
   let written = 0;
+  const created: IcalCreatedBooking[] = [];
   for (const ev of events) {
     const ref =
       ev.uid ??
@@ -149,7 +165,7 @@ export async function upsertIcalBookings(
         data: { guestName, checkIn: ev.start, checkOut: ev.end },
       });
     } else {
-      await tx.booking.create({
+      const booking = await tx.booking.create({
         data: {
           propertyId,
           guestName,
@@ -159,9 +175,16 @@ export async function upsertIcalBookings(
           externalRef: ref,
           status: 'CONFIRMED',
         },
+        select: { id: true },
+      });
+      created.push({
+        id: booking.id,
+        guestName,
+        checkIn: ev.start,
+        checkOut: ev.end,
       });
     }
     written += 1;
   }
-  return written;
+  return { written, created };
 }

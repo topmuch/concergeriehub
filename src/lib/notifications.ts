@@ -75,6 +75,15 @@ export interface UnifiedNotificationPayload {
   email?: { subject: string; html: string; text?: string };
   /** Force email + push SANS lire les préférences (alertes critiques). */
   force?: boolean;
+  /**
+   * v5.20 — Clé du CATALOGUE de préférences (notification-prefs.ts)
+   * utilisée pour filtrer email/push, DISTINCTE du type in-app ci-dessus.
+   * Utile quand le type historique (ex. 'host_checkin') ne correspond pas
+   * à une clé du catalogue (ex. prefs 'checkin_today') : la cloche garde
+   * son icône, l'hôte garde le contrôle de ses canaux.
+   * Absent → la clé de prefs = le type lui-même (comportement historique).
+   */
+  prefKey?: string;
   /** Métadonnées libres persistées dans dataJson. */
   meta?: Record<string, unknown>;
 }
@@ -165,7 +174,9 @@ export async function sendNotification(
   if (!payload.force) {
     try {
       const prefs = await userPrefs(userId);
-      const p = prefsFor(prefs, type);
+      // v5.20 — prefKey (clé catalogue) surcharge le type pour le filtre
+      // des canaux ; le type in-app reste inchangé (icônes cloche).
+      const p = prefsFor(prefs, payload.prefKey ?? type);
       emailWanted = p.email;
       pushWanted = p.push;
     } catch {

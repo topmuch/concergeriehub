@@ -245,6 +245,40 @@ export const NOTIFICATION_EVENTS: NotificationEventMeta[] = [
     defaultPush: true,
   },
   // =============================================================
+  // v5.20 — RAPPELS QUOTIDIENS : les triggers J-3 / J+1 / Bouclier
+  // d'avis du moteur d'automatisations étaient SANS clé de prefs
+  // (envoyés systématiquement). Trois clés dédiées — consultables
+  // dans Paramètres → Notifications. L'email au VOYAGEUR (Bouclier)
+  // n'est pas affecté : ces switches contrôlent le récap à l'hôte.
+  // =============================================================
+  {
+    key: 'checkin_j3',
+    emoji: '✉️',
+    label: 'Arrivée dans 3 jours (J-3)',
+    description:
+      'Rappel pré-arrivée : préparer le logement et envoyer les informations d’accès au voyageur.',
+    defaultEmail: true,
+    defaultPush: true,
+  },
+  {
+    key: 'checkout_j1',
+    emoji: '🧽',
+    label: 'Ménage après départ (J+1)',
+    description:
+      'Rappel du lendemain du départ : ménage à faire ou déjà effectué.',
+    defaultEmail: true,
+    defaultPush: false,
+  },
+  {
+    key: 'review_shield_today',
+    emoji: '⭐',
+    label: 'Bouclier d’avis au départ',
+    description:
+      'Récapitulatif quand le lien d’avis du jour a été envoyé à un voyageur qui part (SMS/email).',
+    defaultEmail: true,
+    defaultPush: true,
+  },
+  // =============================================================
   // v5.19 « BRIEFING DU SOIR » — bilan enrichi de la journée à 18 h
   // (activé PAR DÉFAUT — demande client ; push sans objet pour un
   // digest planifié → defaultPush false).

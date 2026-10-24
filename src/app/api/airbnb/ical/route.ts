@@ -7,6 +7,10 @@
 // DELETE ?feedId=… → supprime le feed (les bookings ICAL déjà
 //                    importés sont conservés — trace des séjours)
 //
+// v5.20 — chaque synchro (manuelle ici, ou cron côté automations)
+// qui CRÉE des séjours notifie l'hôte (notifyIcalImport — récap
+// groupé, prefs 'booking_created' respectées).
+//
 // 🔒 Session + canAccessProperty ; CLEANER/MAINTENANCE en lecture
 // seule (canManage requis sur POST/DELETE).
 // =============================================================
@@ -17,6 +21,7 @@ import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { canAccessProperty, getUserRoleForProperty } from '@/lib/b2b-server';
 import { normalizeIcalUrl, parseIcalEvents, upsertIcalBookings } from '@/lib/ical';
+import { notifyIcalImport } from '@/lib/automations-server';
 
 function canManage(role: string | null): boolean {
   return role === 'OWNER' || role === 'MANAGER';
@@ -208,16 +213,27 @@ async function syncFeed(feedId: string, url: string, propertyId: string) {
       });
       return { lastSyncAt: new Date().toISOString(), lastStatus: 'ERROR' as const, lastError: error, lastImported: 0 };
     }
-    const imported = await db.$transaction((tx) => upsertIcalBookings(tx, propertyId, events));
+    // v5.20 — l'upsert retourne aussi les séjours CRÉÉS (vs mis à jour)
+    const result = await db.$transaction((tx) => upsertIcalBookings(tx, propertyId, events));
     await db.propertyIcalFeed.update({
       where: { id: feedId },
-      data: { lastSyncAt: new Date(), lastStatus: 'OK', lastError: null, lastImported: imported },
+      data: {
+        lastSyncAt: new Date(),
+        lastStatus: 'OK',
+        lastError: null,
+        lastImported: result.written,
+      },
     });
+    // v5.20 — l'hôte est informé des nouveaux séjours (récap groupé,
+    // prefs 'booking_created' respectées — fire-and-forget).
+    if (result.created.length > 0) {
+      await notifyIcalImport(propertyId, result.created);
+    }
     return {
       lastSyncAt: new Date().toISOString(),
       lastStatus: 'OK' as const,
       lastError: null,
-      lastImported: imported,
+      lastImported: result.written,
     };
   } catch (err) {
     const msg =

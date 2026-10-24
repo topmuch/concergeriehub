@@ -9,6 +9,20 @@
 // - runDailyAutomations(propertyIds): tick lazy des rappels du jour
 //   (CHECK_IN_TODAY / CHECK_OUT_TODAY) — lastRunAt garantit 1 run/jour
 //
+// v5.20 — RESPECT DES PRÉFÉRENCES (lacune d'audit) : chaque envoi
+// passe désormais par le service unifié sendNotificationToMany()
+// qui filtre email + push VAPID selon les préférences de CHAQUE
+// destinataire (Paramètres → Notifications, catalogue
+// notification-prefs.ts). Le type in-app historique ('host_checkin'
+// …) est préservé pour les icônes de la cloche ; la clé de prefs
+// est déduite du trigger (PREF_KEY_BY_TRIGGER). Le récapitulatif
+// d'équipe du Bouclier d'avis est régi par 'review_shield_today' —
+// l'email/SMS envoyé au VOYAGEUR lui, ne dépend jamais des prefs hôte.
+// v5.20 — RÉSERVATIONS ICAL (lacune d'audit) : notifyIcalImport()
+// envoie un récapitulatif à l'hôte après chaque synchronisation de
+// calendrier ayant CRÉÉ des séjours (1 seul récap par sync, jamais
+// de relance pour les mises à jour).
+//
 // Garantie : le moteur ne JAMAIS faire échouer le flux métier qui
 // l'appelle (réservation, ménage…). Toutes les erreurs sont loguées
 // et avalées.
@@ -22,14 +36,22 @@ import {
   type AutomationTrigger,
 } from '@/lib/automations';
 import { queueEmail } from '@/lib/email';
-// FIX-12 — rendu DB-first : le modèle éditable /admin/emails → Modèles
-// est lu en priorité, fallback silencieux sur le template codé en dur.
-import { renderHostNotificationEmail } from '@/lib/email-template-render';
+// v5.20 — l'email des notifications passe par le service unifié
+// (renderHostNotificationEmail y est déjà utilisé, DB-first FIX-12).
 // PREMIUM V5 — « Bouclier d'avis au départ » : SMS Twilio (env-gated,
 // fail-closed) + URL canonique + parseur premiumFeatures.
 import { sendSms } from '@/lib/sms';
+// v5.20 — délégation au service unifié (préférences respectées)
+import {
+  sendNotificationToMany,
+  propertyOwnerAndManagers,
+} from '@/lib/notifications';
 // AUDIT PRÉ-PROD — CRON iCal : parse + upsert des réservations distantes
-import { parseIcalEvents, upsertIcalBookings } from '@/lib/ical';
+import {
+  parseIcalEvents,
+  upsertIcalBookings,
+  type IcalCreatedBooking,
+} from '@/lib/ical';
 import { siteUrl } from '@/lib/site';
 import { parsePremiumFeatures } from '@/lib/concierge';
 
@@ -74,6 +96,28 @@ export type AutomationCtx =
   | { kind: 'maintenance'; request: MaintenanceCtx }
   | { kind: 'member'; member: MemberCtx }
   | { kind: 'order'; order: OrderCtx }; // ÉTAPE 17.3
+
+/**
+ * v5.20 — Clé de CATALOGUE de préférences (notification-prefs.ts)
+ * réglant les canaux (email / push) de chaque trigger. Les types
+ * historiques ('host_checkin'…) ne sont pas des clés de catalogue :
+ * sans mapping, prefsFor retomberait sur email/push = true pour
+ * TOUS — la lacune signalée par l'audit. Les clés manquantes du
+ * catalogue (checkin_j3, checkout_j1, review_shield_today) y ont
+ * été ajoutées (toggles auto-rendus dans Paramètres → Notifications).
+ */
+const PREF_KEY_BY_TRIGGER: Record<string, string> = {
+  BOOKING_CREATED: 'booking_created',
+  CLEANING_DONE: 'cleaning_done',
+  MAINTENANCE_REQUESTED: 'maintenance_alert',
+  MEMBER_ACCEPTED: 'team_updates',
+  ORDER_CREATED: 'new_order',
+  CHECK_IN_TODAY: 'checkin_today',
+  CHECK_OUT_TODAY: 'checkout_today',
+  CHECK_IN_J3: 'checkin_j3',
+  CHECK_OUT_J1: 'checkout_j1',
+  REVIEW_SHIELD_TODAY: 'review_shield_today',
+};
 
 interface NotificationPayload {
   type: string;
@@ -152,80 +196,61 @@ async function resolveAudience(propertyId: string, action: AutomationAction): Pr
   }
 }
 
+// v5.20 — l'ancien miroir email (emailMirror, ÉTAPE 22) est remplacé
+// par la délégation au service unifié sendNotificationToMany() :
+// même template, mais l'email ne part PLUS sans le consentement de
+// l'hôte (Paramètres → Notifications par événement).
+
 /**
- * ÉTAPE 22 — Miroir email des notifications : chaque destinataire
- * d'une notification d'équipe reçoit aussi un email (même contenu,
- * template générique). Fire-and-forget : ne lève jamais, n'échoue
- * jamais le flux appelant.
+ * Crée les notifications (dédupliqué) + miroir email. Ne lève jamais.
  *
- * v4.58 — expédié PAR la boîte système (expéditeur global) VERS le
- * mail de chaque compte destinataire — plus aucune redirection.
+ * v5.20 — Délègue au service unifié sendNotificationToMany() :
+ *  - in-app : toujours créé (journal + cloche — icône via payload.type) ;
+ *  - email + push VAPID : filtrés selon les PRÉFÉRENCES de chaque
+ *    destinataire (lacune d'audit corrigée) ;
+ *  - prefKey : clé du catalogue de préférences réglant les canaux
+ *    (PREF_KEY_BY_TRIGGER). Absent → clé = payload.type, qui retombe
+ *    alors sur les défauts du catalogue (email/push activés).
  */
-async function emailMirror(
-  userIds: string[],
-  payload: NotificationPayload,
-  dataJson: string,
-): Promise<void> {
-  try {
-    if (userIds.length === 0) return;
-    let parsed: { propertyName?: string; url?: string; propertyId?: string; trigger?: string } = {};
-    try {
-      parsed = JSON.parse(dataJson);
-    } catch {
-      return;
-    }
-    const propertyName = parsed.propertyName ?? 'Votre bien';
-
-    const users = await db.user.findMany({
-      where: { id: { in: userIds } },
-      select: { id: true, email: true },
-    });
-    for (const user of users) {
-      if (!user.email) continue;
-      const tpl = await renderHostNotificationEmail({
-        title: payload.title,
-        body: payload.body,
-        propertyName,
-        url: parsed.url,
-      });
-      await queueEmail({
-        to: user.email,
-        subject: tpl.subject,
-        html: tpl.html,
-        text: tpl.text,
-        template: 'host_notification',
-        userId: user.id,
-        propertyId: parsed.propertyId ?? null,
-        referenceType: 'automation',
-        meta: { trigger: parsed.trigger, notificationType: payload.type },
-      });
-    }
-  } catch (error) {
-    console.error('[automations] emailMirror failed:', error);
-  }
-}
-
-/** Crée les notifications (dédupliqué) + miroir email. Ne lève jamais. */
 async function pushNotifications(
   userIds: string[],
   payload: NotificationPayload,
   dataJson: string,
+  prefKey?: string,
 ): Promise<number> {
   const unique = Array.from(new Set(userIds.filter(Boolean)));
   if (unique.length === 0) return 0;
   try {
-    const result = await db.notification.createMany({
-      data: unique.map((userId) => ({
-        userId,
-        type: payload.type,
-        title: payload.title,
-        body: payload.body,
-        dataJson,
-      })),
+    let parsed: {
+      propertyId?: string;
+      propertyName?: string;
+      url?: string;
+      trigger?: string;
+      bookingId?: string;
+      requestId?: string;
+      orderId?: string;
+    } = {};
+    try {
+      parsed = JSON.parse(dataJson);
+    } catch {
+      // dataJson illisible : on notifie sans deep-link ni métadonnées
+    }
+    const res = await sendNotificationToMany(unique, payload.type, {
+      title: payload.title,
+      body: payload.body,
+      url: parsed.url,
+      propertyId: parsed.propertyId,
+      propertyName: parsed.propertyName,
+      prefKey,
+      meta: {
+        trigger: parsed.trigger,
+        notificationType: payload.type,
+        ...(parsed.bookingId ? { bookingId: parsed.bookingId } : {}),
+        ...(parsed.requestId ? { requestId: parsed.requestId } : {}),
+        ...(parsed.orderId ? { orderId: parsed.orderId } : {}),
+      },
     });
-    // ÉTAPE 22 — miroir email (best-effort, jamais bloquant)
-    await emailMirror(unique, payload, dataJson);
-    return result.count;
+    return res.sent;
   } catch (error) {
     console.error('[automations] pushNotifications failed:', error);
     return 0;
@@ -367,7 +392,13 @@ export async function runAutomationTrigger(
       const payload = buildPayload(rule.key, rule.action);
       if (!payload) continue;
       const audience = await resolveAudience(propertyId, rule.action as AutomationAction);
-      created += await pushNotifications(audience, payload, dataJson);
+      // v5.20 — email/push filtrés selon les préférences de chaque destinataire
+      created += await pushNotifications(
+        audience,
+        payload,
+        dataJson,
+        PREF_KEY_BY_TRIGGER[trigger],
+      );
       await db.automationRule
         .update({ where: { id: rule.id }, data: { lastRunAt: new Date() } })
         .catch(() => undefined);
@@ -486,7 +517,13 @@ export async function runDailyAutomations(propertyIds: string[]): Promise<number
             rule.propertyId,
             rule.action as AutomationAction,
           );
-          created += await pushNotifications(audience, payload, dataJson);
+          // v5.20 — rappels du matin : email/push filtrés par préférences
+          created += await pushNotifications(
+            audience,
+            payload,
+            dataJson,
+            PREF_KEY_BY_TRIGGER[rule.trigger],
+          );
         }
       }
     }
@@ -564,10 +601,12 @@ async function runOffsetDayForRule(
         bookingId: booking.id,
         url: '/airbnb/dashboard',
       });
+      // v5.20 — email/push filtrés par préférences (clé du trigger J-3/J+1)
       created += await pushNotifications(
         await resolveAudience(rule.propertyId, rule.action as AutomationAction),
         payload,
         dataJson,
+        PREF_KEY_BY_TRIGGER[rule.trigger],
       );
     }
     return created;
@@ -726,15 +765,92 @@ async function runReviewShieldForRule(rule: {
         channel,
         url: `/app/hub/${property.qrHubSlug}/guest`,
       });
+      // v5.20 — récap hôte filtré par la préférence 'review_shield_today'
+      // (l'envoi au VOYAGEUR ci-dessus n'est jamais affecté par les prefs)
       created += await pushNotifications(
         await resolveAudience(property.id, 'NOTIFY_OWNERS'),
         recap,
         dataJson,
+        PREF_KEY_BY_TRIGGER['REVIEW_SHIELD_TODAY'],
       );
     }
     return created;
   } catch (error) {
     console.error('[automations] runReviewShieldForRule failed:', error);
+    return 0;
+  }
+}
+
+/**
+ * v5.20 — RÉSERVATIONS ICAL (lacune d'audit) : les séjours importés
+ * d'un calendrier (Airbnb, Booking.com, Abritel…) étaient muets —
+ * l'hôte les découvrait seulement en ouvrant le planning.
+ *
+ * Après CHAQUE synchronisation ayant CRÉÉ des séjours, un récap
+ * part vers l'hôte et ses managers (in-app + email + push VAPID,
+ * filtrés par la préférence 'booking_created' — le catalogue
+ * annonce déjà « manuel, OTA ou iCal ») :
+ *  - 1 séjour → message individuel (même style que BOOKING_CREATED) ;
+ *  - N séjours → UN SEUL récapitulatif groupé (anti-spam, même un
+ *    premier import de 30 événements) ; les mises à jour de séjours
+ *    déjà connus ne déclenchent jamais de relance.
+ * Deep-link : /airbnb/calendar. Ne lève jamais.
+ */
+export async function notifyIcalImport(
+  propertyId: string,
+  created: IcalCreatedBooking[],
+): Promise<number> {
+  try {
+    if (created.length === 0) return 0;
+    const [property, audience] = await Promise.all([
+      db.property.findUnique({ where: { id: propertyId }, select: { name: true } }),
+      propertyOwnerAndManagers(propertyId),
+    ]);
+    if (audience.length === 0) return 0;
+    const propertyName = property?.name ?? 'Votre bien';
+
+    const sorted = [...created].sort((a, b) => a.checkIn.getTime() - b.checkIn.getTime());
+    const first = sorted[0];
+    const last = sorted[sorted.length - 1];
+
+    let title: string;
+    let body: string;
+    if (created.length === 1) {
+      title = '📅 Nouvelle réservation importée';
+      body =
+        `${propertyName} : séjour de ${first.guestName} ` +
+        `du ${formatFrDate(first.checkIn)} au ${formatFrDate(first.checkOut)} — ` +
+        'importé depuis votre calendrier iCal.';
+    } else {
+      title = `📅 ${created.length} nouvelles réservations importées`;
+      const lines = sorted
+        .slice(0, 5)
+        .map(
+          (b) =>
+            `• ${b.guestName} — du ${formatFrDate(b.checkIn)} au ${formatFrDate(b.checkOut)}`,
+        );
+      if (sorted.length > 5) lines.push(`• … et ${sorted.length - 5} autres séjours`);
+      body =
+        `${propertyName} : ${created.length} séjours ont été ajoutés au planning ` +
+        `depuis votre calendrier iCal (${formatFrDate(first.checkIn)} → ${formatFrDate(last.checkOut)}) :\n` +
+        lines.join('\n');
+    }
+
+    const dataJson = JSON.stringify({
+      propertyId,
+      propertyName,
+      trigger: 'ICAL_IMPORT',
+      bookingIds: created.map((b) => b.id),
+      url: '/airbnb/calendar',
+    });
+    return await pushNotifications(
+      audience,
+      { type: 'host_booking', title, body },
+      dataJson,
+      'booking_created',
+    );
+  } catch (error) {
+    console.error('[automations] notifyIcalImport failed:', error);
     return 0;
   }
 }
@@ -853,6 +969,7 @@ export async function syncDueIcalFeeds(): Promise<number> {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 15_000);
         let imported = 0;
+        let createdBookings: IcalCreatedBooking[] = [];
         let lastError: string | null = null;
         try {
           const res = await fetch(feed.url, {
@@ -866,9 +983,12 @@ export async function syncDueIcalFeeds(): Promise<number> {
             if (error) {
               lastError = error;
             } else {
-              imported = await db.$transaction((tx) =>
+              // v5.20 — l'upsert retourne aussi les séjours CRÉÉS
+              const up = await db.$transaction((tx) =>
                 upsertIcalBookings(tx, feed.propertyId, events),
               );
+              imported = up.written;
+              createdBookings = up.created;
             }
           } else {
             lastError = `HTTP ${res.status}`;
@@ -885,6 +1005,11 @@ export async function syncDueIcalFeeds(): Promise<number> {
             lastImported: imported,
           },
         });
+        // v5.20 — LACUNE D'AUDIT corrigée : l'hôte est informé des
+        // nouveaux séjours (1 récap par sync ; mises à jour muettes).
+        if (createdBookings.length > 0) {
+          await notifyIcalImport(feed.propertyId, createdBookings);
+        }
         synced++;
       } catch (error) {
         // Feed injoignable : trace + horodatage (retry au prochain tick)

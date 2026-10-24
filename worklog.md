@@ -5737,3 +5737,21 @@ Stage Summary:
 - v5.19 LIVE et vérifiée : briefing du soir opérationnel, opt-out disponible, route cron sécurisée
 - Premier envoi automatique attendu aujourd'hui 18:00 UTC ; test manuel superadmin possible : POST /api/admin/trigger-evening-briefings?force=1 (session Console)
 - Réfs : commit code+tar 6702b58, déploiement ygsft3bigjcrdntcg3k9xpcb
+
+---
+Task ID: V5.20
+Agent: Z.ai Code (session principale)
+Task: Correctif des lacunes notifications d'audit — respect des notificationPrefs par les rappels quotidiens + réservations iCal muettes
+
+Work Log:
+- Ouverture de session : git status propre (pas de resync), gardes shims OK ; constat : v5.19 (briefing du soir) DÉJÀ déployée et vérifiée (worklog V5.19-VERIFY, health v5.19) → prochain bump = v5.20
+- Exploration : automations-server.ts (moteur rappels), notifications.ts (service unifié sendNotification qui respecte déjà les prefs), notification-prefs.ts (catalogue auto-rendu dans Paramètres → Notifications), ical.ts (upsert muet), /api/airbnb/ical (sync manuelle), settings-content.tsx:482 (rendu dynamique du catalogue)
+- Fix ① PRÉFÉRENCES (rappels du matin) : pushNotifications() délègue désormais au service unifié sendNotificationToMany() — email + push VAPID filtrés selon les prefs de CHAQUE destinataire ; nouveau champ payload.prefKey (clé catalogue DISTINCTE du type in-app, icônes cloche host_* préservées) ; mapping PREF_KEY_BY_TRIGGER (10 triggers : booking_created, cleaning_done, maintenance_alert, team_updates, new_order, checkin_today, checkout_today, checkin_j3, checkout_j1, review_shield_today) ; 3 nouvelles clés catalogue checkin_j3 / checkout_j1 / review_shield_today (toggles auto-rendus) ; emailMirror (code mort) supprimé ; l'email/SMS au VOYAGEUR du Bouclier d'avis n'est jamais affecté par les prefs hôte
+- Fix ② ICAL MUET : upsertIcalBookings retourne { written, created[] } (séjours CRÉÉS ≠ mis à jour) ; nouvelle fonction notifyIcalImport(propertyId, created) — récap hôte+managers (1 message si 1 séjour, UN récap groupé si N — anti-spam même sur 1er import de 30 events ; mises à jour jamais relancées) ; branchée sur le cron syncDueIcalFeeds ET la synchro manuelle /api/airbnb/ical POST ; prefs 'booking_created' respectées (le catalogue annonce déjà « manuel, OTA ou iCal ») ; deep-link /airbnb/calendar
+- Vérifications : bun run lint = 0 erreur ; tsc --noEmit = 0 erreur ; script one-shot (purgé) : effectivePrefs 3 nouvelles clés OK, upsert idempotent (2e synchro created=0), notifyIcalImport → in-app créée + 0 email avec booking_created.email=false (prefs RESPECTÉES) + 1 email après opt-in, sujet « 📅 Nouvelle réservation importée »
+- dev.log : scheduler daily-automations OK avec le nouveau code, aucune erreur
+
+Stage Summary:
+- Les 2 lacunes d'audit sont corrigées : les rappels du matin respectent désormais Paramètres → Notifications (par événement, par destinataire), et chaque synchro iCal créatrice de séjours notifie l'hôte (récap groupé anti-spam)
+- Aucun changement de schéma (prefs JSON existant) ; 3 nouvelles clés de catalogue (défauts = comportement actuel → aucune surprise pour les hôtes)
+- Version prête : v5.20 (briefing 18 h v5.19 déjà en prod)
