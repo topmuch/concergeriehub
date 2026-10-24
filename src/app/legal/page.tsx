@@ -1,14 +1,25 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import { SiteChrome, PageHero } from '@/components/landing/site-chrome';
 
 // FIX-CSP-PROD : rendu dynamique exigé par la CSP à nonce (même logique
 // que la landing — page pré-rendue = scripts sans nonce = page blanche).
 export const dynamic = 'force-dynamic';
 
+const TITLE = 'Mentions légales, CGU & Confidentialité — RoomScan';
+const DESCRIPTION =
+  'Mentions légales, conditions générales d’utilisation et politique de confidentialité de RoomScan (roomscan.pro).';
+
 export const metadata: Metadata = {
-  title: 'Mentions légales, CGU & Confidentialité',
-  description:
-    'Mentions légales, conditions générales d’utilisation et politique de confidentialité de RoomScan (roomscan.pro).',
+  title: TITLE,
+  description: DESCRIPTION,
+  alternates: { canonical: '/legal' },
+  openGraph: {
+    type: 'website',
+    locale: 'fr_FR',
+    url: '/legal',
+    title: TITLE,
+    description: DESCRIPTION,
+  },
 };
 
 const SECTIONS = [
@@ -29,33 +40,24 @@ function P({ children, className }: { children: React.ReactNode; className?: str
   return <p className={`leading-relaxed text-slate-600 ${className ?? ''}`}>{children}</p>;
 }
 
+// v5.22 — la page légale (Mentions légales / CGU / Confidentialité) rejoint
+// le socle commun du site multipages : SiteChrome = navbar avec le logo
+// officiel + menu complet (desktop & mobile) + sélecteur de langue, et le
+// VRAI footer (5 colonnes) au lieu du mini header/footers locaux.
+// Les ancres #mentions / #cgu / #confidentialite (liées depuis le footer)
+// et le rendu dynamique CSP sont conservés.
 export default function LegalPage() {
   return (
-    <div className="flex min-h-screen flex-col bg-[#F7F7F8] font-sans text-slate-900 antialiased [color-scheme:light]">
-      <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-4xl items-center justify-between px-4 sm:px-6">
-          <Link href="/" className="flex items-center gap-2 font-bold">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#055492] text-sm text-white">
-              C
-            </span>
-            RoomScan
-          </Link>
-          <Link
-            href="/"
-            className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:border-[#055492] hover:text-[#04467a]"
-          >
-            ← Retour au site
-          </Link>
-        </div>
-      </header>
+    <SiteChrome>
+      <PageHero
+        eyebrow="Légal"
+        title="Informations"
+        highlight="légales."
+        description="Mentions légales, conditions d’utilisation et protection des données — RoomScan, accessible sur roomscan.pro."
+      />
 
-      <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-10 sm:px-6">
-        <h1 className="text-3xl font-bold md:text-4xl">Informations légales</h1>
-        <p className="mt-2 text-slate-600">
-          Mentions légales, conditions d’utilisation et protection des données — RoomScan,
-          accessible sur roomscan.pro.
-        </p>
-        <nav aria-label="Sommaire" className="mt-6 flex flex-wrap gap-2">
+      <section className="mx-auto w-full max-w-4xl px-4 pb-16 sm:px-6">
+        <nav aria-label="Sommaire" className="flex flex-wrap gap-2">
           {SECTIONS.map((s) => (
             <a
               key={s.id}
@@ -129,7 +131,7 @@ export default function LegalPage() {
             <H2 id="confidentialite">3. Politique de confidentialité (RGPD)</H2>
             <P>
               <strong>3.1 Données collectées.</strong> Comptes hôtes (nom, e-mail, mot de passe haché),
-              biens et contenus de hub, commandes de services et paiements (traités par Stripe — aucune
+              biens et contenus de hub, commandes de services et paiements (traités par PayPal — aucune
               carte bancaire n‘est stockée sur nos serveurs), mesures techniques anonymisées
               (journalisation, détection d‘erreurs).
             </P>
@@ -157,16 +159,11 @@ export default function LegalPage() {
             </P>
           </section>
         </div>
-      </main>
 
-      <footer className="mt-auto border-t border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-4xl flex-col items-center justify-between gap-2 px-4 py-6 text-sm text-slate-500 sm:flex-row sm:px-6">
-          <p>
-            © {new Date().getFullYear()} RoomScan — roomscan.pro. Tous droits réservés.
-          </p>
-          <p>Dernière mise à jour : octobre 2026</p>
-        </div>
-      </footer>
-    </div>
+        <p className="mt-10 text-center text-sm text-slate-500">
+          Dernière mise à jour : octobre 2026 — contact@roomscan.pro
+        </p>
+      </section>
+    </SiteChrome>
   );
 }
