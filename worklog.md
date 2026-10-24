@@ -5825,3 +5825,36 @@ Work Log:
 Stage Summary:
 - Release « Version 12 » (tag v.12) créée : https://github.com/topmuch/concergeriehub/releases/tag/v.12 — pointe 851d6f0 (v5.21 en prod), asset de restauration app-update-v5.21.tar.xz (6 039 628 o, sha256 b0acddca…f2b), notes détaillées v5.13→v5.21
 - Aucun changement de code : le dépôt reste à 851d6f0 (seul le worklog avance)
+
+---
+Task ID: V5.22
+Agent: Z.ai Code (session principale)
+Task: Pages légales (Mentions légales / CGU / Confidentialité) sans menu ni footer → châssis SiteChrome
+
+Work Log:
+- Ouverture : workspace propre (aucun resync), gardes shims OK, HEAD 70f4f47 (v5.21 en prod)
+- Diagnostic : les « 3 pages » légales sont UNE route /legal (ancres #mentions / #cgu / #confidentialite, liées depuis le footer site-chrome) — header/footer locaux minimalistes (carré « C » + « Retour au site » / 2 lignes), sans logo ni menu ni vrai footer
+- Fix src/app/legal/page.tsx : enveloppe <SiteChrome> (provider i18n + SmoothScroll + mesh gradient + Navbar avec BrandLogo officiel + Footer 5 colonnes) + <PageHero> commun (eyebrow « Légal », h1 « Informations légales. ») ; sommaire 3 pilules conservé ; ancres et scroll-mt-24 intactes ; force-dynamic CSP conservé ; canonical + OpenGraph ajoutés ; cohérence légale Stripe→PayPal (100 % PayPal depuis v5.17)
+- Vérifications : lint 0 erreur (1 warning préexistant icon.tsx), tsc 0 erreur ; navigateur local /legal : navbar logo + menu + footer OK desktop/mobile, burger OK, ancre #cgu OK, 0 erreur console
+- VERSION.txt v5.22 + Dockerfile cb=v5.22 ; tar reconstruit (6 038 156 o) : VERSION interne v5.22 + SiteChrome dans legal/page.tsx vérifiés avant push
+
+Stage Summary:
+- Les 3 pages légales ont le même châssis que tout le site multipages (navbar logo officiel + menu + footer), ancres fonctionnelles
+- Commit code+tar c65235b poussé (vérifié GitHub API : tar 6 038 156 o sur main)
+
+---
+Task ID: V5.22-VERIFY
+Agent: Z.ai Code (session principale)
+Task: Déploiement v5.22 + vérification production + mise à jour release GitHub v.12
+
+Work Log:
+- Déploiement Coolify wzozul7losrisdzfdmd8hd7q → finished (~13 min, file 8 min) ; 1er POST sans Bearer → « Unauthenticated », repris avec .coolify-token
+- Health https://roomscan.pro/api/health → OK, db up 4 ms, smtp up 48 ms, version = v5.22 (2026-10-24) PAGES LÉGALES ; accueil 200, /legal 200
+- Navigateur prod /legal : navbar logo RoomScan + menu complet + footer 5 colonnes rendus, ancre #cgu fonctionnelle, 0 erreur console
+- Release GitHub v.12 mise à jour : tag déplacé 851d6f0 → c65235b (force PATCH refs), notes PATCHées (titre « Version 12 — RoomScan Inventaire v5.22 », section v5.22 ajoutée), asset app-update-v5.21.tar.xz supprimé (204) remplacé par app-update-v5.22.tar.xz (6 038 156 o, uploaded, digest sha256 299aaf18…da5f identique au commit)
+
+Stage Summary:
+- v5.22 LIVE et vérifiée : /legal = navbar logo + menu + footer, ancres OK
+- Release « Version 12 » (https://github.com/topmuch/concergeriehub/releases/tag/v.12) reflète la production courante (v5.22, tar 6 038 156 o, sha256 299aaf18…da5f)
+- Note : 1er PATCH/DELETE release retournés None/401 mais rejeux OK (200/204) — re-vérifier l'état réel plutôt que se fier à un seul appel
+- Reste (non demandé) : re-file des emails QUEUED ; lien checkout absent de la liste Check-out ; emails de validation EDL absents d'EmailOutbox
