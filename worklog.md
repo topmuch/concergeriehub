@@ -5790,3 +5790,20 @@ Stage Summary:
 - Les 3 lacunes d'audit notifications sont maintenant TOUTES corrigées (v5.20 : prefs respectées + iCal notifié ; v5.21 : message texte du livre d'or notifié)
 - Le livre d'or notifie via sa propre clé guestbook_message → l'hôte contrôle ce canal indépendamment du vocal
 - Version prête : v5.21
+
+---
+Task ID: V5.21-VERIFY
+Agent: Z.ai Code (session principale)
+Task: Vérification production v5.21 (message texte du livre d'or notifie l'hôte)
+
+Work Log:
+- Déploiement Coolify xxacxih3ikjaav8ihcp1dinj → finished (~17 min, file d'attente 9 min), déclenché après vérification GitHub API du commit dab4030 (tar 6 039 628 o sur main)
+- Health https://roomscan.pro/api/health → status OK, db up (3 ms), smtp up, version = v5.21 (2026-10-25) MESSAGE TEXTE INVITÉ
+- Vérification navigateur : accueil rendu OK (nav multipages intacte), 0 erreur console, browser fermé proprement
+- Tests fonctionnels : validés localement sur la VRAIE route (in-app + email avec extrait + opt-out par clé respecté) — voir V5.21
+
+Stage Summary:
+- v5.21 LIVE et vérifiée : le mot écrit du livre d'or notifie l'hôte (cloche + push + email, clé prefs dédiée guestbook_message)
+- LES 3 LACUNES D'AUDIT NOTIFICATIONS SONT TOUTES CORRIGÉES : v5.20 (prefs respectées par les rappels du matin + réservations iCal notifiées) ; v5.21 (message texte du livre d'or)
+- Réfs : commit code+tar dab4030, déploiement xxacxih3ikjaav8ihcp1dinj
+- Reste (non demandé) : pas de re-file des emails QUEUED ; lien checkout absent de la liste Check-out ; emails de validation EDL absents d'EmailOutbox
