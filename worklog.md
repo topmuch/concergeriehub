@@ -5675,3 +5675,21 @@ Work Log:
 Stage Summary:
 - v5.18 EN PRODUCTION : site multipages complet (5 pages dédiées + accueil condensé), page contact avec formulaire fonctionnel (DB + email) et carte OpenStreetMap, auth unifiée par URL, SEO par page.
 - Leçons : ① les chaînes passées en PROPS à des composants qui appellent t() (PageHero…) échappent aux greps t() — vérifier apostrophes typographiques aussi dans les props ; ② TS1117 (doublon de clé de dict) est un bon filet — le tsc le voit là où un grep rate ; ③ poll Coolify : la boucle shell 40×30 s dépasse le timeout 600 s — préférer des boucles courtes (10×45 s) réitérables.
+
+---
+Task ID: V5.19-PREP
+Agent: Z.ai Code (session principale)
+Task: Synchronisation git local/GitHub + cartographie des notifications envoyées aux hôtes
+
+Work Log:
+- Ouverture de session : git status --short → 17 fichiers en mode-only (644→755) + 2 shims /upload/[token] supprimés (4e occurrence du piège resync)
+- Restauration : git checkout -- shims + git checkout -- . ; gardes git cat-file -e HEAD:shims OK ; workspace propre
+- Vérif sync : fetch origin → rev-list left/right count main...FETCH_HEAD = 0/0 → local = origin/main = 57af547 (v5.18 worklog) — AUCUN push/pull nécessaire
+- Exploration très approfondie (agent Explore) du système de notifications : EmailOutbox, sendNotification, automations-server, coach-report, cron routes, push VAPID, SMS Twilio
+- Spot-check des déclencheurs quotidiens (CHECK_IN_TODAY/CHECK_OUT_TODAY/CHECK_IN_J3/CHECK_OUT_J1/REVIEW_SHIELD_TODAY dans automations-server.ts ; coach daily/weekly dans coach-report.ts) — confirmés
+
+Stage Summary:
+- Git : local = GitHub = v5.18 (commit 57af547), workspace propre, shims intacts. Prochain bump tar : cb=v5.19
+- Notifications quotidiennes planifiées vers hôtes : (a) rappels automations (arrivée J, départ J, J-3, ménage J+1, Bouclier d'avis) via cron Coolify 07:00 + scheduler interne + tick lazy dashboard ; (b) briefing Coach opt-in daily/weekly (défaut 07:00). Tout le reste est événementiel (inline via EmailOutbox)
+- Lacunes documentées : moteur automations ignore notificationPrefs ; réservations iCal muettes ; messages texte invités silencieux ; pas de re-file des QUEUED
+- Rapport complet remis à l'utilisateur en français
