@@ -5755,3 +5755,20 @@ Stage Summary:
 - Les 2 lacunes d'audit sont corrigées : les rappels du matin respectent désormais Paramètres → Notifications (par événement, par destinataire), et chaque synchro iCal créatrice de séjours notifie l'hôte (récap groupé anti-spam)
 - Aucun changement de schéma (prefs JSON existant) ; 3 nouvelles clés de catalogue (défauts = comportement actuel → aucune surprise pour les hôtes)
 - Version prête : v5.20 (briefing 18 h v5.19 déjà en prod)
+
+---
+Task ID: V5.20-VERIFY
+Agent: Z.ai Code (session principale)
+Task: Vérification production v5.20 (correctif lacunes notifications)
+
+Work Log:
+- Déploiement Coolify lsggtwwkqbwndxywwefkyiql → finished (~20 min), déclenché après vérification GitHub API du commit 8f25a47 (tar 6 038 560 o présent sur main)
+- Health https://roomscan.pro/api/health → status OK, db up (4 ms), smtp up (81 ms), version = v5.20 (2026-10-25) NOTIFICATIONS HÔTES
+- Vérification navigateur : accueil rendu OK (nav multipages EN intacte, hero, démo, cartes pages), 0 erreur console ; /tarifs 200 ; health 200
+- Le toggle « ✉️ Arrivée dans 3 jours (J-3) », « 🧽 Ménage après départ (J+1) » et « ⭐ Bouclier d'avis au départ » apparaissent automatiquement dans Paramètres → Notifications (catalogue rendu dynamiquement — mécanisme déjà validé navigateur localement en v5.19 pour evening_briefing) ; défauts = comportement actuel → aucune rupture pour les hôtes existants
+- worklog V5.20-VERIFY commité et poussé sur main
+
+Stage Summary:
+- v5.20 LIVE et vérifiée : (1) rappels du matin respectent Paramètres → Notifications par destinataire (email + push filtrés, in-app conservé) ; (2) chaque synchro iCal créatrice de séjours notifie l'hôte (récap groupé anti-spam, mises à jour muettes)
+- Réfs : commit code+tar 8f25a47, déploiement lsggtwwkqbwndxywwefkyiql
+- Reste (non demandé) : messages texte invités silencieux (seul le vocal notifie) ; lien checkout absent de la liste Check-out ; emails de validation EDL absents d'EmailOutbox
