@@ -5718,3 +5718,22 @@ Stage Summary:
 - Briefing du soir 18 h opérationnel : activé par défaut, opt-out dans Paramètres → Notifications, contenu enrichi 100 % données réelles, motivation si planning calme
 - Déclenchement : scheduler interne horaire + route cron (redondance Coolify optionnelle — doc d'entête de la route)
 - Déployé en v5.19 (voir V5.19-VERIFY)
+
+---
+Task ID: V5.19-VERIFY
+Agent: Z.ai Code (session principale)
+Task: Vérification production v5.19 (briefing du soir 18 h)
+
+Work Log:
+- Déploiement Coolify ygsft3bigjcrdntcg3k9xpcb → finished (~14 min), déclenché après vérification GitHub API du commit 6702b58 (tar présent + VERSION/Dockerfile/evening-briefing/instrumentation OK)
+- Health https://roomscan.pro/api/health → status OK, db up (2 ms), smtp up (8 ms), version = v5.19 (2026-10-24) BRIEFING DU SOIR 18 H
+- Sécurité route cron en prod : POST et GET /api/admin/trigger-evening-briefings sans auth → 403 (fail-closed) ✅
+- Pages publiques : accueil 200, /tarifs 200 (multipages v5.18 intact) ; accueil rendu navigateur OK (nav EN multipages : Features / How it works / Move-in Reports / Pricing / Contact)
+- Horaire : à 12:30 UTC (Dakar = UTC+0) → premier briefing du soir aujourd'hui à 18:00 UTC via scheduler interne (job horaire evening-briefings, échéance ≥ 18 h) + anti-doublon outbox
+- Rappel : le toggle « Briefing du soir (18 h) » est visible côté hôte (Paramètres → Notifications, email ON par défaut) — validé localement (login → toggle → save → toast → DB)
+- worklog V5.19-VERIFY commité et poussé sur main
+
+Stage Summary:
+- v5.19 LIVE et vérifiée : briefing du soir opérationnel, opt-out disponible, route cron sécurisée
+- Premier envoi automatique attendu aujourd'hui 18:00 UTC ; test manuel superadmin possible : POST /api/admin/trigger-evening-briefings?force=1 (session Console)
+- Réfs : commit code+tar 6702b58, déploiement ygsft3bigjcrdntcg3k9xpcb
