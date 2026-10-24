@@ -76,6 +76,7 @@ export async function register(): Promise<void> {
   const INTERVAL_MS: Record<string, number> = {
     'monitoring-tick': 5 * 60_000,
     'coach-reports': 60 * 60_000,
+    'evening-briefings': 60 * 60_000, // v5.19 — bilan du soir 18 h (route : échéance + anti-doublon)
     'daily-automations': 24 * 60 * 60_000,
     'monitoring-cleanup': 26 * 60 * 60_000,
   };
@@ -84,6 +85,7 @@ export async function register(): Promise<void> {
   const JOB_ORDER = [
     'monitoring-tick',
     'daily-automations',
+    'evening-briefings',
     'coach-reports',
     'monitoring-cleanup',
   ] as const;
@@ -94,6 +96,7 @@ export async function register(): Promise<void> {
   const JOB_ENDPOINT: Record<JobName, string> = {
     'monitoring-tick': '/api/admin/monitoring-tick',
     'daily-automations': '/api/admin/trigger-daily-automations',
+    'evening-briefings': '/api/admin/trigger-evening-briefings',
     'coach-reports': '/api/admin/trigger-coach-reports',
     'monitoring-cleanup': '/api/admin/monitoring-cleanup',
   };

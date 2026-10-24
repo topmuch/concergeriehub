@@ -244,6 +244,20 @@ export const NOTIFICATION_EVENTS: NotificationEventMeta[] = [
     defaultEmail: true,
     defaultPush: true,
   },
+  // =============================================================
+  // v5.19 « BRIEFING DU SOIR » — bilan enrichi de la journée à 18 h
+  // (activé PAR DÉFAUT — demande client ; push sans objet pour un
+  // digest planifié → defaultPush false).
+  // =============================================================
+  {
+    key: 'evening_briefing',
+    emoji: '🌇',
+    label: 'Briefing du soir (18 h)',
+    description:
+      'Bilan quotidien de votre journée : préparatifs de demain (arrivées, départs, ménage), points d\'attention, revenus encaissés, KPIs et message de motivation quand votre planning est calme.',
+    defaultEmail: true,
+    defaultPush: false,
+  },
 ];
 
 export interface NotificationPref {

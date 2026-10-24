@@ -5693,3 +5693,28 @@ Stage Summary:
 - Notifications quotidiennes planifiées vers hôtes : (a) rappels automations (arrivée J, départ J, J-3, ménage J+1, Bouclier d'avis) via cron Coolify 07:00 + scheduler interne + tick lazy dashboard ; (b) briefing Coach opt-in daily/weekly (défaut 07:00). Tout le reste est événementiel (inline via EmailOutbox)
 - Lacunes documentées : moteur automations ignore notificationPrefs ; réservations iCal muettes ; messages texte invités silencieux ; pas de re-file des QUEUED
 - Rapport complet remis à l'utilisateur en français
+
+---
+Task ID: V5.19
+Agent: Z.ai Code (session principale)
+Task: Briefing du soir 18 h — bilan enrichi de la journée + messages de motivation (demande client)
+
+Work Log:
+- Décisions validées en discussion : Option A (données réelles RoomScan), briefing 18 h coexiste avec Coach 7 h, bilan inclus dans le briefing, ordre KPIs à mon choix, activé par défaut avec opt-out dans Paramètres → Notifications
+- Exploration : coach-report.ts (pattern runner/anti-doublon), instrumentation.ts (scheduler interne), notification-prefs.ts (catalogue auto-rendu en UI), models Booking/ServiceOrder/MinibarOrder/LaundryOrder/GuestSession/PrivateFeedback/CheckOutInspection/HousekeepingTask/DashboardInsight/GuestMemory/ServiceRequest
+- Créé src/lib/evening-briefing.ts : runEveningBriefings() — sélection hôtes (owners + membres acceptés), garde préférence (défaut ON), garde 18 h serveur, anti-doublon outbox template evening_briefing, collecte 18 requêtes parallèles (arrivées/départs demain, ménages, insights CRITICAL/HIGH, réclamations >24 h, souvenirs à valider, revenus du jour ServiceOrder+Minibar+Laundry+lateCheckouts, scans/sessions, EDL signés, avis + moyenne, occupation du soir, réservations 7 j), email HTML RoomScan 6 sections + motivation (13 messages rotatifs hash user+date si 0 réservation à venir 7 j), version texte
+- Créé src/app/api/admin/trigger-evening-briefings/route.ts : POST+GET, Bearer CRON_SECRET OU superadmin, ?force=1 superadmin, logCronRun('evening-briefings')
+- instrumentation.ts : job horaire 'evening-briefings' (endpoint + INTERVAL 60 min + JOB_ORDER)
+- notification-prefs.ts : event evening_briefing (🌇, email true / push false) → toggle auto-rendu dans Paramètres → Notifications
+- Aucun changement de schéma (prefs JSON existant + anti-doublon outbox)
+- Lint : 0 erreur
+- Tests locaux : script one-shot avec données de contrôle (user/property/booking arrivée+departure/GuestSession/ServiceOrder 25 000 PAID/Minibar 8 000 PAID/PrivateFeedback 5★/insight CRITICAL/HousekeepingTask DONE) → email SENT provider demo, contenu validé (sections exactes) ; test motivation planning calme → carte « Journée calme ? » présente ; rendu HTML vérifié navigateur (captures)
+- Correctif env local : NEXTAUTH_SECRET/NEXTAUTH_URL/CRON_SECRET/NEXT_PUBLIC_APP_URL ajoutés à .env local (non tracké) — getServerSession renvoyait null sans NEXTAUTH_SECRET ; dev server redémarré
+- Vérification navigateur complète : login hôte → Paramètres → Notifications → toggle « Briefing du soir (18 h) » visible (email ON/push OFF) → clic toggle off → Enregistrer → toast succès → DB persistée {email:false} → restauré {email:true} ; route cron : 403 sans secret, mode cron avec Bearer → SKIPPED trop_tot à 12 h (garde 18 h OK) ; API prefs GET/PUT validées
+- Nettoyage : fichiers de test supprimés, DB locale purgée (users/property/bookings/emails test), browser fermé
+- VERSION.txt v5.19 + Dockerfile cb=v5.19
+
+Stage Summary:
+- Briefing du soir 18 h opérationnel : activé par défaut, opt-out dans Paramètres → Notifications, contenu enrichi 100 % données réelles, motivation si planning calme
+- Déclenchement : scheduler interne horaire + route cron (redondance Coolify optionnelle — doc d'entête de la route)
+- Déployé en v5.19 (voir V5.19-VERIFY)
